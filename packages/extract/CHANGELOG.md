@@ -1,5 +1,13 @@
 # @openpkg-ts/extract
 
+## 0.18.2
+
+### Patch Changes
+
+- chore: migrate workspace dependencies from `workspace:*` to `workspace:^`
+
+  This change updates internal workspace dependency references to use caret ranges (`workspace:^`) instead of exact matches (`workspace:*`). This provides better semver compatibility when packages are published and consumed externally.
+
 ## 0.18.1
 
 ### Patch Changes

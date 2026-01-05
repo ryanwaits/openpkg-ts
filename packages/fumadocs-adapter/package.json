@@ -1,6 +1,6 @@
 {
   "name": "@openpkg-ts/fumadocs-adapter",
-  "version": "0.6.9",
+  "version": "0.6.10",
   "description": "Fumadocs integration for OpenPkg API documentation",
   "type": "module",
   "sideEffects": false,
@@ -28,9 +28,9 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@openpkg-ts/ui": "workspace:*",
-    "@openpkg-ts/doc-generator": "workspace:*",
-    "@openpkg-ts/spec": "workspace:*"
+    "@openpkg-ts/ui": "workspace:^",
+    "@openpkg-ts/doc-generator": "workspace:^",
+    "@openpkg-ts/spec": "workspace:^"
   },
   "peerDependencies": {
     "fumadocs-core": "^16.0.0",

@@ -2,9 +2,7 @@
   "name": "openpkg-ts",
   "private": true,
   "type": "module",
-  "workspaces": [
-    "packages/*"
-  ],
+  "workspaces": ["packages/*"],
   "scripts": {
     "build": "bun run build:spec && bun run build:extract && bun run build:ui && bun run build:doc-generator && bun run build:fumadocs-adapter",
     "build:spec": "cd packages/spec && bun run build",

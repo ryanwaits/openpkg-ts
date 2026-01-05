@@ -1,5 +1,13 @@
 # @openpkg-ts/doc-generator
 
+## 0.6.8
+
+### Patch Changes
+
+- chore: migrate workspace dependencies from `workspace:*` to `workspace:^`
+
+  This change updates internal workspace dependency references to use caret ranges (`workspace:^`) instead of exact matches (`workspace:*`). This provides better semver compatibility when packages are published and consumed externally.
+
 ## 0.6.7
 
 ### Patch Changes

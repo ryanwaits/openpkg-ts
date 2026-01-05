@@ -1,5 +1,16 @@
 # @openpkg-ts/fumadocs-adapter
 
+## 0.6.10
+
+### Patch Changes
+
+- chore: migrate workspace dependencies from `workspace:*` to `workspace:^`
+
+  This change updates internal workspace dependency references to use caret ranges (`workspace:^`) instead of exact matches (`workspace:*`). This provides better semver compatibility when packages are published and consumed externally.
+
+- Updated dependencies
+  - @openpkg-ts/doc-generator@0.6.8
+
 ## 0.6.9
 
 ### Patch Changes
