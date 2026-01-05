@@ -6,7 +6,7 @@ export function formatTypeReference(type: ts.Type, checker: ts.TypeChecker): str
 
 export function collectReferencedTypes(
   type: ts.Type,
-  checker: ts.TypeChecker,
+  _checker: ts.TypeChecker,
   visited: Set<string> = new Set<string>(),
 ): string[] {
   const symbol = type.getSymbol();

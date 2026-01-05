@@ -1,5 +1,18 @@
 # @openpkg-ts/extract
 
+## 0.18.1
+
+### Patch Changes
+
+- Code style cleanup: formatting improvements and lint fixes
+
+  - Remove trailing blank line in TypeRegistry class
+  - Use template literal syntax for regex pattern
+  - Reformat function signature to single line
+  - Reorder imports alphabetically in CLI spec
+  - Format long option strings with proper line breaks
+  - Prefix unused parameter with underscore to silence lint warning
+
 ## 0.18.0
 
 ### Minor Changes

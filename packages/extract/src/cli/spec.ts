@@ -1,9 +1,9 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { normalize, validateSpec } from '@openpkg-ts/spec';
-import { spinner, summary } from '../utils/progress';
 import { Command } from 'commander';
 import { extract } from '../builder';
+import { spinner, summary } from '../utils/progress';
 
 export function createProgram(): Command {
   const program = new Command('tspec')
@@ -13,7 +13,10 @@ export function createProgram(): Command {
     .option('--max-depth <n>', 'Max type depth (default: 4)')
     .option('--skip-resolve', 'Skip external type resolution')
     .option('--runtime', 'Enable Standard Schema runtime extraction')
-    .option('--only <exports>', 'Only extract these exports (comma-separated, supports * wildcards)')
+    .option(
+      '--only <exports>',
+      'Only extract these exports (comma-separated, supports * wildcards)',
+    )
     .option('--ignore <exports>', 'Ignore these exports (comma-separated, supports * wildcards)')
     .option('-v, --verbose', 'Show detailed output')
     .action(async (entry, options) => {
@@ -46,7 +49,9 @@ export function createProgram(): Command {
         resolveExternalTypes: !options.skipResolve,
         schemaExtraction: options.runtime ? 'hybrid' : 'static',
         ...(options.only ? { only: options.only.split(',').map((s: string) => s.trim()) } : {}),
-        ...(options.ignore ? { ignore: options.ignore.split(',').map((s: string) => s.trim()) } : {}),
+        ...(options.ignore
+          ? { ignore: options.ignore.split(',').map((s: string) => s.trim()) }
+          : {}),
       });
 
       const normalized = normalize(result.spec);

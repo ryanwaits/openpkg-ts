@@ -84,18 +84,14 @@ const BUILTIN_TYPES = new Set([
  */
 function matchesPattern(name: string, pattern: string): boolean {
   if (!pattern.includes('*')) return name === pattern;
-  const regex = new RegExp('^' + pattern.replace(/\*/g, '.*') + '$');
+  const regex = new RegExp(`^${pattern.replace(/\*/g, '.*')}$`);
   return regex.test(name);
 }
 
 /**
  * Check if export should be included based on only/ignore filters
  */
-function shouldIncludeExport(
-  name: string,
-  only?: string[],
-  ignore?: string[],
-): boolean {
+function shouldIncludeExport(name: string, only?: string[], ignore?: string[]): boolean {
   if (ignore?.some((p) => matchesPattern(name, p))) return false;
   if (only && only.length > 0) {
     return only.some((p) => matchesPattern(name, p));

@@ -254,5 +254,4 @@ export class TypeRegistry {
       ...(required.length > 0 ? { required } : {}),
     };
   }
-
 }
