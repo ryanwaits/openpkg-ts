@@ -1,5 +1,11 @@
 # @openpkg-ts/extract
 
+## 0.18.3
+
+### Patch Changes
+
+- Update internal package dependency versions
+
 ## 0.18.2
 
 ### Patch Changes

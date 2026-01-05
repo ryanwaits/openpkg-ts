@@ -1,5 +1,11 @@
 # @openpkg-ts/doc-generator
 
+## 0.6.9
+
+### Patch Changes
+
+- Update internal package dependency versions
+
 ## 0.6.8
 
 ### Patch Changes

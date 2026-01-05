@@ -1,5 +1,13 @@
 # @openpkg-ts/fumadocs-adapter
 
+## 0.6.11
+
+### Patch Changes
+
+- Update internal package dependency versions
+- Updated dependencies
+  - @openpkg-ts/doc-generator@0.6.9
+
 ## 0.6.10
 
 ### Patch Changes
