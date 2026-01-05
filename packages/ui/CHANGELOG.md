@@ -1,5 +1,17 @@
 # @openpkg-ts/ui
 
+## 0.1.2
+
+### Patch Changes
+
+- Add explicit return types to exported functions for TypeScript declaration emit
+
+  - Add `React.JSX.Element` return types to React components
+  - Add `Promise<React.JSX.Element>` return types to async React components
+  - Add `CodeOptions` return type to `flagsToOptions` function
+  - Add `AnnotationHandler[]` type annotation to `collapse` export
+  - Eliminates TS9007/TS9013/TS9017 build warnings
+
 ## 0.1.1
 
 ### Patch Changes

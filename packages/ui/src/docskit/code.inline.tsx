@@ -1,7 +1,11 @@
 import { highlight, Inline, type RawCode } from 'codehike/code';
 import { theme } from './code.config';
 
-export async function DocsKitInlineCode({ codeblock }: { codeblock: RawCode }) {
+export async function DocsKitInlineCode({
+  codeblock,
+}: {
+  codeblock: RawCode;
+}): Promise<React.JSX.Element> {
   const highlighted = await highlight(codeblock, theme);
   return (
     <Inline

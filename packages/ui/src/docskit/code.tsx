@@ -10,13 +10,16 @@ export async function DocsKitCode(props: {
   codeblock: RawCode;
   handlers?: AnnotationHandler[];
   className?: string;
-}) {
+}): Promise<React.JSX.Element> {
   const { codeblock, className, ...rest } = props;
   const group = await toCodeGroup({ codeblocks: [codeblock], ...rest });
   return <SingleCode group={group} className={className} />;
 }
 
-export async function SingleCode(props: { group: CodeInfo; className?: string }) {
+export async function SingleCode(props: {
+  group: CodeInfo;
+  className?: string;
+}): Promise<React.JSX.Element> {
   const { pre, title, code, icon, options } = props.group.tabs[0];
 
   const showCopy = options?.copyButton;

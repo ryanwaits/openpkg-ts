@@ -19,7 +19,10 @@ import { getHandlers } from './code.handlers';
  * />
  * ```
  */
-export async function Terminal(props: { codeblock: RawCode; handlers?: AnnotationHandler[] }) {
+export async function Terminal(props: {
+  codeblock: RawCode;
+  handlers?: AnnotationHandler[];
+}): Promise<React.JSX.Element> {
   const { codeblock, handlers: extraHandlers } = props;
   const { flags } = extractFlags(codeblock);
   const options = flagsToOptions(flags);
