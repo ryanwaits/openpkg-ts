@@ -1,0 +1,29 @@
+{
+  "name": "openpkg-ts",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "bun run build:spec && bun run build:extract && bun run build:ui && bun run build:doc-generator && bun run build:fumadocs-adapter",
+    "build:spec": "cd packages/spec && bun run build",
+    "build:extract": "cd packages/extract && bun run build",
+    "build:ui": "cd packages/ui && bun run build",
+    "build:doc-generator": "cd packages/doc-generator && bun run build",
+    "build:fumadocs-adapter": "cd packages/fumadocs-adapter && bun run build",
+    "lint": "bunx biome check packages/",
+    "lint:fix": "bunx biome check --write packages/",
+    "format": "bunx biome format --write packages/",
+    "changeset": "changeset",
+    "version": "changeset version && bun install",
+    "release": "changeset publish"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.1.2",
+    "@changesets/cli": "^2.29.7",
+    "@types/bun": "latest",
+    "bunup": "^0.11.4",
+    "typescript": "^5.8.3"
+  }
+}
