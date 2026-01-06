@@ -1,6 +1,6 @@
 import type { SpecExport } from '@openpkg-ts/spec';
 import type ts from 'typescript';
-import { getJSDocComment, getSourceLocation } from '../ast/utils';
+import { getJSDocComment, getSourceLocation, isSymbolDeprecated } from '../ast/utils';
 import { extractSchemaType } from '../schema/registry';
 // Import adapters to ensure they're registered (side effect)
 import '../schema/adapters';
@@ -17,6 +17,7 @@ export function serializeVariable(
   const name = symbol?.getName() ?? node.name.getText();
   if (!name) return null;
 
+  const deprecated = isSymbolDeprecated(symbol);
   const declSourceFile = node.getSourceFile();
   const { description, tags, examples } = getJSDocComment(statement);
   const source = getSourceLocation(node, declSourceFile);
@@ -53,6 +54,7 @@ export function serializeVariable(
     source,
     schema,
     ...(flags ? { flags } : {}),
+    ...(deprecated ? { deprecated: true } : {}),
     ...(examples.length > 0 ? { examples } : {}),
   };
 }

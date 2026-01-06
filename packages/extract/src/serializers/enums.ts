@@ -1,6 +1,6 @@
 import type { SpecExport, SpecMember, SpecSchema } from '@openpkg-ts/spec';
 import type ts from 'typescript';
-import { getJSDocComment, getSourceLocation } from '../ast/utils';
+import { getJSDocComment, getSourceLocation, isSymbolDeprecated } from '../ast/utils';
 import type { SerializerContext } from './context';
 
 export function serializeEnum(node: ts.EnumDeclaration, ctx: SerializerContext): SpecExport | null {
@@ -9,6 +9,7 @@ export function serializeEnum(node: ts.EnumDeclaration, ctx: SerializerContext):
   const name = symbol?.getName() ?? node.name?.getText();
   if (!name) return null;
 
+  const deprecated = isSymbolDeprecated(symbol);
   const declSourceFile = node.getSourceFile();
   const { description, tags, examples } = getJSDocComment(node);
   const source = getSourceLocation(node, declSourceFile);
@@ -50,6 +51,7 @@ export function serializeEnum(node: ts.EnumDeclaration, ctx: SerializerContext):
     tags,
     source,
     members,
+    ...(deprecated ? { deprecated: true } : {}),
     ...(examples.length > 0 ? { examples } : {}),
   };
 }

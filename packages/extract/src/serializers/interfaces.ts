@@ -1,6 +1,6 @@
 import type { SpecExport, SpecMember, SpecSignature } from '@openpkg-ts/spec';
 import ts from 'typescript';
-import { extractTypeParameters, getJSDocComment, getSourceLocation } from '../ast/utils';
+import { extractTypeParameters, getJSDocComment, getSourceLocation, isSymbolDeprecated } from '../ast/utils';
 import { extractParameters, registerReferencedTypes } from '../types/parameters';
 import { buildSchema } from '../types/schema-builder';
 import type { SerializerContext } from './context';
@@ -14,6 +14,7 @@ export function serializeInterface(
   const name = symbol?.getName() ?? node.name?.getText();
   if (!name) return null;
 
+  const deprecated = isSymbolDeprecated(symbol);
   const declSourceFile = node.getSourceFile();
   const { description, tags, examples } = getJSDocComment(node);
   const source = getSourceLocation(node, declSourceFile);
@@ -64,6 +65,7 @@ export function serializeInterface(
     typeParameters,
     members: members.length > 0 ? members : undefined,
     extends: extendsClause,
+    ...(deprecated ? { deprecated: true } : {}),
     ...(examples.length > 0 ? { examples } : {}),
   };
 }

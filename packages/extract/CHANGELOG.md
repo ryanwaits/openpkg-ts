@@ -1,5 +1,11 @@
 # @openpkg-ts/extract
 
+## 0.23.2
+
+### Patch Changes
+
+- Fix: populate deprecated flag in all serializers and add comprehensive tests
+
 ## 0.23.1
 
 ### Patch Changes
