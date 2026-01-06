@@ -6,8 +6,9 @@
  *
  * @see https://standardschema.dev/json-schema
  */
-import { spawn } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import * as fs from 'node:fs';
+import * as os from 'node:os';
 import * as path from 'node:path';
 
 /**
@@ -95,6 +96,92 @@ export function isStandardJSONSchema(obj: unknown): obj is StandardJSONSchemaV1 
   const jsObj = jsonSchema as Record<string, unknown>;
   // Both input and output must be functions per spec
   return typeof jsObj.output === 'function' && typeof jsObj.input === 'function';
+}
+
+/**
+ * TypeScript runtime configuration.
+ */
+export interface TsRuntime {
+  /** Command to execute */
+  cmd: string;
+  /** Arguments to pass before the script path */
+  args: string[];
+  /** Human-readable name */
+  name: string;
+}
+
+/** Cached runtime detection result */
+let cachedRuntime: TsRuntime | null | undefined;
+
+/**
+ * Check if a command exists in PATH.
+ */
+function commandExists(cmd: string): boolean {
+  try {
+    const result = spawnSync(process.platform === 'win32' ? 'where' : 'which', [cmd], {
+      stdio: 'ignore',
+    });
+    return result.status === 0;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Detect available TypeScript runtime.
+ * Checks in order: Node 22+ native, bun, tsx, ts-node.
+ * Returns null if no TS runtime is available.
+ */
+export function detectTsRuntime(): TsRuntime | null {
+  // Return cached result if available
+  if (cachedRuntime !== undefined) {
+    return cachedRuntime;
+  }
+
+  // 1. Check Node version for native TS support (Node 22+)
+  const nodeVersion = parseInt(process.versions.node.split('.')[0], 10);
+  if (nodeVersion >= 22) {
+    cachedRuntime = {
+      cmd: 'node',
+      args: ['--experimental-strip-types', '--no-warnings'],
+      name: 'node (native)',
+    };
+    return cachedRuntime;
+  }
+
+  // 2. Check for bun (very fast, runs TS natively)
+  if (commandExists('bun')) {
+    cachedRuntime = {
+      cmd: 'bun',
+      args: ['run'],
+      name: 'bun',
+    };
+    return cachedRuntime;
+  }
+
+  // 3. Check for tsx (esbuild-based, popular)
+  if (commandExists('tsx')) {
+    cachedRuntime = {
+      cmd: 'tsx',
+      args: [],
+      name: 'tsx',
+    };
+    return cachedRuntime;
+  }
+
+  // 4. Check for ts-node (older but widely installed)
+  if (commandExists('ts-node')) {
+    cachedRuntime = {
+      cmd: 'ts-node',
+      args: ['--transpile-only'],
+      name: 'ts-node',
+    };
+    return cachedRuntime;
+  }
+
+  // No TS runtime available
+  cachedRuntime = null;
+  return null;
 }
 
 /**
@@ -193,6 +280,200 @@ async function extract() {
 
 extract();
 `;
+
+/**
+ * TypeScript worker script for direct TS execution.
+ * Written to temp file and executed by detected TS runtime.
+ * Compatible with bun, tsx, ts-node, and node --experimental-strip-types.
+ */
+const TS_WORKER_SCRIPT = `
+import * as path from 'path';
+import { pathToFileURL } from 'url';
+
+// TypeBox detection
+const TYPEBOX_KIND = Symbol.for('TypeBox.Kind');
+
+function isTypeBoxSchema(obj: unknown): boolean {
+  if (!obj || typeof obj !== 'object') return false;
+  const o = obj as Record<string | symbol, unknown>;
+  if (!o[TYPEBOX_KIND]) return false;
+  return typeof o.type === 'string' || 'anyOf' in o || 'oneOf' in o || 'allOf' in o;
+}
+
+function sanitizeTypeBoxSchema(schema: unknown): unknown {
+  return JSON.parse(JSON.stringify(schema));
+}
+
+async function extract() {
+  const [,, modulePath, optionsJson] = process.argv;
+  const { target, libraryOptions } = JSON.parse(optionsJson || '{}');
+
+  try {
+    const absPath = path.resolve(modulePath);
+    const mod = await import(pathToFileURL(absPath).href);
+    const results: Array<{exportName: string; vendor: string; outputSchema: unknown; inputSchema?: unknown}> = [];
+
+    // Build exports map
+    const exports: Record<string, unknown> = {};
+    for (const [name, value] of Object.entries(mod)) {
+      if (name === 'default' && typeof value === 'object' && value !== null) {
+        Object.assign(exports, value);
+      } else if (name !== 'default') {
+        exports[name] = value;
+      }
+    }
+
+    // Check each export
+    for (const [name, value] of Object.entries(exports)) {
+      if (name.startsWith('_')) continue;
+      if (typeof value !== 'object' || value === null) continue;
+
+      const v = value as Record<string, unknown>;
+      const std = v['~standard'] as Record<string, unknown> | undefined;
+
+      // Standard JSON Schema
+      if (std && typeof std === 'object' && std.version === 1 && typeof std.vendor === 'string') {
+        const jsonSchema = std.jsonSchema as Record<string, unknown> | undefined;
+        if (jsonSchema && typeof jsonSchema.output === 'function') {
+          try {
+            const options = { target: target || 'draft-2020-12', ...(libraryOptions && { libraryOptions }) };
+            const outputSchema = (jsonSchema.output as Function)(options);
+            const inputSchema = typeof jsonSchema.input === 'function' ? (jsonSchema.input as Function)(options) : undefined;
+            results.push({ exportName: name, vendor: std.vendor as string, outputSchema, inputSchema });
+          } catch {}
+          continue;
+        }
+      }
+
+      // TypeBox
+      if (isTypeBoxSchema(value)) {
+        try {
+          results.push({ exportName: name, vendor: 'typebox', outputSchema: sanitizeTypeBoxSchema(value) });
+        } catch {}
+      }
+    }
+
+    console.log(JSON.stringify({ success: true, results }));
+  } catch (e) {
+    console.log(JSON.stringify({ success: false, error: (e as Error).message }));
+  }
+}
+
+extract();
+`;
+
+/**
+ * Extract Standard Schema from a TypeScript file directly.
+ * Uses detected TS runtime (bun, tsx, ts-node, or node 22+).
+ *
+ * @param tsFilePath - Path to TypeScript file
+ * @param options - Extraction options
+ * @returns Extraction results
+ */
+export async function extractStandardSchemasFromTs(
+  tsFilePath: string,
+  options: ExtractStandardSchemasOptions = {},
+): Promise<StandardSchemaExtractionOutput> {
+  const { timeout = 10000, target = 'draft-2020-12', libraryOptions } = options;
+
+  const result: StandardSchemaExtractionOutput = {
+    schemas: new Map(),
+    errors: [],
+  };
+
+  // Detect available TS runtime
+  const runtime = detectTsRuntime();
+  if (!runtime) {
+    result.errors.push('No TypeScript runtime available. Install bun, tsx, or ts-node, or use Node 22+.');
+    return result;
+  }
+
+  if (!fs.existsSync(tsFilePath)) {
+    result.errors.push(`TypeScript file not found: ${tsFilePath}`);
+    return result;
+  }
+
+  // Write worker script to temp file
+  const tempDir = os.tmpdir();
+  const workerPath = path.join(tempDir, `openpkg-extract-worker-${Date.now()}.ts`);
+
+  try {
+    fs.writeFileSync(workerPath, TS_WORKER_SCRIPT);
+
+    const optionsJson = JSON.stringify({ target, libraryOptions });
+    const args = [...runtime.args, workerPath, tsFilePath, optionsJson];
+
+    return await new Promise((resolve) => {
+      const child = spawn(runtime.cmd, args, {
+        timeout,
+        stdio: ['ignore', 'pipe', 'pipe'],
+        cwd: path.dirname(tsFilePath),
+      });
+
+      let stdout = '';
+      let stderr = '';
+
+      child.stdout.on('data', (data) => {
+        stdout += data.toString();
+      });
+
+      child.stderr.on('data', (data) => {
+        stderr += data.toString();
+      });
+
+      child.on('close', (code) => {
+        // Cleanup temp file
+        try {
+          fs.unlinkSync(workerPath);
+        } catch {}
+
+        if (code !== 0) {
+          result.errors.push(`Extraction failed (${runtime.name}): ${stderr || `exit code ${code}`}`);
+          resolve(result);
+          return;
+        }
+
+        try {
+          const parsed = JSON.parse(stdout);
+          if (!parsed.success) {
+            result.errors.push(`Extraction failed: ${parsed.error}`);
+            resolve(result);
+            return;
+          }
+
+          for (const item of parsed.results) {
+            result.schemas.set(item.exportName, {
+              exportName: item.exportName,
+              vendor: item.vendor,
+              outputSchema: item.outputSchema,
+              inputSchema: item.inputSchema,
+            });
+          }
+        } catch (e) {
+          result.errors.push(`Failed to parse extraction output: ${e}`);
+        }
+
+        resolve(result);
+      });
+
+      child.on('error', (err) => {
+        // Cleanup temp file
+        try {
+          fs.unlinkSync(workerPath);
+        } catch {}
+        result.errors.push(`Subprocess error: ${err.message}`);
+        resolve(result);
+      });
+    });
+  } catch (e) {
+    // Cleanup temp file on error
+    try {
+      fs.unlinkSync(workerPath);
+    } catch {}
+    result.errors.push(`Failed to create worker script: ${e}`);
+    return result;
+  }
+}
 
 /**
  * Read outDir from tsconfig.json.
@@ -369,9 +650,39 @@ export async function extractStandardSchemas(
 }
 
 /**
+ * Result info from extractStandardSchemasFromProject
+ */
+export interface ProjectExtractionInfo {
+  /** How schemas were extracted */
+  method: 'compiled' | 'direct-ts';
+  /** Runtime used (for direct-ts) */
+  runtime?: string;
+  /** Path that was used */
+  path: string;
+}
+
+/**
+ * Extended options for project extraction
+ */
+export interface ExtractFromProjectOptions extends ExtractStandardSchemasOptions {
+  /** Prefer direct TS execution even if compiled JS exists */
+  preferDirectTs?: boolean;
+}
+
+/**
+ * Extended result for project extraction
+ */
+export interface ProjectExtractionOutput extends StandardSchemaExtractionOutput {
+  /** Info about how extraction was performed */
+  info?: ProjectExtractionInfo;
+}
+
+/**
  * Extract Standard Schema from a TypeScript project.
  *
- * Convenience function that resolves compiled JS and extracts schemas.
+ * Tries in order:
+ * 1. Compiled JS (if found)
+ * 2. Direct TypeScript execution (if TS runtime available)
  *
  * @param entryFile - TypeScript entry file path
  * @param baseDir - Project base directory
@@ -380,16 +691,43 @@ export async function extractStandardSchemas(
 export async function extractStandardSchemasFromProject(
   entryFile: string,
   baseDir: string,
-  options: ExtractStandardSchemasOptions = {},
-): Promise<StandardSchemaExtractionOutput> {
-  const compiledPath = resolveCompiledPath(entryFile, baseDir);
+  options: ExtractFromProjectOptions = {},
+): Promise<ProjectExtractionOutput> {
+  const { preferDirectTs, ...extractOptions } = options;
+  const isTypeScript = /\.tsx?$/.test(entryFile);
 
-  if (!compiledPath) {
-    return {
-      schemas: new Map(),
-      errors: [`Could not find compiled JS for ${entryFile}. Build the project first.`],
-    };
+  // Strategy 1: Try compiled JS first (unless preferDirectTs is set)
+  if (!preferDirectTs) {
+    const compiledPath = resolveCompiledPath(entryFile, baseDir);
+    if (compiledPath) {
+      const result = await extractStandardSchemas(compiledPath, extractOptions);
+      return {
+        ...result,
+        info: { method: 'compiled', path: compiledPath },
+      };
+    }
   }
 
-  return extractStandardSchemas(compiledPath, options);
+  // Strategy 2: Direct TypeScript execution
+  if (isTypeScript) {
+    const runtime = detectTsRuntime();
+    if (runtime) {
+      const result = await extractStandardSchemasFromTs(entryFile, extractOptions);
+      return {
+        ...result,
+        info: { method: 'direct-ts', runtime: runtime.name, path: entryFile },
+      };
+    }
+  }
+
+  // No viable extraction method
+  const runtime = detectTsRuntime();
+  const hint = isTypeScript && !runtime
+    ? ' Install bun, tsx, or ts-node for direct TS execution.'
+    : '';
+
+  return {
+    schemas: new Map(),
+    errors: [`Could not find compiled JS for ${entryFile}.${hint}`],
+  };
 }

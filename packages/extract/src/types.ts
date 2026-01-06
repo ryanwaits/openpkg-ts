@@ -32,6 +32,8 @@ export interface ExtractResult {
     vendors: string[];
     /** Any errors encountered during runtime extraction */
     errors: string[];
+    /** Extraction method used: 'compiled' or 'direct-ts (runtime)' */
+    method?: string;
   };
 }
 

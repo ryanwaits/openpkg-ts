@@ -1,5 +1,17 @@
 # @openpkg-ts/extract
 
+## 0.22.0
+
+### Minor Changes
+
+- Add direct TypeScript execution for runtime schema extraction
+
+  - Auto-detect available TS runtimes: Node 22+ (native), bun, tsx, ts-node
+  - Extract Standard JSON Schema from .ts files without requiring a build step
+  - `tspec schemas.ts --runtime` now works out of the box
+  - Falls back to compiled JS when available for production/CI environments
+  - Reports extraction method in output (e.g., "via direct-ts (bun)")
+
 ## 0.21.0
 
 ### Minor Changes

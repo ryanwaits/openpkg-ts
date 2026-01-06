@@ -11,7 +11,7 @@ import { serializeFunctionExport } from '../serializers/functions';
 import { serializeInterface } from '../serializers/interfaces';
 import { serializeTypeAlias } from '../serializers/type-aliases';
 import { serializeVariable } from '../serializers/variables';
-import { extractStandardSchemas, resolveCompiledPath } from '../schema/standard-schema';
+import { extractStandardSchemasFromProject } from '../schema/standard-schema';
 import type {
   Diagnostic,
   ExtractOptions,
@@ -241,40 +241,36 @@ export async function extract(options: ExtractOptions): Promise<ExtractResult> {
 
   if (options.schemaExtraction === 'hybrid') {
     const projectBaseDir = baseDir || path.dirname(entryFile);
-    const compiledPath = resolveCompiledPath(entryFile, projectBaseDir);
 
-    if (compiledPath) {
-      const runtimeResult = await extractStandardSchemas(compiledPath, {
-        target: options.schemaTarget || 'draft-2020-12',
-        timeout: 15000,
-      });
+    const runtimeResult = await extractStandardSchemasFromProject(entryFile, projectBaseDir, {
+      target: options.schemaTarget || 'draft-2020-12',
+      timeout: 15000,
+    });
 
-      if (runtimeResult.schemas.size > 0) {
-        const mergeResult = mergeRuntimeSchemas(exports, runtimeResult.schemas);
-        exports = mergeResult.exports;
+    if (runtimeResult.schemas.size > 0) {
+      const mergeResult = mergeRuntimeSchemas(exports, runtimeResult.schemas);
+      exports = mergeResult.exports;
 
-        runtimeMetadata = {
-          extracted: runtimeResult.schemas.size,
-          merged: mergeResult.merged,
-          vendors: [...new Set([...runtimeResult.schemas.values()].map((s) => s.vendor))],
-          errors: runtimeResult.errors,
-        };
-      }
+      // Include extraction method in metadata
+      const method = runtimeResult.info?.method === 'direct-ts'
+        ? `direct-ts (${runtimeResult.info.runtime})`
+        : 'compiled';
 
-      // Add runtime extraction errors as diagnostics
-      for (const error of runtimeResult.errors) {
-        diagnostics.push({
-          message: `Runtime schema extraction: ${error}`,
-          severity: 'warning',
-          code: 'RUNTIME_SCHEMA_ERROR',
-        });
-      }
-    } else {
+      runtimeMetadata = {
+        extracted: runtimeResult.schemas.size,
+        merged: mergeResult.merged,
+        vendors: [...new Set([...runtimeResult.schemas.values()].map((s) => s.vendor))],
+        errors: runtimeResult.errors,
+        method,
+      };
+    }
+
+    // Add runtime extraction errors as diagnostics
+    for (const error of runtimeResult.errors) {
       diagnostics.push({
-        message: 'Hybrid mode: Could not find compiled JS. Build the project first.',
+        message: `Runtime schema extraction: ${error}`,
         severity: 'warning',
-        code: 'NO_COMPILED_JS',
-        suggestion: 'Run `npm run build` or `tsc` before extraction',
+        code: 'RUNTIME_SCHEMA_ERROR',
       });
     }
   }

@@ -71,8 +71,9 @@ export function createProgram(): Command {
 
       // Report runtime schema extraction results
       if (result.runtimeSchemas) {
-        const { extracted, merged, vendors } = result.runtimeSchemas;
-        console.log(`ℹ Runtime schemas: ${merged}/${extracted} merged (${vendors.join(', ')})`);
+        const { extracted, merged, vendors, method } = result.runtimeSchemas;
+        const via = method ? ` via ${method}` : '';
+        console.log(`ℹ Runtime schemas: ${merged}/${extracted} merged (${vendors.join(', ')})${via}`);
       }
 
       // Report diagnostics (info only with --verbose)
