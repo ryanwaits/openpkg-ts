@@ -69,6 +69,12 @@ export function createProgram(): Command {
       fs.writeFileSync(options.output, JSON.stringify(normalized, null, 2));
       spin.success(`Extracted to ${options.output}`);
 
+      // Report runtime schema extraction results
+      if (result.runtimeSchemas) {
+        const { extracted, merged, vendors } = result.runtimeSchemas;
+        console.log(`ℹ Runtime schemas: ${merged}/${extracted} merged (${vendors.join(', ')})`);
+      }
+
       // Report diagnostics (info only with --verbose)
       for (const diag of result.diagnostics) {
         if (diag.severity === 'info' && !options.verbose) continue;
@@ -77,10 +83,13 @@ export function createProgram(): Command {
       }
 
       // Render summary
-      summary()
+      const sum = summary()
         .addKeyValue('Exports', normalized.exports.length)
-        .addKeyValue('Types', normalized.types?.length || 0)
-        .print();
+        .addKeyValue('Types', normalized.types?.length || 0);
+      if (result.runtimeSchemas) {
+        sum.addKeyValue('Runtime Schemas', result.runtimeSchemas.merged);
+      }
+      sum.print();
     });
 
   return program;

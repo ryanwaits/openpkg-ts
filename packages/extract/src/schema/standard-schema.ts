@@ -195,24 +195,86 @@ extract();
 `;
 
 /**
+ * Read outDir from tsconfig.json.
+ * Returns normalized outDir path or null if not found.
+ */
+function readTsconfigOutDir(baseDir: string): string | null {
+  const tsconfigPath = path.join(baseDir, 'tsconfig.json');
+
+  try {
+    if (!fs.existsSync(tsconfigPath)) {
+      return null;
+    }
+
+    const content = fs.readFileSync(tsconfigPath, 'utf-8');
+    // Strip comments (// and /* */) before parsing - tsconfig allows comments
+    const stripped = content
+      .replace(/\/\*[\s\S]*?\*\//g, '')
+      .replace(/\/\/.*$/gm, '');
+    const tsconfig = JSON.parse(stripped);
+
+    if (tsconfig.compilerOptions?.outDir) {
+      // Normalize: handle "./build" vs "build"
+      return tsconfig.compilerOptions.outDir.replace(/^\.\//, '');
+    }
+  } catch {
+    // Ignore parse errors - use defaults
+  }
+
+  return null;
+}
+
+/**
  * Resolve compiled JS path from TypeScript source.
- * Tries common output locations: dist/, build/, lib/, same dir.
+ * Reads tsconfig.json for outDir and tries multiple output patterns.
+ * Supports .js, .mjs, and .cjs extensions.
  */
 export function resolveCompiledPath(tsPath: string, baseDir: string): string | null {
   const relativePath = path.relative(baseDir, tsPath);
   const withoutExt = relativePath.replace(/\.tsx?$/, '');
+  const srcPrefix = withoutExt.replace(/^src\//, '');
 
-  // Common output patterns
-  const candidates = [
-    // Same location but .js
-    path.join(baseDir, `${withoutExt}.js`),
-    // dist/ folder
-    path.join(baseDir, 'dist', `${withoutExt.replace(/^src\//, '')}.js`),
-    // build/ folder
-    path.join(baseDir, 'build', `${withoutExt.replace(/^src\//, '')}.js`),
-    // lib/ folder
-    path.join(baseDir, 'lib', `${withoutExt.replace(/^src\//, '')}.js`),
-  ];
+  // Read outDir from tsconfig.json
+  const tsconfigOutDir = readTsconfigOutDir(baseDir);
+
+  // Extensions to try (ESM/CJS support)
+  const extensions = ['.js', '.mjs', '.cjs'];
+
+  // Build candidates list - order matters (most specific first)
+  const candidates: string[] = [];
+
+  // 1. If tsconfig has outDir, try that first
+  if (tsconfigOutDir) {
+    for (const ext of extensions) {
+      candidates.push(path.join(baseDir, tsconfigOutDir, `${srcPrefix}${ext}`));
+    }
+  }
+
+  // 2. Common output patterns
+  const commonOutDirs = ['dist', 'build', 'lib', 'out'];
+  for (const outDir of commonOutDirs) {
+    // Skip if same as tsconfig outDir (already added)
+    if (outDir === tsconfigOutDir) continue;
+    for (const ext of extensions) {
+      candidates.push(path.join(baseDir, outDir, `${srcPrefix}${ext}`));
+    }
+  }
+
+  // 3. Same location (for in-place compilation or bundlers)
+  for (const ext of extensions) {
+    candidates.push(path.join(baseDir, `${withoutExt}${ext}`));
+  }
+
+  // 4. Monorepo: try workspace root patterns
+  // Check if we're in a packages/*/src structure
+  const workspaceMatch = baseDir.match(/^(.+\/packages\/[^/]+)$/);
+  if (workspaceMatch) {
+    const pkgRoot = workspaceMatch[1];
+    for (const ext of extensions) {
+      // Package-level dist
+      candidates.push(path.join(pkgRoot, 'dist', `${srcPrefix}${ext}`));
+    }
+  }
 
   for (const candidate of candidates) {
     if (fs.existsSync(candidate)) {

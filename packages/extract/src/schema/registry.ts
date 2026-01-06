@@ -104,7 +104,7 @@ export function extractSchemaType(
   const outputType = adapter.extractOutputType(type, checker);
   if (!outputType) return null;
 
-  const inputType = adapter.extractInputType?.(type, checker);
+  const inputType = adapter.extractInputType?.(type, checker) ?? undefined;
 
   return {
     adapter,

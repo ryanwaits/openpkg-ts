@@ -199,7 +199,7 @@ function serializeIndexSignature(
 function getInterfaceExtends(
   node: ts.InterfaceDeclaration,
   checker: ts.TypeChecker,
-): string | string[] | undefined {
+): string | undefined {
   if (!node.heritageClauses) return undefined;
 
   for (const clause of node.heritageClauses) {
@@ -208,8 +208,8 @@ function getInterfaceExtends(
         const type = checker.getTypeAtLocation(expr);
         return type.getSymbol()?.getName() ?? expr.expression.getText();
       });
-      // Return single string if one, array if multiple
-      return names.length === 1 ? names[0] : names;
+      // Join multiple extends with ' & ' for intersection representation
+      return names.join(' & ');
     }
   }
   return undefined;

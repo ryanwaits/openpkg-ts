@@ -1,5 +1,21 @@
 # @openpkg-ts/extract
 
+## 0.21.0
+
+### Minor Changes
+
+- Add hybrid schema extraction mode that merges runtime Standard JSON Schema with static type analysis
+
+  - Add `schemaExtraction: 'hybrid'` option to extract runtime schemas from compiled JS
+  - Add `schemaTarget` option to specify JSON Schema dialect (draft-2020-12, draft-07, openapi-3.0)
+  - Add `runtimeSchemas` metadata to `ExtractResult` with extraction stats
+  - Add `mergeRuntimeSchemas` function to merge runtime schemas with static exports
+  - Improve `resolveCompiledPath` to read tsconfig.json outDir and support .mjs/.cjs extensions
+  - Fix interface extends serialization to use intersection (`&`) instead of array
+  - Fix TypeScript API compatibility for JSDoc comment extraction and class member modifiers
+  - Fix boolean literal type extraction using `checker.typeToString` instead of `intrinsicName`
+  - Fix `withDescription` to handle string schema types
+
 ## 0.20.0
 
 ### Minor Changes

@@ -8,6 +8,8 @@ export interface ExtractOptions {
   maxExternalTypeDepth?: number;
   resolveExternalTypes?: boolean;
   schemaExtraction?: 'static' | 'hybrid';
+  /** Target JSON Schema dialect for runtime schema extraction */
+  schemaTarget?: 'draft-2020-12' | 'draft-07' | 'openapi-3.0';
   /** Include $schema URL in output */
   includeSchema?: boolean;
   /** Only extract these exports (supports * wildcards) */
@@ -20,6 +22,17 @@ export interface ExtractResult {
   spec: OpenPkg;
   diagnostics: Diagnostic[];
   forgottenExports?: ForgottenExport[];
+  /** Metadata about runtime schema extraction (when schemaExtraction: 'hybrid') */
+  runtimeSchemas?: {
+    /** Number of schema exports found */
+    extracted: number;
+    /** Number of schemas successfully merged with static types */
+    merged: number;
+    /** Schema vendors detected (e.g., 'zod', 'arktype', 'valibot', 'typebox') */
+    vendors: string[];
+    /** Any errors encountered during runtime extraction */
+    errors: string[];
+  };
 }
 
 export interface Diagnostic {

@@ -208,8 +208,8 @@ export function buildSchema(
 
   // Boolean literal (true/false)
   if (type.flags & ts.TypeFlags.BooleanLiteral) {
-    const intrinsicName = (type as ts.IntrinsicType).intrinsicName;
-    return { type: 'boolean', enum: [intrinsicName === 'true'] };
+    const typeString = checker.typeToString(type);
+    return { type: 'boolean', enum: [typeString === 'true'] };
   }
 
   // Union types → anyOf
@@ -443,6 +443,9 @@ export function isPureRefSchema(schema: SpecSchema): schema is { $ref: string } 
  * For pure $ref schemas, wraps in allOf to preserve the reference.
  */
 export function withDescription(schema: SpecSchema, description: string): SpecSchema {
+  if (typeof schema === 'string') {
+    return { type: schema, description };
+  }
   if (isPureRefSchema(schema)) {
     return {
       allOf: [schema],

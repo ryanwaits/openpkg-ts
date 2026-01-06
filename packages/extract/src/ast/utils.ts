@@ -105,9 +105,9 @@ export function getJSDocComment(node: ts.Node): {
   });
 
   // Get description from first JSDoc comment
-  const jsDocComments = (node as ts.HasJSDoc).jsDoc;
+  const jsDocComments = ts.getJSDocCommentsAndTags(node).filter(ts.isJSDoc);
   let description: string | undefined;
-  if (jsDocComments && jsDocComments.length > 0) {
+  if (jsDocComments.length > 0) {
     const firstDoc = jsDocComments[0];
     if (firstDoc.comment) {
       description =

@@ -94,7 +94,7 @@ function getMemberName(member: ts.ClassElement): string | undefined {
 }
 
 function getVisibility(member: ts.ClassElement): SpecVisibility | undefined {
-  const modifiers = ts.getModifiers(member);
+  const modifiers = ts.canHaveModifiers(member) ? ts.getModifiers(member) : undefined;
   if (!modifiers) return undefined;
 
   for (const mod of modifiers) {
@@ -106,12 +106,12 @@ function getVisibility(member: ts.ClassElement): SpecVisibility | undefined {
 }
 
 function isStatic(member: ts.ClassElement): boolean {
-  const modifiers = ts.getModifiers(member);
+  const modifiers = ts.canHaveModifiers(member) ? ts.getModifiers(member) : undefined;
   return modifiers?.some((m) => m.kind === ts.SyntaxKind.StaticKeyword) ?? false;
 }
 
 function isReadonly(member: ts.ClassElement): boolean {
-  const modifiers = ts.getModifiers(member);
+  const modifiers = ts.canHaveModifiers(member) ? ts.getModifiers(member) : undefined;
   return modifiers?.some((m) => m.kind === ts.SyntaxKind.ReadonlyKeyword) ?? false;
 }
 
