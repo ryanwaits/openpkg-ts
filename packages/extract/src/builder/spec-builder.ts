@@ -195,7 +195,8 @@ export async function extract(options: ExtractOptions): Promise<ExtractResult> {
   const types = ctx.typeRegistry.getAll();
 
   // Check for forgotten exports (refs to types not defined)
-  const forgottenExports = collectForgottenExports(exports, types, program, sourceFile, exportedIds);
+  const projectBaseDir = baseDir ?? path.dirname(entryFile);
+  const forgottenExports = collectForgottenExports(exports, types, program, sourceFile, exportedIds, projectBaseDir);
   for (const forgotten of forgottenExports) {
     const refSummary = forgotten.referencedBy
       .slice(0, 3)
@@ -415,11 +416,17 @@ function findTypeDefinition(
 }
 
 /**
- * Determine if a type is external (from node_modules/dependencies)
+ * Determine if a type is external (from node_modules/dependencies or outside project)
+ * @internal Exported for testing
  */
-function isExternalType(definedIn: string | undefined): boolean {
+export function isExternalType(definedIn: string | undefined, baseDir: string): boolean {
   if (!definedIn) return true;
-  return definedIn.includes('node_modules');
+  // External if in node_modules
+  if (definedIn.includes('node_modules')) return true;
+  // External if outside project directory (e.g., linked packages)
+  const normalizedDefined = path.resolve(definedIn);
+  const normalizedBase = path.resolve(baseDir);
+  return !normalizedDefined.startsWith(normalizedBase);
 }
 
 /**
@@ -446,6 +453,7 @@ function collectForgottenExports(
   program: ts.Program,
   sourceFile: ts.SourceFile,
   exportedIds: Set<string>,
+  baseDir: string,
 ): ForgottenExport[] {
   const definedTypes = new Set(types.map((t) => t.id));
   const referencedTypes = new Map<string, TypeReference[]>();
@@ -481,7 +489,7 @@ function collectForgottenExports(
     if (exportedIds.has(typeName)) continue;
 
     const definedIn = findTypeDefinition(typeName, program, sourceFile);
-    const isExternal = isExternalType(definedIn);
+    const isExternal = isExternalType(definedIn, baseDir);
 
     forgottenExports.push({
       name: typeName,

@@ -1,5 +1,18 @@
 # @openpkg-ts/extract
 
+## 0.23.1
+
+### Patch Changes
+
+- fix(extract): detect linked packages as external in forgotten exports
+
+  Types from locally linked packages (paths outside the project's baseDir) are now correctly identified as external. Previously, only types in `node_modules` were detected as external, causing false positive "forgotten export" warnings when using linked packages.
+
+  Changes:
+
+  - Updated `isExternalType` to check if type definition path is outside project baseDir
+  - Added comprehensive unit and integration tests for external type detection
+
 ## 0.23.0
 
 ### Minor Changes
