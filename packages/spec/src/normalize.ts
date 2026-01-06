@@ -120,13 +120,17 @@ function normalizeType(item: SpecType): SpecType {
 }
 
 /**
- * Normalize a tag to only have name and text (schema doesn't allow additionalProperties).
+ * Normalize a tag to only have known fields.
  */
 function normalizeTag(tag: SpecTag & Record<string, unknown>): SpecTag {
-  return {
+  const result: SpecTag = {
     name: tag.name,
     text: tag.text,
   };
+  if (tag.param) {
+    result.param = tag.param;
+  }
+  return result;
 }
 
 /**

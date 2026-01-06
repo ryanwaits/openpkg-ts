@@ -171,7 +171,19 @@
       "required": ["name", "text"],
       "properties": {
         "name": { "type": "string" },
-        "text": { "type": "string" }
+        "text": { "type": "string" },
+        "param": { "$ref": "#/$defs/tagParam" }
+      },
+      "additionalProperties": false
+    },
+    "tagParam": {
+      "type": "object",
+      "required": ["name"],
+      "properties": {
+        "name": { "type": "string" },
+        "type": { "type": "string" },
+        "description": { "type": "string" },
+        "optional": { "type": "boolean" }
       },
       "additionalProperties": false
     },

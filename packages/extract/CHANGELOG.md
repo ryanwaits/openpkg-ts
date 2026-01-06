@@ -1,5 +1,22 @@
 # @openpkg-ts/extract
 
+## 0.19.0
+
+### Minor Changes
+
+- feat(spec): add structured param field to SpecTag for @param tags
+
+  - Add `SpecTagParam` type with name, type, description, and optional fields
+  - Add optional `param` field to `SpecTag` for structured @param data
+  - Update JSON schema v0.4.0 with `tag.param` and `tagParam` definitions
+  - Update normalize.ts to preserve `param` field during normalization
+  - Update extract package to populate structured param data from JSDoc @param tags
+
+### Patch Changes
+
+- Updated dependencies
+  - @openpkg-ts/spec@0.19.0
+
 ## 0.18.3
 
 ### Patch Changes

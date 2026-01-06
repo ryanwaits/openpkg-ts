@@ -1,5 +1,21 @@
 # @openpkg-ts/fumadocs-adapter
 
+## 0.6.12
+
+### Patch Changes
+
+- feat(spec): add structured param field to SpecTag for @param tags
+
+  - Add `SpecTagParam` type with name, type, description, and optional fields
+  - Add optional `param` field to `SpecTag` for structured @param data
+  - Update JSON schema v0.4.0 with `tag.param` and `tagParam` definitions
+  - Update normalize.ts to preserve `param` field during normalization
+  - Update extract package to populate structured param data from JSDoc @param tags
+
+- Updated dependencies
+  - @openpkg-ts/spec@0.19.0
+  - @openpkg-ts/doc-generator@0.6.10
+
 ## 0.6.11
 
 ### Patch Changes

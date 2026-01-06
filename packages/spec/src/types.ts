@@ -1,6 +1,24 @@
-export type SpecTag = {
+/**
+ * Structured data for @param tags.
+ */
+export type SpecTagParam = {
+  /** Parameter name (e.g., "options", "opts.nested") */
   name: string;
+  /** Type annotation from JSDoc {type} syntax */
+  type?: string;
+  /** Parameter description */
+  description?: string;
+  /** Whether param is marked optional with [brackets] */
+  optional?: boolean;
+};
+
+export type SpecTag = {
+  /** Tag name (e.g., "param", "returns", "example") */
+  name: string;
+  /** Raw tag text (for backwards compatibility) */
   text: string;
+  /** Structured data for @param tags */
+  param?: SpecTagParam;
 };
 
 // Priority 2: Type alias structural representation

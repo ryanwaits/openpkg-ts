@@ -3,6 +3,7 @@ import type {
   SpecExampleLanguage,
   SpecSource,
   SpecTag,
+  SpecTagParam,
   SpecTypeParameter,
 } from '@openpkg-ts/spec';
 import ts from 'typescript';
@@ -73,14 +74,34 @@ export function getJSDocComment(node: ts.Node): {
   const tags: SpecTag[] = jsDocTags.map((tag) => {
     const rawText =
       typeof tag.comment === 'string' ? tag.comment : (ts.getTextOfJSDocComment(tag.comment) ?? '');
-    // Strip TSDoc hyphen separator for @param and @typeParam tags
-    let text = rawText;
+
+    // For @param tags, populate structured param field
     if (tag.tagName.text === 'param') {
-      text = stripParamSeparator(rawText) ?? '';
-    } else if (tag.tagName.text === 'typeParam') {
-      text = stripTypeParamSeparator(rawText) ?? '';
+      const paramTag = tag as ts.JSDocParameterTag;
+      const paramName = paramTag.name?.getText() ?? '';
+      const description = stripParamSeparator(rawText);
+      const text = description ? `${paramName} - ${description}` : paramName;
+
+      // Extract type from {type} annotation if present
+      const typeExpr = paramTag.typeExpression;
+      const type = typeExpr ? typeExpr.type.getText() : undefined;
+
+      // Build structured param data
+      const param: SpecTagParam = { name: paramName };
+      if (type) param.type = type;
+      if (description) param.description = description;
+      if (paramTag.isBracketed) param.optional = true;
+
+      return { name: tag.tagName.text, text, param };
     }
-    return { name: tag.tagName.text, text };
+
+    // For @typeParam, just strip the separator (name already in text)
+    if (tag.tagName.text === 'typeParam') {
+      const text = stripTypeParamSeparator(rawText) ?? '';
+      return { name: tag.tagName.text, text };
+    }
+
+    return { name: tag.tagName.text, text: rawText };
   });
 
   // Get description from first JSDoc comment
