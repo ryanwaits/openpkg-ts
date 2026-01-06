@@ -1,5 +1,16 @@
 # @openpkg-ts/extract
 
+## 0.22.1
+
+### Patch Changes
+
+- Add schema library detection for variable exports
+
+  - When serializing variable exports, detect if the type is from a schema library (Zod, Valibot, TypeBox, ArkType)
+  - Extract and serialize the output type instead of the full schema class internals
+  - Add `flags.schemaLibrary` and `flags.hasTransform` metadata to affected exports
+  - Fix circular reference handling for anonymous types in schema-builder (inline as object instead of creating invalid `$ref`)
+
 ## 0.22.0
 
 ### Minor Changes

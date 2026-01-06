@@ -1,6 +1,9 @@
 import type { SpecExport } from '@openpkg-ts/spec';
 import type ts from 'typescript';
 import { getJSDocComment, getSourceLocation } from '../ast/utils';
+import { extractSchemaType } from '../schema/registry';
+// Import adapters to ensure they're registered (side effect)
+import '../schema/adapters';
 import { registerReferencedTypes } from '../types/parameters';
 import { buildSchema } from '../types/schema-builder';
 import type { SerializerContext } from './context';
@@ -19,11 +22,27 @@ export function serializeVariable(
   const source = getSourceLocation(node, declSourceFile);
   const type = ctx.typeChecker.getTypeAtLocation(node);
 
+  // Check if this is a schema library type (Zod, Valibot, TypeBox, ArkType)
+  // If so, extract the output type instead of serializing the full schema class
+  const schemaExtraction = extractSchemaType(type, ctx.typeChecker);
+  const typeToSerialize = schemaExtraction?.outputType ?? type;
+
   // Register referenced types FIRST (before buildSchema adds to visitedTypes)
-  registerReferencedTypes(type, ctx);
+  registerReferencedTypes(typeToSerialize, ctx);
 
   // Then build the schema
-  const schema = buildSchema(type, ctx.typeChecker, ctx);
+  const schema = buildSchema(typeToSerialize, ctx.typeChecker, ctx);
+
+  // Add schema library metadata if this was a schema type
+  const flags = schemaExtraction
+    ? {
+        schemaLibrary: schemaExtraction.adapter.id,
+        ...(schemaExtraction.inputType &&
+        schemaExtraction.inputType !== schemaExtraction.outputType
+          ? { hasTransform: true }
+          : {}),
+      }
+    : undefined;
 
   return {
     id: name,
@@ -33,6 +52,7 @@ export function serializeVariable(
     tags,
     source,
     schema,
+    ...(flags ? { flags } : {}),
     ...(examples.length > 0 ? { examples } : {}),
   };
 }

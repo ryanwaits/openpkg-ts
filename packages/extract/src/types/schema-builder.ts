@@ -161,7 +161,7 @@ export function buildSchema(
     return { type: checker.typeToString(type) };
   }
 
-  // Check for circular references - but not for function types
+  // Check for circular references - but not for function types or anonymous types
   if (ctx?.visitedTypes.has(type)) {
     // Function types should be inlined, not ref'd
     const callSignatures = type.getCallSignatures();
@@ -169,8 +169,16 @@ export function buildSchema(
       return buildFunctionSchema(callSignatures, checker, ctx);
     }
     const symbol = type.getSymbol() || type.aliasSymbol;
-    if (symbol) {
+    // Only create $ref for named types (not anonymous __type)
+    if (symbol && !isAnonymous(type)) {
       return { $ref: `#/types/${symbol.getName()}` };
+    }
+    // For anonymous types, inline as object if possible
+    if (type.flags & ts.TypeFlags.Object) {
+      const properties = type.getProperties();
+      if (properties.length > 0) {
+        return buildObjectSchema(properties, checker, ctx);
+      }
     }
     return { type: checker.typeToString(type) };
   }
