@@ -1,5 +1,19 @@
 # @openpkg-ts/extract
 
+## 0.20.0
+
+### Minor Changes
+
+- Update StandardJSONSchemaV1 interface to match v1 spec
+
+  - Add StandardJSONSchemaTarget type for JSON Schema target versions
+  - Add StandardJSONSchemaOptions interface with target and libraryOptions
+  - Update StandardJSONSchemaV1 to require both input and output methods
+  - Fix isStandardJSONSchema to validate version === 1 and require both methods
+  - Pass options object (not string) to jsonSchema methods per spec
+  - Add libraryOptions passthrough for vendor-specific parameters
+  - Fix forgotten exports detection to skip re-exported types
+
 ## 0.19.0
 
 ### Minor Changes

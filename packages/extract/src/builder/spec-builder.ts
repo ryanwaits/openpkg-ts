@@ -192,7 +192,7 @@ export async function extract(options: ExtractOptions): Promise<ExtractResult> {
   const types = ctx.typeRegistry.getAll();
 
   // Check for forgotten exports (refs to types not defined)
-  const forgottenExports = collectForgottenExports(exports, types, program, sourceFile);
+  const forgottenExports = collectForgottenExports(exports, types, program, sourceFile, exportedIds);
   for (const forgotten of forgottenExports) {
     const refSummary = forgotten.referencedBy
       .slice(0, 3)
@@ -396,6 +396,7 @@ function collectForgottenExports(
   types: SpecType[],
   program: ts.Program,
   sourceFile: ts.SourceFile,
+  exportedIds: Set<string>,
 ): ForgottenExport[] {
   const definedTypes = new Set(types.map((t) => t.id));
   const referencedTypes = new Map<string, TypeReference[]>();
@@ -427,6 +428,8 @@ function collectForgottenExports(
     if (shouldSkipDanglingRef(typeName)) continue;
     // Skip types marked @internal - intentionally not exported
     if (hasInternalTag(typeName, program, sourceFile)) continue;
+    // Skip re-exported types (already in public API)
+    if (exportedIds.has(typeName)) continue;
 
     const definedIn = findTypeDefinition(typeName, program, sourceFile);
     const isExternal = isExternalType(definedIn);

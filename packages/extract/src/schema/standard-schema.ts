@@ -11,15 +11,39 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 
 /**
- * Standard JSON Schema v1 interface (minimal for detection).
+ * Target version for JSON Schema generation.
+ * @see https://standardschema.dev/json-schema
  */
-export interface StandardJSONSchemaV1 {
+export type StandardJSONSchemaTarget = 'draft-2020-12' | 'draft-07' | 'openapi-3.0' | (string & {});
+
+/**
+ * Options for JSON Schema generation methods.
+ */
+export interface StandardJSONSchemaOptions {
+  /** Specifies the target version of the generated JSON Schema */
+  readonly target: StandardJSONSchemaTarget;
+  /** Vendor-specific parameters */
+  readonly libraryOptions?: Record<string, unknown>;
+}
+
+/**
+ * Standard JSON Schema v1 interface.
+ * @see https://standardschema.dev/json-schema
+ */
+export interface StandardJSONSchemaV1<Input = unknown, Output = Input> {
   '~standard': {
-    version: number;
+    /** The version number of the standard (always 1) */
+    version: 1;
+    /** The vendor name of the schema library */
     vendor: string;
-    jsonSchema?: {
-      output: (target?: string) => Record<string, unknown>;
-      input?: (target?: string) => Record<string, unknown>;
+    /** Inferred types (optional) */
+    types?: { input: Input; output: Output };
+    /** JSON Schema conversion methods */
+    jsonSchema: {
+      /** Converts input type to JSON Schema */
+      input: (options: StandardJSONSchemaOptions) => Record<string, unknown>;
+      /** Converts output type to JSON Schema */
+      output: (options: StandardJSONSchemaOptions) => Record<string, unknown>;
     };
   };
 }
@@ -41,7 +65,9 @@ export interface ExtractStandardSchemasOptions {
   /** Timeout in milliseconds (default: 10000) */
   timeout?: number;
   /** JSON Schema target version (default: 'draft-2020-12') */
-  target?: 'draft-2020-12' | 'draft-07' | 'openapi-3.0';
+  target?: StandardJSONSchemaTarget;
+  /** Vendor-specific options to pass through */
+  libraryOptions?: Record<string, unknown>;
 }
 
 /**
@@ -61,12 +87,14 @@ export function isStandardJSONSchema(obj: unknown): obj is StandardJSONSchemaV1 
   const std = (obj as Record<string, unknown>)['~standard'];
   if (typeof std !== 'object' || std === null) return false;
   const stdObj = std as Record<string, unknown>;
-  if (typeof stdObj.version !== 'number') return false;
+  // Per spec: version must be exactly 1
+  if (stdObj.version !== 1) return false;
   if (typeof stdObj.vendor !== 'string') return false;
   const jsonSchema = stdObj.jsonSchema;
   if (typeof jsonSchema !== 'object' || jsonSchema === null) return false;
   const jsObj = jsonSchema as Record<string, unknown>;
-  return typeof jsObj.output === 'function';
+  // Both input and output must be functions per spec
+  return typeof jsObj.output === 'function' && typeof jsObj.input === 'function';
 }
 
 /**
@@ -97,7 +125,8 @@ function sanitizeTypeBoxSchema(schema) {
 async function extract() {
   // With node -e, argv is: [node, arg1, arg2, ...]
   // (the -e script is NOT in argv)
-  const [modulePath, target] = process.argv.slice(1);
+  const [modulePath, optionsJson] = process.argv.slice(1);
+  const { target, libraryOptions } = JSON.parse(optionsJson || '{}');
 
   try {
     // Import the module using dynamic import (works with ESM and CJS)
@@ -121,12 +150,14 @@ async function extract() {
       if (name.startsWith('_')) continue;
       if (typeof value !== 'object' || value === null) continue;
 
-      // Priority 1: Standard Schema (Zod 4.2+, ArkType, etc.)
+      // Priority 1: Standard JSON Schema (Zod 4.2+, ArkType 2.1.28+, Valibot 1.2+)
       const std = value['~standard'];
-      if (std && typeof std === 'object' && typeof std.version === 'number' && typeof std.vendor === 'string' && std.jsonSchema && typeof std.jsonSchema.output === 'function') {
+      if (std && typeof std === 'object' && std.version === 1 && typeof std.vendor === 'string' && std.jsonSchema && typeof std.jsonSchema.output === 'function') {
         try {
-          const outputSchema = std.jsonSchema.output(target);
-          const inputSchema = std.jsonSchema.input ? std.jsonSchema.input(target) : undefined;
+          // Per spec: pass options object with target and optional libraryOptions
+          const options = { target: target || 'draft-2020-12', ...(libraryOptions && { libraryOptions }) };
+          const outputSchema = std.jsonSchema.output(options);
+          const inputSchema = typeof std.jsonSchema.input === 'function' ? std.jsonSchema.input(options) : undefined;
           results.push({
             exportName: name,
             vendor: std.vendor,
@@ -206,7 +237,7 @@ export async function extractStandardSchemas(
   compiledJsPath: string,
   options: ExtractStandardSchemasOptions = {},
 ): Promise<StandardSchemaExtractionOutput> {
-  const { timeout = 10000, target = 'draft-2020-12' } = options;
+  const { timeout = 10000, target = 'draft-2020-12', libraryOptions } = options;
 
   const result: StandardSchemaExtractionOutput = {
     schemas: new Map(),
@@ -218,8 +249,11 @@ export async function extractStandardSchemas(
     return result;
   }
 
+  // Pass options as JSON to subprocess
+  const optionsJson = JSON.stringify({ target, libraryOptions });
+
   return new Promise((resolve) => {
-    const child = spawn('node', ['-e', WORKER_SCRIPT, compiledJsPath, target], {
+    const child = spawn('node', ['-e', WORKER_SCRIPT, compiledJsPath, optionsJson], {
       timeout,
       stdio: ['ignore', 'pipe', 'pipe'],
     });
