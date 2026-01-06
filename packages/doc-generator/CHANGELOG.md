@@ -1,5 +1,13 @@
 # @openpkg-ts/doc-generator
 
+## 0.6.11
+
+### Patch Changes
+
+- chore: bump @openpkg-ts/spec dependency for JSON Schema extensions support
+- Updated dependencies
+  - @openpkg-ts/spec@0.23.0
+
 ## 0.6.10
 
 ### Patch Changes

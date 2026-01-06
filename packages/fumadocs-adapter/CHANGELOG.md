@@ -1,5 +1,15 @@
 # @openpkg-ts/fumadocs-adapter
 
+## 0.6.13
+
+### Patch Changes
+
+- chore: bump @openpkg-ts/spec dependency for JSON Schema extensions support
+- Updated dependencies
+- Updated dependencies
+  - @openpkg-ts/doc-generator@0.6.11
+  - @openpkg-ts/spec@0.23.0
+
 ## 0.6.12
 
 ### Patch Changes

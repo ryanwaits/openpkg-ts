@@ -103,8 +103,9 @@ export type SpecSchemaRef = { $ref: string; typeArguments?: SpecSchema[] };
 export type SpecSchemaFallback = { type: string };
 
 // Generic object for SDK compatibility (allows Record<string, unknown> produced at runtime)
+// Includes JSON Schema extensions for TypeScript-specific type information
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export type SpecSchemaGeneric = Record<string, unknown>;
+export type SpecSchemaGeneric = Record<string, unknown> & Partial<JSONSchemaExtensions>;
 
 // Main union - flexible JSON Schema patterns
 // Note: SpecSchemaGeneric is last to allow type inference for the more specific variants first
@@ -175,6 +176,58 @@ export type SpecSignature = {
   overloadIndex?: number;
   isImplementation?: boolean;
   throws?: SpecThrows[];
+};
+
+// ============================================================================
+// JSON Schema Extensions for TypeScript Constructs
+// ============================================================================
+
+/**
+ * JSON Schema extension fields for TypeScript-specific type information.
+ *
+ * These extensions use the `x-` prefix which is valid JSON Schema for vendor extensions.
+ * They allow consumers to preserve TypeScript-specific information while still having
+ * valid JSON Schema. The extensions are optional - a consumer can ignore them for pure
+ * JSON Schema usage.
+ *
+ * Extension semantics:
+ * | Extension            | Purpose                                                              |
+ * |----------------------|----------------------------------------------------------------------|
+ * | `x-ts-type`          | Preserves original TS type for types that map to JSON Schema but    |
+ * |                      | lose fidelity (bigint → integer, symbol → string)                   |
+ * | `x-ts-function`      | Marks a schema as representing a function type                      |
+ * | `x-ts-signatures`    | Contains function/method signatures for callable types              |
+ * | `x-ts-type-arguments`| Preserves generic type arguments for parameterized types            |
+ */
+export type JSONSchemaExtensions = {
+  /**
+   * Preserves the original TypeScript type when mapping to JSON Schema loses fidelity.
+   * Examples:
+   * - bigint → { type: "integer", "x-ts-type": "bigint" }
+   * - symbol → { type: "string", "x-ts-type": "symbol" }
+   * - void → { type: "null", "x-ts-type": "void" } (optionally)
+   * - never, any, unknown, undefined also supported
+   */
+  'x-ts-type'?: 'bigint' | 'symbol' | 'void' | 'never' | 'any' | 'unknown' | 'undefined' | string;
+
+  /**
+   * Marks a schema as representing a function type.
+   * When true, the schema represents a callable TypeScript function.
+   */
+  'x-ts-function'?: boolean;
+
+  /**
+   * Contains function/method signatures for callable types.
+   * Used in conjunction with `x-ts-function` to preserve full signature information.
+   */
+  'x-ts-signatures'?: SpecSignature[];
+
+  /**
+   * Preserves generic type arguments for parameterized types.
+   * Used with $ref to maintain generic instantiation information.
+   * Example: Map<string, number> → { "$ref": "#/$defs/Map", "x-ts-type-arguments": [...] }
+   */
+  'x-ts-type-arguments'?: SpecSchema[];
 };
 
 export type SpecMember = {

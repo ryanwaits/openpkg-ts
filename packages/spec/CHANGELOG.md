@@ -1,5 +1,23 @@
 # @openpkg-ts/spec
 
+## 0.23.0
+
+### Minor Changes
+
+- feat: add JSON Schema 2020-12 normalization
+
+  **@openpkg-ts/spec:**
+
+  - Add `JSONSchemaExtensions` type for TypeScript-specific JSON Schema extensions (`x-ts-type`, `x-ts-function`, `x-ts-signatures`, `x-ts-type-arguments`)
+  - Update `SpecSchemaGeneric` to include `Partial<JSONSchemaExtensions>` for extension support
+
+  **@openpkg-ts/extract:**
+
+  - Add `schema-normalizer` module with functions to convert SpecSchema DSL to valid JSON Schema 2020-12
+  - New exports: `normalizeSchema`, `normalizeExport`, `normalizeType`, `normalizeMembers`, `NormalizeOptions`, `JSONSchema`
+  - Update `extract()` to automatically normalize all schemas to JSON Schema 2020-12 format
+  - Update README with comprehensive documentation for JSON Schema output format and TypeScript extension fields
+
 ## 0.19.0
 
 ### Minor Changes

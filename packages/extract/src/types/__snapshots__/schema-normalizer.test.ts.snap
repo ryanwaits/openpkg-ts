@@ -1,0 +1,508 @@
+// Bun Snapshot v1, https://bun.sh/docs/test/snapshots
+
+exports[`snapshot tests for complex types deeply nested object with all special types 1`] = `
+{
+  "properties": {
+    "level1": {
+      "properties": {
+        "bigintField": {
+          "type": "integer",
+          "x-ts-type": "bigint",
+        },
+        "level2": {
+          "properties": {
+            "callback": {
+              "x-ts-function": true,
+              "x-ts-signatures": [
+                {
+                  "parameters": [
+                    {
+                      "name": "x",
+                      "required": true,
+                      "schema": {},
+                    },
+                  ],
+                  "returns": {
+                    "schema": {
+                      "type": "null",
+                    },
+                  },
+                },
+              ],
+            },
+            "items": {
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                  },
+                  {
+                    "not": {},
+                  },
+                  {
+                    "$ref": "#/types/CustomType",
+                    "x-ts-type-arguments": [
+                      {
+                        "type": "integer",
+                        "x-ts-type": "bigint",
+                      },
+                    ],
+                  },
+                ],
+              },
+              "type": "array",
+            },
+          },
+          "type": "object",
+        },
+        "symbolField": {
+          "type": "string",
+          "x-ts-type": "symbol",
+        },
+      },
+      "type": "object",
+    },
+  },
+  "type": "object",
+}
+`;
+
+exports[`snapshot tests for complex types interface with all member kinds 1`] = `
+{
+  "additionalProperties": {},
+  "properties": {
+    "count": {
+      "type": "integer",
+      "x-ts-type": "bigint",
+    },
+    "id": {
+      "description": "Unique ID",
+      "type": "string",
+    },
+    "process": {
+      "description": "Process data",
+      "x-ts-function": true,
+      "x-ts-signatures": [
+        {
+          "parameters": [
+            {
+              "name": "input",
+              "required": true,
+              "schema": {},
+            },
+            {
+              "name": "options",
+              "required": false,
+              "schema": {
+                "type": "object",
+              },
+            },
+          ],
+          "returns": {
+            "schema": {
+              "$ref": "#/types/Promise",
+              "x-ts-type-arguments": [
+                {
+                  "type": "null",
+                },
+              ],
+            },
+          },
+        },
+      ],
+    },
+    "sym": {
+      "type": "string",
+      "x-ts-type": "symbol",
+    },
+    "value": {
+      "type": "number",
+      "x-ts-accessor": "setter",
+    },
+  },
+  "required": [
+    "id",
+    "count",
+    "process",
+    "value",
+    "value",
+  ],
+  "type": "object",
+}
+`;
+
+exports[`snapshot tests for complex types discriminated union with complex variants 1`] = `
+{
+  "anyOf": [
+    {
+      "properties": {
+        "data": {
+          "properties": {
+            "id": {
+              "type": "integer",
+              "x-ts-type": "bigint",
+            },
+            "items": {
+              "items": {
+                "type": "string",
+                "x-ts-type": "symbol",
+              },
+              "type": "array",
+            },
+          },
+          "type": "object",
+        },
+        "kind": {
+          "enum": [
+            "success",
+          ],
+          "type": "string",
+        },
+      },
+      "required": [
+        "kind",
+        "data",
+      ],
+      "type": "object",
+    },
+    {
+      "properties": {
+        "error": {
+          "properties": {
+            "cause": {},
+            "code": {
+              "type": "number",
+            },
+            "message": {
+              "type": "string",
+            },
+          },
+          "type": "object",
+        },
+        "kind": {
+          "enum": [
+            "error",
+          ],
+          "type": "string",
+        },
+      },
+      "required": [
+        "kind",
+        "error",
+      ],
+      "type": "object",
+    },
+    {
+      "properties": {
+        "kind": {
+          "enum": [
+            "pending",
+          ],
+          "type": "string",
+        },
+      },
+      "required": [
+        "kind",
+      ],
+      "type": "object",
+    },
+  ],
+  "discriminator": {
+    "propertyName": "kind",
+  },
+}
+`;
+
+exports[`snapshot tests for complex types generic type with nested type arguments 1`] = `
+{
+  "$ref": "#/types/ApiResponse",
+  "x-ts-type-arguments": [
+    {
+      "$ref": "#/types/Map",
+      "x-ts-type-arguments": [
+        {
+          "type": "string",
+          "x-ts-type": "symbol",
+        },
+        {
+          "$ref": "#/types/Array",
+          "x-ts-type-arguments": [
+            {
+              "type": "integer",
+              "x-ts-type": "bigint",
+            },
+          ],
+        },
+      ],
+    },
+  ],
+}
+`;
+
+exports[`snapshot tests for complex types class export with all member types 1`] = `
+{
+  "properties": {
+    "_cache": {
+      "type": "object",
+    },
+    "count": {
+      "type": "integer",
+      "x-ts-accessor": "getter",
+      "x-ts-type": "bigint",
+    },
+    "id": {
+      "type": "string",
+    },
+    "status": {
+      "type": "string",
+    },
+    "transform": {
+      "x-ts-function": true,
+      "x-ts-signatures": [
+        {
+          "parameters": [
+            {
+              "name": "input",
+              "required": true,
+              "schema": {},
+            },
+          ],
+          "returns": {
+            "schema": {
+              "$ref": "#/types/Promise",
+              "x-ts-type-arguments": [
+                {
+                  "$ref": "#/types/T",
+                },
+              ],
+            },
+          },
+          "typeParameters": [
+            {
+              "constraint": "object",
+              "name": "T",
+            },
+          ],
+        },
+      ],
+    },
+    "validate": {
+      "x-ts-function": true,
+      "x-ts-signatures": [
+        {
+          "parameters": [
+            {
+              "name": "data",
+              "required": true,
+              "schema": {},
+            },
+          ],
+          "returns": {
+            "schema": {
+              "type": "boolean",
+            },
+          },
+        },
+        {
+          "parameters": [
+            {
+              "name": "data",
+              "required": true,
+              "schema": {},
+            },
+            {
+              "name": "strict",
+              "required": true,
+              "schema": {
+                "type": "boolean",
+              },
+            },
+          ],
+          "returns": {
+            "schema": {
+              "type": "null",
+            },
+          },
+        },
+      ],
+    },
+  },
+  "required": [
+    "id",
+    "_cache",
+    "status",
+    "count",
+    "transform",
+    "validate",
+  ],
+  "type": "object",
+}
+`;
+
+exports[`snapshot tests for complex types class export with all member types 2`] = `
+[
+  {
+    "kind": "property",
+    "name": "id",
+    "schema": {
+      "type": "string",
+    },
+    "visibility": "public",
+  },
+  {
+    "kind": "property",
+    "name": "_cache",
+    "schema": {
+      "type": "object",
+    },
+    "visibility": "private",
+  },
+  {
+    "kind": "property",
+    "name": "status",
+    "schema": {
+      "type": "string",
+    },
+    "visibility": "protected",
+  },
+  {
+    "kind": "getter",
+    "name": "count",
+    "schema": {
+      "type": "integer",
+      "x-ts-type": "bigint",
+    },
+  },
+  {
+    "kind": "method",
+    "name": "transform",
+    "signatures": [
+      {
+        "parameters": [
+          {
+            "name": "input",
+            "required": true,
+            "schema": {},
+          },
+        ],
+        "returns": {
+          "schema": {
+            "$ref": "#/types/Promise",
+            "x-ts-type-arguments": [
+              {
+                "$ref": "#/types/T",
+              },
+            ],
+          },
+        },
+        "typeParameters": [
+          {
+            "constraint": "object",
+            "name": "T",
+          },
+        ],
+      },
+    ],
+  },
+  {
+    "kind": "method",
+    "name": "validate",
+    "signatures": [
+      {
+        "parameters": [
+          {
+            "name": "data",
+            "required": true,
+            "schema": {},
+          },
+        ],
+        "returns": {
+          "schema": {
+            "type": "boolean",
+          },
+        },
+      },
+      {
+        "parameters": [
+          {
+            "name": "data",
+            "required": true,
+            "schema": {},
+          },
+          {
+            "name": "strict",
+            "required": true,
+            "schema": {
+              "type": "boolean",
+            },
+          },
+        ],
+        "returns": {
+          "schema": {
+            "type": "null",
+          },
+        },
+      },
+    ],
+  },
+]
+`;
+
+exports[`snapshot tests for complex types tuple types with various configurations 1`] = `
+[
+  {
+    "maxItems": 2,
+    "minItems": 2,
+    "prefixedItems": [
+      {
+        "type": "string",
+      },
+      {
+        "type": "number",
+      },
+    ],
+    "type": "array",
+  },
+  {
+    "maxItems": 3,
+    "minItems": 3,
+    "prefixedItems": [
+      {
+        "type": "integer",
+        "x-ts-type": "bigint",
+      },
+      {
+        "type": "string",
+        "x-ts-type": "symbol",
+      },
+      {
+        "type": "null",
+      },
+    ],
+    "type": "array",
+  },
+  {
+    "maxItems": 2,
+    "minItems": 2,
+    "prefixedItems": [
+      {
+        "type": "string",
+      },
+      {
+        "properties": {
+          "x": {
+            "type": "integer",
+            "x-ts-type": "bigint",
+          },
+          "y": {
+            "type": "string",
+            "x-ts-type": "symbol",
+          },
+        },
+        "type": "object",
+      },
+    ],
+    "type": "array",
+  },
+]
+`;

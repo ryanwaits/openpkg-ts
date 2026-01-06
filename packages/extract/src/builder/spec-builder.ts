@@ -20,6 +20,7 @@ import type {
   TypeReference,
 } from '../types';
 import { mergeRuntimeSchemas } from './schema-merger';
+import { normalizeExport, normalizeType } from '../types/schema-normalizer';
 
 /** Built-in types that shouldn't be tracked as dangling refs */
 const BUILTIN_TYPES = new Set([
@@ -275,12 +276,17 @@ export async function extract(options: ExtractOptions): Promise<ExtractResult> {
     }
   }
 
+  // Normalize exports and types to JSON Schema 2020-12 format
+  // This happens after all extraction (static + runtime schema merging) is complete
+  const normalizedExports = exports.map((exp) => normalizeExport(exp, { dialect: 'draft-2020-12' }));
+  const normalizedTypes = types.map((t) => normalizeType(t, { dialect: 'draft-2020-12' }));
+
   const spec: OpenPkg = {
     ...(includeSchema ? { $schema: SCHEMA_URL } : {}),
     openpkg: SCHEMA_VERSION,
     meta,
-    exports,
-    types,
+    exports: normalizedExports,
+    types: normalizedTypes,
     generation: {
       generator: '@openpkg-ts/extract',
       timestamp: new Date().toISOString(),
