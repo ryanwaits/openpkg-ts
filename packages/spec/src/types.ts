@@ -151,6 +151,8 @@ export type SpecTypeParameter = {
   name: string;
   constraint?: string;
   default?: string;
+  variance?: 'in' | 'out' | 'inout';
+  const?: boolean;
 };
 
 export type SpecSignatureParameter = {
@@ -172,6 +174,8 @@ export type SpecSignature = {
   parameters?: SpecSignatureParameter[];
   returns?: SpecSignatureReturn;
   description?: string;
+  tags?: SpecTag[];
+  examples?: SpecExample[];
   typeParameters?: SpecTypeParameter[];
   overloadIndex?: number;
   isImplementation?: boolean;
@@ -181,6 +185,17 @@ export type SpecSignature = {
 // ============================================================================
 // JSON Schema Extensions for TypeScript Constructs
 // ============================================================================
+
+/**
+ * Type predicate information for type guard functions.
+ * Preserved in x-ts-type-predicate extension.
+ */
+export type SpecTypePredicate = {
+  /** The parameter name that the type guard narrows */
+  parameterName: string;
+  /** The type that the parameter is narrowed to */
+  type: SpecSchema;
+};
 
 /**
  * JSON Schema extension fields for TypeScript-specific type information.
@@ -198,6 +213,8 @@ export type SpecSignature = {
  * | `x-ts-function`      | Marks a schema as representing a function type                      |
  * | `x-ts-signatures`    | Contains function/method signatures for callable types              |
  * | `x-ts-type-arguments`| Preserves generic type arguments for parameterized types            |
+ * | `x-ts-type-predicate`| Preserves type guard narrowing information                          |
+ * | `x-ts-package`       | Package name for external type references                           |
  */
 export type JSONSchemaExtensions = {
   /**
@@ -228,6 +245,18 @@ export type JSONSchemaExtensions = {
    * Example: Map<string, number> → { "$ref": "#/$defs/Map", "x-ts-type-arguments": [...] }
    */
   'x-ts-type-arguments'?: SpecSchema[];
+
+  /**
+   * Preserves type guard narrowing information for type predicate functions.
+   * Example: (value: unknown) => value is string → { "x-ts-type-predicate": { parameterName: "value", type: { type: "string" } } }
+   */
+  'x-ts-type-predicate'?: SpecTypePredicate;
+
+  /**
+   * Package name for external type references from node_modules.
+   * Example: AnyRouter from @trpc/server → { "$ref": "#/types/AnyRouter", "x-ts-package": "@trpc/server" }
+   */
+  'x-ts-package'?: string;
 };
 
 export type SpecMember = {
@@ -241,6 +270,11 @@ export type SpecMember = {
   schema?: SpecSchema;
   signatures?: SpecSignature[];
   decorators?: SpecDecorator[];
+};
+
+export type SpecInheritedMember = SpecMember & {
+  /** Name of the class this member was inherited from */
+  inheritedFrom: string;
 };
 
 export type SpecExportKind =

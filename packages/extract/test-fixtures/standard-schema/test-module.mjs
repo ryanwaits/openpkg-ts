@@ -18,11 +18,13 @@ export const ConfigSchema = z.object({
 });
 
 // Schema with transform (input differs from output)
-export const CreateUserInput = z.object({
-  name: z.string(),
-  email: z.string().email(),
-}).transform((data) => ({
-  ...data,
-  id: 'generated-id',
-  createdAt: new Date().toISOString(),
-}));
+export const CreateUserInput = z
+  .object({
+    name: z.string(),
+    email: z.string().email(),
+  })
+  .transform((data) => ({
+    ...data,
+    id: 'generated-id',
+    createdAt: new Date().toISOString(),
+  }));

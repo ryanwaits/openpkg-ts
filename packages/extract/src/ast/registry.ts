@@ -1,7 +1,7 @@
 import type { SpecType, SpecTypeKind } from '@openpkg-ts/spec';
 import ts from 'typescript';
 import type { SerializerContext } from '../serializers/context';
-import { buildSchema } from '../types/schema-builder';
+import { ARRAY_PROTOTYPE_METHODS, buildSchema } from '../types/schema-builder';
 
 const PRIMITIVES = new Set([
   'string',
@@ -235,6 +235,9 @@ export class TypeRegistry {
     for (const prop of properties.slice(0, 20)) {
       const propName = prop.getName();
       if (propName.startsWith('_')) continue;
+
+      // Skip Array prototype methods to prevent explosion
+      if (ARRAY_PROTOTYPE_METHODS.has(propName)) continue;
 
       const propType = checker.getTypeOfSymbol(prop);
 

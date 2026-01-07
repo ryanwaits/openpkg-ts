@@ -3,6 +3,7 @@ import * as path from 'node:path';
 import { normalize, validateSpec } from '@openpkg-ts/spec';
 import { Command } from 'commander';
 import { extract } from '../builder';
+import { resolveCompiledPath, detectTsRuntime } from '../schema/standard-schema';
 import { spinner, summary } from '../utils/progress';
 
 export function createProgram(): Command {
@@ -41,6 +42,29 @@ export function createProgram(): Command {
         console.warn('  Consider: tspec src/index.ts\n');
       }
 
+      // Pre-flight check for --runtime flag
+      if (options.runtime) {
+        const resolvedEntry = path.resolve(entryFile);
+        const baseDir = path.dirname(resolvedEntry);
+        const isTs = /\.tsx?$/.test(resolvedEntry);
+
+        if (isTs) {
+          const compiledPath = resolveCompiledPath(resolvedEntry, baseDir);
+          const tsRuntime = detectTsRuntime();
+
+          if (!compiledPath && !tsRuntime) {
+            console.error(`✗ Runtime schema extraction requires compiled JavaScript files.`);
+            console.error(`  No .js files found for ${path.basename(entryFile)}.\n`);
+            console.error(`  Solutions:`);
+            console.error(`  1. Build the project first: npm run build`);
+            console.error(`  2. Install a TS runtime: bun, tsx, or ts-node`);
+            console.error(`  3. Use Node 22+ for native TypeScript support`);
+            console.error(`  4. Remove --runtime flag for static extraction only`);
+            process.exit(1);
+          }
+        }
+      }
+
       const spin = spinner('Extracting...');
 
       const result = await extract({
@@ -73,7 +97,9 @@ export function createProgram(): Command {
       if (result.runtimeSchemas) {
         const { extracted, merged, vendors, method } = result.runtimeSchemas;
         const via = method ? ` via ${method}` : '';
-        console.log(`ℹ Runtime schemas: ${merged}/${extracted} merged (${vendors.join(', ')})${via}`);
+        console.log(
+          `ℹ Runtime schemas: ${merged}/${extracted} merged (${vendors.join(', ')})${via}`,
+        );
       }
 
       // Report diagnostics (info only with --verbose)

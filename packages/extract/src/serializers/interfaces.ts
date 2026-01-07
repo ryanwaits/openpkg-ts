@@ -1,6 +1,13 @@
 import type { SpecExport, SpecMember, SpecSignature } from '@openpkg-ts/spec';
 import ts from 'typescript';
-import { extractTypeParameters, getJSDocComment, getSourceLocation, isSymbolDeprecated } from '../ast/utils';
+import {
+  extractTypeParameters,
+  extractTypeParametersFromSignature,
+  getJSDocComment,
+  getJSDocForSignature,
+  getSourceLocation,
+  isSymbolDeprecated,
+} from '../ast/utils';
 import { extractParameters, registerReferencedTypes } from '../types/parameters';
 import { buildSchema } from '../types/schema-builder';
 import type { SerializerContext } from './context';
@@ -111,16 +118,27 @@ function serializeMethodSignature(
   const type = checker.getTypeAtLocation(node);
   const callSignatures = type.getCallSignatures();
 
-  const signatures: SpecSignature[] = callSignatures.map((sig) => {
+  const signatures: SpecSignature[] = callSignatures.map((sig, index) => {
     const params = extractParameters(sig, ctx);
     const returnType = checker.getReturnTypeOfSignature(sig);
     registerReferencedTypes(returnType, ctx);
+
+    // Get per-overload JSDoc
+    const sigDoc = getJSDocForSignature(sig);
+
+    // Get per-overload type parameters
+    const sigTypeParams = extractTypeParametersFromSignature(sig, checker);
 
     return {
       parameters: params.length > 0 ? params : undefined,
       returns: {
         schema: buildSchema(returnType, checker, ctx),
       },
+      ...(sigDoc.description ? { description: sigDoc.description } : {}),
+      ...(sigDoc.tags.length > 0 ? { tags: sigDoc.tags } : {}),
+      ...(sigDoc.examples.length > 0 ? { examples: sigDoc.examples } : {}),
+      ...(sigTypeParams ? { typeParameters: sigTypeParams } : {}),
+      ...(callSignatures.length > 1 ? { overloadIndex: index } : {}),
     };
   });
 

@@ -102,11 +102,103 @@ const BUILTIN_TYPES = new Set([
   'BigUint64Array',
 ]);
 
+// Array prototype methods that should be skipped when processing tuple/array elements
+// These methods cause "explosion" when empty arrays or tuples fall through to object handling
+export const ARRAY_PROTOTYPE_METHODS = new Set([
+  // Mutating methods
+  'pop',
+  'push',
+  'shift',
+  'unshift',
+  'splice',
+  'sort',
+  'reverse',
+  'fill',
+  'copyWithin',
+  // Accessor methods
+  'concat',
+  'join',
+  'slice',
+  'indexOf',
+  'lastIndexOf',
+  'includes',
+  'find',
+  'findIndex',
+  'findLast',
+  'findLastIndex',
+  'filter',
+  'map',
+  'reduce',
+  'reduceRight',
+  'every',
+  'some',
+  'flat',
+  'flatMap',
+  'forEach',
+  'entries',
+  'keys',
+  'values',
+  'at',
+  'with',
+  'toReversed',
+  'toSorted',
+  'toSpliced',
+  // Properties
+  'length',
+  // Iterator
+  Symbol.iterator.toString(),
+  // Other
+  'toString',
+  'toLocaleString',
+]);
+
 /**
  * Check if a name is a primitive type
  */
 export function isPrimitiveName(name: string): boolean {
   return PRIMITIVES.has(name);
+}
+
+/**
+ * Check if a symbol is from TypeScript's built-in lib (lib.es*.d.ts).
+ * Used to detect Array, Object, and other built-in types.
+ */
+function isBuiltinSymbol(symbol: ts.Symbol | undefined): boolean {
+  if (!symbol) return false;
+  const declarations = symbol.getDeclarations();
+  if (!declarations || declarations.length === 0) return false;
+  const sourceFile = declarations[0].getSourceFile();
+  const fileName = sourceFile.fileName;
+  // TypeScript lib files are in node_modules/typescript/lib/lib.*.d.ts
+  return fileName.includes('/typescript/lib/lib.') || fileName.includes('\\typescript\\lib\\lib.');
+}
+
+/**
+ * Get the origin package name for a type if it comes from node_modules.
+ * Returns undefined for types defined in the current project.
+ *
+ * @example
+ * getTypeOrigin(trpcRouterType) // Returns '@trpc/server'
+ * getTypeOrigin(localUserType) // Returns undefined
+ */
+export function getTypeOrigin(type: ts.Type, _checker: ts.TypeChecker): string | undefined {
+  const symbol = type.getSymbol() ?? type.aliasSymbol;
+  if (!symbol) return undefined;
+
+  const declarations = symbol.getDeclarations();
+  if (!declarations || declarations.length === 0) return undefined;
+
+  const fileName = declarations[0].getSourceFile().fileName;
+
+  // Match node_modules package pattern
+  // Handles: node_modules/@scope/package/... or node_modules/package/...
+  const match = fileName.match(/node_modules\/(@[^/]+\/[^/]+|[^/]+)/);
+  if (!match) return undefined;
+
+  // Exclude TypeScript's built-in lib files
+  if (match[1] === 'typescript') return undefined;
+
+  return match[1];
 }
 
 /**
@@ -247,12 +339,38 @@ export function buildSchema(
 
   // Intersection types → allOf
   if (type.isIntersection()) {
+    // Filter out `never` types from intersection
+    const filteredTypes = type.types.filter((t) => !(t.flags & ts.TypeFlags.Never));
+
+    // Handle degenerate cases
+    if (filteredTypes.length === 0) {
+      return { type: 'never' };
+    }
+    if (filteredTypes.length === 1) {
+      // Single-type intersection: return the single schema
+      return buildSchema(filteredTypes[0], checker, ctx);
+    }
+
     if (ctx) {
       return withDepth(ctx, () => ({
-        allOf: type.types.map((t) => buildSchema(t, checker, ctx)),
+        allOf: filteredTypes.map((t) => buildSchema(t, checker, ctx)),
       }));
     }
-    return { allOf: type.types.map((t) => buildSchema(t, checker, ctx)) };
+    return { allOf: filteredTypes.map((t) => buildSchema(t, checker, ctx)) };
+  }
+
+  // EARLY CHECK: Detect empty arrays and Array interface BEFORE array/tuple checks
+  // This prevents explosion where empty arrays fall through to object handling
+  // and pick up all 50+ Array prototype methods
+  const typeString = checker.typeToString(type);
+  if (typeString === 'never[]' || typeString === '[]') {
+    return { type: 'array', prefixedItems: [], minItems: 0, maxItems: 0 };
+  }
+
+  // Detect Array interface to prevent prototype expansion
+  const symbol = type.getSymbol() || type.aliasSymbol;
+  if (symbol?.getName() === 'Array' && isBuiltinSymbol(symbol)) {
+    return { type: 'array', items: {} };
   }
 
   // Array type (T[])
@@ -276,12 +394,21 @@ export function buildSchema(
     const typeRef = type as ts.TypeReference;
     const elementTypes = typeRef.typeArguments ?? [];
     if (ctx) {
-      return withDepth(ctx, () => ({
-        type: 'array',
-        prefixedItems: elementTypes.map((t) => buildSchema(t, checker, ctx)),
-        minItems: elementTypes.length,
-        maxItems: elementTypes.length,
-      }));
+      return withDepth(ctx, () => {
+        // Set flag to indicate we're processing tuple elements
+        const prevInTupleElement = ctx.inTupleElement;
+        ctx.inTupleElement = true;
+        try {
+          return {
+            type: 'array',
+            prefixedItems: elementTypes.map((t) => buildSchema(t, checker, ctx)),
+            minItems: elementTypes.length,
+            maxItems: elementTypes.length,
+          };
+        } finally {
+          ctx.inTupleElement = prevInTupleElement;
+        }
+      });
     }
     return {
       type: 'array',
@@ -303,16 +430,27 @@ export function buildSchema(
     }
 
     if (name && (isBuiltinGeneric(name) || !isAnonymous(typeRef.target))) {
+      const packageOrigin = getTypeOrigin(typeRef.target, checker);
       if (ctx) {
-        return withDepth(ctx, () => ({
-          $ref: `#/types/${name}`,
-          typeArguments: typeRef.typeArguments!.map((t) => buildSchema(t, checker, ctx)),
-        }));
+        return withDepth(ctx, () => {
+          const schema: SpecSchema = {
+            $ref: `#/types/${name}`,
+            typeArguments: typeRef.typeArguments!.map((t) => buildSchema(t, checker, ctx)),
+          };
+          if (packageOrigin) {
+            (schema as Record<string, unknown>)['x-ts-package'] = packageOrigin;
+          }
+          return schema;
+        });
       }
-      return {
+      const schema: SpecSchema = {
         $ref: `#/types/${name}`,
         typeArguments: typeRef.typeArguments.map((t) => buildSchema(t, checker, ctx)),
       };
+      if (packageOrigin) {
+        (schema as Record<string, unknown>)['x-ts-package'] = packageOrigin;
+      }
+      return schema;
     }
   }
 
@@ -325,7 +463,7 @@ export function buildSchema(
   }
 
   // Named types (classes, interfaces, type aliases)
-  const symbol = type.getSymbol() || type.aliasSymbol;
+  // (symbol already declared above for Array interface check)
   if (symbol && !isAnonymous(type)) {
     const name = symbol.getName();
 
@@ -341,7 +479,12 @@ export function buildSchema(
 
     // Named type → $ref
     if (!name.startsWith('__')) {
-      return { $ref: `#/types/${name}` };
+      const packageOrigin = getTypeOrigin(type, checker);
+      const schema: SpecSchema = { $ref: `#/types/${name}` };
+      if (packageOrigin) {
+        (schema as Record<string, unknown>)['x-ts-package'] = packageOrigin;
+      }
+      return schema;
     }
   }
 
@@ -413,6 +556,13 @@ function buildObjectSchema(
       const propName = prop.getName();
       // Skip private/internal properties
       if (propName.startsWith('_')) continue;
+
+      // Skip Array prototype methods - they cause "explosion" where
+      // tuple/array types include all 50+ Array methods in output.
+      // These are always inherited from TypeScript built-in Array interface.
+      if (ARRAY_PROTOTYPE_METHODS.has(propName)) {
+        continue;
+      }
 
       const propType = checker.getTypeOfSymbol(prop);
       props[propName] = buildSchema(propType, checker, ctx);

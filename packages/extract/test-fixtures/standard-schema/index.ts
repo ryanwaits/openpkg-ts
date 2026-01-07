@@ -15,15 +15,17 @@ export const UserSchema = z.object({
 export type User = z.infer<typeof UserSchema>;
 
 // Nested schema with transform
-export const CreateUserInput = z.object({
-  name: z.string(),
-  email: z.string().email(),
-  password: z.string().min(8),
-}).transform((data) => ({
-  ...data,
-  id: crypto.randomUUID(),
-  createdAt: new Date(),
-}));
+export const CreateUserInput = z
+  .object({
+    name: z.string(),
+    email: z.string().email(),
+    password: z.string().min(8),
+  })
+  .transform((data) => ({
+    ...data,
+    id: crypto.randomUUID(),
+    createdAt: new Date(),
+  }));
 
 export type CreateUserInputType = z.input<typeof CreateUserInput>;
 export type CreateUserOutputType = z.output<typeof CreateUserInput>;

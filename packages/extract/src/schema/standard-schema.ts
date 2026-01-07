@@ -384,7 +384,9 @@ export async function extractStandardSchemasFromTs(
   // Detect available TS runtime
   const runtime = detectTsRuntime();
   if (!runtime) {
-    result.errors.push('No TypeScript runtime available. Install bun, tsx, or ts-node, or use Node 22+.');
+    result.errors.push(
+      'No TypeScript runtime available. Install bun, tsx, or ts-node, or use Node 22+.',
+    );
     return result;
   }
 
@@ -428,7 +430,9 @@ export async function extractStandardSchemasFromTs(
         } catch {}
 
         if (code !== 0) {
-          result.errors.push(`Extraction failed (${runtime.name}): ${stderr || `exit code ${code}`}`);
+          result.errors.push(
+            `Extraction failed (${runtime.name}): ${stderr || `exit code ${code}`}`,
+          );
           resolve(result);
           return;
         }
@@ -489,9 +493,7 @@ function readTsconfigOutDir(baseDir: string): string | null {
 
     const content = fs.readFileSync(tsconfigPath, 'utf-8');
     // Strip comments (// and /* */) before parsing - tsconfig allows comments
-    const stripped = content
-      .replace(/\/\*[\s\S]*?\*\//g, '')
-      .replace(/\/\/.*$/gm, '');
+    const stripped = content.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
     const tsconfig = JSON.parse(stripped);
 
     if (tsconfig.compilerOptions?.outDir) {
@@ -722,9 +724,8 @@ export async function extractStandardSchemasFromProject(
 
   // No viable extraction method
   const runtime = detectTsRuntime();
-  const hint = isTypeScript && !runtime
-    ? ' Install bun, tsx, or ts-node for direct TS execution.'
-    : '';
+  const hint =
+    isTypeScript && !runtime ? ' Install bun, tsx, or ts-node for direct TS execution.' : '';
 
   return {
     schemas: new Map(),

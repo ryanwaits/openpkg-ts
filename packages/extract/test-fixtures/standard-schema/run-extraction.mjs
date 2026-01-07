@@ -1,9 +1,10 @@
 /**
  * Test our extractStandardSchemas function
  */
-import { extractStandardSchemas } from '../../dist/src/index.js';
+
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { extractStandardSchemas } from '../../dist/src/index.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const testModulePath = path.join(__dirname, 'test-module.mjs');
@@ -25,8 +26,14 @@ console.log(`Found ${result.schemas.size} Standard JSON Schemas:\n`);
 for (const [name, schema] of result.schemas) {
   console.log(`=== ${name} ===`);
   console.log('Vendor:', schema.vendor);
-  console.log('Output Schema:', JSON.stringify(schema.outputSchema, null, 2).substring(0, 200) + '...');
-  if (schema.inputSchema && JSON.stringify(schema.inputSchema) !== JSON.stringify(schema.outputSchema)) {
+  console.log(
+    'Output Schema:',
+    JSON.stringify(schema.outputSchema, null, 2).substring(0, 200) + '...',
+  );
+  if (
+    schema.inputSchema &&
+    JSON.stringify(schema.inputSchema) !== JSON.stringify(schema.outputSchema)
+  ) {
     console.log('Input Schema DIFFERS from output');
   }
   console.log();

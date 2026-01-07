@@ -65,6 +65,67 @@ function stripTypeParamSeparator(text: string | undefined): string | undefined {
   return text.trim() || undefined;
 }
 
+/**
+ * Extract text from @see tag, preserving full URLs.
+ * TypeScript's getTextOfJSDocComment can sometimes strip URL protocols
+ * because it treats protocol prefixes like 'https' as JSDocLink targets.
+ * This function extracts the full text from the tag to preserve URLs.
+ */
+function extractSeeTagText(tag: ts.JSDocTag): string {
+  // Get the full tag text and extract everything after @see
+  // This is the most reliable way to preserve URLs
+  const fullText = tag.getText();
+
+  // Match @see followed by content (including URLs)
+  // The regex captures everything after @see, handling multi-line content
+  const seeMatch = fullText.match(/@see\s+(.+?)(?:\s*\*\s*@|\s*\*\/|$)/s);
+  if (seeMatch) {
+    // Clean up the matched content - remove trailing comment markers
+    let text = seeMatch[1].trim();
+    // Remove trailing " * " patterns from multi-line JSDoc
+    text = text.replace(/\s*\*\s*$/gm, '').trim();
+    if (text) return text;
+  }
+
+  // Fallback: try to construct from comment parts
+  if (tag.comment) {
+    if (typeof tag.comment === 'string') {
+      // Check if it looks like a partial URL (starts with ://)
+      // If so, we need to get the full text instead
+      if (!tag.comment.startsWith('://')) {
+        return tag.comment;
+      }
+    }
+
+    // Handle NodeArray of JSDocComment parts
+    if (Array.isArray(tag.comment)) {
+      const parts: string[] = [];
+      for (const part of tag.comment) {
+        if (ts.isJSDocLink(part) || ts.isJSDocLinkCode(part) || ts.isJSDocLinkPlain(part)) {
+          // JSDocLink has a name property (the identifier) and text property
+          // For URLs, the name might be undefined and the full URL is in the text
+          if (part.name) {
+            parts.push(part.name.getText());
+          }
+          // The text property contains any text after the link/before the closing brace
+          if (part.text) {
+            parts.push(part.text);
+          }
+        } else if (part.kind === ts.SyntaxKind.JSDocText) {
+          parts.push((part as ts.JSDocText).text);
+        }
+      }
+      const result = parts.join('').trim();
+      if (result && !result.startsWith('://')) return result;
+    }
+  }
+
+  // Ultimate fallback to standard extraction
+  return typeof tag.comment === 'string'
+    ? tag.comment
+    : (ts.getTextOfJSDocComment(tag.comment) ?? '');
+}
+
 export function getJSDocComment(node: ts.Node): {
   description?: string;
   tags: SpecTag[];
@@ -98,6 +159,12 @@ export function getJSDocComment(node: ts.Node): {
     // For @typeParam, just strip the separator (name already in text)
     if (tag.tagName.text === 'typeParam') {
       const text = stripTypeParamSeparator(rawText) ?? '';
+      return { name: tag.tagName.text, text };
+    }
+
+    // For @see tags, use special extraction to preserve URLs
+    if (tag.tagName.text === 'see') {
+      const text = extractSeeTagText(tag);
       return { name: tag.tagName.text, text };
     }
 
@@ -178,6 +245,7 @@ type DeclarationWithTypeParams =
 
 /**
  * Extract type parameters from declarations like `<T extends Base, K = Default>`
+ * Also captures variance annotations (in/out) and const modifier.
  */
 export function extractTypeParameters(
   node: DeclarationWithTypeParams,
@@ -204,10 +272,30 @@ export function extractTypeParameters(
       defaultType = checker.typeToString(defType);
     }
 
+    // Check for variance and const modifiers
+    let variance: 'in' | 'out' | 'inout' | undefined;
+    let isConst: boolean | undefined;
+
+    const modifiers = ts.getModifiers(tp);
+    if (modifiers) {
+      let hasIn = false;
+      let hasOut = false;
+      for (const mod of modifiers) {
+        if (mod.kind === ts.SyntaxKind.InKeyword) hasIn = true;
+        if (mod.kind === ts.SyntaxKind.OutKeyword) hasOut = true;
+        if (mod.kind === ts.SyntaxKind.ConstKeyword) isConst = true;
+      }
+      if (hasIn && hasOut) variance = 'inout';
+      else if (hasIn) variance = 'in';
+      else if (hasOut) variance = 'out';
+    }
+
     return {
       name,
       ...(constraint ? { constraint } : {}),
       ...(defaultType ? { default: defaultType } : {}),
+      ...(variance ? { variance } : {}),
+      ...(isConst ? { const: isConst } : {}),
     };
   });
 }
@@ -234,4 +322,85 @@ export function isSymbolDeprecated(symbol: ts.Symbol | undefined): boolean {
   }
 
   return false;
+}
+
+/**
+ * Get JSDoc comment for a specific signature (overload).
+ * Uses signature.getDeclaration() to get the specific overload's declaration.
+ */
+export function getJSDocForSignature(signature: ts.Signature): {
+  description?: string;
+  tags: SpecTag[];
+  examples: SpecExample[];
+} {
+  const decl = signature.getDeclaration();
+  if (!decl) {
+    return { tags: [], examples: [] };
+  }
+  return getJSDocComment(decl);
+}
+
+/**
+ * Extract type parameters from a signature (for per-overload type parameters).
+ * Uses signature.getTypeParameters() for accurate per-signature extraction.
+ */
+export function extractTypeParametersFromSignature(
+  signature: ts.Signature,
+  checker: ts.TypeChecker,
+): SpecTypeParameter[] | undefined {
+  const typeParams = signature.getTypeParameters();
+  if (!typeParams || typeParams.length === 0) {
+    return undefined;
+  }
+
+  return typeParams.map((tp) => {
+    const name = tp.getSymbol()?.getName() ?? 'T';
+
+    // Get constraint
+    let constraint: string | undefined;
+    const constraintType = tp.getConstraint();
+    if (constraintType) {
+      constraint = checker.typeToString(constraintType);
+    }
+
+    // Get default
+    let defaultType: string | undefined;
+    const defaultT = tp.getDefault();
+    if (defaultT) {
+      defaultType = checker.typeToString(defaultT);
+    }
+
+    // Check for variance and const modifiers on the declaration
+    let variance: 'in' | 'out' | 'inout' | undefined;
+    let isConst: boolean | undefined;
+
+    const tpSymbol = tp.getSymbol();
+    const declarations = tpSymbol?.getDeclarations() ?? [];
+    for (const decl of declarations) {
+      if (ts.isTypeParameterDeclaration(decl)) {
+        const modifiers = ts.getModifiers(decl);
+        if (modifiers) {
+          let hasIn = false;
+          let hasOut = false;
+          for (const mod of modifiers) {
+            if (mod.kind === ts.SyntaxKind.InKeyword) hasIn = true;
+            if (mod.kind === ts.SyntaxKind.OutKeyword) hasOut = true;
+            if (mod.kind === ts.SyntaxKind.ConstKeyword) isConst = true;
+          }
+          if (hasIn && hasOut) variance = 'inout';
+          else if (hasIn) variance = 'in';
+          else if (hasOut) variance = 'out';
+        }
+        break;
+      }
+    }
+
+    return {
+      name,
+      ...(constraint ? { constraint } : {}),
+      ...(defaultType ? { default: defaultType } : {}),
+      ...(variance ? { variance } : {}),
+      ...(isConst ? { const: isConst } : {}),
+    };
+  });
 }

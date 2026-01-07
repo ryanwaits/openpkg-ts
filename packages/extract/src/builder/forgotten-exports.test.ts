@@ -24,9 +24,7 @@ describe('forgotten exports detection', () => {
     });
 
     // ExternalType is exported, so it should NOT be in forgottenExports
-    const forgottenExternalType = result.forgottenExports?.find(
-      (f) => f.name === 'ExternalType'
-    );
+    const forgottenExternalType = result.forgottenExports?.find((f) => f.name === 'ExternalType');
     expect(forgottenExternalType).toBeUndefined();
   });
 
@@ -49,9 +47,7 @@ describe('forgotten exports detection', () => {
     });
 
     // InternalType SHOULD be in forgottenExports since it's not exported
-    const forgottenInternal = result.forgottenExports?.find(
-      (f) => f.name === 'InternalType'
-    );
+    const forgottenInternal = result.forgottenExports?.find((f) => f.name === 'InternalType');
     expect(forgottenInternal).toBeDefined();
     expect(forgottenInternal?.name).toBe('InternalType');
     expect(forgottenInternal?.isExternal).toBe(false);
@@ -73,9 +69,7 @@ describe('forgotten exports detection', () => {
     });
 
     // MyCallback is exported, should NOT be forgotten
-    const forgottenCallback = result.forgottenExports?.find(
-      (f) => f.name === 'MyCallback'
-    );
+    const forgottenCallback = result.forgottenExports?.find((f) => f.name === 'MyCallback');
     expect(forgottenCallback).toBeUndefined();
   });
 
@@ -98,9 +92,7 @@ describe('forgotten exports detection', () => {
     });
 
     // CallbackOptions is NOT exported, should be forgotten
-    const forgottenOptions = result.forgottenExports?.find(
-      (f) => f.name === 'CallbackOptions'
-    );
+    const forgottenOptions = result.forgottenExports?.find((f) => f.name === 'CallbackOptions');
     expect(forgottenOptions).toBeDefined();
     expect(forgottenOptions?.name).toBe('CallbackOptions');
   });
@@ -127,14 +119,10 @@ describe('forgotten exports detection', () => {
     });
 
     // MiddleType is exported - should NOT be forgotten
-    expect(
-      result.forgottenExports?.find((f) => f.name === 'MiddleType')
-    ).toBeUndefined();
+    expect(result.forgottenExports?.find((f) => f.name === 'MiddleType')).toBeUndefined();
 
     // DeepInternal is NOT exported - should be forgotten
-    const forgottenDeep = result.forgottenExports?.find(
-      (f) => f.name === 'DeepInternal'
-    );
+    const forgottenDeep = result.forgottenExports?.find((f) => f.name === 'DeepInternal');
     expect(forgottenDeep).toBeDefined();
   });
 });
@@ -162,9 +150,7 @@ describe('forgotten exports with linked packages (integration)', () => {
 
     // ExternalConfig is defined in the test file (inside /project)
     // so it should be detected as internal forgotten export
-    const forgottenConfig = result.forgottenExports?.find(
-      (f) => f.name === 'ExternalConfig'
-    );
+    const forgottenConfig = result.forgottenExports?.find((f) => f.name === 'ExternalConfig');
     expect(forgottenConfig).toBeDefined();
     expect(forgottenConfig?.isExternal).toBe(false);
   });
@@ -191,9 +177,7 @@ describe('forgotten exports with linked packages (integration)', () => {
     // NodeModuleType is defined in test content (internal to project)
     // This tests the basic flow - actual node_modules detection
     // is tested via isExternalType unit tests
-    const forgotten = result.forgottenExports?.find(
-      (f) => f.name === 'NodeModuleType'
-    );
+    const forgotten = result.forgottenExports?.find((f) => f.name === 'NodeModuleType');
     expect(forgotten).toBeDefined();
     expect(forgotten?.isExternal).toBe(false);
   });

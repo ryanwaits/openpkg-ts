@@ -1,9 +1,16 @@
 import type { SpecExport, SpecMember, SpecSignature, SpecVisibility } from '@openpkg-ts/spec';
 import ts from 'typescript';
-import { extractTypeParameters, getJSDocComment, getSourceLocation, isSymbolDeprecated } from '../ast/utils';
+import {
+  extractTypeParameters,
+  extractTypeParametersFromSignature,
+  getJSDocComment,
+  getJSDocForSignature,
+  getSourceLocation,
+  isSymbolDeprecated,
+} from '../ast/utils';
 import { extractParameters, registerReferencedTypes } from '../types/parameters';
 import { buildSchema } from '../types/schema-builder';
-import type { SerializerContext } from './context';
+import { getInheritedMembers, type SerializerContext } from './context';
 
 export function serializeClass(
   node: ts.ClassDeclaration,
@@ -63,6 +70,24 @@ export function serializeClass(
 
   // Add deduplicated methods
   members.push(...methodsByName.values());
+
+  // Collect own member names for inheritance filtering
+  const ownMemberNames = new Set<string>();
+  for (const member of node.members) {
+    const memberName = getMemberName(member);
+    if (memberName) ownMemberNames.add(memberName);
+  }
+
+  // Get class type for inheritance analysis
+  const classType = checker.getTypeAtLocation(node);
+
+  // Get inherited instance members
+  const inheritedInstance = getInheritedMembers(classType, ownMemberNames, ctx, false);
+  members.push(...inheritedInstance);
+
+  // Get inherited static members
+  const inheritedStatic = getInheritedMembers(classType, ownMemberNames, ctx, true);
+  members.push(...inheritedStatic);
 
   // Extract extends clause
   const extendsClause = getExtendsClause(node, checker);
@@ -165,16 +190,27 @@ function serializeMethod(node: ts.MethodDeclaration, ctx: SerializerContext): Sp
   const type = checker.getTypeAtLocation(node);
   const callSignatures = type.getCallSignatures();
 
-  const signatures: SpecSignature[] = callSignatures.map((sig) => {
+  const signatures: SpecSignature[] = callSignatures.map((sig, index) => {
     const params = extractParameters(sig, ctx);
     const returnType = checker.getReturnTypeOfSignature(sig);
     registerReferencedTypes(returnType, ctx);
+
+    // Get per-overload JSDoc
+    const sigDoc = getJSDocForSignature(sig);
+
+    // Get per-overload type parameters
+    const sigTypeParams = extractTypeParametersFromSignature(sig, checker);
 
     return {
       parameters: params.length > 0 ? params : undefined,
       returns: {
         schema: buildSchema(returnType, checker, ctx),
       },
+      ...(sigDoc.description ? { description: sigDoc.description } : {}),
+      ...(sigDoc.tags.length > 0 ? { tags: sigDoc.tags } : {}),
+      ...(sigDoc.examples.length > 0 ? { examples: sigDoc.examples } : {}),
+      ...(sigTypeParams ? { typeParameters: sigTypeParams } : {}),
+      ...(callSignatures.length > 1 ? { overloadIndex: index } : {}),
     };
   });
 

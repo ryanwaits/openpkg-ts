@@ -1,9 +1,21 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import type { OpenPkg, SpecExport, SpecMember, SpecType } from '@openpkg-ts/spec';
+import type {
+  OpenPkg,
+  SpecExport,
+  SpecMember,
+  SpecSignature,
+  SpecType,
+} from '@openpkg-ts/spec';
 import { SCHEMA_URL, SCHEMA_VERSION } from '@openpkg-ts/spec';
 import ts from 'typescript';
+import {
+  extractTypeParametersFromSignature,
+  getJSDocForSignature,
+  isSymbolDeprecated,
+} from '../ast/utils';
 import { createProgram } from '../compiler/program';
+import { extractStandardSchemasFromProject } from '../schema/standard-schema';
 import { serializeClass } from '../serializers/classes';
 import { createContext, type SerializerContext } from '../serializers/context';
 import { serializeEnum } from '../serializers/enums';
@@ -11,7 +23,8 @@ import { serializeFunctionExport } from '../serializers/functions';
 import { serializeInterface } from '../serializers/interfaces';
 import { serializeTypeAlias } from '../serializers/type-aliases';
 import { serializeVariable } from '../serializers/variables';
-import { extractStandardSchemasFromProject } from '../schema/standard-schema';
+import { extractParameters, registerReferencedTypes } from '../types/parameters';
+import { buildSchema } from '../types/schema-builder';
 import type {
   Diagnostic,
   ExtractOptions,
@@ -19,8 +32,8 @@ import type {
   ForgottenExport,
   TypeReference,
 } from '../types';
-import { mergeRuntimeSchemas } from './schema-merger';
 import { normalizeExport, normalizeType } from '../types/schema-normalizer';
+import { mergeRuntimeSchemas } from './schema-merger';
 
 /** Built-in types that shouldn't be tracked as dangling refs */
 const BUILTIN_TYPES = new Set([
@@ -196,7 +209,14 @@ export async function extract(options: ExtractOptions): Promise<ExtractResult> {
 
   // Check for forgotten exports (refs to types not defined)
   const projectBaseDir = baseDir ?? path.dirname(entryFile);
-  const forgottenExports = collectForgottenExports(exports, types, program, sourceFile, exportedIds, projectBaseDir);
+  const forgottenExports = collectForgottenExports(
+    exports,
+    types,
+    program,
+    sourceFile,
+    exportedIds,
+    projectBaseDir,
+  );
   for (const forgotten of forgottenExports) {
     const refSummary = forgotten.referencedBy
       .slice(0, 3)
@@ -254,9 +274,10 @@ export async function extract(options: ExtractOptions): Promise<ExtractResult> {
       exports = mergeResult.exports;
 
       // Include extraction method in metadata
-      const method = runtimeResult.info?.method === 'direct-ts'
-        ? `direct-ts (${runtimeResult.info.runtime})`
-        : 'compiled';
+      const method =
+        runtimeResult.info?.method === 'direct-ts'
+          ? `direct-ts (${runtimeResult.info.runtime})`
+          : 'compiled';
 
       runtimeMetadata = {
         extracted: runtimeResult.schemas.size,
@@ -279,7 +300,9 @@ export async function extract(options: ExtractOptions): Promise<ExtractResult> {
 
   // Normalize exports and types to JSON Schema 2020-12 format
   // This happens after all extraction (static + runtime schema merging) is complete
-  const normalizedExports = exports.map((exp) => normalizeExport(exp, { dialect: 'draft-2020-12' }));
+  const normalizedExports = exports.map((exp) =>
+    normalizeExport(exp, { dialect: 'draft-2020-12' }),
+  );
   const normalizedTypes = types.map((t) => normalizeType(t, { dialect: 'draft-2020-12' }));
 
   const spec: OpenPkg = {
@@ -631,6 +654,10 @@ function serializeNamespaceMember(
 
   if (!declaration) return null;
 
+  const type = checker.getTypeAtLocation(declaration);
+  const callSignatures = type.getCallSignatures();
+  const deprecated = isSymbolDeprecated(targetSymbol);
+
   // Determine kind
   let kind: string = 'variable';
   if (ts.isFunctionDeclaration(declaration) || ts.isFunctionExpression(declaration)) {
@@ -645,8 +672,6 @@ function serializeNamespaceMember(
     kind = 'enum';
   } else if (ts.isVariableDeclaration(declaration)) {
     // Check if it's a function assigned to a variable
-    const type = checker.getTypeAtLocation(declaration);
-    const callSignatures = type.getCallSignatures();
     if (callSignatures.length > 0) {
       kind = 'function';
     }
@@ -656,10 +681,45 @@ function serializeNamespaceMember(
   const docComment = targetSymbol.getDocumentationComment(checker);
   const description = docComment.map((c) => c.text).join('\n') || undefined;
 
+  // Build signatures for functions
+  let signatures: SpecSignature[] | undefined;
+  if (kind === 'function' && callSignatures.length > 0) {
+    signatures = callSignatures.map((sig, index) => {
+      const params = extractParameters(sig, ctx);
+      const returnType = checker.getReturnTypeOfSignature(sig);
+      registerReferencedTypes(returnType, ctx);
+      const returnSchema = buildSchema(returnType, ctx.typeChecker, ctx);
+
+      // Get per-overload JSDoc
+      const sigDoc = getJSDocForSignature(sig);
+      const sigTypeParams = extractTypeParametersFromSignature(sig, ctx.typeChecker);
+
+      return {
+        parameters: params,
+        returns: { schema: returnSchema },
+        ...(sigDoc.description ? { description: sigDoc.description } : {}),
+        ...(sigDoc.tags.length > 0 ? { tags: sigDoc.tags } : {}),
+        ...(sigDoc.examples.length > 0 ? { examples: sigDoc.examples } : {}),
+        ...(sigTypeParams ? { typeParameters: sigTypeParams } : {}),
+        ...(callSignatures.length > 1 ? { overloadIndex: index } : {}),
+      };
+    });
+  }
+
+  // Build schema for non-function members
+  let schema;
+  if (kind !== 'function') {
+    registerReferencedTypes(type, ctx);
+    schema = buildSchema(type, ctx.typeChecker, ctx);
+  }
+
   return {
     name: memberName,
     kind,
     ...(description ? { description } : {}),
+    ...(signatures ? { signatures } : {}),
+    ...(schema ? { schema } : {}),
+    ...(deprecated ? { flags: { deprecated: true } } : {}),
   };
 }
 

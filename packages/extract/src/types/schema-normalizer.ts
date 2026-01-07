@@ -19,13 +19,7 @@
  * | { type: 'tuple', items }      | { "type": "array", "prefixedItems": [...] }       |
  */
 
-import type {
-  SpecSchema,
-  SpecSignature,
-  SpecExport,
-  SpecType,
-  SpecMember,
-} from '@openpkg-ts/spec';
+import type { SpecExport, SpecMember, SpecSchema, SpecSignature, SpecType } from '@openpkg-ts/spec';
 
 // ============================================================================
 // Types
@@ -78,10 +72,7 @@ const TS_PRIMITIVE_NORMALIZATIONS: Record<string, () => JSONSchema> = {
  * @param options - Normalization options
  * @returns JSON Schema 2020-12 compatible schema
  */
-export function normalizeSchema(
-  schema: SpecSchema,
-  options: NormalizeOptions = {},
-): JSONSchema {
+export function normalizeSchema(schema: SpecSchema, options: NormalizeOptions = {}): JSONSchema {
   const { includeSchemaField = false, dialect = 'draft-2020-12' } = options;
 
   const normalized = normalizeSchemaInternal(schema, options);
@@ -100,10 +91,7 @@ export function normalizeSchema(
 /**
  * Internal recursive normalization function
  */
-function normalizeSchemaInternal(
-  schema: SpecSchema,
-  options: NormalizeOptions,
-): JSONSchema {
+function normalizeSchemaInternal(schema: SpecSchema, options: NormalizeOptions): JSONSchema {
   // Handle string shorthand (e.g., "string", "number")
   if (typeof schema === 'string') {
     return normalizeStringType(schema);
@@ -137,7 +125,7 @@ function normalizeSchemaInternal(
 
   // Handle typed schemas
   if ('type' in schema && typeof schema.type === 'string') {
-    return normalizeTypedSchema(schema, options);
+    return normalizeTypedSchema(schema as Record<string, unknown> & { type: string }, options);
   }
 
   // Pass through other schemas (generic objects)
@@ -168,7 +156,7 @@ function normalizeStringType(type: string): JSONSchema {
  * Normalize a schema with explicit type field
  */
 function normalizeTypedSchema(
-  schema: SpecSchema & { type: string },
+  schema: Record<string, unknown> & { type: string },
   options: NormalizeOptions,
 ): JSONSchema {
   const { type } = schema;
@@ -183,7 +171,7 @@ function normalizeTypedSchema(
 
   // Handle function types
   if (type === 'function') {
-    return normalizeFunctionType(schema, options);
+    return normalizeFunctionType(schema as Record<string, unknown> & { type: 'function' }, options);
   }
 
   // Handle tuple type (legacy format with type: 'tuple')
@@ -215,7 +203,7 @@ function normalizeTypedSchema(
  * Normalize function types to x-ts-function format
  */
 function normalizeFunctionType(
-  schema: SpecSchema & { type: 'function' },
+  schema: Record<string, unknown> & { type: 'function' },
   options: NormalizeOptions,
 ): JSONSchema {
   const result: JSONSchema = {
@@ -280,7 +268,7 @@ function normalizeSignature(
  * Uses prefixedItems instead of items array
  */
 function normalizeTupleType(
-  schema: SpecSchema,
+  schema: Record<string, unknown>,
   options: NormalizeOptions,
 ): JSONSchema {
   const result: JSONSchema = { type: 'array' };
@@ -321,7 +309,7 @@ function normalizeTupleType(
  * Normalize array type
  */
 function normalizeArrayType(
-  schema: SpecSchema,
+  schema: Record<string, unknown>,
   options: NormalizeOptions,
 ): JSONSchema {
   const result: JSONSchema = { type: 'array' };
@@ -358,7 +346,7 @@ function normalizeArrayType(
  * Normalize object type
  */
 function normalizeObjectType(
-  schema: SpecSchema,
+  schema: Record<string, unknown>,
   options: NormalizeOptions,
 ): JSONSchema {
   const result: JSONSchema = { type: 'object' };
@@ -403,7 +391,7 @@ function normalizeObjectType(
  * Normalize standard JSON Schema types (string, number, boolean, integer, null)
  */
 function normalizeStandardType(
-  schema: SpecSchema & { type: string },
+  schema: Record<string, unknown> & { type: string },
   options: NormalizeOptions,
 ): JSONSchema {
   const result: JSONSchema = { type: schema.type };
@@ -433,6 +421,22 @@ function normalizeStandardType(
     }
   }
 
+  // Preserve all x-ts-* extensions (TypeScript-specific metadata)
+  for (const key of Object.keys(schema)) {
+    if (key.startsWith('x-ts-') && schema[key] !== undefined) {
+      // Recursively normalize the value if it's a schema-like object
+      const value = schema[key];
+      if (isSchemaLike(value)) {
+        result[key] = normalizeSchemaInternal(value as SpecSchema, options);
+      } else if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+        // For objects like x-ts-type-predicate which contain schema fields
+        result[key] = normalizeGenericObject(value as Record<string, unknown>, options);
+      } else {
+        result[key] = value;
+      }
+    }
+  }
+
   return result;
 }
 
@@ -440,7 +444,7 @@ function normalizeStandardType(
  * Normalize $ref with optional typeArguments
  */
 function normalizeRef(
-  schema: { $ref: string; typeArguments?: SpecSchema[] },
+  schema: { $ref: string; typeArguments?: SpecSchema[]; [key: string]: unknown },
   options: NormalizeOptions,
 ): JSONSchema {
   const result: JSONSchema = { $ref: schema.$ref };
@@ -452,6 +456,13 @@ function normalizeRef(
     );
   }
 
+  // Preserve x-ts-package and other x-ts-* extensions
+  for (const key of Object.keys(schema)) {
+    if (key.startsWith('x-ts-') && schema[key] !== undefined) {
+      result[key] = schema[key];
+    }
+  }
+
   return result;
 }
 
@@ -461,7 +472,7 @@ function normalizeRef(
 function normalizeCombinator(
   keyword: 'anyOf' | 'allOf' | 'oneOf',
   schemas: SpecSchema[],
-  originalSchema: SpecSchema,
+  originalSchema: Record<string, unknown>,
   options: NormalizeOptions,
 ): JSONSchema {
   const result: JSONSchema = {
@@ -575,10 +586,7 @@ function mergeSchemaFields(
  * 2. Normalize member schemas
  * 3. Generate a JSON Schema from members if members exist (populates `schema` field)
  */
-export function normalizeExport(
-  exp: SpecExport,
-  options: NormalizeOptions = {},
-): SpecExport {
+export function normalizeExport(exp: SpecExport, options: NormalizeOptions = {}): SpecExport {
   const result: SpecExport = { ...exp };
 
   // Normalize top-level schema if it exists
@@ -613,10 +621,7 @@ export function normalizeExport(
  * 2. Normalize member schemas
  * 3. Generate a JSON Schema from members if members exist (populates `schema` field)
  */
-export function normalizeType(
-  type: SpecType,
-  options: NormalizeOptions = {},
-): SpecType {
+export function normalizeType(type: SpecType, options: NormalizeOptions = {}): SpecType {
   const result: SpecType = { ...type };
 
   // Normalize top-level schema if it exists
@@ -674,10 +679,7 @@ function normalizeSignatureSpec(
 /**
  * Normalize a SpecMember
  */
-function normalizeMember(
-  member: SpecMember,
-  options: NormalizeOptions,
-): SpecMember {
+function normalizeMember(member: SpecMember, options: NormalizeOptions): SpecMember {
   const result: SpecMember = { ...member };
 
   if (member.schema) {
@@ -767,10 +769,7 @@ export function normalizeMembers(
 /**
  * Convert a single member to its JSON Schema representation
  */
-function normalizeMemberToSchema(
-  member: SpecMember,
-  options: NormalizeOptions,
-): JSONSchema {
+function normalizeMemberToSchema(member: SpecMember, options: NormalizeOptions): JSONSchema {
   const { kind, schema, signatures, description } = member;
 
   // Method members → x-ts-function schema
@@ -781,9 +780,7 @@ function normalizeMemberToSchema(
 
   // Getter members - include x-ts-accessor extension
   if (kind === 'getter') {
-    const baseSchema = schema
-      ? normalizeSchemaInternal(schema, options)
-      : {};
+    const baseSchema = schema ? normalizeSchemaInternal(schema, options) : {};
     return {
       ...baseSchema,
       'x-ts-accessor': 'getter',
@@ -793,9 +790,7 @@ function normalizeMemberToSchema(
 
   // Setter members - include x-ts-accessor extension
   if (kind === 'setter') {
-    const baseSchema = schema
-      ? normalizeSchemaInternal(schema, options)
-      : {};
+    const baseSchema = schema ? normalizeSchemaInternal(schema, options) : {};
     return {
       ...baseSchema,
       'x-ts-accessor': 'setter',
@@ -822,9 +817,7 @@ function normalizeMemberToSchema(
   }
 
   // Regular property
-  const baseSchema = schema
-    ? normalizeSchemaInternal(schema, options)
-    : {};
+  const baseSchema = schema ? normalizeSchemaInternal(schema, options) : {};
 
   return description ? { ...baseSchema, description } : baseSchema;
 }
@@ -832,18 +825,13 @@ function normalizeMemberToSchema(
 /**
  * Normalize a method member to x-ts-function schema
  */
-function normalizeMethodMember(
-  member: SpecMember,
-  options: NormalizeOptions,
-): JSONSchema {
+function normalizeMethodMember(member: SpecMember, options: NormalizeOptions): JSONSchema {
   const result: JSONSchema = {
     'x-ts-function': true,
   };
 
   if (member.signatures && member.signatures.length > 0) {
-    result['x-ts-signatures'] = member.signatures.map((sig) =>
-      normalizeSignature(sig, options),
-    );
+    result['x-ts-signatures'] = member.signatures.map((sig) => normalizeSignature(sig, options));
   }
 
   if (member.description) {

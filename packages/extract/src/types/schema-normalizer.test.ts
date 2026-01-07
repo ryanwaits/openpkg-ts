@@ -652,7 +652,7 @@ describe('normalizeMembers', () => {
         },
       ];
       const result = normalizeMembers(members);
-      expect(result.properties?.process).toEqual({
+      expect((result.properties as Record<string, unknown>)?.process).toEqual({
         'x-ts-function': true,
         'x-ts-signatures': [
           {
@@ -1039,7 +1039,7 @@ describe('extract pipeline integration', () => {
   test('runtime schema merging result is normalized', () => {
     // Simulates a merged runtime schema (from Zod/Valibot) that may have
     // TypeScript-specific types that need normalization
-    const exportWithRuntimeSchema: SpecExport = {
+    const exportWithSchema: SpecExport = {
       id: 'userSchema',
       name: 'userSchema',
       kind: 'variable',
@@ -1051,13 +1051,9 @@ describe('extract pipeline integration', () => {
         },
         required: ['id', 'createdAt'],
       },
-      runtimeSchema: {
-        vendor: 'zod',
-        source: 'z.object({ id: z.string(), createdAt: z.bigint() })',
-      },
     };
 
-    const result = normalizeExport(exportWithRuntimeSchema);
+    const result = normalizeExport(exportWithSchema);
 
     // The bigint type should be normalized to integer + x-ts-type
     expect(result.schema).toEqual({
@@ -1067,12 +1063,6 @@ describe('extract pipeline integration', () => {
         createdAt: { type: 'integer', 'x-ts-type': 'bigint' },
       },
       required: ['id', 'createdAt'],
-    });
-
-    // runtimeSchema metadata should be preserved
-    expect(result.runtimeSchema).toEqual({
-      vendor: 'zod',
-      source: 'z.object({ id: z.string(), createdAt: z.bigint() })',
     });
   });
 

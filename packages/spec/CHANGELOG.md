@@ -1,5 +1,11 @@
 # @openpkg-ts/spec
 
+## 0.24.0
+
+### Minor Changes
+
+- Add type predicates, inherited members, variance modifiers, and overload JSDoc support
+
 ## 0.23.0
 
 ### Minor Changes

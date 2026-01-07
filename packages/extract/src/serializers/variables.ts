@@ -38,8 +38,7 @@ export function serializeVariable(
   const flags = schemaExtraction
     ? {
         schemaLibrary: schemaExtraction.adapter.id,
-        ...(schemaExtraction.inputType &&
-        schemaExtraction.inputType !== schemaExtraction.outputType
+        ...(schemaExtraction.inputType && schemaExtraction.inputType !== schemaExtraction.outputType
           ? { hasTransform: true }
           : {}),
       }

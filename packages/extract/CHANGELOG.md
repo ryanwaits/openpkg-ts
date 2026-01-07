@@ -1,5 +1,16 @@
 # @openpkg-ts/extract
 
+## 0.24.0
+
+### Minor Changes
+
+- Add type predicates, inherited members, variance modifiers, and overload JSDoc support
+
+### Patch Changes
+
+- Updated dependencies
+  - @openpkg-ts/spec@0.24.0
+
 ## 0.23.2
 
 ### Patch Changes
