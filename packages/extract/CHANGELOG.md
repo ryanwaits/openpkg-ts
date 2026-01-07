@@ -1,5 +1,11 @@
 # @openpkg-ts/extract
 
+## 0.24.1
+
+### Patch Changes
+
+- perf: cache type lookups, reduce allocations in ref traversal
+
 ## 0.24.0
 
 ### Minor Changes

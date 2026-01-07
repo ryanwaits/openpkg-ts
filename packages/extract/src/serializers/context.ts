@@ -59,6 +59,7 @@ export function getInheritedMembers(
   const { typeChecker: checker } = ctx;
   const inherited: SpecInheritedMember[] = [];
   const visited = new Set<ts.Type>();
+  const inheritedNames = new Set<string>();
 
   // For static members, we need to get the constructor type
   const typeToWalk = isStatic
@@ -71,7 +72,7 @@ export function getInheritedMembers(
 
   if (!typeToWalk) return inherited;
 
-  walkBaseTypes(typeToWalk as ts.Type, ownMemberNames, inherited, visited, ctx, isStatic);
+  walkBaseTypes(typeToWalk as ts.Type, ownMemberNames, inherited, inheritedNames, visited, ctx, isStatic);
   return inherited;
 }
 
@@ -79,6 +80,7 @@ function walkBaseTypes(
   type: ts.Type,
   ownMemberNames: Set<string>,
   inherited: SpecInheritedMember[],
+  inheritedNames: Set<string>,
   visited: Set<ts.Type>,
   ctx: SerializerContext,
   isStatic: boolean,
@@ -102,7 +104,7 @@ function walkBaseTypes(
 
       // Skip if already defined in child or already inherited
       if (ownMemberNames.has(propName)) continue;
-      if (inherited.some((m) => m.name === propName)) continue;
+      if (inheritedNames.has(propName)) continue;
 
       // Skip private members (start with #) and internal properties
       if (propName.startsWith('#') || propName.startsWith('__')) continue;
@@ -110,11 +112,12 @@ function walkBaseTypes(
       const member = serializeInheritedMember(prop, baseName, ctx, isStatic);
       if (member) {
         inherited.push(member);
+        inheritedNames.add(propName);
       }
     }
 
     // Recursively walk up the chain
-    walkBaseTypes(baseType, ownMemberNames, inherited, visited, ctx, isStatic);
+    walkBaseTypes(baseType, ownMemberNames, inherited, inheritedNames, visited, ctx, isStatic);
   }
 }
 

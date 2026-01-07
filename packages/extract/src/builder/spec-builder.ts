@@ -35,6 +35,32 @@ import type {
 import { normalizeExport, normalizeType } from '../types/schema-normalizer';
 import { mergeRuntimeSchemas } from './schema-merger';
 
+/** Cache for findTypeDefinition results to avoid redundant AST walks */
+let typeDefinitionCache: Map<string, string | undefined> | null = null;
+
+function getTypeDefinitionCache(): Map<string, string | undefined> {
+  if (!typeDefinitionCache) {
+    typeDefinitionCache = new Map();
+  }
+  return typeDefinitionCache;
+}
+
+/** Cache for hasInternalTag results to avoid redundant resolveName calls */
+let internalTagCache: Map<string, boolean> | null = null;
+
+function getInternalTagCache(): Map<string, boolean> {
+  if (!internalTagCache) {
+    internalTagCache = new Map();
+  }
+  return internalTagCache;
+}
+
+/** Clear caches at start of each extraction */
+export function clearTypeDefinitionCache(): void {
+  typeDefinitionCache = null;
+  internalTagCache = null;
+}
+
 /** Built-in types that shouldn't be tracked as dangling refs */
 const BUILTIN_TYPES = new Set([
   'Array',
@@ -131,6 +157,9 @@ function shouldSkipDanglingRef(name: string): boolean {
 }
 
 export async function extract(options: ExtractOptions): Promise<ExtractResult> {
+  // Clear caches at start of each extraction
+  clearTypeDefinitionCache();
+
   const {
     entryFile,
     baseDir,
@@ -209,6 +238,7 @@ export async function extract(options: ExtractOptions): Promise<ExtractResult> {
 
   // Check for forgotten exports (refs to types not defined)
   const projectBaseDir = baseDir ?? path.dirname(entryFile);
+  const definedTypes = new Set(types.map((t) => t.id));
   const forgottenExports = collectForgottenExports(
     exports,
     types,
@@ -216,6 +246,7 @@ export async function extract(options: ExtractOptions): Promise<ExtractResult> {
     sourceFile,
     exportedIds,
     projectBaseDir,
+    definedTypes,
   );
   for (const forgotten of forgottenExports) {
     const refSummary = forgotten.referencedBy
@@ -332,7 +363,7 @@ export async function extract(options: ExtractOptions): Promise<ExtractResult> {
 /** Location context for type reference tracking */
 type RefLocation = TypeReference['location'];
 
-/** State for tracking reference context during traversal */
+/** Mutable state for tracking reference context during traversal */
 interface RefTraversalState {
   exportName: string;
   location: RefLocation;
@@ -341,6 +372,7 @@ interface RefTraversalState {
 
 /**
  * Collect all $ref values with context (which export, location type, path)
+ * Uses mutable state with push/pop to avoid allocation overhead
  */
 function collectAllRefsWithContext(
   obj: unknown,
@@ -351,10 +383,9 @@ function collectAllRefsWithContext(
 
   if (Array.isArray(obj)) {
     for (let i = 0; i < obj.length; i++) {
-      collectAllRefsWithContext(obj[i], refs, {
-        ...state,
-        path: [...state.path, `[${i}]`],
-      });
+      state.path.push(`[${i}]`);
+      collectAllRefsWithContext(obj[i], refs, state);
+      state.path.pop();
     }
     return;
   }
@@ -368,25 +399,24 @@ function collectAllRefsWithContext(
         typeName,
         exportName: state.exportName,
         location: state.location,
-        path: state.path.join('.') || undefined,
+        path: state.path.length > 0 ? state.path.join('.') : undefined,
       });
       refs.set(typeName, existing);
     }
 
+    const prevLocation = state.location;
     for (const [key, value] of Object.entries(record)) {
       // Infer location from property name
-      let newLocation = state.location;
-      if (key === 'returnType' || key === 'returns') newLocation = 'return';
-      else if (key === 'parameters' || key === 'params') newLocation = 'parameter';
-      else if (key === 'properties' || key === 'members') newLocation = 'property';
-      else if (key === 'extends' || key === 'implements') newLocation = 'extends';
-      else if (key === 'typeParameters' || key === 'typeParams') newLocation = 'type-parameter';
+      if (key === 'returnType' || key === 'returns') state.location = 'return';
+      else if (key === 'parameters' || key === 'params') state.location = 'parameter';
+      else if (key === 'properties' || key === 'members') state.location = 'property';
+      else if (key === 'extends' || key === 'implements') state.location = 'extends';
+      else if (key === 'typeParameters' || key === 'typeParams') state.location = 'type-parameter';
 
-      collectAllRefsWithContext(value, refs, {
-        ...state,
-        location: newLocation,
-        path: [...state.path, key],
-      });
+      state.path.push(key);
+      collectAllRefsWithContext(value, refs, state);
+      state.path.pop();
+      state.location = prevLocation;
     }
   }
 }
@@ -399,6 +429,13 @@ function findTypeDefinition(
   program: ts.Program,
   sourceFile: ts.SourceFile,
 ): string | undefined {
+  const cache = getTypeDefinitionCache();
+
+  // Check cache first (includes both found and not-found results)
+  if (cache.has(typeName)) {
+    return cache.get(typeName);
+  }
+
   const checker = program.getTypeChecker();
 
   // Search in the entry source file first
@@ -419,22 +456,32 @@ function findTypeDefinition(
 
   // Check entry file
   const entryResult = findInNode(sourceFile);
-  if (entryResult) return entryResult;
+  if (entryResult) {
+    cache.set(typeName, entryResult);
+    return entryResult;
+  }
 
   // Check all source files in program
   for (const sf of program.getSourceFiles()) {
     if (sf.isDeclarationFile && !sf.fileName.includes('node_modules')) {
       const result = findInNode(sf);
-      if (result) return result;
+      if (result) {
+        cache.set(typeName, result);
+        return result;
+      }
     }
   }
 
   // Try to find via type checker symbol lookup
   const symbol = checker.resolveName(typeName, sourceFile, ts.SymbolFlags.Type, false);
   if (symbol?.declarations?.[0]) {
-    return symbol.declarations[0].getSourceFile().fileName;
+    const result = symbol.declarations[0].getSourceFile().fileName;
+    cache.set(typeName, result);
+    return result;
   }
 
+  // Cache not-found result too
+  cache.set(typeName, undefined);
   return undefined;
 }
 
@@ -456,15 +503,24 @@ export function isExternalType(definedIn: string | undefined, baseDir: string): 
  * Check if a type has @internal JSDoc tag
  */
 function hasInternalTag(typeName: string, program: ts.Program, sourceFile: ts.SourceFile): boolean {
+  const cache = getInternalTagCache();
+  const cached = cache.get(typeName);
+  if (cached !== undefined) {
+    return cached;
+  }
+
   const checker = program.getTypeChecker();
-
-  // Try to find the symbol for this type
   const symbol = checker.resolveName(typeName, sourceFile, ts.SymbolFlags.Type, false);
-  if (!symbol) return false;
 
-  // Check JSDoc tags on the symbol
+  if (!symbol) {
+    cache.set(typeName, false);
+    return false;
+  }
+
   const jsTags = symbol.getJsDocTags();
-  return jsTags.some((tag) => tag.name === 'internal');
+  const isInternal = jsTags.some((tag) => tag.name === 'internal');
+  cache.set(typeName, isInternal);
+  return isInternal;
 }
 
 /**
@@ -477,8 +533,8 @@ function collectForgottenExports(
   sourceFile: ts.SourceFile,
   exportedIds: Set<string>,
   baseDir: string,
+  definedTypes: Set<string>,
 ): ForgottenExport[] {
-  const definedTypes = new Set(types.map((t) => t.id));
   const referencedTypes = new Map<string, TypeReference[]>();
 
   // Collect refs from exports with context
