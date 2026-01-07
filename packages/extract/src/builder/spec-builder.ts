@@ -61,6 +61,9 @@ export function clearTypeDefinitionCache(): void {
   internalTagCache = null;
 }
 
+/** Yield to event loop every N exports to allow spinner animation */
+const YIELD_BATCH_SIZE = 5;
+
 /** Built-in types that shouldn't be tracked as dangling refs */
 const BUILTIN_TYPES = new Set([
   'Array',
@@ -170,6 +173,7 @@ export async function extract(options: ExtractOptions): Promise<ExtractResult> {
     includeSchema,
     only,
     ignore,
+    onProgress,
   } = options;
 
   const diagnostics: Diagnostic[] = [];
@@ -212,11 +216,19 @@ export async function extract(options: ExtractOptions): Promise<ExtractResult> {
   });
   ctx.exportedIds = exportedIds;
 
-  for (const symbol of exportedSymbols) {
+  // Pre-filter exports to get accurate total for progress reporting
+  const filteredSymbols = exportedSymbols.filter((s) => shouldIncludeExport(s.getName(), only, ignore));
+  const total = filteredSymbols.length;
+
+  for (let i = 0; i < filteredSymbols.length; i++) {
+    const symbol = filteredSymbols[i];
     const exportName = symbol.getName();
 
-    // Apply only/ignore filters
-    if (!shouldIncludeExport(exportName, only, ignore)) continue;
+    // Report progress and yield to event loop periodically
+    onProgress?.(i + 1, total, exportName);
+    if (i > 0 && i % YIELD_BATCH_SIZE === 0) {
+      await new Promise((r) => setImmediate(r));
+    }
 
     try {
       const { declaration, targetSymbol } = resolveExportTarget(symbol, typeChecker);

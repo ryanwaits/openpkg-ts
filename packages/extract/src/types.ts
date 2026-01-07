@@ -16,6 +16,8 @@ export interface ExtractOptions {
   only?: string[];
   /** Ignore these exports (supports * wildcards) */
   ignore?: string[];
+  /** Progress callback for tracking extraction progress */
+  onProgress?: (current: number, total: number, item: string) => void;
 }
 
 export interface ExtractResult {

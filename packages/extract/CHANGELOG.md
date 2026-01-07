@@ -1,5 +1,11 @@
 # @openpkg-ts/extract
 
+## 0.25.0
+
+### Minor Changes
+
+- Add onProgress callback to extract() for tracking extraction progress
+
 ## 0.24.1
 
 ### Patch Changes
