@@ -1,5 +1,11 @@
 # @openpkg-ts/extract
 
+## 0.27.0
+
+### Minor Changes
+
+- Add export verification tracking discovered vs extracted exports, --verify CLI flag
+
 ## 0.26.0
 
 ### Minor Changes

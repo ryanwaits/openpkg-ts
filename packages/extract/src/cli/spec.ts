@@ -20,6 +20,7 @@ export function createProgram(): Command {
     )
     .option('--ignore <exports>', 'Ignore these exports (comma-separated, supports * wildcards)')
     .option('-v, --verbose', 'Show detailed output')
+    .option('--verify', 'Enable export count verification mode (exit 1 on failures)')
     .action(async (entry, options) => {
       let entryFile: string;
       let fromDts = false;
@@ -128,7 +129,40 @@ export function createProgram(): Command {
       if (result.runtimeSchemas) {
         sum.addKeyValue('Runtime Schemas', result.runtimeSchemas.merged);
       }
+
+      // Verification output
+      if (result.verification) {
+        const v = result.verification;
+        sum.addKeyValue('Discovered', v.discovered);
+        sum.addKeyValue('Extracted', v.extracted);
+        if (v.failed > 0) {
+          sum.addWithThreshold('Failed', v.failed, { value: 0, operator: '<=' });
+        }
+      }
       sum.print();
+
+      // Failed exports details
+      if (result.verification?.failed) {
+        console.log('\nFailed exports:');
+        for (const f of result.verification.details.failed) {
+          console.log(`  - ${f.name}: ${f.error}`);
+        }
+      }
+
+      // Skipped exports (verbose only)
+      if (options.verbose && result.verification?.details.skipped.length) {
+        console.log('\nSkipped exports:');
+        for (const s of result.verification.details.skipped) {
+          console.log(`  - ${s.name}: ${s.reason}`);
+        }
+      }
+
+      // Strict verification mode
+      if (options.verify && result.verification?.failed) {
+        const v = result.verification;
+        spin.fail(`Expected ${v.discovered} exports, got ${v.extracted}`);
+        process.exit(1);
+      }
     });
 
   return program;

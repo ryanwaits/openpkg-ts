@@ -48,6 +48,8 @@ export interface ExtractResult {
       missingExamples: number;
     };
   };
+  /** Export verification comparing discovered vs extracted */
+  verification?: ExportVerification;
 }
 
 export interface Diagnostic {
@@ -73,4 +75,32 @@ export interface ForgottenExport {
   referencedBy: TypeReference[];
   isExternal: boolean;
   fix?: string;
+}
+
+/** Tracks status of each discovered export through serialization pipeline */
+export interface ExportTracker {
+  name: string;
+  discovered: boolean;
+  status: 'pending' | 'success' | 'skipped' | 'failed';
+  skipReason?: 'filtered' | 'no-declaration' | 'internal';
+  error?: string;
+  kind?: string;
+}
+
+/** Verification result comparing discovered vs extracted exports */
+export interface ExportVerification {
+  /** Total exports discovered by TypeScript */
+  discovered: number;
+  /** Exports successfully extracted */
+  extracted: number;
+  /** Exports skipped (filtered, no-declaration, internal) */
+  skipped: number;
+  /** Exports that failed during serialization */
+  failed: number;
+  /** Delta: discovered - extracted */
+  delta: number;
+  details: {
+    skipped: Array<{ name: string; reason: 'filtered' | 'no-declaration' | 'internal' }>;
+    failed: Array<{ name: string; error: string }>;
+  };
 }

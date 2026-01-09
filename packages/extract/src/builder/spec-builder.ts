@@ -27,6 +27,8 @@ import { extractParameters, registerReferencedTypes } from '../types/parameters'
 import { buildSchema } from '../types/schema-builder';
 import type {
   Diagnostic,
+  ExportTracker,
+  ExportVerification,
   ExtractOptions,
   ExtractResult,
   ForgottenExport,
@@ -90,6 +92,40 @@ function computeDegradedStats(exports: SpecExport[]): {
   }
 
   return { exportsWithoutDescription, paramsWithoutDocs, missingExamples };
+}
+
+/** Build verification summary from export tracker data */
+function buildVerificationSummary(
+  discoveredCount: number,
+  extractedCount: number,
+  tracker: Map<string, ExportTracker>,
+): ExportVerification {
+  const skippedDetails: ExportVerification['details']['skipped'] = [];
+  const failedDetails: ExportVerification['details']['failed'] = [];
+
+  for (const entry of tracker.values()) {
+    if (entry.status === 'skipped' && entry.skipReason) {
+      skippedDetails.push({ name: entry.name, reason: entry.skipReason });
+    } else if (entry.status === 'failed' && entry.error) {
+      failedDetails.push({ name: entry.name, error: entry.error });
+    }
+  }
+
+  const skipped = skippedDetails.length;
+  const failed = failedDetails.length;
+  const delta = discoveredCount - extractedCount - skipped;
+
+  return {
+    discovered: discoveredCount,
+    extracted: extractedCount,
+    skipped,
+    failed,
+    delta,
+    details: {
+      skipped: skippedDetails,
+      failed: failedDetails,
+    },
+  };
 }
 
 /** Built-in types that shouldn't be tracked as dangling refs */
@@ -238,6 +274,19 @@ export async function extract(options: ExtractOptions): Promise<ExtractResult> {
     exportedIds.add(symbol.getName());
   }
 
+  // Track status of each discovered export through serialization pipeline
+  const exportTracker = new Map<string, ExportTracker>();
+  for (const symbol of exportedSymbols) {
+    const name = symbol.getName();
+    const included = shouldIncludeExport(name, only, ignore);
+    exportTracker.set(name, {
+      name,
+      discovered: true,
+      status: included ? 'pending' : 'skipped',
+      ...(included ? {} : { skipReason: 'filtered' }),
+    });
+  }
+
   const ctx = createContext(program, sourceFile, {
     maxTypeDepth,
     maxExternalTypeDepth,
@@ -252,6 +301,7 @@ export async function extract(options: ExtractOptions): Promise<ExtractResult> {
   for (let i = 0; i < filteredSymbols.length; i++) {
     const symbol = filteredSymbols[i];
     const exportName = symbol.getName();
+    const tracker = exportTracker.get(exportName)!;
 
     // Report progress and yield to event loop periodically
     onProgress?.(i + 1, total, exportName);
@@ -261,17 +311,35 @@ export async function extract(options: ExtractOptions): Promise<ExtractResult> {
 
     try {
       const { declaration, targetSymbol } = resolveExportTarget(symbol, typeChecker);
-      if (!declaration) continue;
+      if (!declaration) {
+        tracker.status = 'skipped';
+        tracker.skipReason = 'no-declaration';
+        continue;
+      }
 
       const exp = serializeDeclaration(declaration, symbol, targetSymbol, exportName, ctx);
-      if (exp) exports.push(exp);
+      if (exp) {
+        exports.push(exp);
+        tracker.status = 'success';
+        tracker.kind = exp.kind;
+      } else {
+        tracker.status = 'skipped';
+        tracker.skipReason = 'internal';
+      }
     } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : String(err);
+      tracker.status = 'failed';
+      tracker.error = errorMsg;
       diagnostics.push({
-        message: `Failed to serialize ${exportName}: ${err}`,
+        message: `Failed to serialize '${exportName}': ${errorMsg}`,
         severity: 'warning',
+        code: 'SERIALIZATION_FAILED',
       });
     }
   }
+
+  // Build verification summary from tracker
+  const verification = buildVerificationSummary(exportedSymbols.length, exports.length, exportTracker);
 
   // Get package metadata
   const meta = await getPackageMeta(entryFile, baseDir);
@@ -402,9 +470,21 @@ export async function extract(options: ExtractOptions): Promise<ExtractResult> {
     ? { reason: 'dts-source' as const, stats: computeDegradedStats(normalizedExports) }
     : undefined;
 
+  // Add diagnostic if any exports failed verification
+  if (verification.failed > 0) {
+    const failedNames = verification.details.failed.map((f) => f.name).join(', ');
+    diagnostics.push({
+      message: `Export verification: ${verification.failed} export(s) failed: ${failedNames}`,
+      severity: 'warning',
+      code: 'EXPORT_VERIFICATION_FAILED',
+      suggestion: 'Check serialization errors for these exports',
+    });
+  }
+
   return {
     spec,
     diagnostics,
+    verification,
     ...(internalForgotten.length > 0 ? { forgottenExports: internalForgotten } : {}),
     ...(runtimeMetadata ? { runtimeSchemas: runtimeMetadata } : {}),
     ...(degradedMode ? { degradedMode } : {}),
