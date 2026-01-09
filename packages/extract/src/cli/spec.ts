@@ -38,8 +38,9 @@ export function createProgram(): Command {
       }
 
       if (fromDts) {
-        console.warn('⚠ Using .d.ts file. TSDoc comments may be missing.');
-        console.warn('  Consider: tspec src/index.ts\n');
+        console.log('Mode: Declaration-only (.d.ts)');
+        console.log('  Types and signatures will be extracted');
+        console.log('  JSDoc comments unavailable (stripped during compilation)\n');
       }
 
       // Pre-flight check for --runtime flag
@@ -76,6 +77,7 @@ export function createProgram(): Command {
         ...(options.ignore
           ? { ignore: options.ignore.split(',').map((s: string) => s.trim()) }
           : {}),
+        isDtsSource: fromDts,
       });
 
       const normalized = normalize(result.spec);
@@ -92,6 +94,16 @@ export function createProgram(): Command {
 
       fs.writeFileSync(options.output, JSON.stringify(normalized, null, 2));
       spin.success(`Extracted to ${options.output}`);
+
+      // Report degraded mode stats
+      if (result.degradedMode) {
+        const { stats } = result.degradedMode;
+        const total = normalized.exports.length;
+        console.log('\nExtraction completed in declaration-only mode:');
+        console.log(`  ${stats.exportsWithoutDescription}/${total} exports missing descriptions`);
+        console.log(`  ${stats.paramsWithoutDocs} parameters without documentation`);
+        console.log(`  ${stats.missingExamples} exports without examples`);
+      }
 
       // Report runtime schema extraction results
       if (result.runtimeSchemas) {

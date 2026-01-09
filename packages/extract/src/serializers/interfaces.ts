@@ -23,7 +23,7 @@ export function serializeInterface(
 
   const deprecated = isSymbolDeprecated(symbol);
   const declSourceFile = node.getSourceFile();
-  const { description, tags, examples } = getJSDocComment(node);
+  const { description, tags, examples } = getJSDocComment(node, symbol, checker);
   const source = getSourceLocation(node, declSourceFile);
 
   // Extract type parameters like <T, K extends Base>
@@ -124,7 +124,7 @@ function serializeMethodSignature(
     registerReferencedTypes(returnType, ctx);
 
     // Get per-overload JSDoc
-    const sigDoc = getJSDocForSignature(sig);
+    const sigDoc = getJSDocForSignature(sig, checker);
 
     // Get per-overload type parameters
     const sigTypeParams = extractTypeParametersFromSignature(sig, checker);

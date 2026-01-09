@@ -1,5 +1,22 @@
 # @openpkg-ts/extract
 
+## 0.26.0
+
+### Minor Changes
+
+- feat(extract): .d.ts declaration-only mode support
+
+  - Add `isDtsSource` option to ExtractOptions
+  - Track degraded mode stats (missing descriptions/params/examples)
+  - Improved CLI output for declaration-only extraction
+  - Symbol.getDocumentationComment() fallback for preserved docs
+  - Generation metadata: `mode` and `limitations` fields
+
+### Patch Changes
+
+- Updated dependencies
+  - @openpkg-ts/spec@0.26.0
+
 ## 0.25.0
 
 ### Minor Changes

@@ -19,7 +19,7 @@ export function serializeVariable(
 
   const deprecated = isSymbolDeprecated(symbol);
   const declSourceFile = node.getSourceFile();
-  const { description, tags, examples } = getJSDocComment(statement);
+  const { description, tags, examples } = getJSDocComment(statement, symbol, ctx.typeChecker);
   const source = getSourceLocation(node, declSourceFile);
   const type = ctx.typeChecker.getTypeAtLocation(node);
 

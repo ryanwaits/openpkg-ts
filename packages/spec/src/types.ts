@@ -439,10 +439,23 @@ export type SpecGenerationInfo = {
 /** Supported OpenPkg spec versions */
 export type OpenPkgVersion = '0.2.0' | '0.3.0' | '0.4.0';
 
+/** Extraction mode indicating source type */
+export type SpecExtractionMode = 'source' | 'declaration-only';
+
+/** Known limitations when extracting from declaration-only sources */
+export type SpecExtractionLimitation =
+  | 'No JSDoc descriptions'
+  | 'No @example tags'
+  | 'No @param descriptions';
+
 /** Minimal generation metadata for v0.4.0 */
 export type SpecGenerationMeta = {
   generator?: string;
   timestamp?: string;
+  /** Extraction mode: 'source' (full .ts) or 'declaration-only' (.d.ts) */
+  mode?: SpecExtractionMode;
+  /** Known limitations when in declaration-only mode */
+  limitations?: SpecExtractionLimitation[];
 };
 
 export type OpenPkg = {

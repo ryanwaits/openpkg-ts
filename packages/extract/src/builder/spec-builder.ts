@@ -64,6 +64,34 @@ export function clearTypeDefinitionCache(): void {
 /** Yield to event loop every N exports to allow spinner animation */
 const YIELD_BATCH_SIZE = 5;
 
+/** Compute degraded mode stats from exports */
+function computeDegradedStats(exports: SpecExport[]): {
+  exportsWithoutDescription: number;
+  paramsWithoutDocs: number;
+  missingExamples: number;
+} {
+  let exportsWithoutDescription = 0;
+  let paramsWithoutDocs = 0;
+  let missingExamples = 0;
+
+  for (const exp of exports) {
+    if (!exp.description) exportsWithoutDescription++;
+    if (!exp.examples || exp.examples.length === 0) missingExamples++;
+
+    // Count params without docs across all signatures
+    const signatures = (exp as { signatures?: Array<{ parameters?: Array<{ description?: string }> }> }).signatures;
+    if (signatures) {
+      for (const sig of signatures) {
+        for (const param of sig.parameters ?? []) {
+          if (!param.description) paramsWithoutDocs++;
+        }
+      }
+    }
+  }
+
+  return { exportsWithoutDescription, paramsWithoutDocs, missingExamples };
+}
+
 /** Built-in types that shouldn't be tracked as dangling refs */
 const BUILTIN_TYPES = new Set([
   'Array',
@@ -174,6 +202,7 @@ export async function extract(options: ExtractOptions): Promise<ExtractResult> {
     only,
     ignore,
     onProgress,
+    isDtsSource,
   } = options;
 
   const diagnostics: Diagnostic[] = [];
@@ -185,7 +214,7 @@ export async function extract(options: ExtractOptions): Promise<ExtractResult> {
 
   if (!sourceFile) {
     return {
-      spec: createEmptySpec(entryFile, includeSchema),
+      spec: createEmptySpec(entryFile, includeSchema, isDtsSource),
       diagnostics: [{ message: `Could not load source file: ${entryFile}`, severity: 'error' }],
     };
   }
@@ -196,7 +225,7 @@ export async function extract(options: ExtractOptions): Promise<ExtractResult> {
   const moduleSymbol = typeChecker.getSymbolAtLocation(sourceFile);
   if (!moduleSymbol) {
     return {
-      spec: createEmptySpec(entryFile, includeSchema),
+      spec: createEmptySpec(entryFile, includeSchema, isDtsSource),
       diagnostics: [{ message: 'Could not get module symbol', severity: 'warning' }],
     };
   }
@@ -357,18 +386,28 @@ export async function extract(options: ExtractOptions): Promise<ExtractResult> {
     generation: {
       generator: '@openpkg-ts/extract',
       timestamp: new Date().toISOString(),
+      mode: isDtsSource ? 'declaration-only' : 'source',
       ...(options.schemaExtraction === 'hybrid' ? { schemaExtraction: 'hybrid' } : {}),
+      ...(isDtsSource && {
+        limitations: ['No JSDoc descriptions', 'No @example tags', 'No @param descriptions'],
+      }),
     },
   };
 
   // Filter to only internal forgotten exports (for fix generation)
   const internalForgotten = forgottenExports.filter((f) => !f.isExternal);
 
+  // Compute degraded mode stats when extracting from .d.ts
+  const degradedMode = isDtsSource
+    ? { reason: 'dts-source' as const, stats: computeDegradedStats(normalizedExports) }
+    : undefined;
+
   return {
     spec,
     diagnostics,
     ...(internalForgotten.length > 0 ? { forgottenExports: internalForgotten } : {}),
     ...(runtimeMetadata ? { runtimeSchemas: runtimeMetadata } : {}),
+    ...(degradedMode ? { degradedMode } : {}),
   };
 }
 
@@ -759,7 +798,7 @@ function serializeNamespaceMember(
       const returnSchema = buildSchema(returnType, ctx.typeChecker, ctx);
 
       // Get per-overload JSDoc
-      const sigDoc = getJSDocForSignature(sig);
+      const sigDoc = getJSDocForSignature(sig, checker);
       const sigTypeParams = extractTypeParametersFromSignature(sig, ctx.typeChecker);
 
       return {
@@ -877,7 +916,7 @@ function withExportName(entry: SpecExport, exportName: string): SpecExport {
   };
 }
 
-function createEmptySpec(entryFile: string, includeSchema?: boolean): OpenPkg {
+function createEmptySpec(entryFile: string, includeSchema?: boolean, isDtsSource?: boolean): OpenPkg {
   return {
     ...(includeSchema ? { $schema: SCHEMA_URL } : {}),
     openpkg: SCHEMA_VERSION,
@@ -886,6 +925,10 @@ function createEmptySpec(entryFile: string, includeSchema?: boolean): OpenPkg {
     generation: {
       generator: '@openpkg-ts/extract',
       timestamp: new Date().toISOString(),
+      mode: isDtsSource ? 'declaration-only' : 'source',
+      ...(isDtsSource && {
+        limitations: ['No JSDoc descriptions', 'No @example tags', 'No @param descriptions'],
+      }),
     },
   };
 }

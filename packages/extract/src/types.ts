@@ -18,6 +18,8 @@ export interface ExtractOptions {
   ignore?: string[];
   /** Progress callback for tracking extraction progress */
   onProgress?: (current: number, total: number, item: string) => void;
+  /** Whether source is a .d.ts file (degraded mode - TSDoc may be missing) */
+  isDtsSource?: boolean;
 }
 
 export interface ExtractResult {
@@ -36,6 +38,15 @@ export interface ExtractResult {
     errors: string[];
     /** Extraction method used: 'compiled' or 'direct-ts (runtime)' */
     method?: string;
+  };
+  /** Degraded mode info when extracting from .d.ts files */
+  degradedMode?: {
+    reason: 'dts-source';
+    stats: {
+      exportsWithoutDescription: number;
+      paramsWithoutDocs: number;
+      missingExamples: number;
+    };
   };
 }
 

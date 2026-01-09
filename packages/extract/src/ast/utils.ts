@@ -126,7 +126,11 @@ function extractSeeTagText(tag: ts.JSDocTag): string {
     : (ts.getTextOfJSDocComment(tag.comment) ?? '');
 }
 
-export function getJSDocComment(node: ts.Node): {
+export function getJSDocComment(
+  node: ts.Node,
+  symbol?: ts.Symbol,
+  checker?: ts.TypeChecker,
+): {
   description?: string;
   tags: SpecTag[];
   examples: SpecExample[];
@@ -181,6 +185,15 @@ export function getJSDocComment(node: ts.Node): {
         typeof firstDoc.comment === 'string'
           ? firstDoc.comment
           : ts.getTextOfJSDocComment(firstDoc.comment);
+    }
+  }
+
+  // Fallback: use Symbol.getDocumentationComment() for .d.ts files
+  // TypeScript preserves some docs in compiled declarations via this API
+  if (!description && symbol && checker) {
+    const docComment = symbol.getDocumentationComment(checker);
+    if (docComment.length > 0) {
+      description = docComment.map((c) => c.text).join('\n');
     }
   }
 
@@ -328,7 +341,10 @@ export function isSymbolDeprecated(symbol: ts.Symbol | undefined): boolean {
  * Get JSDoc comment for a specific signature (overload).
  * Uses signature.getDeclaration() to get the specific overload's declaration.
  */
-export function getJSDocForSignature(signature: ts.Signature): {
+export function getJSDocForSignature(
+  signature: ts.Signature,
+  checker?: ts.TypeChecker,
+): {
   description?: string;
   tags: SpecTag[];
   examples: SpecExample[];
@@ -337,7 +353,9 @@ export function getJSDocForSignature(signature: ts.Signature): {
   if (!decl) {
     return { tags: [], examples: [] };
   }
-  return getJSDocComment(decl);
+  // Get symbol for fallback doc extraction in .d.ts files
+  const symbol = checker?.getSymbolAtLocation(decl);
+  return getJSDocComment(decl, symbol, checker);
 }
 
 /**

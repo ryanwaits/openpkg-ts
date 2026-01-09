@@ -1,5 +1,12 @@
 # @openpkg-ts/doc-generator
 
+## 0.6.13
+
+### Patch Changes
+
+- Updated dependencies
+  - @openpkg-ts/spec@0.26.0
+
 ## 0.6.12
 
 ### Patch Changes

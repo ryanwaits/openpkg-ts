@@ -202,7 +202,7 @@ function serializeInheritedMember(
       registerReferencedTypes(returnType, ctx);
 
       // Get per-overload JSDoc
-      const sigDoc = getJSDocForSignature(sig);
+      const sigDoc = getJSDocForSignature(sig, checker);
 
       return {
         parameters: params.length > 0 ? params : undefined,

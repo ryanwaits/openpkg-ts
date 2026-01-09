@@ -11,7 +11,7 @@ export function serializeEnum(node: ts.EnumDeclaration, ctx: SerializerContext):
 
   const deprecated = isSymbolDeprecated(symbol);
   const declSourceFile = node.getSourceFile();
-  const { description, tags, examples } = getJSDocComment(node);
+  const { description, tags, examples } = getJSDocComment(node, symbol, checker);
   const source = getSourceLocation(node, declSourceFile);
 
   const members: SpecMember[] = node.members.map((member) => {
