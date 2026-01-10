@@ -1,5 +1,11 @@
 # @openpkg-ts/spec
 
+## 0.27.1
+
+### Patch Changes
+
+- Add test suite for validate, normalize, and diff modules (76 tests)
+
 ## 0.26.0
 
 ### Minor Changes

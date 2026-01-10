@@ -1,5 +1,12 @@
 # @openpkg-ts/extract
 
+## 0.27.1
+
+### Patch Changes
+
+- Updated dependencies
+  - @openpkg-ts/spec@0.27.1
+
 ## 0.27.0
 
 ### Minor Changes
