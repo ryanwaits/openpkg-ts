@@ -4,8 +4,8 @@
  * This simulates what the integrated extraction would produce
  */
 
-import path from 'path';
-import { fileURLToPath } from 'url';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { extractStandardSchemas } from '../../dist/src/index.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));

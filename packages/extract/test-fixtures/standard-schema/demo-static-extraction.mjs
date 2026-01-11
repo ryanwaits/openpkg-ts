@@ -2,8 +2,8 @@
  * Demo: What static TypeScript extraction produces for the same schemas
  */
 
-import path from 'path';
-import { fileURLToPath } from 'url';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { extract } from '../../dist/src/index.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
