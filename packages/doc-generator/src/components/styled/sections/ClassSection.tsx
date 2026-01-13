@@ -38,8 +38,39 @@ function getMemberBadges(member: SpecMember): string[] {
   if (flags?.static) badges.push('static');
   if (flags?.readonly) badges.push('readonly');
   if (flags?.async) badges.push('async');
+  if (flags?.abstract) badges.push('abstract');
 
   return badges;
+}
+
+/** Format decorators for display */
+function formatDecorators(decorators: { name: string; argumentsText?: string[] }[] | undefined): string {
+  if (!decorators?.length) return '';
+  return decorators
+    .map((d) => {
+      const args = d.argumentsText?.length ? `(${d.argumentsText.join(', ')})` : '';
+      return `@${d.name}${args}`;
+    })
+    .join(' ');
+}
+
+/** Build description with decorators and inheritedFrom */
+function buildMemberDescription(member: SpecMember): string | undefined {
+  const parts: string[] = [];
+
+  // Add decorators
+  const decoratorsStr = formatDecorators(member.decorators);
+  if (decoratorsStr) parts.push(decoratorsStr);
+
+  // Add inheritedFrom
+  if ('inheritedFrom' in member && member.inheritedFrom) {
+    parts.push(`Inherited from ${member.inheritedFrom}`);
+  }
+
+  // Add description
+  if (member.description) parts.push(member.description);
+
+  return parts.length > 0 ? parts.join(' • ') : undefined;
 }
 
 /**
@@ -131,31 +162,25 @@ export function ClassSection({ export: exp, spec }: ClassSectionProps): ReactNod
         <ParameterList title="Static Members" className="mt-6">
           {staticProperties.map((member) => {
             const badges = getMemberBadges(member);
+            const desc = buildMemberDescription(member);
             return (
               <APIParameterItem
                 key={member.name}
                 name={member.name}
                 type={formatSchema(member.schema)}
-                description={
-                  badges.length > 0
-                    ? `[${badges.join(', ')}] ${member.description || ''}`
-                    : member.description
-                }
+                description={badges.length > 0 ? `[${badges.join(', ')}] ${desc || ''}` : desc}
               />
             );
           })}
           {staticMethods.map((member) => {
             const badges = getMemberBadges(member);
+            const desc = buildMemberDescription(member);
             return (
               <APIParameterItem
                 key={member.name}
                 name={`${member.name}()`}
                 type={formatMethodSignature(member)}
-                description={
-                  badges.length > 0
-                    ? `[${badges.join(', ')}] ${member.description || ''}`
-                    : member.description
-                }
+                description={badges.length > 0 ? `[${badges.join(', ')}] ${desc || ''}` : desc}
               />
             );
           })}
@@ -167,16 +192,13 @@ export function ClassSection({ export: exp, spec }: ClassSectionProps): ReactNod
         <ParameterList title="Methods" className="mt-6">
           {instanceMethods.map((member) => {
             const badges = getMemberBadges(member);
+            const desc = buildMemberDescription(member);
             return (
               <APIParameterItem
                 key={member.name}
                 name={`${member.name}()`}
                 type={formatMethodSignature(member)}
-                description={
-                  badges.length > 0
-                    ? `[${badges.join(', ')}] ${member.description || ''}`
-                    : member.description
-                }
+                description={badges.length > 0 ? `[${badges.join(', ')}] ${desc || ''}` : desc}
               />
             );
           })}
@@ -188,16 +210,13 @@ export function ClassSection({ export: exp, spec }: ClassSectionProps): ReactNod
         <ParameterList title="Properties" className="mt-6">
           {instanceProperties.map((member) => {
             const badges = getMemberBadges(member);
+            const desc = buildMemberDescription(member);
             return (
               <APIParameterItem
                 key={member.name}
                 name={member.name}
                 type={formatSchema(member.schema)}
-                description={
-                  badges.length > 0
-                    ? `[${badges.join(', ')}] ${member.description || ''}`
-                    : member.description
-                }
+                description={badges.length > 0 ? `[${badges.join(', ')}] ${desc || ''}` : desc}
               />
             );
           })}

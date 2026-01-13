@@ -1,5 +1,18 @@
 # @openpkg-ts/fumadocs-adapter
 
+## 0.6.18
+
+### Patch Changes
+
+- Bump doc-generator dependency for output format parity features
+
+## 0.6.17
+
+### Patch Changes
+
+- Updated dependencies
+  - @openpkg-ts/doc-generator@0.7.0
+
 ## 0.6.16
 
 ### Patch Changes

@@ -27,6 +27,31 @@ function formatMethodSignature(member: SpecMember): string {
   return `(${paramStr}): ${returnType}`;
 }
 
+/** Format decorators for display */
+function formatDecorators(decorators: { name: string; argumentsText?: string[] }[] | undefined): string {
+  if (!decorators?.length) return '';
+  return decorators
+    .map((d) => {
+      const args = d.argumentsText?.length ? `(${d.argumentsText.join(', ')})` : '';
+      return `@${d.name}${args}`;
+    })
+    .join(' ');
+}
+
+/** Build description with decorators */
+function buildMemberDescription(member: SpecMember): string | undefined {
+  const parts: string[] = [];
+
+  // Add decorators
+  const decoratorsStr = formatDecorators(member.decorators);
+  if (decoratorsStr) parts.push(decoratorsStr);
+
+  // Add description
+  if (member.description) parts.push(member.description);
+
+  return parts.length > 0 ? parts.join(' • ') : undefined;
+}
+
 /**
  * Interface/type section for use in single-page API reference.
  * Renders an APISection with properties and methods.
@@ -101,8 +126,7 @@ export function InterfaceSection({ export: exp, spec }: InterfaceSectionProps): 
                 key={prop.name ?? index}
                 name={prop.name}
                 type={type}
-                required={prop.required !== false}
-                description={prop.description}
+                description={buildMemberDescription(prop)}
                 children={hasNestedProperties ? children : undefined}
               />
             );
@@ -118,7 +142,7 @@ export function InterfaceSection({ export: exp, spec }: InterfaceSectionProps): 
               key={method.name ?? index}
               name={`${method.name}()`}
               type={formatMethodSignature(method)}
-              description={method.description}
+              description={buildMemberDescription(method)}
             />
           ))}
         </ParameterList>

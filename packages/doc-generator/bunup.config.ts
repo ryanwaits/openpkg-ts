@@ -18,6 +18,7 @@ export default defineConfig([
     entry: ['src/react.ts', 'src/react-styled.ts'],
     outDir: 'dist',
     dts: true,
+    clean: false, // Don't clean - server build already did
     format: ['esm'],
     target: 'browser',
     splitting: false, // Prevent shared chunks with server build

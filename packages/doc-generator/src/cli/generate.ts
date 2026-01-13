@@ -2,11 +2,13 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import type { Command } from 'commander';
 import { createDocs } from '../core/loader';
+import { toHTML } from '../render/html';
+import { toStyledHTML } from '../render/html-styled';
 import { toJSONString } from '../render/json';
 import { exportToMarkdown } from '../render/markdown';
 import { toDocusaurusSidebarJS, toFumadocsMetaJSON, toNavigation } from '../render/nav';
 
-export type GenerateFormat = 'mdx' | 'json';
+export type GenerateFormat = 'mdx' | 'json' | 'html' | 'html-styled';
 export type NavFormat = 'fumadocs' | 'docusaurus' | 'generic';
 export type GroupBy = 'kind' | 'module' | 'tag' | 'none';
 
@@ -27,9 +29,9 @@ function slugify(name: string): string {
 export function registerGenerateCommand(program: Command): void {
   program
     .command('generate <spec>')
-    .description('Generate MDX or JSON files from OpenPkg spec')
+    .description('Generate MDX, JSON, or HTML files from OpenPkg spec')
     .option('-o, --out <dir>', 'Output directory', './api-docs')
-    .option('-f, --format <format>', 'Output format: mdx or json', 'mdx')
+    .option('-f, --format <format>', 'Output format: mdx, json, html, or html-styled', 'mdx')
     .option('--nav <format>', 'Navigation format: fumadocs, docusaurus, generic')
     .option('--flat', 'Flat file structure (no grouping folders)')
     .option('--group-by <groupBy>', 'Group by: kind, module, tag, none', 'kind')
@@ -64,6 +66,66 @@ export function registerGenerateCommand(program: Command): void {
           const jsonPath = path.join(outDir, 'api.json');
           fs.writeFileSync(jsonPath, jsonContent);
           console.log(`Generated ${jsonPath}`);
+        } else if (options.format === 'html') {
+          // HTML output - index + per-export pages
+          const indexHtml = toHTML(docs.spec, {
+            title: `${docs.spec.meta.name} API Reference`,
+            includeStyles: true,
+            fullDocument: true,
+          });
+          const indexPath = path.join(outDir, 'index.html');
+          fs.writeFileSync(indexPath, indexHtml);
+
+          // Per-export pages in /api subfolder
+          const pagesDir = path.join(outDir, 'api');
+          fs.mkdirSync(pagesDir, { recursive: true });
+
+          let fileCount = 0;
+          for (const exp of exports) {
+            const exportHtml = toHTML(docs.spec, {
+              export: exp.name,
+              includeStyles: true,
+              fullDocument: true,
+            });
+            const filename = `${slugify(exp.name)}.html`;
+            fs.writeFileSync(path.join(pagesDir, filename), exportHtml);
+            fileCount++;
+
+            if (options.verbose) {
+              console.log(`  api/${filename}`);
+            }
+          }
+
+          console.log(`Generated ${fileCount + 1} HTML files in ${outDir}`);
+        } else if (options.format === 'html-styled') {
+          // Styled HTML output using React SSR (Tailwind-styled components)
+          const indexHtml = await toStyledHTML(docs.spec, {
+            title: `${docs.spec.meta.name} API Reference`,
+            includeStyles: true,
+          });
+          const indexPath = path.join(outDir, 'index.html');
+          fs.writeFileSync(indexPath, indexHtml);
+
+          // Per-export pages in /api subfolder
+          const pagesDir = path.join(outDir, 'api');
+          fs.mkdirSync(pagesDir, { recursive: true });
+
+          let fileCount = 0;
+          for (const exp of exports) {
+            const exportHtml = await toStyledHTML(docs.spec, {
+              export: exp.name,
+              includeStyles: true,
+            });
+            const filename = `${slugify(exp.name)}.html`;
+            fs.writeFileSync(path.join(pagesDir, filename), exportHtml);
+            fileCount++;
+
+            if (options.verbose) {
+              console.log(`  api/${filename}`);
+            }
+          }
+
+          console.log(`Generated ${fileCount + 1} styled HTML files in ${outDir}`);
         } else {
           // MDX files output
           const groupBy = options.groupBy ?? 'kind';

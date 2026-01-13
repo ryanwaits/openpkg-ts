@@ -187,9 +187,15 @@ function renderProperties(members: SpecMember[] | undefined): string {
     .map((p) => {
       const type = escapeHTML(formatSchema(p.schema));
       const desc = p.description ? escapeHTML(p.description) : '-';
+      const inherited =
+        'inheritedFrom' in p && p.inheritedFrom ? ` <em>(from ${escapeHTML(String(p.inheritedFrom))})</em>` : '';
+      const flagBadges: string[] = [];
+      if (p.flags?.abstract) flagBadges.push('abstract');
+      if (p.flags?.readonly) flagBadges.push('readonly');
+      const badges = flagBadges.length ? ` <span class="badge">${flagBadges.join(', ')}</span>` : '';
       return `
         <tr>
-          <td><code>${escapeHTML(p.name || '')}</code></td>
+          <td><code>${escapeHTML(p.name || '')}</code>${badges}${inherited}</td>
           <td><code>${type}</code></td>
           <td>${desc}</td>
         </tr>`;
@@ -214,10 +220,18 @@ function renderMethods(members: SpecMember[] | undefined): string {
       const params = escapeHTML(formatParameters(sig));
       const returnType = escapeHTML(formatReturnType(sig));
       const desc = m.description ? `<p>${escapeHTML(m.description)}</p>` : '';
+      const decorators = renderDecorators(m.decorators);
+      const flags = renderFlags(m.flags);
+      const inherited =
+        'inheritedFrom' in m && m.inheritedFrom
+          ? `<p class="inherited"><em>Inherited from <code>${escapeHTML(String(m.inheritedFrom))}</code></em></p>`
+          : '';
 
       return `
         <div class="method">
-          <h4><code>${escapeHTML(m.name || '')}${params}: ${returnType}</code></h4>
+          <h4><code>${escapeHTML(m.name || '')}${params}: ${returnType}</code>${flags ? ` ${flags}` : ''}</h4>
+          ${decorators ? `<div class="decorators">${decorators}</div>` : ''}
+          ${inherited}
           ${desc}
         </div>`;
     })
@@ -240,11 +254,57 @@ function renderEnumMembers(members: SpecMember[] | undefined): string {
 }
 
 /**
+ * Render decorators as HTML.
+ */
+function renderDecorators(decorators: { name: string; argumentsText?: string[] }[] | undefined): string {
+  if (!decorators?.length) return '';
+  return decorators
+    .map((d) => {
+      const args = d.argumentsText?.length ? `(${d.argumentsText.join(', ')})` : '';
+      return `<code class="decorator">@${escapeHTML(d.name)}${escapeHTML(args)}</code>`;
+    })
+    .join(' ');
+}
+
+/**
+ * Render flags as badges.
+ */
+function renderFlags(flags: Record<string, unknown> | undefined): string {
+  if (!flags) return '';
+  const badges: string[] = [];
+  if (flags.abstract) badges.push('<span class="badge">abstract</span>');
+  if (flags.typeOnly) badges.push('<span class="badge">type-only</span>');
+  if (flags.readonly) badges.push('<span class="badge">readonly</span>');
+  return badges.join(' ');
+}
+
+/**
+ * Render throws section.
+ */
+function renderThrows(sig: SpecSignature | undefined): string {
+  if (!sig?.throws?.length) return '';
+
+  const items = sig.throws
+    .map((t) => {
+      if (t.type) {
+        return `<li><code>${escapeHTML(t.type)}</code>${t.description ? ` - ${escapeHTML(t.description)}` : ''}</li>`;
+      }
+      return t.description ? `<li>${escapeHTML(t.description)}</li>` : '';
+    })
+    .filter(Boolean)
+    .join('');
+
+  return `<h3>Throws</h3><ul>${items}</ul>`;
+}
+
+/**
  * Render a single export to HTML.
  */
 function renderExport(exp: SpecExport): string {
   const deprecated = exp.deprecated ? ' deprecated' : '';
-  const badge = exp.deprecated ? '<span class="badge">Deprecated</span>' : '';
+  const deprecatedBadge = exp.deprecated ? '<span class="badge">Deprecated</span>' : '';
+  const decorators = renderDecorators(exp.decorators);
+  const flags = renderFlags(exp.flags);
   const desc = exp.description ? `<p>${escapeHTML(exp.description)}</p>` : '';
   const primarySig = exp.signatures?.[0];
 
@@ -252,7 +312,7 @@ function renderExport(exp: SpecExport): string {
 
   switch (exp.kind) {
     case 'function':
-      content = renderParameters(primarySig) + renderReturns(primarySig);
+      content = renderParameters(primarySig) + renderReturns(primarySig) + renderThrows(primarySig);
       break;
     case 'class':
     case 'interface':
@@ -265,9 +325,12 @@ function renderExport(exp: SpecExport): string {
 
   content += renderExamples(exp.examples);
 
+  const badges = [deprecatedBadge, flags].filter(Boolean).join(' ');
+
   return `
     <article class="export-card${deprecated}" id="${exp.id}">
-      <h3>${escapeHTML(exp.name)}${badge}</h3>
+      <h3>${escapeHTML(exp.name)}${badges ? ` ${badges}` : ''}</h3>
+      ${decorators ? `<div class="decorators">${decorators}</div>` : ''}
       ${renderSignature(exp)}
       ${desc}
       ${content}

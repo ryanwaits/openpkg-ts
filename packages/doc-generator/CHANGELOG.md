@@ -1,5 +1,11 @@
 # @openpkg-ts/doc-generator
 
+## 0.7.0
+
+### Minor Changes
+
+- Add parity features across output formats: throws/decorators/inheritedFrom rendering in html-styled and React components, typeAliasKind badges, const type param support, x-ts-package attribution option, formatConditionalType/formatMappedType helpers
+
 ## 0.6.14
 
 ### Patch Changes

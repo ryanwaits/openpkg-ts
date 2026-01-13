@@ -52,6 +52,9 @@ npx openpkg-docs generate ./openpkg.json --out ./docs/api
 # Generate JSON for custom rendering
 npx openpkg-docs generate ./openpkg.json --format json --out ./api.json
 
+# Generate static HTML files
+npx openpkg-docs generate ./openpkg.json --format html --out ./html-docs
+
 # Generate with navigation
 npx openpkg-docs generate ./openpkg.json --out ./docs/api --nav fumadocs
 
@@ -268,14 +271,14 @@ Pre-styled with Tailwind v4:
 
 ### `generate`
 
-Generate MDX or JSON files from OpenPkg spec.
+Generate MDX, JSON, or HTML files from OpenPkg spec.
 
 ```bash
 openpkg-docs generate <spec> [options]
 
 Options:
   -o, --out <dir>       Output directory (default: ./api-docs)
-  -f, --format <type>   Output format: mdx or json (default: mdx)
+  -f, --format <type>   Output format: mdx, json, or html (default: mdx)
   --nav <format>        Navigation: fumadocs, docusaurus, generic
   --flat                Flat file structure
   --group-by <type>     Group by: kind, module, tag, none (default: kind)

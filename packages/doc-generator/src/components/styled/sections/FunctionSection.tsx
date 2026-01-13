@@ -96,6 +96,24 @@ export function FunctionSection({ export: exp, spec }: FunctionSectionProps): Re
         />
       )}
 
+      {/* Throws */}
+      {sig?.throws && sig.throws.length > 0 && (
+        <div className="mt-6 rounded-md bg-destructive/10 border border-destructive/20 p-4">
+          <h4 className="text-xs font-semibold uppercase tracking-wide text-destructive mb-2">
+            Throws
+          </h4>
+          <div className="space-y-1">
+            {sig.throws.map((t, i) => (
+              <div key={i} className="text-sm">
+                {t.type && <code className="font-mono text-destructive">{t.type}</code>}
+                {t.type && t.description && <span className="mx-1">—</span>}
+                {t.description && <span className="text-muted-foreground">{t.description}</span>}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Type parameters */}
       {exp.typeParameters && exp.typeParameters.length > 0 && (
         <ParameterList title="Type Parameters" className="mt-6">

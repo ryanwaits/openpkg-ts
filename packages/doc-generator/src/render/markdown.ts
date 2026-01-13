@@ -47,13 +47,34 @@ const defaultSections = {
 };
 
 /**
+ * Truncate description for frontmatter (YAML-safe, word-boundary aware).
+ */
+function truncateDescription(text: string | undefined, fallback: string): string {
+  if (!text) return fallback;
+
+  // Normalize: replace newlines/excess whitespace with single spaces
+  let desc = text.replace(/\n+/g, ' ').replace(/\s+/g, ' ').trim();
+
+  if (desc.length <= 160) return desc;
+
+  // Truncate at word boundary
+  desc = desc.slice(0, 160);
+  const lastSpace = desc.lastIndexOf(' ');
+  if (lastSpace > 100) {
+    desc = desc.slice(0, lastSpace);
+  }
+
+  return `${desc}...`;
+}
+
+/**
  * Generate frontmatter YAML block.
  */
 function generateFrontmatter(exp: SpecExport, custom?: Record<string, unknown>): string {
   const slug = exp.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
   const meta: Record<string, unknown> = {
     title: exp.name,
-    description: exp.description?.slice(0, 160) || `API reference for ${exp.name}`,
+    description: truncateDescription(exp.description, `API reference for ${exp.name}`),
     slug,
     ...custom,
   };
@@ -135,6 +156,26 @@ function renderReturns(sig: SpecSignature | undefined, offset = 0): string {
 }
 
 /**
+ * Render throws section.
+ */
+function renderThrows(sig: SpecSignature | undefined, offset = 0): string {
+  if (!sig?.throws?.length) return '';
+
+  const lines = [heading(2, 'Throws', offset), ''];
+
+  for (const t of sig.throws) {
+    if (t.type) {
+      lines.push(`- \`${t.type}\`${t.description ? ` - ${t.description}` : ''}`);
+    } else if (t.description) {
+      lines.push(`- ${t.description}`);
+    }
+  }
+  lines.push('');
+
+  return lines.join('\n');
+}
+
+/**
  * Render examples section.
  */
 function renderExamples(examples: (string | SpecExample)[] | undefined, offset = 0): string {
@@ -179,6 +220,31 @@ function renderProperties(members: SpecMember[] | undefined, offset = 0): string
     const type = formatSchema(prop.schema);
     lines.push(`### \`${prop.name}\``);
     lines.push('');
+
+    // Decorators
+    if (prop.decorators?.length) {
+      for (const dec of prop.decorators) {
+        const args = dec.argumentsText?.length ? `(${dec.argumentsText.join(', ')})` : '';
+        lines.push(`\`@${dec.name}${args}\``);
+      }
+      lines.push('');
+    }
+
+    // Inherited from
+    if ('inheritedFrom' in prop && prop.inheritedFrom) {
+      lines.push(`*Inherited from \`${prop.inheritedFrom}\`*`);
+      lines.push('');
+    }
+
+    // Flags
+    const propBadges: string[] = [];
+    if (prop.flags?.abstract) propBadges.push('`abstract`');
+    if (prop.flags?.readonly) propBadges.push('`readonly`');
+    if (propBadges.length) {
+      lines.push(propBadges.join(' '));
+      lines.push('');
+    }
+
     lines.push(`**Type:** \`${type}\``);
     if (prop.description) {
       lines.push('');
@@ -206,6 +272,30 @@ function renderMethods(members: SpecMember[] | undefined, offset = 0): string {
 
     lines.push(`### \`${method.name}${params}: ${returnType}\``);
     lines.push('');
+
+    // Decorators
+    if (method.decorators?.length) {
+      for (const dec of method.decorators) {
+        const args = dec.argumentsText?.length ? `(${dec.argumentsText.join(', ')})` : '';
+        lines.push(`\`@${dec.name}${args}\``);
+      }
+      lines.push('');
+    }
+
+    // Inherited from
+    if ('inheritedFrom' in method && method.inheritedFrom) {
+      lines.push(`*Inherited from \`${method.inheritedFrom}\`*`);
+      lines.push('');
+    }
+
+    // Flags
+    const methodBadges: string[] = [];
+    if (method.flags?.abstract) methodBadges.push('`abstract`');
+    if (methodBadges.length) {
+      lines.push(methodBadges.join(' '));
+      lines.push('');
+    }
+
     if (method.description) {
       lines.push(method.description);
       lines.push('');
@@ -285,6 +375,33 @@ export function exportToMarkdown(exp: SpecExport, options: MarkdownOptions = {})
   parts.push(heading(1, exp.name, offset));
   parts.push('');
 
+  // Decorators
+  if (exp.decorators?.length) {
+    for (const dec of exp.decorators) {
+      const args = dec.argumentsText?.length ? `(${dec.argumentsText.join(', ')})` : '';
+      parts.push(`\`@${dec.name}${args}\``);
+    }
+    parts.push('');
+  }
+
+  // Flags badges
+  const badges: string[] = [];
+  if (exp.flags?.abstract) badges.push('`abstract`');
+  if (exp.flags?.typeOnly) badges.push('`type-only`');
+
+  // Type alias kind badges
+  if (exp.kind === 'type' && 'typeAliasKind' in exp) {
+    const kind = exp.typeAliasKind as string;
+    if (kind === 'conditional') badges.push('`conditional type`');
+    else if (kind === 'mapped') badges.push('`mapped type`');
+    else if (kind === 'template-literal') badges.push('`template literal`');
+  }
+
+  if (badges.length) {
+    parts.push(badges.join(' '));
+    parts.push('');
+  }
+
   // Signature
   if (sections.signature) {
     const sig = buildSignatureString(exp);
@@ -317,6 +434,7 @@ export function exportToMarkdown(exp: SpecExport, options: MarkdownOptions = {})
     case 'function':
       if (sections.parameters) parts.push(renderParameters(primarySig, offset));
       if (sections.returns) parts.push(renderReturns(primarySig, offset));
+      parts.push(renderThrows(primarySig, offset));
       break;
 
     case 'class':

@@ -9,9 +9,28 @@ import type {
 } from '@openpkg-ts/spec';
 
 /**
+ * Format function schema to signature string.
+ */
+function formatFunctionSchema(schema: Record<string, unknown>): string {
+  const sigs = schema['x-ts-signatures'] as SpecSignature[] | undefined;
+  if (!sigs?.length) return '(...args: unknown[]) => unknown';
+
+  const sig = sigs[0];
+  const params = formatParameters(sig);
+  const ret = sig.returns ? formatSchema(sig.returns.schema) : 'void';
+  return `${params} => ${ret}`;
+}
+
+export interface FormatSchemaOptions {
+  /** Include package attribution for external types */
+  includePackage?: boolean;
+}
+
+/**
  * Format a schema to a human-readable type string.
  *
  * @param schema - The schema to format
+ * @param options - Formatting options
  * @returns Formatted type string
  *
  * @example
@@ -19,37 +38,74 @@ import type {
  * formatSchema({ type: 'string' }) // 'string'
  * formatSchema({ $ref: '#/types/User' }) // 'User'
  * formatSchema({ anyOf: [{ type: 'string' }, { type: 'number' }] }) // 'string | number'
+ * formatSchema({ type: 'integer', 'x-ts-type': 'bigint' }) // 'bigint'
+ * formatSchema({ 'x-ts-type': 'Response', 'x-ts-package': 'express' }, { includePackage: true }) // 'Response (from express)'
  * ```
  */
-export function formatSchema(schema: SpecSchema | undefined): string {
+export function formatSchema(schema: SpecSchema | undefined, options?: FormatSchemaOptions): string {
   if (!schema) return 'unknown';
   if (typeof schema === 'string') return schema;
 
+  // Helper to append package info
+  const withPackage = (typeStr: string): string => {
+    if (options?.includePackage && typeof schema === 'object' && 'x-ts-package' in schema) {
+      const pkg = schema['x-ts-package'] as string;
+      return `${typeStr} (from ${pkg})`;
+    }
+    return typeStr;
+  };
+
   if (typeof schema === 'object' && schema !== null) {
-    // Handle $ref
+    // Handle x-ts-type first (preserves original TS type)
+    if ('x-ts-type' in schema && typeof schema['x-ts-type'] === 'string') {
+      const tsType = schema['x-ts-type'];
+      // Handle function types with signatures
+      if (tsType === 'function' || schema['x-ts-function']) {
+        return withPackage(formatFunctionSchema(schema as Record<string, unknown>));
+      }
+      return withPackage(tsType); // bigint, symbol, void, never, etc.
+    }
+
+    // Handle x-ts-function (callable types)
+    if ('x-ts-function' in schema && schema['x-ts-function']) {
+      return withPackage(formatFunctionSchema(schema as Record<string, unknown>));
+    }
+
+    // Handle x-ts-type-predicate (type guards)
+    if ('x-ts-type-predicate' in schema) {
+      const pred = schema['x-ts-type-predicate'] as { parameterName: string; type: SpecSchema };
+      return `${pred.parameterName} is ${formatSchema(pred.type, options)}`;
+    }
+
+    // Handle $ref with x-ts-type-arguments (generics)
     if ('$ref' in schema && typeof schema.$ref === 'string') {
-      return schema.$ref.replace('#/types/', '');
+      const baseName = schema.$ref.replace('#/types/', '');
+      if ('x-ts-type-arguments' in schema && Array.isArray(schema['x-ts-type-arguments'])) {
+        const args = (schema['x-ts-type-arguments'] as SpecSchema[]).map((s) => formatSchema(s, options)).join(', ');
+        return withPackage(`${baseName}<${args}>`);
+      }
+      return withPackage(baseName);
     }
 
     // Handle anyOf (union)
     if ('anyOf' in schema && Array.isArray(schema.anyOf)) {
-      return schema.anyOf.map((s) => formatSchema(s)).join(' | ');
+      return schema.anyOf.map((s) => formatSchema(s, options)).join(' | ');
     }
 
     // Handle allOf (intersection)
     if ('allOf' in schema && Array.isArray(schema.allOf)) {
-      return schema.allOf.map((s) => formatSchema(s)).join(' & ');
+      return schema.allOf.map((s) => formatSchema(s, options)).join(' & ');
     }
 
     // Handle array
     if ('type' in schema && schema.type === 'array') {
-      const items = 'items' in schema ? formatSchema(schema.items as SpecSchema) : 'unknown';
+      const items = 'items' in schema ? formatSchema(schema.items as SpecSchema, options) : 'unknown';
       return `${items}[]`;
     }
 
     // Handle tuple
     if ('type' in schema && schema.type === 'tuple' && 'items' in schema) {
-      const items = (schema.items as SpecSchema[]).map(formatSchema).join(', ');
+      const items = (schema.items as SpecSchema[]).map((s) => formatSchema(s, options)).join(', ');
       return `[${items}]`;
     }
 
@@ -57,7 +113,7 @@ export function formatSchema(schema: SpecSchema | undefined): string {
     if ('type' in schema && schema.type === 'object') {
       if ('properties' in schema && schema.properties) {
         const props = Object.entries(schema.properties)
-          .map(([k, v]) => `${k}: ${formatSchema(v as SpecSchema)}`)
+          .map(([k, v]) => `${k}: ${formatSchema(v as SpecSchema, options)}`)
           .join('; ');
         return `{ ${props} }`;
       }
@@ -66,7 +122,7 @@ export function formatSchema(schema: SpecSchema | undefined): string {
 
     // Handle basic type
     if ('type' in schema && typeof schema.type === 'string') {
-      return schema.type;
+      return withPackage(schema.type);
     }
   }
 
@@ -84,12 +140,20 @@ export function formatSchema(schema: SpecSchema | undefined): string {
  * formatTypeParameters([{ name: 'T' }]) // '<T>'
  * formatTypeParameters([{ name: 'T', constraint: 'object' }]) // '<T extends object>'
  * formatTypeParameters([{ name: 'T', default: 'unknown' }]) // '<T = unknown>'
+ * formatTypeParameters([{ name: 'T', variance: 'in' }]) // '<in T>'
  * ```
  */
 export function formatTypeParameters(typeParams?: SpecTypeParameter[]): string {
   if (!typeParams?.length) return '';
   const params = typeParams.map((tp) => {
-    let str = tp.name;
+    let str = '';
+    // Handle const modifier (TS 5.0+ feature)
+    if ('const' in tp && tp.const) str += 'const ';
+    // Handle variance modifiers
+    if (tp.variance === 'in') str += 'in ';
+    else if (tp.variance === 'out') str += 'out ';
+    else if (tp.variance === 'inout') str += 'in out ';
+    str += tp.name;
     if (tp.constraint) str += ` extends ${tp.constraint}`;
     if (tp.default) str += ` = ${tp.default}`;
     return str;
@@ -292,4 +356,87 @@ export function groupByVisibility(members?: SpecMember[]): {
  */
 export function sortByName<T extends { name: string }>(items: T[]): T[] {
   return [...items].sort((a, b) => a.name.localeCompare(b.name));
+}
+
+/**
+ * Conditional type structure from the spec.
+ */
+export interface SpecConditionalType {
+  checkType: SpecSchema;
+  extendsType: SpecSchema;
+  trueType: SpecSchema;
+  falseType: SpecSchema;
+}
+
+/**
+ * Mapped type structure from the spec.
+ */
+export interface SpecMappedType {
+  keyType: SpecSchema;
+  valueType: SpecSchema;
+  readonly?: boolean | 'add' | 'remove';
+  optional?: boolean | 'add' | 'remove';
+}
+
+/**
+ * Format a conditional type to a human-readable string.
+ *
+ * @param condType - The conditional type structure
+ * @returns Formatted conditional type string
+ *
+ * @example
+ * ```ts
+ * formatConditionalType({
+ *   checkType: { 'x-ts-type': 'T' },
+ *   extendsType: { type: 'string' },
+ *   trueType: { type: 'boolean', const: true },
+ *   falseType: { type: 'boolean', const: false }
+ * })
+ * // 'T extends string ? true : false'
+ * ```
+ */
+export function formatConditionalType(condType: SpecConditionalType): string {
+  const check = formatSchema(condType.checkType);
+  const ext = formatSchema(condType.extendsType);
+  const trueT = formatSchema(condType.trueType);
+  const falseT = formatSchema(condType.falseType);
+  return `${check} extends ${ext} ? ${trueT} : ${falseT}`;
+}
+
+/**
+ * Format a mapped type to a human-readable string.
+ *
+ * @param mappedType - The mapped type structure
+ * @returns Formatted mapped type string
+ *
+ * @example
+ * ```ts
+ * formatMappedType({
+ *   keyType: { 'x-ts-type': 'K in keyof T' },
+ *   valueType: { 'x-ts-type': 'T[K]' },
+ *   readonly: true
+ * })
+ * // '{ readonly [K in keyof T]: T[K] }'
+ * ```
+ */
+export function formatMappedType(mappedType: SpecMappedType): string {
+  const keyStr = formatSchema(mappedType.keyType);
+  const valueStr = formatSchema(mappedType.valueType);
+
+  // Build modifiers
+  let readonlyMod = '';
+  if (mappedType.readonly === true || mappedType.readonly === 'add') {
+    readonlyMod = 'readonly ';
+  } else if (mappedType.readonly === 'remove') {
+    readonlyMod = '-readonly ';
+  }
+
+  let optionalMod = '';
+  if (mappedType.optional === true || mappedType.optional === 'add') {
+    optionalMod = '?';
+  } else if (mappedType.optional === 'remove') {
+    optionalMod = '-?';
+  }
+
+  return `{ ${readonlyMod}[${keyStr}]${optionalMod}: ${valueStr} }`;
 }
