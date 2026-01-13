@@ -785,9 +785,48 @@ function serializeDeclaration(
       result = serializeVariable(declaration, varStatement, ctx);
     }
   } else if (ts.isNamespaceExport(declaration) || ts.isModuleDeclaration(declaration)) {
-    result = serializeNamespaceExport(exportSymbol, exportName, ctx);
+    try {
+      result = serializeNamespaceExport(exportSymbol, exportName, ctx);
+    } catch {
+      // Fallback for namespace exports with parent chain issues
+      result = {
+        id: exportName,
+        name: exportName,
+        kind: 'namespace',
+        tags: [],
+        members: [],
+        examples: [],
+      };
+    }
+  } else if (ts.isNamespaceImport(declaration)) {
+    // Handle `import * as foo` re-exported as `export { foo }`
+    try {
+      result = serializeNamespaceExport(exportSymbol, exportName, ctx);
+    } catch {
+      // Fallback for namespace imports with parent chain issues
+      result = {
+        id: exportName,
+        name: exportName,
+        kind: 'namespace',
+        tags: [],
+        members: [],
+        examples: [],
+      };
+    }
   } else if (ts.isSourceFile(declaration)) {
-    result = serializeNamespaceExport(exportSymbol, exportName, ctx);
+    try {
+      result = serializeNamespaceExport(exportSymbol, exportName, ctx);
+    } catch {
+      // Fallback for source file exports with parent chain issues
+      result = {
+        id: exportName,
+        name: exportName,
+        kind: 'namespace',
+        tags: [],
+        members: [],
+        examples: [],
+      };
+    }
   }
 
   if (result) {

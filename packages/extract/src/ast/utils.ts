@@ -74,7 +74,13 @@ function stripTypeParamSeparator(text: string | undefined): string | undefined {
 function extractSeeTagText(tag: ts.JSDocTag): string {
   // Get the full tag text and extract everything after @see
   // This is the most reliable way to preserve URLs
-  const fullText = tag.getText();
+  let fullText = '';
+  try {
+    fullText = tag.getText();
+  } catch {
+    // getText() may fail on synthetic nodes without parent links
+    return typeof tag.comment === 'string' ? tag.comment : '';
+  }
 
   // Match @see followed by content (including URLs)
   // The regex captures everything after @see, handling multi-line content
@@ -105,7 +111,14 @@ function extractSeeTagText(tag: ts.JSDocTag): string {
           // JSDocLink has a name property (the identifier) and text property
           // For URLs, the name might be undefined and the full URL is in the text
           if (part.name) {
-            parts.push(part.name.getText());
+            try {
+              parts.push(part.name.getText());
+            } catch {
+              // getText() may fail, use identifier text as fallback
+              if (ts.isIdentifier(part.name)) {
+                parts.push(part.name.text);
+              }
+            }
           }
           // The text property contains any text after the link/before the closing brace
           if (part.text) {
@@ -143,13 +156,25 @@ export function getJSDocComment(
     // For @param tags, populate structured param field
     if (tag.tagName.text === 'param') {
       const paramTag = tag as ts.JSDocParameterTag;
-      const paramName = paramTag.name?.getText() ?? '';
+      // Use try-catch for getText() as it may fail on synthetic nodes without parent links
+      let paramName = '';
+      try {
+        paramName = paramTag.name?.getText() ?? '';
+      } catch {
+        // Fallback: try to get name from symbol or use empty
+        paramName = (paramTag.name as ts.Identifier)?.text ?? '';
+      }
       const description = stripParamSeparator(rawText);
       const text = description ? `${paramName} - ${description}` : paramName;
 
       // Extract type from {type} annotation if present
       const typeExpr = paramTag.typeExpression;
-      const type = typeExpr ? typeExpr.type.getText() : undefined;
+      let type: string | undefined;
+      try {
+        type = typeExpr ? typeExpr.type.getText() : undefined;
+      } catch {
+        // getText() failed, skip type extraction
+      }
 
       // Build structured param data
       const param: SpecTagParam = { name: paramName };
@@ -227,7 +252,13 @@ export function getParamDescription(
     if (tag.tagName.text !== 'param') continue;
 
     const paramTag = tag as ts.JSDocParameterTag;
-    const tagParamName = paramTag.name?.getText() ?? '';
+    let tagParamName = '';
+    try {
+      tagParamName = paramTag.name?.getText() ?? '';
+    } catch {
+      // getText() may fail on synthetic nodes without parent links
+      tagParamName = (paramTag.name as ts.Identifier)?.text ?? '';
+    }
 
     // Try matching strategies:
     // 1. Exact match: @param propertyName

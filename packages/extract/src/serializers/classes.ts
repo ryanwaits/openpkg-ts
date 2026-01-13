@@ -161,6 +161,9 @@ function serializeProperty(
   const { description, tags } = getJSDocComment(node);
   const visibility = getVisibility(node);
 
+  // Skip private members - in .d.ts files, private members often have no type info
+  if (visibility === 'private') return null;
+
   // Get property type
   const type = checker.getTypeAtLocation(node);
 

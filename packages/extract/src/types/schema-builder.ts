@@ -239,14 +239,56 @@ function isAtMaxDepth(ctx: SerializerContext | undefined): boolean {
 }
 
 /**
+ * Ensure schema is non-empty — fallback to x-ts-type string representation if empty.
+ * Never emit {} as a schema; always include meaningful type info.
+ */
+export function ensureNonEmptySchema(
+  schema: SpecSchema,
+  type: ts.Type,
+  checker: ts.TypeChecker,
+): SpecSchema {
+  if (typeof schema === 'object' && schema !== null && !Array.isArray(schema)) {
+    // Check if schema has no enumerable keys (would serialize to {})
+    const keys = Object.keys(schema);
+    if (keys.length === 0) {
+      return { 'x-ts-type': checker.typeToString(type) };
+    }
+    // Check if schema would serialize to {} (all values undefined/function/symbol)
+    try {
+      const serialized = JSON.stringify(schema);
+      if (serialized === '{}' || serialized === 'null') {
+        return { 'x-ts-type': checker.typeToString(type) };
+      }
+    } catch {
+      // JSON.stringify failed, return fallback
+      return { 'x-ts-type': checker.typeToString(type) };
+    }
+  }
+  return schema;
+}
+
+/**
  * Build a structured SpecSchema from a TypeScript type.
  * Uses $ref for named types and typeArguments for generics.
+ * Guarantees non-empty schema output via ensureNonEmptySchema wrapper.
  */
 export function buildSchema(
   type: ts.Type,
   checker: ts.TypeChecker,
   ctx?: SerializerContext,
   _depth = 0, // deprecated, use ctx.currentDepth instead
+): SpecSchema {
+  const schema = buildSchemaInternal(type, checker, ctx);
+  return ensureNonEmptySchema(schema, type, checker);
+}
+
+/**
+ * Internal schema builder - may return empty schemas for unhandled cases.
+ */
+function buildSchemaInternal(
+  type: ts.Type,
+  checker: ts.TypeChecker,
+  ctx?: SerializerContext,
 ): SpecSchema {
   // Check depth limit using context
   if (isAtMaxDepth(ctx)) {
@@ -263,13 +305,30 @@ export function buildSchema(
     const symbol = type.getSymbol() || type.aliasSymbol;
     // Only create $ref for named types (not anonymous __type)
     if (symbol && !isAnonymous(type)) {
-      return { $ref: `#/types/${symbol.getName()}` };
+      const name = symbol.getName();
+      const schema: SpecSchema = { $ref: `#/types/${name}` };
+
+      // For generic types, still include typeArguments even on revisit
+      const typeRef = type as ts.TypeReference;
+      if (typeRef.target) {
+        const typeArgs = checker.getTypeArguments(typeRef);
+        if (typeArgs && typeArgs.length > 0) {
+          // Temporarily remove this type from visited to allow typeArg resolution
+          ctx.visitedTypes.delete(type);
+          (schema as Record<string, unknown>).typeArguments = typeArgs.map((t) =>
+            buildSchema(t, checker, ctx),
+          );
+          ctx.visitedTypes.add(type);
+        }
+      }
+
+      return schema;
     }
     // For anonymous types, inline as object if possible
     if (type.flags & ts.TypeFlags.Object) {
       const properties = type.getProperties();
       if (properties.length > 0) {
-        return buildObjectSchema(properties, checker, ctx);
+        return buildObjectSchema(properties, checker, ctx, type);
       }
     }
     return { type: checker.typeToString(type) };
@@ -386,7 +445,14 @@ export function buildSchema(
   // Detect Array interface to prevent prototype expansion
   const symbol = type.getSymbol() || type.aliasSymbol;
   if (symbol?.getName() === 'Array' && isBuiltinSymbol(symbol)) {
-    return { type: 'array', items: {} };
+    // Get type arguments if available, otherwise use unknown
+    const typeRef = type as ts.TypeReference;
+    const typeArgs = typeRef.target ? checker.getTypeArguments(typeRef) : undefined;
+    const elementType = typeArgs?.[0];
+    if (elementType) {
+      return { type: 'array', items: buildSchema(elementType, checker, ctx) };
+    }
+    return { type: 'array', items: { 'x-ts-type': 'unknown' } };
   }
 
   // Array type (T[])
@@ -476,6 +542,44 @@ export function buildSchema(
     }
   }
 
+  // Fallback: check aliasTypeArguments for types where typeRef.target is undefined
+  // This handles cases like return types from getReturnTypeOfSignature() where
+  // the type has generic arguments via aliasSymbol/aliasTypeArguments
+  const aliasTypeArgs = type.aliasTypeArguments;
+  const aliasSymbol = type.aliasSymbol;
+  if (aliasSymbol && aliasTypeArgs && aliasTypeArgs.length > 0) {
+    const name = aliasSymbol.getName();
+
+    // Skip built-in non-generic types
+    if (BUILTIN_TYPES.has(name)) {
+      return { $ref: `#/types/${name}` };
+    }
+
+    if (isBuiltinGeneric(name) || !name.startsWith('__')) {
+      const packageOrigin = getTypeOrigin(type, checker);
+      if (ctx) {
+        return withDepth(ctx, () => {
+          const schema: SpecSchema = {
+            $ref: `#/types/${name}`,
+            typeArguments: aliasTypeArgs.map((t) => buildSchema(t, checker, ctx)),
+          };
+          if (packageOrigin) {
+            (schema as Record<string, unknown>)['x-ts-package'] = packageOrigin;
+          }
+          return schema;
+        });
+      }
+      const schema: SpecSchema = {
+        $ref: `#/types/${name}`,
+        typeArguments: aliasTypeArgs.map((t) => buildSchema(t, checker, ctx)),
+      };
+      if (packageOrigin) {
+        (schema as Record<string, unknown>)['x-ts-package'] = packageOrigin;
+      }
+      return schema;
+    }
+  }
+
   // Function types - check BEFORE named types to avoid $ref to function names
   if (type.flags & ts.TypeFlags.Object) {
     const callSignatures = type.getCallSignatures();
@@ -517,7 +621,7 @@ export function buildSchema(
     // Object with properties
     const properties = type.getProperties();
     if (properties.length > 0 || objectType.objectFlags & ts.ObjectFlags.Anonymous) {
-      return buildObjectSchema(properties, checker, ctx);
+      return buildObjectSchema(properties, checker, ctx, type);
     }
   }
 
@@ -569,6 +673,7 @@ function buildObjectSchema(
   properties: ts.Symbol[],
   checker: ts.TypeChecker,
   ctx: SerializerContext | undefined,
+  originalType?: ts.Type,
 ): SpecSchema {
   const buildProps = () => {
     const props: Record<string, SpecSchema> = {};
@@ -594,11 +699,18 @@ function buildObjectSchema(
       }
     }
 
-    return {
+    const schema: SpecSchema = {
       type: 'object' as const,
       properties: props,
       ...(required.length > 0 ? { required } : {}),
     };
+
+    // Add x-ts-type for empty properties to provide context
+    if (Object.keys(props).length === 0 && originalType) {
+      (schema as Record<string, unknown>)['x-ts-type'] = checker.typeToString(originalType);
+    }
+
+    return schema;
   };
 
   if (ctx) {

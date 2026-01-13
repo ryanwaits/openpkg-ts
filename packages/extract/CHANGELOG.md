@@ -1,5 +1,11 @@
 # @openpkg-ts/extract
 
+## 0.29.0
+
+### Minor Changes
+
+- Add workspace re-export resolution for monorepos using pnpm-workspace.yaml or package.json workspaces
+
 ## 0.28.0
 
 ### Minor Changes
