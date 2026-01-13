@@ -104,7 +104,7 @@ const BUILTIN_TYPES = new Set([
 
 // Array prototype methods that should be skipped when processing tuple/array elements
 // These methods cause "explosion" when empty arrays or tuples fall through to object handling
-export const ARRAY_PROTOTYPE_METHODS = new Set([
+export const ARRAY_PROTOTYPE_METHODS: Set<string> = new Set([
   // Mutating methods
   'pop',
   'push',
