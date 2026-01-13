@@ -95,6 +95,13 @@ export function serializeClass(
   // Extract implements clause
   const implementsClause = getImplementsClause(node, checker);
 
+  // Check for class-level flags (abstract class)
+  const classFlags: Record<string, unknown> = {};
+  const classModifiers = ts.getModifiers(node);
+  if (classModifiers?.some((m) => m.kind === ts.SyntaxKind.AbstractKeyword)) {
+    classFlags.abstract = true;
+  }
+
   return {
     id: name,
     name,
@@ -109,6 +116,7 @@ export function serializeClass(
     implements: implementsClause?.length ? implementsClause : undefined,
     ...(deprecated ? { deprecated: true } : {}),
     ...(examples.length > 0 ? { examples } : {}),
+    ...(Object.keys(classFlags).length > 0 ? { flags: classFlags } : {}),
   };
 }
 
@@ -218,10 +226,13 @@ function serializeMethod(node: ts.MethodDeclaration, ctx: SerializerContext): Sp
   if (isStatic(node)) flags.static = true;
   if (node.asteriskToken) flags.generator = true;
 
-  // Check for async
+  // Check for async and abstract
   const modifiers = ts.getModifiers(node);
   if (modifiers?.some((m) => m.kind === ts.SyntaxKind.AsyncKeyword)) {
     flags.async = true;
+  }
+  if (modifiers?.some((m) => m.kind === ts.SyntaxKind.AbstractKeyword)) {
+    flags.abstract = true;
   }
 
   return {
@@ -273,6 +284,27 @@ function serializeAccessor(
   const flags: Record<string, unknown> = {};
   if (isStatic(node)) flags.static = true;
 
+  // For setters, extract parameter info into signatures array
+  let signatures: SpecSignature[] | undefined;
+  if (ts.isSetAccessorDeclaration(node) && node.parameters.length > 0) {
+    const param = node.parameters[0];
+    const paramName = param.name.getText();
+    const paramType = checker.getTypeAtLocation(param);
+    registerReferencedTypes(paramType, ctx);
+
+    signatures = [
+      {
+        parameters: [
+          {
+            name: paramName,
+            schema: buildSchema(paramType, checker, ctx),
+            required: true,
+          },
+        ],
+      },
+    ];
+  }
+
   return {
     name,
     kind,
@@ -280,6 +312,7 @@ function serializeAccessor(
     tags: tags.length > 0 ? tags : undefined,
     visibility,
     schema,
+    signatures,
     flags: Object.keys(flags).length > 0 ? flags : undefined,
   };
 }

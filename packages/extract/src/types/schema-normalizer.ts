@@ -7,10 +7,10 @@
  * Type Mappings:
  * | SpecSchema                    | JSON Schema 2020-12                                |
  * |-------------------------------|---------------------------------------------------|
- * | { type: 'void' }              | { "type": "null" }                                |
+ * | { type: 'void' }              | { "type": "null", "x-ts-type": "void" }           |
  * | { type: 'never' }             | { "not": {} }                                     |
  * | { type: 'any' }               | {}                                                |
- * | { type: 'unknown' }           | {}                                                |
+ * | { type: 'unknown' }           | { "x-ts-type": "unknown" }                        |
  * | { type: 'undefined' }         | { "type": "null" }                                |
  * | { type: 'bigint' }            | { "type": "integer", "x-ts-type": "bigint" }      |
  * | { type: 'symbol' }            | { "type": "string", "x-ts-type": "symbol" }       |
@@ -51,11 +51,12 @@ const SCHEMA_DIALECT_URLS: Record<string, string> = {
 };
 
 // TypeScript primitive types that need special handling
+// All mappings produce valid JSON Schema while preserving TS type info via x-ts-type
 const TS_PRIMITIVE_NORMALIZATIONS: Record<string, () => JSONSchema> = {
-  void: () => ({ type: 'null' }),
+  void: () => ({ type: 'null', 'x-ts-type': 'void' }),
   never: () => ({ not: {} }),
   any: () => ({}),
-  unknown: () => ({}),
+  unknown: () => ({ 'x-ts-type': 'unknown' }),
   undefined: () => ({ type: 'null' }),
   bigint: () => ({ type: 'integer', 'x-ts-type': 'bigint' }),
   symbol: () => ({ type: 'string', 'x-ts-type': 'symbol' }),

@@ -310,14 +310,14 @@ export async function extract(options: ExtractOptions): Promise<ExtractResult> {
     }
 
     try {
-      const { declaration, targetSymbol } = resolveExportTarget(symbol, typeChecker);
+      const { declaration, targetSymbol, isTypeOnly } = resolveExportTarget(symbol, typeChecker);
       if (!declaration) {
         tracker.status = 'skipped';
         tracker.skipReason = 'no-declaration';
         continue;
       }
 
-      const exp = serializeDeclaration(declaration, symbol, targetSymbol, exportName, ctx);
+      const exp = serializeDeclaration(declaration, symbol, targetSymbol, exportName, ctx, isTypeOnly);
       if (exp) {
         exports.push(exp);
         tracker.status = 'success';
@@ -714,13 +714,34 @@ function collectForgottenExports(
 }
 
 /**
+ * Check if an export symbol is a type-only export (export type { X }).
+ */
+function isTypeOnlyExport(symbol: ts.Symbol): boolean {
+  const declarations = symbol.declarations ?? [];
+  for (const decl of declarations) {
+    // Check if this is an ExportSpecifier
+    if (ts.isExportSpecifier(decl)) {
+      // Check if the specifier itself is type-only
+      if (decl.isTypeOnly) return true;
+      // Check if the parent ExportDeclaration is type-only
+      const exportDecl = decl.parent?.parent;
+      if (exportDecl && ts.isExportDeclaration(exportDecl) && exportDecl.isTypeOnly) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+/**
  * Follows export aliases back to the declaration that carries the type info.
  */
 function resolveExportTarget(
   symbol: ts.Symbol,
   checker: ts.TypeChecker,
-): { declaration?: ts.Declaration; targetSymbol: ts.Symbol } {
+): { declaration?: ts.Declaration; targetSymbol: ts.Symbol; isTypeOnly: boolean } {
   let targetSymbol = symbol;
+  const isTypeOnly = isTypeOnlyExport(symbol);
 
   if (symbol.flags & ts.SymbolFlags.Alias) {
     const aliasTarget = checker.getAliasedSymbol(symbol);
@@ -735,7 +756,7 @@ function resolveExportTarget(
     declarations.find((decl) => decl.kind !== ts.SyntaxKind.ExportSpecifier) ||
     declarations[0];
 
-  return { declaration, targetSymbol };
+  return { declaration, targetSymbol, isTypeOnly };
 }
 
 function serializeDeclaration(
@@ -744,6 +765,7 @@ function serializeDeclaration(
   _targetSymbol: ts.Symbol,
   exportName: string,
   ctx: SerializerContext,
+  isTypeOnly = false,
 ): SpecExport | null {
   let result: SpecExport | null = null;
 
@@ -770,6 +792,13 @@ function serializeDeclaration(
 
   if (result) {
     result = withExportName(result, exportName);
+    // Add typeOnly flag for type-only re-exports
+    if (isTypeOnly) {
+      result = {
+        ...result,
+        flags: { ...(result.flags ?? {}), typeOnly: true },
+      };
+    }
   }
 
   return result;

@@ -1,5 +1,11 @@
 # @openpkg-ts/extract
 
+## 0.28.0
+
+### Minor Changes
+
+- Enhanced type extraction: typeOnly flag for re-exports, abstract class/method flags, setter parameter signatures, interface call overload aggregation, x-ts-type extensions for void/unknown/this
+
 ## 0.27.2
 
 ### Patch Changes

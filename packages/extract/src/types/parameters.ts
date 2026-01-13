@@ -4,6 +4,27 @@ import { getParamDescription } from '../ast/utils';
 import type { SerializerContext } from '../serializers/context';
 import { buildSchema } from './schema-builder';
 
+/**
+ * Strip `undefined` from a union type when the parameter is already optional.
+ * This avoids redundant `{ anyOf: [{ type: 'number' }, { type: 'undefined' }] }`
+ * when `required: false` already expresses optionality.
+ */
+function stripUndefinedFromType(type: ts.Type, checker: ts.TypeChecker): ts.Type {
+  if (!type.isUnion()) return type;
+
+  // Filter out undefined from the union
+  const nonUndefinedTypes = type.types.filter((t) => !(t.flags & ts.TypeFlags.Undefined));
+
+  // If no types remain or all were undefined, return original
+  if (nonUndefinedTypes.length === 0) return type;
+
+  // If only one type remains, return it directly
+  if (nonUndefinedTypes.length === 1) return nonUndefinedTypes[0];
+
+  // Otherwise, create a new union type without undefined
+  return checker.getUnionType(nonUndefinedTypes);
+}
+
 export function extractParameters(
   signature: ts.Signature,
   ctx: SerializerContext,
@@ -25,13 +46,27 @@ export function extractParameters(
       result.push(...expandedParams);
     } else {
       // Regular parameter
-      registerReferencedTypes(type, ctx);
+      const isOptional = !!(param.flags & 16777216); /* Optional */
 
-      result.push({
-        name: param.getName(),
-        schema: buildSchema(type, checker, ctx),
-        required: !((param.flags & 16777216) /* Optional */),
-      });
+      // Strip undefined from optional params - optionality is expressed via required: false
+      const effectiveType = isOptional ? stripUndefinedFromType(type, checker) : type;
+      registerReferencedTypes(effectiveType, ctx);
+
+      // Get description from @param tag
+      const paramName = param.getName();
+      const description = getParamDescription(paramName, jsdocTags);
+
+      const paramResult: SpecSignatureParameter = {
+        name: paramName,
+        schema: buildSchema(effectiveType, checker, ctx),
+        required: !isOptional,
+      };
+
+      if (description) {
+        paramResult.description = description;
+      }
+
+      result.push(paramResult);
     }
   }
 
@@ -74,19 +109,21 @@ function expandBindingPattern(
     const propSymbol = allProperties.get(propertyName);
     if (!propSymbol) continue;
 
-    const propType = checker.getTypeOfSymbol(propSymbol);
-    registerReferencedTypes(propType, ctx);
-
     // Check optionality: property is optional OR has default value
     const isOptional =
       !!(propSymbol.flags & ts.SymbolFlags.Optional) || element.initializer !== undefined;
+
+    const propType = checker.getTypeOfSymbol(propSymbol);
+    // Strip undefined from optional props - optionality is expressed via required: false
+    const effectiveType = isOptional ? stripUndefinedFromType(propType, checker) : propType;
+    registerReferencedTypes(effectiveType, ctx);
 
     // Get description from JSDoc
     const description = getParamDescription(propertyName, jsdocTags, inferredAlias);
 
     const param: SpecSignatureParameter = {
       name: propertyName,
-      schema: buildSchema(propType, checker, ctx),
+      schema: buildSchema(effectiveType, checker, ctx),
       required: !isOptional,
     };
 

@@ -9,10 +9,10 @@ import {
 
 describe('normalizeSchema', () => {
   describe('primitive type normalization', () => {
-    test('void → null', () => {
+    test('void → null with x-ts-type', () => {
       const input: SpecSchema = { type: 'void' };
       const result = normalizeSchema(input);
-      expect(result).toEqual({ type: 'null' });
+      expect(result).toEqual({ type: 'null', 'x-ts-type': 'void' });
     });
 
     test('never → not {}', () => {
@@ -27,10 +27,10 @@ describe('normalizeSchema', () => {
       expect(result).toEqual({});
     });
 
-    test('unknown → {}', () => {
+    test('unknown → x-ts-type extension only', () => {
       const input: SpecSchema = { type: 'unknown' };
       const result = normalizeSchema(input);
-      expect(result).toEqual({});
+      expect(result).toEqual({ 'x-ts-type': 'unknown' });
     });
 
     test('undefined → null', () => {
@@ -54,7 +54,7 @@ describe('normalizeSchema', () => {
     test('preserves description on primitive types', () => {
       const input: SpecSchema = { type: 'void', description: 'Returns nothing' } as SpecSchema;
       const result = normalizeSchema(input);
-      expect(result).toEqual({ type: 'null', description: 'Returns nothing' });
+      expect(result).toEqual({ type: 'null', 'x-ts-type': 'void', description: 'Returns nothing' });
     });
   });
 
@@ -143,7 +143,7 @@ describe('normalizeSchema', () => {
             parameters: [
               { name: 'x', schema: { type: 'integer', 'x-ts-type': 'bigint' }, required: true },
             ],
-            returns: { schema: { type: 'null' } },
+            returns: { schema: { type: 'null', 'x-ts-type': 'void' } },
           },
         ],
       });
@@ -333,7 +333,7 @@ describe('normalizeSchema', () => {
       };
       const result = normalizeSchema(input);
       expect(result).toEqual({
-        anyOf: [{ type: 'string' }, { type: 'null' }, { not: {} }],
+        anyOf: [{ type: 'string' }, { type: 'null', 'x-ts-type': 'void' }, { not: {} }],
       });
     });
 
@@ -356,7 +356,7 @@ describe('normalizeSchema', () => {
       };
       const result = normalizeSchema(input);
       expect(result).toEqual({
-        oneOf: [{}, {}],
+        oneOf: [{}, { 'x-ts-type': 'unknown' }],
       });
     });
 
@@ -381,10 +381,10 @@ describe('normalizeSchema', () => {
     });
 
     test('TypeScript type string shorthand', () => {
-      expect(normalizeSchema('void' as SpecSchema)).toEqual({ type: 'null' });
+      expect(normalizeSchema('void' as SpecSchema)).toEqual({ type: 'null', 'x-ts-type': 'void' });
       expect(normalizeSchema('never' as SpecSchema)).toEqual({ not: {} });
       expect(normalizeSchema('any' as SpecSchema)).toEqual({});
-      expect(normalizeSchema('unknown' as SpecSchema)).toEqual({});
+      expect(normalizeSchema('unknown' as SpecSchema)).toEqual({ 'x-ts-type': 'unknown' });
       expect(normalizeSchema('bigint' as SpecSchema)).toEqual({
         type: 'integer',
         'x-ts-type': 'bigint',
@@ -439,7 +439,7 @@ describe('normalizeSchema', () => {
               nestedArray: {
                 type: 'array',
                 items: {
-                  anyOf: [{ type: 'null' }, { not: {} }, { type: 'string', 'x-ts-type': 'symbol' }],
+                  anyOf: [{ type: 'null', 'x-ts-type': 'void' }, { not: {} }, { type: 'string', 'x-ts-type': 'symbol' }],
                 },
               },
             },
@@ -459,7 +459,7 @@ describe('normalizeExport', () => {
       schema: { type: 'void' },
     };
     const result = normalizeExport(input);
-    expect(result.schema).toEqual({ type: 'null' });
+    expect(result.schema).toEqual({ type: 'null', 'x-ts-type': 'void' });
   });
 
   test('normalizes export signatures', () => {
@@ -479,7 +479,7 @@ describe('normalizeExport', () => {
       type: 'integer',
       'x-ts-type': 'bigint',
     });
-    expect(result.signatures![0].returns!.schema).toEqual({ type: 'null' });
+    expect(result.signatures![0].returns!.schema).toEqual({ type: 'null', 'x-ts-type': 'void' });
   });
 
   test('normalizes export members', () => {
@@ -535,7 +535,7 @@ describe('normalizeType', () => {
       properties: {
         callback: {
           'x-ts-function': true,
-          'x-ts-signatures': [{ returns: { schema: { type: 'null' } } }],
+          'x-ts-signatures': [{ returns: { schema: { type: 'null', 'x-ts-type': 'void' } } }],
         },
       },
       required: ['callback'],
@@ -659,7 +659,7 @@ describe('normalizeMembers', () => {
             parameters: [
               { name: 'input', schema: { type: 'integer', 'x-ts-type': 'bigint' }, required: true },
             ],
-            returns: { schema: { type: 'null' } },
+            returns: { schema: { type: 'null', 'x-ts-type': 'void' } },
           },
         ],
       });
@@ -700,7 +700,7 @@ describe('normalizeMembers', () => {
           'x-ts-signatures': [
             {
               parameters: [{ name: 'args', schema: { type: 'array' }, required: true }],
-              returns: { schema: { type: 'null' } },
+              returns: { schema: { type: 'null', 'x-ts-type': 'void' } },
             },
           ],
         },
@@ -892,7 +892,7 @@ describe('normalizeMembers', () => {
           'x-ts-signatures': [
             {
               parameters: [{ name: 'event', schema: { type: 'object' }, required: true }],
-              returns: { schema: { type: 'null' } },
+              returns: { schema: { type: 'null', 'x-ts-type': 'void' } },
             },
           ],
         },
@@ -1003,7 +1003,7 @@ describe('normalizeExport with members schema generation', () => {
         value: { type: 'number' },
         increment: {
           'x-ts-function': true,
-          'x-ts-signatures': [{ returns: { schema: { type: 'null' } } }],
+          'x-ts-signatures': [{ returns: { schema: { type: 'null', 'x-ts-type': 'void' } } }],
         },
       },
       required: ['value', 'increment'],
@@ -1127,7 +1127,7 @@ describe('extract pipeline integration', () => {
           'x-ts-signatures': [
             {
               parameters: [{ name: 'event', schema: { type: 'string' }, required: true }],
-              returns: { schema: { type: 'null' } }, // void → null
+              returns: { schema: { type: 'null', 'x-ts-type': 'void' } },
             },
           ],
         },
@@ -1184,11 +1184,11 @@ describe('extract pipeline integration', () => {
 
     const result = normalizeExport(functionExport);
 
-    expect(result.signatures![0].parameters![0].schema).toEqual({}); // unknown → {}
+    expect(result.signatures![0].parameters![0].schema).toEqual({ 'x-ts-type': 'unknown' });
     expect(result.signatures![0].returns!.schema).toEqual({
       anyOf: [
         { type: 'string' },
-        { type: 'null' }, // void → null
+        { type: 'null', 'x-ts-type': 'void' },
         { not: {} }, // never → not {}
       ],
     });
@@ -1239,6 +1239,8 @@ describe('snapshot tests for complex types', () => {
     };
 
     const result = normalizeSchema(input);
+    // Verify the structure is as expected (snapshot will capture full structure)
+    expect(result.type).toBe('object');
     expect(result).toMatchSnapshot();
   });
 
@@ -1443,6 +1445,7 @@ describe('AJV validation - normalized output is valid JSON Schema', () => {
   }
 
   describe('primitive type schemas are valid', () => {
+    // All TypeScript primitive types normalize to valid JSON Schema
     test.each([
       ['void', { type: 'void' }],
       ['never', { type: 'never' }],
@@ -1457,6 +1460,20 @@ describe('AJV validation - normalized output is valid JSON Schema', () => {
       ['null', { type: 'null' }],
     ])('%s normalizes to valid JSON Schema', (_name, input) => {
       const result = normalizeSchema(input as SpecSchema);
+      expect(validateSchema(result)).toBe(true);
+    });
+
+    // void normalizes to { type: 'null', 'x-ts-type': 'void' } - valid JSON Schema
+    test('void normalizes to null with x-ts-type extension', () => {
+      const result = normalizeSchema({ type: 'void' } as SpecSchema);
+      expect(result).toEqual({ type: 'null', 'x-ts-type': 'void' });
+      expect(validateSchema(result)).toBe(true);
+    });
+
+    // unknown normalizes to { 'x-ts-type': 'unknown' } - valid JSON Schema (empty-ish object)
+    test('unknown normalizes with x-ts-type extension', () => {
+      const result = normalizeSchema({ type: 'unknown' } as SpecSchema);
+      expect(result).toEqual({ 'x-ts-type': 'unknown' });
       expect(validateSchema(result)).toBe(true);
     });
   });
@@ -1638,9 +1655,19 @@ describe('AJV validation - normalized output is valid JSON Schema', () => {
 
     test('oneOf', () => {
       const input: SpecSchema = {
-        oneOf: [{ type: 'void' }, { type: 'never' }, { type: 'unknown' }],
+        oneOf: [{ type: 'string' }, { type: 'never' }, { type: 'unknown' }],
       };
       const result = normalizeSchema(input);
+      expect(validateSchema(result)).toBe(true);
+    });
+
+    test('oneOf with void normalizes to valid JSON Schema', () => {
+      const input: SpecSchema = {
+        oneOf: [{ type: 'void' }, { type: 'string' }],
+      };
+      const result = normalizeSchema(input);
+      // void normalizes to { type: 'null', 'x-ts-type': 'void' } - valid JSON Schema
+      expect(result.oneOf).toContainEqual({ type: 'null', 'x-ts-type': 'void' });
       expect(validateSchema(result)).toBe(true);
     });
 
@@ -1758,7 +1785,7 @@ describe('AJV validation - normalized output is valid JSON Schema', () => {
             ],
             returns: {
               schema: {
-                anyOf: [{ type: 'string' }, { type: 'void' }],
+                anyOf: [{ type: 'string' }, { type: 'null' }],
               },
             },
           },
@@ -1767,9 +1794,26 @@ describe('AJV validation - normalized output is valid JSON Schema', () => {
       const result = normalizeExport(exp);
       // Function exports don't generate schema from members
       expect(result.signatures).toBeDefined();
-      // Verify normalized signatures are valid
+      // Verify normalized signatures are valid (using null instead of void for JSON Schema validity)
       const sigSchema = result.signatures![0].returns!.schema;
       expect(validateSchema(sigSchema as Record<string, unknown>)).toBe(true);
+    });
+
+    test('function export with void return normalizes to valid JSON Schema', () => {
+      const exp: SpecExport = {
+        id: 'doSomething',
+        name: 'doSomething',
+        kind: 'function',
+        signatures: [
+          {
+            parameters: [],
+            returns: { schema: { type: 'void' } },
+          },
+        ],
+      };
+      const result = normalizeExport(exp);
+      // void normalizes to null with x-ts-type extension
+      expect(result.signatures![0].returns!.schema).toEqual({ type: 'null', 'x-ts-type': 'void' });
     });
   });
 
@@ -2101,13 +2145,16 @@ describe('Zod runtime vs normalized static output comparison', () => {
       expect(normalized['x-ts-type']).toBe('symbol');
     });
 
-    test('void maps to null', () => {
-      // z.void() exists but in practice functions returning void don't have JSON Schema
+    test('void maps to null with x-ts-type extension', () => {
+      // void is semantically different from null in TypeScript
+      // void means "no return value" while null is an explicit value
+      // We map to null for JSON Schema validity, but preserve 'void' in x-ts-type
 
       const staticSchema: SpecSchema = { type: 'void' };
       const normalized = normalizeSchema(staticSchema);
 
       expect(normalized.type).toBe('null');
+      expect(normalized['x-ts-type']).toBe('void');
     });
 
     test('function types use x-ts-function extension', () => {

@@ -294,6 +294,19 @@ export function buildSchema(
   if (type.flags & ts.TypeFlags.BigInt) return { type: 'bigint' };
   if (type.flags & ts.TypeFlags.ESSymbol) return { type: 'symbol' };
 
+  // Handle 'this' type - mark with x-ts-type for fluent patterns
+  if (type.isThisType?.()) {
+    // Get the constraint (the class type) and create a $ref with this marker
+    const constraint = type.getConstraint?.();
+    const symbol = constraint?.getSymbol() ?? type.getSymbol();
+    if (symbol && !isAnonymous(type)) {
+      return {
+        $ref: `#/types/${symbol.getName()}`,
+        'x-ts-type': 'this',
+      } as SpecSchema;
+    }
+  }
+
   // String literal
   if (type.flags & ts.TypeFlags.StringLiteral) {
     const literal = (type as ts.StringLiteralType).value;
@@ -338,9 +351,12 @@ export function buildSchema(
   }
 
   // Intersection types → allOf
-  if (type.isIntersection()) {
+  // Use both isIntersection() and TypeFlags.Intersection to catch all cases
+  const isIntersectionType = type.isIntersection() || !!(type.flags & ts.TypeFlags.Intersection);
+  if (isIntersectionType && 'types' in type) {
+    const intersectionType = type as ts.IntersectionType;
     // Filter out `never` types from intersection
-    const filteredTypes = type.types.filter((t) => !(t.flags & ts.TypeFlags.Never));
+    const filteredTypes = intersectionType.types.filter((t) => !(t.flags & ts.TypeFlags.Never));
 
     // Handle degenerate cases
     if (filteredTypes.length === 0) {
@@ -374,9 +390,11 @@ export function buildSchema(
   }
 
   // Array type (T[])
+  // Use checker.getTypeArguments() for consistent type argument resolution
   if (checker.isArrayType(type)) {
-    const typeRef = type as ts.TypeReference;
-    const elementType = typeRef.typeArguments?.[0];
+    const arrayTypeRef = type as ts.TypeReference;
+    const arrayTypeArgs = checker.getTypeArguments(arrayTypeRef);
+    const elementType = arrayTypeArgs?.[0];
     if (elementType) {
       if (ctx) {
         return withDepth(ctx, () => ({
@@ -390,9 +408,10 @@ export function buildSchema(
   }
 
   // Tuple type - uses prefixedItems per JSON Schema 2020-12
+  // Use checker.getTypeArguments() for consistent type argument resolution
   if (checker.isTupleType(type)) {
-    const typeRef = type as ts.TypeReference;
-    const elementTypes = typeRef.typeArguments ?? [];
+    const tupleTypeRef = type as ts.TypeReference;
+    const elementTypes = checker.getTypeArguments(tupleTypeRef) ?? [];
     if (ctx) {
       return withDepth(ctx, () => {
         // Set flag to indicate we're processing tuple elements
@@ -419,8 +438,11 @@ export function buildSchema(
   }
 
   // Generic type reference (Promise<T>, Result<T,E>, etc.)
+  // Use checker.getTypeArguments() instead of typeRef.typeArguments as the latter
+  // may not be populated for resolved types (e.g., from getReturnTypeOfSignature)
   const typeRef = type as ts.TypeReference;
-  if (typeRef.target && typeRef.typeArguments && typeRef.typeArguments.length > 0) {
+  const typeArgs = typeRef.target ? checker.getTypeArguments(typeRef) : undefined;
+  if (typeRef.target && typeArgs && typeArgs.length > 0) {
     const symbol = typeRef.target.getSymbol();
     const name = symbol?.getName();
 
@@ -435,7 +457,7 @@ export function buildSchema(
         return withDepth(ctx, () => {
           const schema: SpecSchema = {
             $ref: `#/types/${name}`,
-            typeArguments: typeRef.typeArguments!.map((t) => buildSchema(t, checker, ctx)),
+            typeArguments: typeArgs.map((t) => buildSchema(t, checker, ctx)),
           };
           if (packageOrigin) {
             (schema as Record<string, unknown>)['x-ts-package'] = packageOrigin;
@@ -445,7 +467,7 @@ export function buildSchema(
       }
       const schema: SpecSchema = {
         $ref: `#/types/${name}`,
-        typeArguments: typeRef.typeArguments.map((t) => buildSchema(t, checker, ctx)),
+        typeArguments: typeArgs.map((t) => buildSchema(t, checker, ctx)),
       };
       if (packageOrigin) {
         (schema as Record<string, unknown>)['x-ts-package'] = packageOrigin;

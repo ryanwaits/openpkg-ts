@@ -32,6 +32,8 @@ export function serializeInterface(
   // Extract members: properties, methods, call signatures
   const members: SpecMember[] = [];
   const methodsByName = new Map<string, SpecMember>();
+  // Aggregate call signatures (overloads) into a single member
+  let callSignatureMember: SpecMember | null = null;
 
   for (const member of node.members) {
     if (ts.isPropertySignature(member)) {
@@ -39,16 +41,56 @@ export function serializeInterface(
       if (propMember) members.push(propMember);
     } else if (ts.isMethodSignature(member)) {
       const methodMember = serializeMethodSignature(member, ctx);
-      if (methodMember?.name) {
-        // Dedupe methods by name
-        if (!methodsByName.has(methodMember.name)) {
+      if (methodMember?.name && methodMember.signatures) {
+        // Merge method overloads by name
+        const existing = methodsByName.get(methodMember.name);
+        if (existing && existing.signatures) {
+          // Add overload index to merged signatures
+          const startIndex = existing.signatures.length;
+          const newSigs = methodMember.signatures.map((sig, i) => ({
+            ...sig,
+            overloadIndex: startIndex + i,
+          }));
+          // Also add overload index to existing signatures if not present
+          if (existing.signatures.length > 0 && existing.signatures[0].overloadIndex === undefined) {
+            existing.signatures = existing.signatures.map((sig, i) => ({
+              ...sig,
+              overloadIndex: i,
+            }));
+          }
+          existing.signatures.push(...newSigs);
+        } else {
           methodsByName.set(methodMember.name, methodMember);
         }
       }
     } else if (ts.isCallSignatureDeclaration(member)) {
-      // Callable interface: interface Foo { (): void }
-      const callMember = serializeCallSignature(member, ctx);
-      if (callMember) members.push(callMember);
+      // Callable interface: interface Foo { (): void; (arg: T): string }
+      // Aggregate all call signatures into a single member with multiple signatures
+      const callSig = serializeCallSignature(member, ctx);
+      if (callSig && callSig.signatures) {
+        if (callSignatureMember && callSignatureMember.signatures) {
+          // Add overload index to merged signatures
+          const startIndex = callSignatureMember.signatures.length;
+          const newSigs = callSig.signatures.map((sig, i) => ({
+            ...sig,
+            overloadIndex: startIndex + i,
+          }));
+          // Also add overload index to existing signatures if not present
+          if (callSignatureMember.signatures.length > 0 && callSignatureMember.signatures[0].overloadIndex === undefined) {
+            callSignatureMember.signatures = callSignatureMember.signatures.map((sig, i) => ({
+              ...sig,
+              overloadIndex: i,
+            }));
+          }
+          callSignatureMember.signatures.push(...newSigs);
+          // Merge descriptions if both exist
+          if (callSig.description && !callSignatureMember.description) {
+            callSignatureMember.description = callSig.description;
+          }
+        } else {
+          callSignatureMember = callSig;
+        }
+      }
     } else if (ts.isIndexSignatureDeclaration(member)) {
       // Index signature: interface Foo { [key: string]: number }
       const indexMember = serializeIndexSignature(member, ctx);
@@ -56,11 +98,23 @@ export function serializeInterface(
     }
   }
 
-  // Add deduplicated methods
+  // Add aggregated call signature member if present
+  if (callSignatureMember) {
+    members.push(callSignatureMember);
+  }
+
+  // Add deduplicated methods with merged overloads
   members.push(...methodsByName.values());
 
   // Extract extends clause
   const extendsClause = getInterfaceExtends(node, checker);
+
+  // For callable interfaces, extract call signatures to export-level signatures array
+  // This makes it easier for consumers to know the interface is callable
+  const exportSignatures: SpecSignature[] | undefined =
+    callSignatureMember?.signatures && callSignatureMember.signatures.length > 0
+      ? callSignatureMember.signatures
+      : undefined;
 
   return {
     id: name,
@@ -71,6 +125,7 @@ export function serializeInterface(
     source,
     typeParameters,
     members: members.length > 0 ? members : undefined,
+    signatures: exportSignatures,
     extends: extendsClause,
     ...(deprecated ? { deprecated: true } : {}),
     ...(examples.length > 0 ? { examples } : {}),
@@ -204,15 +259,14 @@ function serializeIndexSignature(
     : checker.getStringType();
   const keyTypeName = checker.typeToString(keyType);
 
+  // The member represents "what type do values have" - just the value schema
+  // The parent interface schema will use additionalProperties for the full object
   return {
     name: `[${keyTypeName}]`,
     kind: 'index-signature',
     description,
     tags: tags.length > 0 ? tags : undefined,
-    schema: {
-      type: 'object',
-      additionalProperties: valueSchema,
-    },
+    schema: valueSchema,
   };
 }
 
