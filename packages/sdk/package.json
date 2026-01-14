@@ -1,0 +1,60 @@
+{
+  "name": "@openpkg-ts/sdk",
+  "version": "0.30.0",
+  "description": "TypeScript API extraction SDK - programmatic primitives for OpenPkg specs",
+  "keywords": [
+    "openpkg",
+    "typescript",
+    "api-extractor",
+    "sdk",
+    "type-extraction"
+  ],
+  "homepage": "https://github.com/doccov/doccov#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/doccov/doccov.git",
+    "directory": "packages/sdk"
+  },
+  "license": "MIT",
+  "author": "Ryan Waits",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "bunup",
+    "dev": "bunup --watch",
+    "lint": "biome check src/",
+    "lint:fix": "biome check --write src/",
+    "format": "biome format --write src/",
+    "test": "bun test"
+  },
+  "dependencies": {
+    "@openpkg-ts/spec": "workspace:*",
+    "typescript": "^5.0.0"
+  },
+  "peerDependencies": {
+    "shiki": "^1.0.0"
+  },
+  "peerDependenciesMeta": {
+    "shiki": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/node": "^20.0.0",
+    "bunup": "latest"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

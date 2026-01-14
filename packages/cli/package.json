@@ -1,0 +1,26 @@
+{
+  "name": "@openpkg-ts/cli",
+  "version": "0.2.0",
+  "description": "CLI for OpenPkg TypeScript API extraction",
+  "type": "module",
+  "bin": {
+    "openpkg": "./bin/openpkg.ts"
+  },
+  "scripts": {
+    "build": "bunup",
+    "dev": "bunup --watch",
+    "test": "bun test"
+  },
+  "dependencies": {
+    "@openpkg-ts/sdk": "workspace:*",
+    "commander": "^14.0.0"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/node": "^20.0.0",
+    "bunup": "latest"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

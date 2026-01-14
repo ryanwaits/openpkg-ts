@@ -12,27 +12,24 @@ TypeScript API extraction and documentation toolkit. Extract complete API specif
 ## Quick Start
 
 ```bash
-# Extract spec from TypeScript
-npx @openpkg-ts/extract src/index.ts -o openpkg.json
-
-# Generate markdown docs
-npx @openpkg-ts/doc-generator generate openpkg.json -o docs/api
+# Extract spec and generate markdown docs
+npx @openpkg-ts/cli spec src/index.ts | npx @openpkg-ts/cli docs --format markdown
 ```
 
 ## Packages
 
 | Package | Description |
 |---------|-------------|
-| [@openpkg-ts/extract](./packages/extract) | TypeScript API extraction via `tspec` CLI. Parses exports, types, JSDoc, and generates JSON Schema 2020-12 output. Supports workspace re-exports, declaration-only mode, and runtime schema extraction. |
-| [@openpkg-ts/spec](./packages/spec) | Core specification types, JSON Schema validation, normalization, and diffing. Use for validating specs, comparing versions, and calculating semver bumps. |
-| [@openpkg-ts/doc-generator](./packages/doc-generator) | Multi-format documentation generator. Outputs Markdown/MDX, HTML, JSON, navigation configs, and search indexes. Includes React components (headless and styled). |
-| [@openpkg-ts/fumadocs-adapter](./packages/fumadocs-adapter) | Fumadocs integration with virtual source generation, styled components, and CSS theming. Single-page and multi-page navigation modes. |
-| [@openpkg-ts/ui](./packages/ui) | Reusable React components for API docs. ExportCard, ParameterItem, CodeTabs, and Stripe-style DocsKit components with CodeHike integration. |
+| [@openpkg-ts/cli](./packages/cli) | CLI tool for extraction and doc generation. `openpkg spec`, `openpkg docs`, `openpkg diff` commands. |
+| [@openpkg-ts/sdk](./packages/sdk) | Programmatic SDK for extraction, rendering, and querying. Core primitives for building tooling. |
+| [@openpkg-ts/spec](./packages/spec) | Core specification types, JSON Schema validation, normalization, and diffing. |
+| [@openpkg-ts/react](./packages/react) | React components for rendering API docs. Headless and styled variants. |
+| [@openpkg-ts/adapters](./packages/adapters) | Framework adapters (Fumadocs, Docusaurus, Mintlify). |
 
 ## How It Works
 
 ```
-TypeScript Source → [extract] → OpenPkg Spec (JSON) → [doc-generator] → Docs
+TypeScript Source → [spec] → OpenPkg Spec (JSON) → [docs] → Markdown/HTML/JSON
 ```
 
 The spec is the intermediate format—validate it, diff it, or feed it to any renderer.

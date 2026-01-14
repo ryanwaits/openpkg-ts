@@ -1,0 +1,66 @@
+{
+  "name": "@openpkg-ts/adapters",
+  "version": "0.2.0",
+  "description": "Framework adapters for OpenPkg - Fumadocs, Docusaurus, Mintlify, etc.",
+  "keywords": [
+    "openpkg",
+    "fumadocs",
+    "docusaurus",
+    "mintlify",
+    "documentation",
+    "adapter"
+  ],
+  "homepage": "https://github.com/ryanwaits/openpkg-ts#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ryanwaits/openpkg-ts.git",
+    "directory": "packages/adapters"
+  },
+  "license": "MIT",
+  "author": "Ryan Waits",
+  "type": "module",
+  "exports": {
+    "./fumadocs": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./fumadocs/components": {
+      "import": "./dist/components/index.js",
+      "types": "./dist/components/index.d.ts"
+    },
+    "./fumadocs/css": "./src/fumadocs/styles/docskit.css"
+  },
+  "files": [
+    "dist",
+    "src/fumadocs/styles"
+  ],
+  "scripts": {
+    "build": "bunup",
+    "lint": "biome check src/",
+    "lint:fix": "biome check --write src/",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@openpkg-ts/sdk": "workspace:*",
+    "@openpkg-ts/spec": "workspace:*",
+    "@openpkg-ts/ui": "workspace:*"
+  },
+  "peerDependencies": {
+    "fumadocs-core": "^16.0.0",
+    "react": "^18 || ^19"
+  },
+  "peerDependenciesMeta": {
+    "fumadocs-core": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0",
+    "bunup": "latest",
+    "fumadocs-core": "^16.4.0",
+    "typescript": "^5.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

@@ -4,7 +4,7 @@
   "commit": false,
   "fixed": [],
   "linked": [
-    ["@openpkg-ts/spec", "@openpkg-ts/extract"]
+    ["@openpkg-ts/spec", "@openpkg-ts/sdk"]
   ],
   "access": "public",
   "baseBranch": "main",
