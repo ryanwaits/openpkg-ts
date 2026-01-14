@@ -1,5 +1,11 @@
 # @openpkg-ts/extract
 
+## 0.30.2
+
+### Patch Changes
+
+- fix namespace re-export extraction (export \* as X from './module')
+
 ## 0.30.1
 
 ### Patch Changes

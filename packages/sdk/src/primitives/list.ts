@@ -108,6 +108,18 @@ function extractExportItem(
 
   if (!declaration) return null;
 
+  // Handle namespace re-exports (export * as X from './module')
+  // These resolve to SourceFile declarations - handle specially
+  if (ts.isSourceFile(declaration)) {
+    return {
+      name,
+      kind: 'namespace' as const,
+      file: path.relative(path.dirname(entryFile), declaration.fileName),
+      line: 1,
+      reexport: true,
+    };
+  }
+
   // Get kind
   const kind = getExportKind(declaration, checker.getTypeAtLocation(declaration));
 
@@ -136,6 +148,11 @@ function extractExportItem(
 }
 
 function getExportKind(declaration: ts.Declaration, type: ts.Type): ExportItem['kind'] {
+  // Handle namespace re-exports (export * as X from './module')
+  // These resolve to SourceFile declarations
+  if (ts.isSourceFile(declaration)) {
+    return 'namespace';
+  }
   if (ts.isFunctionDeclaration(declaration) || ts.isFunctionExpression(declaration)) {
     return 'function';
   }
