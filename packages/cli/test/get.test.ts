@@ -13,7 +13,11 @@ describe('getExport', () => {
         interface Client { fetch(): void; }
       `;
 
-      const result = await getExport({ entryFile: 'test.ts', exportName: 'createClient', content: code });
+      const result = await getExport({
+        entryFile: 'test.ts',
+        exportName: 'createClient',
+        content: code,
+      });
 
       expect(result.errors).toHaveLength(0);
       expect(result.export).not.toBeNull();
@@ -127,7 +131,11 @@ describe('getExport', () => {
         export type Partial<T> = { [K in keyof T]?: T[K] };
       `;
 
-      const result = await getExport({ entryFile: 'test.ts', exportName: 'Partial', content: code });
+      const result = await getExport({
+        entryFile: 'test.ts',
+        exportName: 'Partial',
+        content: code,
+      });
 
       expect(result.errors).toHaveLength(0);
       expect(result.export!.kind).toBe('type');
@@ -153,7 +161,11 @@ describe('getExport', () => {
         }
       `;
 
-      const result = await getExport({ entryFile: 'test.ts', exportName: 'ApiClient', content: code });
+      const result = await getExport({
+        entryFile: 'test.ts',
+        exportName: 'ApiClient',
+        content: code,
+      });
 
       expect(result.errors).toHaveLength(0);
       expect(result.export).not.toBeNull();
@@ -200,7 +212,11 @@ describe('getExport', () => {
         }
       `;
 
-      const result = await getExport({ entryFile: 'test.ts', exportName: 'LogLevel', content: code });
+      const result = await getExport({
+        entryFile: 'test.ts',
+        exportName: 'LogLevel',
+        content: code,
+      });
 
       expect(result.errors).toHaveLength(0);
       expect(result.export).not.toBeNull();
@@ -234,7 +250,11 @@ describe('getExport', () => {
         export const DEFAULT_CONFIG = { timeout: 5000, retries: 3 };
       `;
 
-      const result = await getExport({ entryFile: 'test.ts', exportName: 'DEFAULT_CONFIG', content: code });
+      const result = await getExport({
+        entryFile: 'test.ts',
+        exportName: 'DEFAULT_CONFIG',
+        content: code,
+      });
 
       expect(result.errors).toHaveLength(0);
       expect(result.export).not.toBeNull();
@@ -247,7 +267,11 @@ describe('getExport', () => {
         export const VERSION: string = '1.0.0';
       `;
 
-      const result = await getExport({ entryFile: 'test.ts', exportName: 'VERSION', content: code });
+      const result = await getExport({
+        entryFile: 'test.ts',
+        exportName: 'VERSION',
+        content: code,
+      });
 
       expect(result.errors).toHaveLength(0);
       expect(result.export!.kind).toBe('variable');
@@ -283,7 +307,11 @@ describe('getExport', () => {
         export function myFunc(): void {}
       `;
 
-      const result = await getExport({ entryFile: 'test.ts', exportName: 'NonExistent', content: code });
+      const result = await getExport({
+        entryFile: 'test.ts',
+        exportName: 'NonExistent',
+        content: code,
+      });
 
       expect(result.export).toBeNull();
       expect(result.errors.length).toBeGreaterThan(0);
@@ -293,7 +321,11 @@ describe('getExport', () => {
     test('returns error for empty file', async () => {
       const code = `// empty file`;
 
-      const result = await getExport({ entryFile: 'test.ts', exportName: 'anything', content: code });
+      const result = await getExport({
+        entryFile: 'test.ts',
+        exportName: 'anything',
+        content: code,
+      });
 
       expect(result.export).toBeNull();
       expect(result.errors.length).toBeGreaterThan(0);
@@ -311,7 +343,11 @@ describe('getExport', () => {
         }
       `;
 
-      const result = await getExport({ entryFile: 'test.ts', exportName: 'Response', content: code });
+      const result = await getExport({
+        entryFile: 'test.ts',
+        exportName: 'Response',
+        content: code,
+      });
 
       expect(result.errors).toHaveLength(0);
       expect(result.export).not.toBeNull();

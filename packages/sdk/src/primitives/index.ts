@@ -9,93 +9,89 @@
  * - generateDocs() - generate documentation
  */
 
-// List exports
-export {
-  listExports,
-  type ListExportsOptions,
-  type ListExportsResult,
-  type ExportItem,
-} from './list';
-
-// Get single export
-export {
-  getExport,
-  type GetExportOptions,
-  type GetExportResult,
-} from './get';
-
-// Extract full spec
-export {
-  extractSpec,
-  type ExtractOptions,
-  type ExtractResult,
-} from './spec';
-
 // Diff specs
 export {
-  diffSpec,
-  diffSpecs,
-  categorizeBreakingChanges,
-  recommendSemverBump,
-  calculateNextVersion,
-  type SpecDiff,
   type BreakingSeverity,
   type CategorizedBreaking,
+  calculateNextVersion,
+  categorizeBreakingChanges,
+  diffSpec,
+  diffSpecs,
   type MemberChangeInfo,
+  recommendSemverBump,
   type SemverBump,
   type SemverRecommendation,
+  type SpecDiff,
 } from './diff';
-
 // Generate docs
 export {
-  generateDocs,
-  createDocs,
-  loadSpec,
-  toMarkdown,
-  toHTML,
-  toJSON,
-  toJSONString,
-  exportToMarkdown,
-  toNavigation,
-  toDocusaurusSidebarJS,
-  toFumadocsMetaJSON,
-  toSearchIndex,
-  toSearchIndexJSON,
-  toAlgoliaRecords,
-  toPagefindRecords,
+  type AlgoliaRecord,
   buildSignatureString,
+  createDocs,
+  type DocsInstance,
+  type ExportMarkdownOptions,
+  exportToMarkdown,
+  formatBadges,
   formatParameters,
   formatReturnType,
   formatSchema,
   formatTypeParameters,
+  type GroupBy,
+  generateDocs,
+  getMemberBadges,
   getMethods,
   getProperties,
   groupByVisibility,
+  type HTMLOptions,
   isMethod,
   isProperty,
-  resolveTypeRef,
-  sortByName,
-  formatBadges,
-  getMemberBadges,
-  type DocsInstance,
-  type LoadOptions,
-  type MarkdownOptions,
-  type HTMLOptions,
   type JSONOptions,
-  type ExportMarkdownOptions,
-  type NavOptions,
+  type LoadOptions,
+  loadSpec,
+  type MarkdownOptions,
   type NavFormat,
-  type GroupBy,
-  type SimplifiedSpec,
-  type SimplifiedExport,
-  type SimplifiedMember,
-  type SimplifiedSignature,
-  type SimplifiedParameter,
-  type SimplifiedReturn,
-  type SimplifiedExample,
+  type NavOptions,
+  type PagefindRecord,
+  resolveTypeRef,
   type SearchIndex,
   type SearchOptions,
   type SearchRecord,
-  type AlgoliaRecord,
-  type PagefindRecord,
+  type SimplifiedExample,
+  type SimplifiedExport,
+  type SimplifiedMember,
+  type SimplifiedParameter,
+  type SimplifiedReturn,
+  type SimplifiedSignature,
+  type SimplifiedSpec,
+  sortByName,
+  toAlgoliaRecords,
+  toDocusaurusSidebarJS,
+  toFumadocsMetaJSON,
+  toHTML,
+  toJSON,
+  toJSONString,
+  toMarkdown,
+  toNavigation,
+  toPagefindRecords,
+  toSearchIndex,
+  toSearchIndexJSON,
 } from './docs';
+// Get single export
+export {
+  type GetExportOptions,
+  type GetExportResult,
+  getExport,
+} from './get';
+// List exports
+export {
+  type ExportItem,
+  type ListExportsOptions,
+  type ListExportsResult,
+  listExports,
+} from './list';
+// Extract full spec
+export {
+  type ExtractOptions,
+  type ExtractResult,
+  extractSpec,
+} from './spec';

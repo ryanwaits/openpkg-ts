@@ -1,44 +1,42 @@
 // Query utilities
+
+// Format utilities
+export { formatBadges, getMemberBadges } from './format';
+// Loader utilities
 export {
+  createDocs,
+  type DocsInstance,
+  type LoadOptions,
+  loadSpec,
+} from './loader';
+export {
+  buildSignatureString,
   type FormatSchemaOptions,
-  type SpecConditionalType,
-  type SpecMappedType,
-  formatSchema,
-  formatTypeParameters,
+  formatConditionalType,
+  formatMappedType,
   formatParameters,
   formatReturnType,
-  buildSignatureString,
-  resolveTypeRef,
-  isMethod,
-  isProperty,
+  formatSchema,
+  formatTypeParameters,
   getMethods,
   getProperties,
   groupByVisibility,
+  isMethod,
+  isProperty,
+  resolveTypeRef,
+  type SpecConditionalType,
+  type SpecMappedType,
   sortByName,
-  formatConditionalType,
-  formatMappedType,
 } from './query';
-
-// Format utilities
-export { getMemberBadges, formatBadges } from './format';
-
 // Search utilities
 export {
-  type SearchOptions,
-  type PagefindRecord,
   type AlgoliaRecord,
-  type SearchRecord,
+  type PagefindRecord,
   type SearchIndex,
-  toSearchIndex,
-  toPagefindRecords,
+  type SearchOptions,
+  type SearchRecord,
   toAlgoliaRecords,
+  toPagefindRecords,
+  toSearchIndex,
   toSearchIndexJSON,
 } from './search';
-
-// Loader utilities
-export {
-  type LoadOptions,
-  type DocsInstance,
-  loadSpec,
-  createDocs,
-} from './loader';

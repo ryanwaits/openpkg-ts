@@ -6,9 +6,5 @@
     "jsx": "react-jsx"
   },
   "include": ["src"],
-  "references": [
-    { "path": "../spec" },
-    { "path": "../sdk" },
-    { "path": "../ui" }
-  ]
+  "references": [{ "path": "../spec" }, { "path": "../sdk" }, { "path": "../ui" }]
 }

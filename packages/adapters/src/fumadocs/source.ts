@@ -1,5 +1,5 @@
-import type { OpenPkg, SpecExport, SpecExportKind } from '@openpkg-ts/spec';
 import { createDocs, type DocsInstance } from '@openpkg-ts/sdk';
+import type { OpenPkg, SpecExport, SpecExportKind } from '@openpkg-ts/spec';
 import type { Source, VirtualFile } from 'fumadocs-core/source';
 
 export interface OpenPkgSourceOptions {

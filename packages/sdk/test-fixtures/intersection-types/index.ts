@@ -47,6 +47,6 @@ export function mergeUserRole(user: User, role: Role): User & Role {
 }
 
 // Function with branded type parameter
-export function getUserById(id: UserId): User | null {
+export function getUserById(_id: UserId): User | null {
   return null;
 }

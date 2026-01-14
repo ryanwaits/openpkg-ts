@@ -6,5 +6,12 @@ export default defineConfig({
   dts: true,
   clean: true,
   format: ['esm'],
-  external: ['react', 'react-dom', '@openpkg-ts/sdk', '@openpkg-ts/spec', '@openpkg-ts/ui', 'fumadocs-core'],
+  external: [
+    'react',
+    'react-dom',
+    '@openpkg-ts/sdk',
+    '@openpkg-ts/spec',
+    '@openpkg-ts/ui',
+    'fumadocs-core',
+  ],
 });

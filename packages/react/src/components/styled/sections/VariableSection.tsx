@@ -1,5 +1,6 @@
 'use client';
 
+import { formatSchema } from '@openpkg-ts/sdk';
 import type { OpenPkg, SpecExport } from '@openpkg-ts/spec';
 import { APIParameterItem, APISection, ParameterList } from '@openpkg-ts/ui/docskit';
 import type { ReactNode } from 'react';
@@ -8,7 +9,6 @@ import {
   getLanguagesFromExamples,
   specExamplesToCodeExamples,
 } from '../../../adapters/spec-to-docskit';
-import { formatSchema } from '@openpkg-ts/sdk';
 
 export interface VariableSectionProps {
   export: SpecExport;

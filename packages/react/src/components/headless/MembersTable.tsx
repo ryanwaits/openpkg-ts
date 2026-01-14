@@ -1,7 +1,7 @@
 'use client';
 
+import { formatSchema, getMemberBadges } from '@openpkg-ts/sdk';
 import type { SpecMember } from '@openpkg-ts/spec';
-import { getMemberBadges, formatSchema } from '@openpkg-ts/sdk';
 
 export interface MembersTableProps {
   /** Members to display */

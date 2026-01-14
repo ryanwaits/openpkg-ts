@@ -1,7 +1,7 @@
 'use client';
 
-import type { SpecMember, SpecSignatureParameter } from '@openpkg-ts/spec';
 import { formatSchema } from '@openpkg-ts/sdk';
+import type { SpecMember, SpecSignatureParameter } from '@openpkg-ts/spec';
 
 export interface ParamTableProps {
   /** Parameters or members to display */

@@ -1,7 +1,7 @@
 'use client';
 
-import type { OpenPkg } from '@openpkg-ts/spec';
 import type { DocsInstance } from '@openpkg-ts/sdk';
+import type { OpenPkg } from '@openpkg-ts/spec';
 import { ClassPage } from './ClassPage';
 import { EnumPage } from './EnumPage';
 import { ExportIndexPage } from './ExportIndexPage';

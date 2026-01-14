@@ -1,8 +1,8 @@
 'use client';
 
+import { formatSchema } from '@openpkg-ts/sdk';
 import type { SpecSchema, SpecSignatureParameter } from '@openpkg-ts/spec';
 import { useState } from 'react';
-import { formatSchema } from '@openpkg-ts/sdk';
 
 export interface ExpandablePropertyProps {
   /** Parameter to display */

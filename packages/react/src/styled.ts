@@ -1,8 +1,15 @@
 // Styled React components (Tailwind v4)
 
+// Adapters for converting spec data to component props
+export {
+  buildImportStatement,
+  getLanguagesFromExamples,
+  specExamplesToCodeExamples,
+  specParamToAPIParam,
+  specSchemaToAPISchema,
+} from './adapters/spec-to-docskit';
 // Also re-export headless components for composition
 export * from './components/headless';
-
 export type {
   APIPageProps,
   ClassPageProps,
@@ -45,12 +52,3 @@ export {
   VariablePage,
   VariableSection,
 } from './components/styled';
-
-// Adapters for converting spec data to component props
-export {
-  buildImportStatement,
-  getLanguagesFromExamples,
-  specExamplesToCodeExamples,
-  specParamToAPIParam,
-  specSchemaToAPISchema,
-} from './adapters/spec-to-docskit';

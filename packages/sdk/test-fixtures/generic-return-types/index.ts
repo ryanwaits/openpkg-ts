@@ -23,7 +23,7 @@ export async function getUser(id: string): Promise<User> {
 }
 
 // Promise with union return
-export async function findUser(id: string): Promise<User | null> {
+export async function findUser(_id: string): Promise<User | null> {
   return null;
 }
 
@@ -43,7 +43,7 @@ export async function fetchAllUsers(): Promise<Result<User[]>> {
 }
 
 // Multiple type parameters
-export async function fetchUserWithError(id: string): Promise<Result<User, string>> {
+export async function fetchUserWithError(_id: string): Promise<Result<User, string>> {
   return { success: false, error: 'Not found' };
 }
 

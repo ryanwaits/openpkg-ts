@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
-import { enrichDiff, type DiffResult } from '../src/commands/diff';
 import type { OpenPkg, SpecExport } from '@openpkg-ts/spec';
+import { enrichDiff } from '../src/commands/diff';
 
 // Helper to create minimal spec
 function makeSpec(exports: SpecExport[], types: OpenPkg['types'] = []): OpenPkg {

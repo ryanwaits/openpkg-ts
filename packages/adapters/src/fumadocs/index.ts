@@ -19,18 +19,18 @@
 
 // Re-export core SDK types for convenience
 export type {
+  AlgoliaRecord,
   DocsInstance,
   LoadOptions,
-  AlgoliaRecord,
   PagefindRecord,
   SearchIndex,
   SearchOptions,
 } from '@openpkg-ts/sdk';
 
 export {
-  createDocs,
-  loadSpec,
   buildSignatureString,
+  createDocs,
+  exportToMarkdown,
   formatParameters,
   formatReturnType,
   formatSchema,
@@ -40,20 +40,20 @@ export {
   groupByVisibility,
   isMethod,
   isProperty,
+  loadSpec,
   resolveTypeRef,
   sortByName,
   toAlgoliaRecords,
-  toPagefindRecords,
-  toSearchIndex,
-  toSearchIndexJSON,
+  toDocusaurusSidebarJS,
+  toFumadocsMetaJSON,
   toHTML,
   toJSON,
   toJSONString,
   toMarkdown,
   toNavigation,
-  toDocusaurusSidebarJS,
-  toFumadocsMetaJSON,
-  exportToMarkdown,
+  toPagefindRecords,
+  toSearchIndex,
+  toSearchIndexJSON,
 } from '@openpkg-ts/sdk';
 
 // Re-export spec types
@@ -71,24 +71,22 @@ export type {
   SpecTypeKind,
   SpecTypeParameter,
 } from '@openpkg-ts/spec';
-
-// Fumadocs source integration
-export {
-  openpkgSource,
-  type OpenPkgSourceOptions,
-  type OpenPkgPageData,
-  type OpenPkgIndexPageData,
-  type OpenPkgSinglePageData,
-  type OpenPkgMetaData,
-} from './source';
+// Sidebar badge component
+export { SidebarKindBadge, type SidebarKindBadgeProps } from './components/sidebar-badge';
 
 // Fumadocs plugin integration
 export {
-  openpkgPlugin,
-  type OpenpkgPluginOptions,
   KindBadge,
   type KindBadgeProps,
+  type OpenpkgPluginOptions,
+  openpkgPlugin,
 } from './plugin';
-
-// Sidebar badge component
-export { SidebarKindBadge, type SidebarKindBadgeProps } from './components/sidebar-badge';
+// Fumadocs source integration
+export {
+  type OpenPkgIndexPageData,
+  type OpenPkgMetaData,
+  type OpenPkgPageData,
+  type OpenPkgSinglePageData,
+  type OpenPkgSourceOptions,
+  openpkgSource,
+} from './source';

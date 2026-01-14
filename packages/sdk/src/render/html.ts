@@ -188,11 +188,15 @@ function renderProperties(members: SpecMember[] | undefined): string {
       const type = escapeHTML(formatSchema(p.schema));
       const desc = p.description ? escapeHTML(p.description) : '-';
       const inherited =
-        'inheritedFrom' in p && p.inheritedFrom ? ` <em>(from ${escapeHTML(String(p.inheritedFrom))})</em>` : '';
+        'inheritedFrom' in p && p.inheritedFrom
+          ? ` <em>(from ${escapeHTML(String(p.inheritedFrom))})</em>`
+          : '';
       const flagBadges: string[] = [];
       if (p.flags?.abstract) flagBadges.push('abstract');
       if (p.flags?.readonly) flagBadges.push('readonly');
-      const badges = flagBadges.length ? ` <span class="badge">${flagBadges.join(', ')}</span>` : '';
+      const badges = flagBadges.length
+        ? ` <span class="badge">${flagBadges.join(', ')}</span>`
+        : '';
       return `
         <tr>
           <td><code>${escapeHTML(p.name || '')}</code>${badges}${inherited}</td>
@@ -256,7 +260,9 @@ function renderEnumMembers(members: SpecMember[] | undefined): string {
 /**
  * Render decorators as HTML.
  */
-function renderDecorators(decorators: { name: string; argumentsText?: string[] }[] | undefined): string {
+function renderDecorators(
+  decorators: { name: string; argumentsText?: string[] }[] | undefined,
+): string {
   if (!decorators?.length) return '';
   return decorators
     .map((d) => {

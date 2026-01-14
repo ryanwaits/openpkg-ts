@@ -290,12 +290,7 @@ export function createProgram({
         }
 
         // Use TypeScript's built-in resolution
-        const resolved = ts.resolveModuleName(
-          moduleName,
-          containingFile,
-          options,
-          compilerHost,
-        );
+        const resolved = ts.resolveModuleName(moduleName, containingFile, options, compilerHost);
         return resolved.resolvedModule;
       });
     };

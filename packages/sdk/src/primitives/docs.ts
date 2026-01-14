@@ -3,69 +3,63 @@
  * Re-exports doc generation utilities from SDK core and render modules
  */
 export {
-  // Core loader
-  createDocs,
-  loadSpec,
-  type DocsInstance,
-  type LoadOptions,
-
+  type AlgoliaRecord,
   // Query utilities
   buildSignatureString,
+  // Core loader
+  createDocs,
+  type DocsInstance,
+  // Format utilities
+  formatBadges,
   formatParameters,
   formatReturnType,
   formatSchema,
   formatTypeParameters,
+  getMemberBadges,
   getMethods,
   getProperties,
   groupByVisibility,
   isMethod,
   isProperty,
+  type LoadOptions,
+  loadSpec,
+  type PagefindRecord,
   resolveTypeRef,
-  sortByName,
-
-  // Format utilities
-  formatBadges,
-  getMemberBadges,
-
-  // Search
-  toSearchIndex,
-  toSearchIndexJSON,
-  toAlgoliaRecords,
-  toPagefindRecords,
   type SearchIndex,
   type SearchOptions,
   type SearchRecord,
-  type AlgoliaRecord,
-  type PagefindRecord,
+  sortByName,
+  toAlgoliaRecords,
+  toPagefindRecords,
+  // Search
+  toSearchIndex,
+  toSearchIndexJSON,
 } from '../core';
-
+// Alias for convenience
 export {
-  // Render functions
-  toMarkdown,
+  type ExportMarkdownOptions,
+  exportToMarkdown,
+  type GroupBy,
+  type HTMLOptions,
+  type JSONOptions,
+  // Types
+  type MarkdownOptions,
+  type NavFormat,
+  type NavOptions,
+  type SimplifiedExample,
+  type SimplifiedExport,
+  type SimplifiedMember,
+  type SimplifiedParameter,
+  type SimplifiedReturn,
+  type SimplifiedSignature,
+  type SimplifiedSpec,
+  toDocusaurusSidebarJS,
+  toFumadocsMetaJSON,
   toHTML,
   toJSON,
   toJSONString,
-  exportToMarkdown,
+  // Render functions
+  toMarkdown,
+  toMarkdown as generateDocs,
   toNavigation,
-  toDocusaurusSidebarJS,
-  toFumadocsMetaJSON,
-
-  // Types
-  type MarkdownOptions,
-  type HTMLOptions,
-  type JSONOptions,
-  type ExportMarkdownOptions,
-  type NavOptions,
-  type NavFormat,
-  type GroupBy,
-  type SimplifiedSpec,
-  type SimplifiedExport,
-  type SimplifiedMember,
-  type SimplifiedSignature,
-  type SimplifiedParameter,
-  type SimplifiedReturn,
-  type SimplifiedExample,
 } from '../render';
-
-// Alias for convenience
-export { toMarkdown as generateDocs } from '../render';

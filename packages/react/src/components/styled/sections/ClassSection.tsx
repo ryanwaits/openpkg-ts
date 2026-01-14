@@ -1,5 +1,6 @@
 'use client';
 
+import { formatSchema } from '@openpkg-ts/sdk';
 import type { OpenPkg, SpecExport, SpecMember } from '@openpkg-ts/spec';
 import { APIParameterItem, APISection, ParameterList } from '@openpkg-ts/ui/docskit';
 import type { ReactNode } from 'react';
@@ -9,7 +10,6 @@ import {
   specExamplesToCodeExamples,
   specParamToAPIParam,
 } from '../../../adapters/spec-to-docskit';
-import { formatSchema } from '@openpkg-ts/sdk';
 
 export interface ClassSectionProps {
   export: SpecExport;
@@ -44,7 +44,9 @@ function getMemberBadges(member: SpecMember): string[] {
 }
 
 /** Format decorators for display */
-function formatDecorators(decorators: { name: string; argumentsText?: string[] }[] | undefined): string {
+function formatDecorators(
+  decorators: { name: string; argumentsText?: string[] }[] | undefined,
+): string {
   if (!decorators?.length) return '';
   return decorators
     .map((d) => {

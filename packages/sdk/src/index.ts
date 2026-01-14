@@ -46,29 +46,24 @@ export * from './render';
 
 // AST utilities
 export * from './ast';
-
+// Legacy export (deprecated - use extractSpec instead)
+export { extract } from './builder';
 // Compiler utilities
 export * from './compiler';
-
 // Schema adapters
 export * from './schema';
-
 // Serializers
 export * from './serializers';
-
-// Type utilities
-export * from './types/index';
 
 // Additional types
 export type {
   Diagnostic,
+  ExportTracker,
+  ExportVerification,
   ExtractOptions,
   ExtractResult,
   ForgottenExport,
   TypeReference,
-  ExportTracker,
-  ExportVerification,
 } from './types';
-
-// Legacy export (deprecated - use extractSpec instead)
-export { extract } from './builder';
+// Type utilities
+export * from './types/index';

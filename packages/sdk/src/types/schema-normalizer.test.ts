@@ -439,7 +439,11 @@ describe('normalizeSchema', () => {
               nestedArray: {
                 type: 'array',
                 items: {
-                  anyOf: [{ type: 'null', 'x-ts-type': 'void' }, { not: {} }, { type: 'string', 'x-ts-type': 'symbol' }],
+                  anyOf: [
+                    { type: 'null', 'x-ts-type': 'void' },
+                    { not: {} },
+                    { type: 'string', 'x-ts-type': 'symbol' },
+                  ],
                 },
               },
             },

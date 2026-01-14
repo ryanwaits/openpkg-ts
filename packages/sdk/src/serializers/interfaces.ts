@@ -44,7 +44,7 @@ export function serializeInterface(
       if (methodMember?.name && methodMember.signatures) {
         // Merge method overloads by name
         const existing = methodsByName.get(methodMember.name);
-        if (existing && existing.signatures) {
+        if (existing?.signatures) {
           // Add overload index to merged signatures
           const startIndex = existing.signatures.length;
           const newSigs = methodMember.signatures.map((sig, i) => ({
@@ -52,7 +52,10 @@ export function serializeInterface(
             overloadIndex: startIndex + i,
           }));
           // Also add overload index to existing signatures if not present
-          if (existing.signatures.length > 0 && existing.signatures[0].overloadIndex === undefined) {
+          if (
+            existing.signatures.length > 0 &&
+            existing.signatures[0].overloadIndex === undefined
+          ) {
             existing.signatures = existing.signatures.map((sig, i) => ({
               ...sig,
               overloadIndex: i,
@@ -67,8 +70,8 @@ export function serializeInterface(
       // Callable interface: interface Foo { (): void; (arg: T): string }
       // Aggregate all call signatures into a single member with multiple signatures
       const callSig = serializeCallSignature(member, ctx);
-      if (callSig && callSig.signatures) {
-        if (callSignatureMember && callSignatureMember.signatures) {
+      if (callSig?.signatures) {
+        if (callSignatureMember?.signatures) {
           // Add overload index to merged signatures
           const startIndex = callSignatureMember.signatures.length;
           const newSigs = callSig.signatures.map((sig, i) => ({
@@ -76,7 +79,10 @@ export function serializeInterface(
             overloadIndex: startIndex + i,
           }));
           // Also add overload index to existing signatures if not present
-          if (callSignatureMember.signatures.length > 0 && callSignatureMember.signatures[0].overloadIndex === undefined) {
+          if (
+            callSignatureMember.signatures.length > 0 &&
+            callSignatureMember.signatures[0].overloadIndex === undefined
+          ) {
             callSignatureMember.signatures = callSignatureMember.signatures.map((sig, i) => ({
               ...sig,
               overloadIndex: i,

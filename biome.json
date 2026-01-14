@@ -25,6 +25,25 @@
       }
     }
   },
+  "overrides": [
+    {
+      "includes": ["**/test-fixtures/**"],
+      "linter": {
+        "rules": {
+          "suspicious": { "noExplicitAny": "off" },
+          "correctness": { "noUnusedFunctionParameters": "off" }
+        }
+      }
+    },
+    {
+      "includes": ["**/*.tsx"],
+      "linter": {
+        "rules": {
+          "suspicious": { "noArrayIndexKey": "off" }
+        }
+      }
+    }
+  ],
   "formatter": {
     "enabled": true,
     "formatWithErrors": false,

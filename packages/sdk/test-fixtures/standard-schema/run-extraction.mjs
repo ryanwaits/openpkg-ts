@@ -28,7 +28,7 @@ for (const [name, schema] of result.schemas) {
   console.log('Vendor:', schema.vendor);
   console.log(
     'Output Schema:',
-    JSON.stringify(schema.outputSchema, null, 2).substring(0, 200) + '...',
+    `${JSON.stringify(schema.outputSchema, null, 2).substring(0, 200)}...`,
   );
   if (
     schema.inputSchema &&

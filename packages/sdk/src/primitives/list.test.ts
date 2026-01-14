@@ -32,7 +32,15 @@ describe('listExports', () => {
     expect(result.exports).toHaveLength(7);
 
     const kinds = result.exports.map((e) => e.kind).sort();
-    expect(kinds).toEqual(['class', 'enum', 'function', 'interface', 'namespace', 'type', 'variable']);
+    expect(kinds).toEqual([
+      'class',
+      'enum',
+      'function',
+      'interface',
+      'namespace',
+      'type',
+      'variable',
+    ]);
   });
 
   test('detects arrow function as function', async () => {

@@ -18,4 +18,4 @@ export function when<T>(pattern: T): (value: unknown) => boolean {
 /**
  * Constant value for matching
  */
-export const DEFAULT_PATTERN = "__DEFAULT__";
+export const DEFAULT_PATTERN = '__DEFAULT__';

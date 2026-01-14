@@ -1,10 +1,10 @@
 #!/usr/bin/env bun
-import { Command } from 'commander';
+import * as path from 'node:path';
 import { getExport, listExports } from '@openpkg-ts/sdk';
-import { createSnapshotCommand } from '../src/commands/snapshot';
+import { Command } from 'commander';
 import { createDiffCommand } from '../src/commands/diff';
 import { createDocsCommand } from '../src/commands/docs';
-import * as path from 'node:path';
+import { createSnapshotCommand } from '../src/commands/snapshot';
 
 const program = new Command();
 
@@ -39,9 +39,8 @@ program
     const result = await getExport({ entryFile, exportName: name });
 
     if (!result.export) {
-      const errorMsg = result.errors.length > 0
-        ? result.errors.join('; ')
-        : `Export '${name}' not found`;
+      const errorMsg =
+        result.errors.length > 0 ? result.errors.join('; ') : `Export '${name}' not found`;
       console.error(JSON.stringify({ error: errorMsg }, null, 2));
       process.exit(1);
     }

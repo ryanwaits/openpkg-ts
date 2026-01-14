@@ -1,8 +1,8 @@
 'use client';
 
+import { formatReturnType, formatSchema, getMemberBadges } from '@openpkg-ts/sdk';
 import type { SpecMember } from '@openpkg-ts/spec';
 import { useEffect, useState } from 'react';
-import { getMemberBadges, formatReturnType, formatSchema } from '@openpkg-ts/sdk';
 
 export interface CollapsibleMethodProps {
   /** Method member to display */

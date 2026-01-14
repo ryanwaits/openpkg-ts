@@ -1,16 +1,12 @@
-/**
- * Get detailed spec for a single export
- */
-import * as path from 'node:path';
 import type { SpecExport, SpecType } from '@openpkg-ts/spec';
 import ts from 'typescript';
 import { createProgram } from '../compiler/program';
-import { createContext } from '../serializers/context';
-import { serializeFunctionExport } from '../serializers/functions';
 import { serializeClass } from '../serializers/classes';
+import { createContext } from '../serializers/context';
+import { serializeEnum } from '../serializers/enums';
+import { serializeFunctionExport } from '../serializers/functions';
 import { serializeInterface } from '../serializers/interfaces';
 import { serializeTypeAlias } from '../serializers/type-aliases';
-import { serializeEnum } from '../serializers/enums';
 import { serializeVariable } from '../serializers/variables';
 import { normalizeExport, normalizeType } from '../types/schema-normalizer';
 
@@ -80,7 +76,14 @@ export async function getExport(options: GetExportOptions): Promise<GetExportRes
       return { export: null, types: [], errors: [`No declaration found for '${exportName}'`] };
     }
 
-    let spec = serializeDeclaration(declaration, targetSymbol, resolvedSymbol, exportName, ctx, isTypeOnly);
+    let spec = serializeDeclaration(
+      declaration,
+      targetSymbol,
+      resolvedSymbol,
+      exportName,
+      ctx,
+      isTypeOnly,
+    );
 
     if (!spec) {
       return { export: null, types: [], errors: [`Could not serialize '${exportName}'`] };
@@ -90,18 +93,22 @@ export async function getExport(options: GetExportOptions): Promise<GetExportRes
     spec = normalizeExport(spec, { dialect: 'draft-2020-12' }) as SpecExport;
 
     // Get types referenced
-    const types = ctx.typeRegistry.getAll().map((t) => normalizeType(t, { dialect: 'draft-2020-12' }));
+    const types = ctx.typeRegistry
+      .getAll()
+      .map((t) => normalizeType(t, { dialect: 'draft-2020-12' }));
 
     return { export: spec, types, errors };
   } catch (err) {
-    errors.push(`Failed to serialize '${exportName}': ${err instanceof Error ? err.message : String(err)}`);
+    errors.push(
+      `Failed to serialize '${exportName}': ${err instanceof Error ? err.message : String(err)}`,
+    );
     return { export: null, types: [], errors };
   }
 }
 
 function resolveExportTarget(
   symbol: ts.Symbol,
-  checker: ts.TypeChecker
+  checker: ts.TypeChecker,
 ): { declaration?: ts.Declaration; resolvedSymbol: ts.Symbol; isTypeOnly: boolean } {
   let resolvedSymbol = symbol;
   let isTypeOnly = false;
@@ -137,11 +144,11 @@ function resolveExportTarget(
 
 function serializeDeclaration(
   declaration: ts.Declaration,
-  exportSymbol: ts.Symbol,
+  _exportSymbol: ts.Symbol,
   _targetSymbol: ts.Symbol,
   exportName: string,
   ctx: ReturnType<typeof createContext>,
-  isTypeOnly: boolean
+  isTypeOnly: boolean,
 ): SpecExport | null {
   let result: SpecExport | null = null;
 

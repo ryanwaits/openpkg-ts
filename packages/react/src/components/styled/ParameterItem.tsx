@@ -1,10 +1,10 @@
 'use client';
 
+import { formatSchema } from '@openpkg-ts/sdk';
 import type { SpecSchema, SpecSignatureParameter } from '@openpkg-ts/spec';
 import { cn } from '@openpkg-ts/ui/lib/utils';
 import { ChevronRight } from 'lucide-react';
 import { useState } from 'react';
-import { formatSchema } from '@openpkg-ts/sdk';
 
 export interface ParameterItemProps {
   /** Parameter to display */

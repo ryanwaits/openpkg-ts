@@ -1,7 +1,7 @@
-import { Command } from 'commander';
-import { extractSpec, type ExtractOptions, type Diagnostic } from '@openpkg-ts/sdk';
-import * as path from 'node:path';
 import * as fs from 'node:fs';
+import * as path from 'node:path';
+import { type Diagnostic, type ExtractOptions, extractSpec } from '@openpkg-ts/sdk';
+import { Command } from 'commander';
 
 interface SnapshotCommandOptions {
   output?: string;
@@ -15,11 +15,14 @@ interface SnapshotCommandOptions {
 
 function parseFilter(value: string | undefined): string[] | undefined {
   if (!value) return undefined;
-  return value.split(',').map(s => s.trim()).filter(Boolean);
+  return value
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
 }
 
 function formatDiagnostics(diagnostics: Diagnostic[]): object[] {
-  return diagnostics.map(d => ({
+  return diagnostics.map((d) => ({
     message: d.message,
     severity: d.severity,
     ...(d.code && { code: d.code }),
@@ -32,7 +35,11 @@ export function createSnapshotCommand(): Command {
   return new Command('snapshot')
     .description('Generate full OpenPkg spec from TypeScript entry point')
     .argument('<entry>', 'Entry point file path')
-    .option('-o, --output <file>', 'Output file (default: openpkg.json, use - for stdout)', 'openpkg.json')
+    .option(
+      '-o, --output <file>',
+      'Output file (default: openpkg.json, use - for stdout)',
+      'openpkg.json',
+    )
     .option('--max-depth <n>', 'Max type depth (default: 4)', '4')
     .option('--skip-resolve', 'Skip external type resolution')
     .option('--runtime', 'Enable Standard Schema runtime extraction')
@@ -65,14 +72,14 @@ export function createSnapshotCommand(): Command {
               extracted: result.verification.extracted,
               skipped: result.verification.skipped,
               failed: result.verification.failed,
-            }
+            },
           }),
           ...(result.runtimeSchemas && {
             runtime: {
               extracted: result.runtimeSchemas.extracted,
               merged: result.runtimeSchemas.merged,
               vendors: result.runtimeSchemas.vendors,
-            }
+            },
           }),
         };
 
@@ -102,7 +109,6 @@ export function createSnapshotCommand(): Command {
           fs.writeFileSync(outputPath, specJson);
           console.error(`Wrote ${outputPath}`);
         }
-
       } catch (err) {
         const error = err instanceof Error ? err : new Error(String(err));
         const errorOutput = {

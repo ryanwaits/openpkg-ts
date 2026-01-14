@@ -1,7 +1,7 @@
 'use client';
 
-import type { SpecExport } from '@openpkg-ts/spec';
 import { buildSignatureString } from '@openpkg-ts/sdk';
+import type { SpecExport } from '@openpkg-ts/spec';
 
 export interface SignatureProps {
   /** The export to render signature for */

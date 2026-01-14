@@ -42,7 +42,10 @@ export interface FormatSchemaOptions {
  * formatSchema({ 'x-ts-type': 'Response', 'x-ts-package': 'express' }, { includePackage: true }) // 'Response (from express)'
  * ```
  */
-export function formatSchema(schema: SpecSchema | undefined, options?: FormatSchemaOptions): string {
+export function formatSchema(
+  schema: SpecSchema | undefined,
+  options?: FormatSchemaOptions,
+): string {
   if (!schema) return 'unknown';
   if (typeof schema === 'string') return schema;
 
@@ -81,7 +84,9 @@ export function formatSchema(schema: SpecSchema | undefined, options?: FormatSch
     if ('$ref' in schema && typeof schema.$ref === 'string') {
       const baseName = schema.$ref.replace('#/types/', '');
       if ('x-ts-type-arguments' in schema && Array.isArray(schema['x-ts-type-arguments'])) {
-        const args = (schema['x-ts-type-arguments'] as SpecSchema[]).map((s) => formatSchema(s, options)).join(', ');
+        const args = (schema['x-ts-type-arguments'] as SpecSchema[])
+          .map((s) => formatSchema(s, options))
+          .join(', ');
         return withPackage(`${baseName}<${args}>`);
       }
       return withPackage(baseName);
@@ -99,7 +104,8 @@ export function formatSchema(schema: SpecSchema | undefined, options?: FormatSch
 
     // Handle array
     if ('type' in schema && schema.type === 'array') {
-      const items = 'items' in schema ? formatSchema(schema.items as SpecSchema, options) : 'unknown';
+      const items =
+        'items' in schema ? formatSchema(schema.items as SpecSchema, options) : 'unknown';
       return `${items}[]`;
     }
 

@@ -1,19 +1,19 @@
-import { describe, expect, test, beforeAll, afterAll } from 'bun:test';
+import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
+import * as fs from 'node:fs';
+import * as os from 'node:os';
+import * as path from 'node:path';
 import {
   createDocs,
+  exportToMarkdown,
   loadSpec,
-  toMarkdown,
+  type SimplifiedExport,
+  type SimplifiedSpec,
   toHTML,
   toJSON,
   toJSONString,
-  exportToMarkdown,
-  type SimplifiedSpec,
-  type SimplifiedExport,
+  toMarkdown,
 } from '@openpkg-ts/sdk';
 import type { OpenPkg } from '@openpkg-ts/spec';
-import * as fs from 'node:fs';
-import * as path from 'node:path';
-import * as os from 'node:os';
 
 // Test fixture spec
 const testSpec: OpenPkg = {

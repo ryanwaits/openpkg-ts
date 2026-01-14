@@ -72,7 +72,15 @@ export function getInheritedMembers(
 
   if (!typeToWalk) return inherited;
 
-  walkBaseTypes(typeToWalk as ts.Type, ownMemberNames, inherited, inheritedNames, visited, ctx, isStatic);
+  walkBaseTypes(
+    typeToWalk as ts.Type,
+    ownMemberNames,
+    inherited,
+    inheritedNames,
+    visited,
+    ctx,
+    isStatic,
+  );
   return inherited;
 }
 

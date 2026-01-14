@@ -1,8 +1,8 @@
-import { describe, expect, test, beforeAll, afterAll } from 'bun:test';
-import { extractSpec, type ExtractOptions, type ExtractResult } from '@openpkg-ts/sdk';
+import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import * as fs from 'node:fs';
-import * as path from 'node:path';
 import * as os from 'node:os';
+import * as path from 'node:path';
+import { extractSpec } from '@openpkg-ts/sdk';
 
 // Test fixture code samples
 const FIXTURE_CODE = {
@@ -92,7 +92,7 @@ describe('spec command (extractSpec)', () => {
         content: FIXTURE_CODE.basic,
       });
 
-      const kinds = new Set(result.spec.exports.map(e => e.kind));
+      const kinds = new Set(result.spec.exports.map((e) => e.kind));
       expect(kinds.has('function')).toBe(true);
       expect(kinds.has('interface')).toBe(true);
       expect(kinds.has('variable')).toBe(true);
@@ -104,7 +104,7 @@ describe('spec command (extractSpec)', () => {
         content: FIXTURE_CODE.withClasses,
       });
 
-      const classExport = result.spec.exports.find(e => e.kind === 'class');
+      const classExport = result.spec.exports.find((e) => e.kind === 'class');
       expect(classExport).toBeDefined();
       expect(classExport!.name).toBe('Service');
     });
@@ -115,7 +115,7 @@ describe('spec command (extractSpec)', () => {
         content: FIXTURE_CODE.withEnums,
       });
 
-      const enums = result.spec.exports.filter(e => e.kind === 'enum');
+      const enums = result.spec.exports.filter((e) => e.kind === 'enum');
       expect(enums.length).toBe(2);
     });
 
@@ -165,8 +165,8 @@ describe('spec command (extractSpec)', () => {
       });
 
       // Export names and kinds should be consistent
-      const names1 = result1.spec.exports.map(e => e.name).sort();
-      const names2 = result2.spec.exports.map(e => e.name).sort();
+      const names1 = result1.spec.exports.map((e) => e.name).sort();
+      const names2 = result2.spec.exports.map((e) => e.name).sort();
       expect(names1).toEqual(names2);
     });
   });
@@ -191,7 +191,7 @@ describe('spec command (extractSpec)', () => {
       });
 
       expect(result.spec.exports.length).toBe(2);
-      expect(result.spec.exports.every(e => e.name.startsWith('create'))).toBe(true);
+      expect(result.spec.exports.every((e) => e.name.startsWith('create'))).toBe(true);
     });
 
     test('filters with wildcard suffix', async () => {
@@ -201,8 +201,8 @@ describe('spec command (extractSpec)', () => {
         only: ['*User'],
       });
 
-      const names = result.spec.exports.map(e => e.name);
-      expect(names.every(n => n.endsWith('User'))).toBe(true);
+      const names = result.spec.exports.map((e) => e.name);
+      expect(names.every((n) => n.endsWith('User'))).toBe(true);
     });
 
     test('filters multiple patterns', async () => {
@@ -213,7 +213,7 @@ describe('spec command (extractSpec)', () => {
       });
 
       expect(result.spec.exports.length).toBe(2);
-      const names = result.spec.exports.map(e => e.name);
+      const names = result.spec.exports.map((e) => e.name);
       expect(names).toContain('createUser');
       expect(names).toContain('MAX_USERS');
     });
@@ -237,7 +237,7 @@ describe('spec command (extractSpec)', () => {
         ignore: ['deleteUser'],
       });
 
-      const names = result.spec.exports.map(e => e.name);
+      const names = result.spec.exports.map((e) => e.name);
       expect(names).not.toContain('deleteUser');
     });
 
@@ -248,8 +248,8 @@ describe('spec command (extractSpec)', () => {
         ignore: ['*User'],
       });
 
-      const names = result.spec.exports.map(e => e.name);
-      expect(names.some(n => n.endsWith('User'))).toBe(false);
+      const names = result.spec.exports.map((e) => e.name);
+      expect(names.some((n) => n.endsWith('User'))).toBe(false);
     });
 
     test('ignores multiple patterns', async () => {
@@ -259,7 +259,7 @@ describe('spec command (extractSpec)', () => {
         ignore: ['deleteUser', 'MAX_USERS'],
       });
 
-      const names = result.spec.exports.map(e => e.name);
+      const names = result.spec.exports.map((e) => e.name);
       expect(names).not.toContain('deleteUser');
       expect(names).not.toContain('MAX_USERS');
     });
@@ -389,7 +389,7 @@ describe('spec command (extractSpec)', () => {
         content: FIXTURE_CODE.basic,
       });
 
-      const fn = result.spec.exports.find(e => e.kind === 'function');
+      const fn = result.spec.exports.find((e) => e.kind === 'function');
       expect(fn).toBeDefined();
       expect(fn!.signatures).toBeDefined();
     });
@@ -400,7 +400,7 @@ describe('spec command (extractSpec)', () => {
         content: FIXTURE_CODE.basic,
       });
 
-      const iface = result.spec.exports.find(e => e.kind === 'interface');
+      const iface = result.spec.exports.find((e) => e.kind === 'interface');
       expect(iface).toBeDefined();
       expect(iface!.members).toBeDefined();
     });

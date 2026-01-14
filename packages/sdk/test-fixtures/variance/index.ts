@@ -108,7 +108,7 @@ export class ConstantHolder<const T> {
  * @typeParam In - Input type (contravariant)
  * @typeParam Out - Output type (covariant)
  */
-export type Transform<in In, out Out> = (input: In) => Out
+export type Transform<in In, out Out> = (input: In) => Out;
 
 /**
  * Event handler with multiple variance annotations.

@@ -3,6 +3,7 @@
  * Bridges the gap between SpecExport data and the new Stripe-style API components.
  */
 
+import { formatSchema } from '@openpkg-ts/sdk';
 import type {
   OpenPkg,
   SpecExample,
@@ -11,7 +12,6 @@ import type {
   SpecSignatureParameter,
 } from '@openpkg-ts/spec';
 import type { APIParameterSchema, CodeExample, Language } from '@openpkg-ts/ui/docskit';
-import { formatSchema } from '@openpkg-ts/sdk';
 
 /**
  * Convert SpecSchema to APIParameterSchema for nested object display.

@@ -4,12 +4,13 @@ import type {
   OpenPkg,
   SpecExport,
   SpecMember,
+  SpecSchema,
   SpecSignature,
   SpecType,
 } from '@openpkg-ts/spec';
 import { SCHEMA_URL, SCHEMA_VERSION } from '@openpkg-ts/spec';
 import ts from 'typescript';
-import { isTypeOnlyExport, resolveExportTarget } from '../ast/resolve';
+import { resolveExportTarget } from '../ast/resolve';
 import {
   extractTypeParametersFromSignature,
   getJSDocForSignature,
@@ -24,8 +25,6 @@ import { serializeFunctionExport } from '../serializers/functions';
 import { serializeInterface } from '../serializers/interfaces';
 import { serializeTypeAlias } from '../serializers/type-aliases';
 import { serializeVariable } from '../serializers/variables';
-import { extractParameters, registerReferencedTypes } from '../types/parameters';
-import { buildSchema } from '../types/schema-builder';
 import type {
   Diagnostic,
   ExportTracker,
@@ -35,6 +34,8 @@ import type {
   ForgottenExport,
   TypeReference,
 } from '../types';
+import { extractParameters, registerReferencedTypes } from '../types/parameters';
+import { buildSchema } from '../types/schema-builder';
 import { normalizeExport, normalizeType } from '../types/schema-normalizer';
 import { mergeRuntimeSchemas } from './schema-merger';
 
@@ -82,7 +83,9 @@ function computeDegradedStats(exports: SpecExport[]): {
     if (!exp.examples || exp.examples.length === 0) missingExamples++;
 
     // Count params without docs across all signatures
-    const signatures = (exp as { signatures?: Array<{ parameters?: Array<{ description?: string }> }> }).signatures;
+    const signatures = (
+      exp as { signatures?: Array<{ parameters?: Array<{ description?: string }> }> }
+    ).signatures;
     if (signatures) {
       for (const sig of signatures) {
         for (const param of sig.parameters ?? []) {
@@ -296,7 +299,9 @@ export async function extract(options: ExtractOptions): Promise<ExtractResult> {
   ctx.exportedIds = exportedIds;
 
   // Pre-filter exports to get accurate total for progress reporting
-  const filteredSymbols = exportedSymbols.filter((s) => shouldIncludeExport(s.getName(), only, ignore));
+  const filteredSymbols = exportedSymbols.filter((s) =>
+    shouldIncludeExport(s.getName(), only, ignore),
+  );
   const total = filteredSymbols.length;
 
   for (let i = 0; i < filteredSymbols.length; i++) {
@@ -318,7 +323,14 @@ export async function extract(options: ExtractOptions): Promise<ExtractResult> {
         continue;
       }
 
-      const exp = serializeDeclaration(declaration, symbol, targetSymbol, exportName, ctx, isTypeOnly);
+      const exp = serializeDeclaration(
+        declaration,
+        symbol,
+        targetSymbol,
+        exportName,
+        ctx,
+        isTypeOnly,
+      );
       if (exp) {
         exports.push(exp);
         tracker.status = 'success';
@@ -340,7 +352,11 @@ export async function extract(options: ExtractOptions): Promise<ExtractResult> {
   }
 
   // Build verification summary from tracker
-  const verification = buildVerificationSummary(exportedSymbols.length, exports.length, exportTracker);
+  const verification = buildVerificationSummary(
+    exportedSymbols.length,
+    exports.length,
+    exportTracker,
+  );
 
   // Get package metadata
   const meta = await getPackageMeta(entryFile, baseDir);
@@ -917,7 +933,7 @@ function serializeNamespaceMember(
   }
 
   // Build schema for non-function members
-  let schema;
+  let schema: SpecSchema | undefined;
   if (kind !== 'function') {
     registerReferencedTypes(type, ctx);
     schema = buildSchema(type, ctx.typeChecker, ctx);
@@ -1019,7 +1035,11 @@ function withExportName(entry: SpecExport, exportName: string): SpecExport {
   };
 }
 
-function createEmptySpec(entryFile: string, includeSchema?: boolean, isDtsSource?: boolean): OpenPkg {
+function createEmptySpec(
+  entryFile: string,
+  includeSchema?: boolean,
+  isDtsSource?: boolean,
+): OpenPkg {
   return {
     ...(includeSchema ? { $schema: SCHEMA_URL } : {}),
     openpkg: SCHEMA_VERSION,

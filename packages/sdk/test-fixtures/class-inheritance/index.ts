@@ -17,9 +17,6 @@ export class BaseClass {
   /** Protected property (should be inherited) */
   protected protectedProperty: number = 42;
 
-  /** Private property (should NOT be inherited) */
-  private privateProperty: boolean = true;
-
   /** Static property on base */
   static staticBaseProperty: string = 'static-base';
 

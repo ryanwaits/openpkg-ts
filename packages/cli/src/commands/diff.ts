@@ -1,15 +1,15 @@
-import { Command } from 'commander';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
 import {
-  diffSpec,
-  categorizeBreakingChanges,
-  recommendSemverBump,
-  type OpenPkg,
   type CategorizedBreaking,
+  categorizeBreakingChanges,
+  diffSpec,
+  type OpenPkg,
+  recommendSemverBump,
   type SemverBump,
   type SpecExportKind,
 } from '@openpkg-ts/spec';
-import * as fs from 'node:fs';
-import * as path from 'node:path';
+import { Command } from 'commander';
 
 /**
  * A changed export with details about what changed
@@ -75,7 +75,7 @@ export function enrichDiff(oldSpec: OpenPkg, newSpec: OpenPkg): DiffResult {
   const semver = recommendSemverBump(rawDiff);
 
   const oldExports = toExportMap(oldSpec);
-  const newExports = toExportMap(newSpec);
+  const _newExports = toExportMap(newSpec);
 
   // Separate removed from changed
   const removed: RemovedExport[] = [];
@@ -152,22 +152,24 @@ export function createDiffCommand(): Command {
     .argument('<new>', 'Path to new spec file (JSON)')
     .option('--json', 'Output as JSON (default)')
     .option('--summary', 'Only show summary')
-    .action(async (oldPath: string, newPath: string, options: { json?: boolean; summary?: boolean }) => {
-      try {
-        const oldSpec = loadSpec(oldPath);
-        const newSpec = loadSpec(newPath);
+    .action(
+      async (oldPath: string, newPath: string, options: { json?: boolean; summary?: boolean }) => {
+        try {
+          const oldSpec = loadSpec(oldPath);
+          const newSpec = loadSpec(newPath);
 
-        const result = enrichDiff(oldSpec, newSpec);
+          const result = enrichDiff(oldSpec, newSpec);
 
-        if (options.summary) {
-          console.log(JSON.stringify(result.summary, null, 2));
-        } else {
-          console.log(JSON.stringify(result, null, 2));
+          if (options.summary) {
+            console.log(JSON.stringify(result.summary, null, 2));
+          } else {
+            console.log(JSON.stringify(result, null, 2));
+          }
+        } catch (err) {
+          const error = err instanceof Error ? err : new Error(String(err));
+          console.error(JSON.stringify({ error: error.message }, null, 2));
+          process.exit(1);
         }
-      } catch (err) {
-        const error = err instanceof Error ? err : new Error(String(err));
-        console.error(JSON.stringify({ error: error.message }, null, 2));
-        process.exit(1);
-      }
-    });
+      },
+    );
 }

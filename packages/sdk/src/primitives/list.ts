@@ -3,8 +3,8 @@
  */
 import * as path from 'node:path';
 import ts from 'typescript';
+import { isSymbolDeprecated } from '../ast/utils';
 import { createProgram } from '../compiler/program';
-import { getJSDocComment, isSymbolDeprecated } from '../ast/utils';
 
 export interface ListExportsOptions {
   /** Entry point file path */
@@ -68,7 +68,9 @@ export async function listExports(options: ListExportsOptions): Promise<ListExpo
         exports.push(exportItem);
       }
     } catch (err) {
-      errors.push(`Failed to extract '${symbol.getName()}': ${err instanceof Error ? err.message : String(err)}`);
+      errors.push(
+        `Failed to extract '${symbol.getName()}': ${err instanceof Error ? err.message : String(err)}`,
+      );
     }
   }
 
@@ -82,12 +84,12 @@ function extractExportItem(
   symbol: ts.Symbol,
   checker: ts.TypeChecker,
   entryFile: string,
-  entrySourceFile: ts.SourceFile
+  entrySourceFile: ts.SourceFile,
 ): ExportItem | null {
   const name = symbol.getName();
 
   // Detect re-export before resolving alias
-  const isReexport = symbol.flags & ts.SymbolFlags.Alias ? true : false;
+  const isReexport = !!(symbol.flags & ts.SymbolFlags.Alias);
 
   // Resolve alias
   let targetSymbol = symbol;
@@ -133,10 +135,7 @@ function extractExportItem(
   };
 }
 
-function getExportKind(
-  declaration: ts.Declaration,
-  type: ts.Type
-): ExportItem['kind'] {
+function getExportKind(declaration: ts.Declaration, type: ts.Type): ExportItem['kind'] {
   if (ts.isFunctionDeclaration(declaration) || ts.isFunctionExpression(declaration)) {
     return 'function';
   }
@@ -176,5 +175,5 @@ function getDescriptionPreview(symbol: ts.Symbol, checker: ts.TypeChecker): stri
 
   // Truncate at 80 chars
   if (firstLine.length <= 80) return firstLine;
-  return firstLine.slice(0, 77) + '...';
+  return `${firstLine.slice(0, 77)}...`;
 }

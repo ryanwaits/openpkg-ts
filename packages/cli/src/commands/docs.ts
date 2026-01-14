@@ -1,8 +1,8 @@
-import { Command } from 'commander';
-import { createDocs, loadSpec, type DocsInstance } from '@openpkg-ts/sdk';
-import type { OpenPkg } from '@openpkg-ts/spec';
-import * as path from 'node:path';
 import * as fs from 'node:fs';
+import * as path from 'node:path';
+import { createDocs, type DocsInstance, loadSpec } from '@openpkg-ts/sdk';
+import type { OpenPkg } from '@openpkg-ts/spec';
+import { Command } from 'commander';
 
 type OutputFormat = 'md' | 'json' | 'html';
 
@@ -22,9 +22,12 @@ async function readStdin(): Promise<string> {
 
 function getExtension(format: OutputFormat): string {
   switch (format) {
-    case 'json': return '.json';
-    case 'html': return '.html';
-    default: return '.md';
+    case 'json':
+      return '.json';
+    case 'html':
+      return '.html';
+    default:
+      return '.md';
   }
 }
 
