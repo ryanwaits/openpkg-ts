@@ -1,5 +1,11 @@
 # @openpkg-ts/extract
 
+## 0.30.1
+
+### Patch Changes
+
+- fix workspace:\* deps to use published versions for npm compatibility
+
 ## 0.30.0
 
 ### Minor Changes
