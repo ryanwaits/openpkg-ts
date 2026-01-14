@@ -6,7 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ### Breaking Changes
 
-#### `@openpkg-ts/extract`
+#### `@openpkg-ts/sdk`
 
 - **JSON Schema 2020-12 Output**: All schema output is now normalized to valid JSON Schema 2020-12. This ensures consistency between static TypeScript analysis and runtime schema extraction (Zod, Valibot, etc.).
 

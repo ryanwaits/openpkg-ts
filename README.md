@@ -13,14 +13,14 @@ TypeScript API extraction and documentation toolkit. Extract complete API specif
 
 ```bash
 # Extract spec and generate markdown docs
-npx @openpkg-ts/cli spec src/index.ts | npx @openpkg-ts/cli docs --format markdown
+npx @openpkg-ts/cli snapshot src/index.ts | npx @openpkg-ts/cli docs --format markdown
 ```
 
 ## Packages
 
 | Package | Description |
 |---------|-------------|
-| [@openpkg-ts/cli](./packages/cli) | CLI tool for extraction and doc generation. `openpkg spec`, `openpkg docs`, `openpkg diff` commands. |
+| [@openpkg-ts/cli](./packages/cli) | CLI tool for extraction and doc generation. `openpkg snapshot`, `openpkg docs`, `openpkg diff` commands. |
 | [@openpkg-ts/sdk](./packages/sdk) | Programmatic SDK for extraction, rendering, and querying. Core primitives for building tooling. |
 | [@openpkg-ts/spec](./packages/spec) | Core specification types, JSON Schema validation, normalization, and diffing. |
 | [@openpkg-ts/react](./packages/react) | React components for rendering API docs. Headless and styled variants. |

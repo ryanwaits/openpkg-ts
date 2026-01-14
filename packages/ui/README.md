@@ -12,7 +12,7 @@ Peer deps: `react@^19`, `react-dom@^19`
 
 ## Entry Points
 
-### `@openpkg-ts/api`
+### `@openpkg-ts/ui/api`
 
 Components for displaying API exports and parameters.
 
@@ -28,7 +28,7 @@ import { ExportCard, ParameterItem, CodeTabs, TypeBadge, ImportSection } from '@
 | `TypeBadge` | Inline type annotation badge |
 | `ImportSection` | Import statement display |
 
-### `@openpkg-ts/badge`
+### `@openpkg-ts/ui/badge`
 
 Status and kind indicator badges.
 
@@ -41,7 +41,7 @@ import { KindBadge, StatusBadge } from '@openpkg-ts/ui/badge';
 | `KindBadge` | Export kind (function, class, interface, type, etc.) |
 | `StatusBadge` | Status indicator (stable, beta, deprecated, etc.) |
 
-### `@openpkg-ts/docskit`
+### `@openpkg-ts/ui/docskit`
 
 Stripe-style API reference components and CodeHike integrations.
 
@@ -73,7 +73,7 @@ import {
 - `addDocsKit` - Register all handlers
 - `mark`, `hover`, `tooltip`, `callout`, `collapse`, `diff`, `lineNumbers`, `wordWrap`, `expandable`, `link`
 
-### `@openpkg-ts/lib/utils`
+### `@openpkg-ts/ui/lib/utils`
 
 ```tsx
 import { cn } from '@openpkg-ts/ui/lib/utils';

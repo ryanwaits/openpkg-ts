@@ -120,7 +120,7 @@ openpkg diff baseline.json new.json --summary
 ## Programmatic Use
 
 ```typescript
-import { getExport, listExports } from '@openpkg-ts/cli';
+import { getExport, listExports } from '@openpkg-ts/sdk';
 
 // Same primitives as CLI
 const { exports } = await listExports({ entryFile: './src/index.ts' });

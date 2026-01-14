@@ -9,10 +9,10 @@
     "typescript",
     "api-docs"
   ],
-  "homepage": "https://github.com/doccov/doccov#readme",
+  "homepage": "https://github.com/ryanwaits/openpkg-ts#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/doccov/doccov.git",
+    "url": "git+https://github.com/ryanwaits/openpkg-ts.git",
     "directory": "packages/react"
   },
   "license": "MIT",
