@@ -20,11 +20,20 @@ npx @openpkg-ts/cli snapshot src/index.ts | npx @openpkg-ts/cli docs --format ma
 
 | Package | Description |
 |---------|-------------|
-| [@openpkg-ts/cli](./packages/cli) | CLI tool for extraction and doc generation. `openpkg snapshot`, `openpkg docs`, `openpkg diff` commands. |
-| [@openpkg-ts/sdk](./packages/sdk) | Programmatic SDK for extraction, rendering, and querying. Core primitives for building tooling. |
-| [@openpkg-ts/spec](./packages/spec) | Core specification types, JSON Schema validation, normalization, and diffing. |
-| [@openpkg-ts/react](./packages/react) | React components for rendering API docs. Headless and styled variants. |
-| [@openpkg-ts/adapters](./packages/adapters) | Framework adapters (Fumadocs, Docusaurus, Mintlify). |
+| [@openpkg-ts/cli](./packages/cli) | CLI tool for extraction and doc generation |
+| [@openpkg-ts/sdk](./packages/sdk) | Programmatic SDK for extraction, rendering, and querying |
+| [@openpkg-ts/spec](./packages/spec) | Spec types, validation, normalization, diffing |
+| [@openpkg-ts/react](./packages/react) | React components for API docs (headless + styled) |
+| [@openpkg-ts/ui](./packages/ui) | Low-level UI primitives (CodeHike, Radix) |
+| [@openpkg-ts/adapters](./packages/adapters) | Framework adapters (Fumadocs) |
+
+### Which package?
+
+- **CLI user** → `@openpkg-ts/cli`
+- **Building tooling** → `@openpkg-ts/sdk`
+- **React docs site** → `@openpkg-ts/react` (uses ui internally)
+- **Fumadocs integration** → `@openpkg-ts/adapters`
+- **Custom UI primitives** → `@openpkg-ts/ui`
 
 ## How It Works
 

@@ -1,6 +1,6 @@
 # @openpkg-ts/react
 
-React components for rendering OpenPkg API documentation.
+React components for rendering OpenPkg API documentation. Built on `@openpkg-ts/ui`.
 
 ## Install
 
@@ -22,7 +22,10 @@ import {
   ExampleBlock,
   ExpandableProperty,
   MembersTable,
+  MemberRow,
+  NestedProperty,
   ParamTable,
+  ParamRow,
   Signature,
   TypeTable,
 } from '@openpkg-ts/react';
@@ -34,7 +37,10 @@ import {
 | `ExampleBlock` | Code example display |
 | `ExpandableProperty` | Property with nested children |
 | `MembersTable` | Class/interface members table |
+| `MemberRow` | Single member row |
+| `NestedProperty` | Nested property display |
 | `ParamTable` | Function parameters table |
+| `ParamRow` | Single parameter row |
 | `Signature` | Type signature renderer |
 | `TypeTable` | Type properties table |
 
@@ -126,7 +132,20 @@ import {
   specSchemaToAPISchema,
   specExamplesToCodeExamples,
   buildImportStatement,
+  getLanguagesFromExamples,
 } from '@openpkg-ts/react/styled';
+```
+
+## Headless Utilities
+
+```tsx
+import {
+  cleanCode,
+  getExampleCode,
+  getExampleLanguage,
+  getExampleTitle,
+  groupMembersByKind,
+} from '@openpkg-ts/react';
 ```
 
 ## License

@@ -18,7 +18,7 @@
     },
     "packages/adapters": {
       "name": "@openpkg-ts/adapters",
-      "version": "0.2.0",
+      "version": "0.2.2",
       "dependencies": {
         "@openpkg-ts/sdk": "workspace:*",
         "@openpkg-ts/spec": "workspace:*",
@@ -40,7 +40,7 @@
     },
     "packages/cli": {
       "name": "@openpkg-ts/cli",
-      "version": "0.2.0",
+      "version": "0.2.3",
       "bin": {
         "openpkg": "./bin/openpkg.ts",
       },
@@ -56,7 +56,7 @@
     },
     "packages/react": {
       "name": "@openpkg-ts/react",
-      "version": "0.2.0",
+      "version": "0.2.2",
       "dependencies": {
         "@openpkg-ts/sdk": "workspace:*",
         "@openpkg-ts/spec": "workspace:*",
@@ -82,7 +82,7 @@
     },
     "packages/sdk": {
       "name": "@openpkg-ts/sdk",
-      "version": "0.30.0",
+      "version": "0.30.2",
       "dependencies": {
         "@openpkg-ts/spec": "workspace:*",
         "typescript": "^5.0.0",
@@ -115,7 +115,7 @@
     },
     "packages/ui": {
       "name": "@openpkg-ts/ui",
-      "version": "0.1.2",
+      "version": "0.1.3",
       "dependencies": {
         "@radix-ui/react-collapsible": "^1.1.12",
         "@radix-ui/react-slot": "^1.1.0",
@@ -136,8 +136,8 @@
         "typescript": "^5.0.0",
       },
       "peerDependencies": {
-        "react": "^19.0.0",
-        "react-dom": "^19.0.0",
+        "react": "^18 || ^19",
+        "react-dom": "^18 || ^19",
       },
     },
   },
@@ -1282,7 +1282,7 @@
 
     "@openpkg-ts/spec/bunup": ["bunup@0.16.17", "", { "dependencies": { "@bunup/dts": "^0.14.46", "@bunup/shared": "0.16.12", "chokidar": "^5.0.0", "coffi": "^0.1.37", "lightningcss": "^1.30.2", "picocolors": "^1.1.1", "tinyexec": "^1.0.2", "tree-kill": "^1.2.2", "zlye": "^0.4.4" }, "peerDependencies": { "typescript": "latest" }, "optionalPeers": ["typescript"], "bin": { "bunup": "dist/cli/index.js" } }, "sha512-zO4OcBVmYHnkc9knyZ0igcRugua59b9P5tRiW/yktdSxkKtSqREItJSas40+AM61JWHq2GXP7AoM7EJMndR9dw=="],
 
-    "@openpkg-ts/ui/bunup": ["bunup@0.16.17", "", { "dependencies": { "@bunup/dts": "^0.14.46", "@bunup/shared": "0.16.12", "chokidar": "^5.0.0", "coffi": "^0.1.37", "lightningcss": "^1.30.2", "picocolors": "^1.1.1", "tinyexec": "^1.0.2", "tree-kill": "^1.2.2", "zlye": "^0.4.4" }, "peerDependencies": { "typescript": "latest" }, "optionalPeers": ["typescript"], "bin": { "bunup": "dist/cli/index.js" } }, "sha512-zO4OcBVmYHnkc9knyZ0igcRugua59b9P5tRiW/yktdSxkKtSqREItJSas40+AM61JWHq2GXP7AoM7EJMndR9dw=="],
+    "@openpkg-ts/ui/bunup": ["bunup@0.16.20", "", { "dependencies": { "@bunup/dts": "^0.14.49", "@bunup/shared": "0.16.19", "chokidar": "^5.0.0", "coffi": "^0.1.37", "lightningcss": "^1.30.2", "picocolors": "^1.1.1", "tinyexec": "^1.0.2", "tree-kill": "^1.2.2", "zlye": "^0.4.4" }, "peerDependencies": { "typescript": "latest" }, "optionalPeers": ["typescript"], "bin": { "bunup": "dist/cli/index.js" } }, "sha512-a3Bu6ho8Bs7YEynHzUvwBVXXJIbSxlYMDYZrndyIIL1waUYQ4Eh9V62vS8TpVESOxcx8mQfuS5Hb1bXYE2bYkA=="],
 
     "@openpkg-ts/ui/lucide-react": ["lucide-react@0.555.0", "", { "peerDependencies": { "react": "^16.5.1 || ^17.0.0 || ^18.0.0 || ^19.0.0" } }, "sha512-D8FvHUGbxWBRQM90NZeIyhAvkFfsh3u9ekrMvJ30Z6gnpBHS6HC6ldLg7tL45hwiIz/u66eKDtdA23gwwGsAHA=="],
 
@@ -1338,7 +1338,9 @@
 
     "@openpkg-ts/spec/bunup/chokidar": ["chokidar@5.0.0", "", { "dependencies": { "readdirp": "^5.0.0" } }, "sha512-TQMmc3w+5AxjpL8iIiwebF73dRDF4fBIieAqGn9RGCWaEVwQ6Fb2cGe31Yns0RRIzii5goJ1Y7xbMwo1TxMplw=="],
 
-    "@openpkg-ts/ui/bunup/@bunup/dts": ["@bunup/dts@0.14.46", "", { "dependencies": { "@babel/parser": "^7.28.4", "coffi": "^0.1.37", "oxc-minify": "^0.93.0", "oxc-resolver": "^11.9.0", "oxc-transform": "^0.93.0", "picocolors": "^1.1.1", "std-env": "^3.9.0", "ts-import-resolver": "^0.1.23" }, "peerDependencies": { "typescript": ">=4.5.0" }, "optionalPeers": ["typescript"] }, "sha512-3U1cTvieC7Qjrwiqi8kwWIDwnhTcJvCJF6qc492oo+1pd9bvgScpd24ZCAox0YXo1a5UmqgxQKzGVXqzCrCnFQ=="],
+    "@openpkg-ts/ui/bunup/@bunup/dts": ["@bunup/dts@0.14.49", "", { "dependencies": { "@babel/parser": "^7.28.6", "coffi": "^0.1.37", "oxc-minify": "^0.93.0", "oxc-resolver": "^11.16.2", "oxc-transform": "^0.93.0", "picocolors": "^1.1.1", "std-env": "^3.10.0", "ts-import-resolver": "^0.1.23" }, "peerDependencies": { "typescript": ">=4.5.0" }, "optionalPeers": ["typescript"] }, "sha512-mAni3Zpf1MLxFDNCNStcxjbgNaSZpygc1qqF66WHMoUs3j+NSNKZPKwex9uLGXazJdE8g9MqQ//1QQcETdwY6Q=="],
+
+    "@openpkg-ts/ui/bunup/@bunup/shared": ["@bunup/shared@0.16.19", "", { "peerDependencies": { "typescript": "latest" }, "optionalPeers": ["typescript"] }, "sha512-gk0ALbDgEifVtZYRZ/ivvwF53pvOdpfqtLIIK67Q417nvtn/XPGE9NZLbdsowTKy2befmT8eiTxMXeoLyZPibA=="],
 
     "@openpkg-ts/ui/bunup/chokidar": ["chokidar@5.0.0", "", { "dependencies": { "readdirp": "^5.0.0" } }, "sha512-TQMmc3w+5AxjpL8iIiwebF73dRDF4fBIieAqGn9RGCWaEVwQ6Fb2cGe31Yns0RRIzii5goJ1Y7xbMwo1TxMplw=="],
 
@@ -1383,6 +1385,8 @@
     "@openpkg-ts/spec/bunup/@bunup/dts/oxc-transform": ["oxc-transform@0.93.0", "", { "optionalDependencies": { "@oxc-transform/binding-android-arm64": "0.93.0", "@oxc-transform/binding-darwin-arm64": "0.93.0", "@oxc-transform/binding-darwin-x64": "0.93.0", "@oxc-transform/binding-freebsd-x64": "0.93.0", "@oxc-transform/binding-linux-arm-gnueabihf": "0.93.0", "@oxc-transform/binding-linux-arm-musleabihf": "0.93.0", "@oxc-transform/binding-linux-arm64-gnu": "0.93.0", "@oxc-transform/binding-linux-arm64-musl": "0.93.0", "@oxc-transform/binding-linux-riscv64-gnu": "0.93.0", "@oxc-transform/binding-linux-s390x-gnu": "0.93.0", "@oxc-transform/binding-linux-x64-gnu": "0.93.0", "@oxc-transform/binding-linux-x64-musl": "0.93.0", "@oxc-transform/binding-wasm32-wasi": "0.93.0", "@oxc-transform/binding-win32-arm64-msvc": "0.93.0", "@oxc-transform/binding-win32-x64-msvc": "0.93.0" } }, "sha512-QCwM2nMAWf4hEBehLVA2apllxdmmWLb5M0in9HwC2boaaFbP0QntbLy4hfRZGur2KKyEBErZbH9S5NYX8eHslg=="],
 
     "@openpkg-ts/spec/bunup/chokidar/readdirp": ["readdirp@5.0.0", "", {}, "sha512-9u/XQ1pvrQtYyMpZe7DXKv2p5CNvyVwzUB6uhLAnQwHMSgKMBR62lc7AHljaeteeHXn11XTAaLLUVZYVZyuRBQ=="],
+
+    "@openpkg-ts/ui/bunup/@bunup/dts/@babel/parser": ["@babel/parser@7.28.6", "", { "dependencies": { "@babel/types": "^7.28.6" }, "bin": "./bin/babel-parser.js" }, "sha512-TeR9zWR18BvbfPmGbLampPMW+uW1NZnJlRuuHso8i87QZNq2JRF9i6RgxRqtEq+wQGsS19NNTWr2duhnE49mfQ=="],
 
     "@openpkg-ts/ui/bunup/@bunup/dts/oxc-minify": ["oxc-minify@0.93.0", "", { "optionalDependencies": { "@oxc-minify/binding-android-arm64": "0.93.0", "@oxc-minify/binding-darwin-arm64": "0.93.0", "@oxc-minify/binding-darwin-x64": "0.93.0", "@oxc-minify/binding-freebsd-x64": "0.93.0", "@oxc-minify/binding-linux-arm-gnueabihf": "0.93.0", "@oxc-minify/binding-linux-arm-musleabihf": "0.93.0", "@oxc-minify/binding-linux-arm64-gnu": "0.93.0", "@oxc-minify/binding-linux-arm64-musl": "0.93.0", "@oxc-minify/binding-linux-riscv64-gnu": "0.93.0", "@oxc-minify/binding-linux-s390x-gnu": "0.93.0", "@oxc-minify/binding-linux-x64-gnu": "0.93.0", "@oxc-minify/binding-linux-x64-musl": "0.93.0", "@oxc-minify/binding-wasm32-wasi": "0.93.0", "@oxc-minify/binding-win32-arm64-msvc": "0.93.0", "@oxc-minify/binding-win32-x64-msvc": "0.93.0" } }, "sha512-pwMjOGN/I+cfLVkSmECcVHROKwECNVAXCT5h/29S4f0aArIUh3CQnix1yYy7MTQ3yThNuGANjjE9jWJyT43Vbw=="],
 
@@ -1771,6 +1775,8 @@
     "@openpkg-ts/spec/bunup/@bunup/dts/oxc-transform/@oxc-transform/binding-win32-arm64-msvc": ["@oxc-transform/binding-win32-arm64-msvc@0.93.0", "", { "os": "win32", "cpu": "arm64" }, "sha512-RR30xNVMIEe5PWSD26uGEZp6yH7fkLKznvPSebVOVl2IWW8Sjnd59i6Ws08FmBKH9QP3jW30MypL6ESdlE5yWw=="],
 
     "@openpkg-ts/spec/bunup/@bunup/dts/oxc-transform/@oxc-transform/binding-win32-x64-msvc": ["@oxc-transform/binding-win32-x64-msvc@0.93.0", "", { "os": "win32", "cpu": "x64" }, "sha512-6QN3DEaEw3eWioWEFRgNsTvYq8czYSnpkjB2za+/WdLN0g5FzOl2ZEfNiPrBWIPnSmjUmDWtWVWcSjwY7fX5/Q=="],
+
+    "@openpkg-ts/ui/bunup/@bunup/dts/@babel/parser/@babel/types": ["@babel/types@7.28.6", "", { "dependencies": { "@babel/helper-string-parser": "^7.27.1", "@babel/helper-validator-identifier": "^7.28.5" } }, "sha512-0ZrskXVEHSWIqZM/sQZ4EV3jZJXRkio/WCxaqKZP1g//CEWEPSfeZFcms4XeKBCHU0ZKnIkdJeU/kF+eRp5lBg=="],
 
     "@openpkg-ts/ui/bunup/@bunup/dts/oxc-minify/@oxc-minify/binding-android-arm64": ["@oxc-minify/binding-android-arm64@0.93.0", "", { "os": "android", "cpu": "arm64" }, "sha512-N3j/JoK4hXwQbnyOJoEltM8MEkddWV3XtfYimO6jsMjr5R6QdauKaSVeQHO/lSezB7SFkrMPqr6X7tBfghHiXA=="],
 

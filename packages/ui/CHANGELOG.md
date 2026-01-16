@@ -1,5 +1,11 @@
 # @openpkg-ts/ui
 
+## 0.1.3
+
+### Patch Changes
+
+- Expand peer deps to allow React 18 (`react@^18 || ^19`)
+
 ## 0.1.2
 
 ### Patch Changes
