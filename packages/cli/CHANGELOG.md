@@ -1,5 +1,11 @@
 # @openpkg-ts/cli
 
+## 0.2.2
+
+### Patch Changes
+
+- pull version from package.json instead of hardcoding
+
 ## 0.2.1
 
 ### Patch Changes

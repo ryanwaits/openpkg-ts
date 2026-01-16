@@ -5,13 +5,14 @@ import { Command } from 'commander';
 import { createDiffCommand } from '../src/commands/diff';
 import { createDocsCommand } from '../src/commands/docs';
 import { createSnapshotCommand } from '../src/commands/snapshot';
+import pkg from '../package.json';
 
 const program = new Command();
 
 program
   .name('openpkg')
   .description('OpenPkg CLI - TypeScript API extraction primitives')
-  .version('0.1.0');
+  .version(pkg.version);
 
 program
   .command('list')
