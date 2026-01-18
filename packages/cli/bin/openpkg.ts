@@ -2,10 +2,10 @@
 import * as path from 'node:path';
 import { getExport, listExports } from '@openpkg-ts/sdk';
 import { Command } from 'commander';
+import pkg from '../package.json';
 import { createDiffCommand } from '../src/commands/diff';
 import { createDocsCommand } from '../src/commands/docs';
 import { createSnapshotCommand } from '../src/commands/snapshot';
-import pkg from '../package.json';
 
 const program = new Command();
 
