@@ -1,4 +1,4 @@
-import type { OpenPkg, SpecExport, SpecExportKind } from './types';
+import type { OpenPkg, SpecExportKind } from './types';
 
 export type BreakingSeverity = 'high' | 'medium' | 'low';
 
@@ -38,16 +38,6 @@ export function diffSpec(oldSpec: OpenPkg, newSpec: OpenPkg): SpecDiff {
   diffCollections(result, oldSpec.types ?? [], newSpec.types ?? []);
 
   return result;
-}
-
-function toExportMap(exports: SpecExport[]): Map<string, SpecExport> {
-  const map = new Map<string, SpecExport>();
-  for (const exp of exports) {
-    if (exp && typeof exp.id === 'string') {
-      map.set(exp.id, exp);
-    }
-  }
-  return map;
 }
 
 type WithId = { id: string };
@@ -166,8 +156,8 @@ export function categorizeBreakingChanges(
   newSpec: OpenPkg,
   memberChanges?: MemberChangeInfo[],
 ): CategorizedBreaking[] {
-  const oldExportMap = toExportMap(oldSpec.exports);
-  const newExportMap = toExportMap(newSpec.exports);
+  const oldExportMap = toMap(oldSpec.exports);
+  const newExportMap = toMap(newSpec.exports);
 
   const categorized: CategorizedBreaking[] = [];
 
