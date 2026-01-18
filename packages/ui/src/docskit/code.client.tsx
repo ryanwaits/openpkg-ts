@@ -1,6 +1,6 @@
 'use client';
 
-import { useStateOrLocalStorage } from '@/hooks/use-locale-storage';
+import { useStateOrLocalStorage } from '@/hooks/use-local-storage';
 import { cn } from '@/lib/utils';
 import type { CodeInfo } from './code.config';
 import { CopyButton } from './code.copy';
