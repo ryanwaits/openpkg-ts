@@ -9,7 +9,7 @@ import {
   type RawCode,
 } from 'codehike/code';
 import { useEffect, useState } from 'react';
-import { useStateOrLocalStorage } from '@/hooks/use-locale-storage';
+import { useStateOrLocalStorage } from '@/hooks/use-local-storage';
 import { cn } from '@/lib/utils';
 import { type CodeOptions, flagsToOptions, theme } from './code.config';
 import { CopyButton } from './code.copy';
