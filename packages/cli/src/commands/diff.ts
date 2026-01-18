@@ -75,7 +75,6 @@ export function enrichDiff(oldSpec: OpenPkg, newSpec: OpenPkg): DiffResult {
   const semver = recommendSemverBump(rawDiff);
 
   const oldExports = toExportMap(oldSpec);
-  const _newExports = toExportMap(newSpec);
 
   // Separate removed from changed
   const removed: RemovedExport[] = [];
