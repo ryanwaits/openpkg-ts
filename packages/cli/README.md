@@ -78,6 +78,9 @@ openpkg docs openpkg.json --split -o docs/api/
 
 # Pipeline: stdin
 openpkg snapshot src/index.ts -o - | openpkg docs - -f md
+
+# With adapter (generates framework-specific output)
+openpkg docs openpkg.json --adapter fumadocs -o docs/api/
 ```
 
 Options:
@@ -86,6 +89,7 @@ Options:
 | `-o, --output <path>` | Output file or directory (default: stdout) |
 | `-f, --format <fmt>` | Format: `md`, `json`, `html` (default: md) |
 | `--split` | One file per export (requires `-o` as directory) |
+| `-a, --adapter <name>` | Use adapter: `fumadocs`, `raw` (default: raw) |
 
 ### diff
 
@@ -103,6 +107,135 @@ Output includes:
 - `changed` - modified exports
 - `docsOnly` - documentation-only changes
 - `summary.semverBump` - recommended version bump
+
+### breaking
+
+Check for breaking changes. Exit 1 if any found.
+
+```bash
+openpkg breaking old.json new.json
+```
+
+Output:
+```json
+{
+  "breaking": [
+    { "id": "createClient", "name": "createClient", "kind": "function", "severity": "high", "reason": "signature changed" }
+  ],
+  "count": 1
+}
+```
+
+### semver
+
+Recommend version bump based on changes.
+
+```bash
+openpkg semver old.json new.json
+```
+
+Output:
+```json
+{
+  "bump": "major",
+  "reason": "1 breaking change detected"
+}
+```
+
+### validate
+
+Validate spec against schema.
+
+```bash
+openpkg validate openpkg.json
+openpkg validate openpkg.json --version 1.0
+```
+
+Output:
+```json
+{
+  "valid": true,
+  "errors": []
+}
+```
+
+### changelog
+
+Generate changelog from diff.
+
+```bash
+openpkg changelog old.json new.json
+openpkg changelog old.json new.json --format json
+```
+
+Markdown output:
+```markdown
+## Breaking Changes
+- **Removed** `oldFunction` (function)
+
+## Added
+- `newFunction`
+```
+
+### diagnostics
+
+Analyze spec for quality issues.
+
+```bash
+openpkg diagnostics openpkg.json
+```
+
+Output:
+```json
+{
+  "summary": {
+    "total": 5,
+    "missingDescriptions": 3,
+    "deprecatedNoReason": 1,
+    "missingParamDocs": 1
+  },
+  "diagnostics": { ... }
+}
+```
+
+### filter
+
+Filter spec by various criteria.
+
+```bash
+openpkg filter openpkg.json --kind function,class
+openpkg filter openpkg.json --has-description -o documented.json
+openpkg filter openpkg.json --search "user" --summary
+openpkg filter openpkg.json --deprecated --quiet | jq '.exports[].name'
+```
+
+Options:
+| Flag | Description |
+|------|-------------|
+| `--kind <kinds>` | Filter by kinds (comma-separated) |
+| `--name <names>` | Filter by exact names (comma-separated) |
+| `--id <ids>` | Filter by export IDs (comma-separated) |
+| `--tag <tags>` | Filter by tags (comma-separated) |
+| `--deprecated` | Only deprecated exports |
+| `--no-deprecated` | Exclude deprecated exports |
+| `--has-description` | Only exports with descriptions |
+| `--missing-description` | Only exports without descriptions |
+| `--search <term>` | Search name/description (case-insensitive) |
+| `--module <path>` | Filter by source file path (contains) |
+| `-o, --output <file>` | Output file (default: stdout) |
+| `--summary` | Only output matched/total counts |
+| `--quiet` | Output raw spec only (no wrapper) |
+
+All criteria use AND logic when combined.
+
+Output (default):
+```json
+{
+  "spec": { ... },
+  "matched": 12,
+  "total": 45
+}
+```
 
 ## Pipelines
 

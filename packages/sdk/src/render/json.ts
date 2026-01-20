@@ -13,6 +13,8 @@ export interface JSONOptions {
   includeRaw?: boolean;
   /** Export to render (single export mode) */
   export?: string;
+  /** Exports to render (multi-export mode) - overridden by `export` if both provided */
+  exports?: string[];
   /** Include computed fields (signatures, formatted types) */
   computed?: boolean;
   /** Flatten nested structures */
@@ -226,7 +228,7 @@ export function toJSON(
   spec: OpenPkg,
   options: JSONOptions = {},
 ): SimplifiedSpec | SimplifiedExport {
-  // Single export mode
+  // Single export mode (takes precedence)
   if (options.export) {
     const exp = spec.exports.find((e) => e.name === options.export || e.id === options.export);
     if (!exp) {
@@ -235,8 +237,15 @@ export function toJSON(
     return simplifyExport(exp);
   }
 
+  // Filter exports if exports[] provided
+  let specExports = spec.exports;
+  if (options.exports?.length) {
+    const ids = new Set(options.exports);
+    specExports = spec.exports.filter((e) => ids.has(e.name) || ids.has(e.id));
+  }
+
   // Full spec mode
-  const exports = spec.exports.map(simplifyExport);
+  const exports = specExports.map(simplifyExport);
 
   // Group by kind
   const byKind = {} as Record<SpecExportKind, SimplifiedExport[]>;

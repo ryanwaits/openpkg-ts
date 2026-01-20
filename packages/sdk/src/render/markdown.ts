@@ -31,8 +31,10 @@ export interface MarkdownOptions {
 }
 
 export interface ExportMarkdownOptions extends MarkdownOptions {
-  /** Export to render */
+  /** Export to render (single export mode) */
   export?: string;
+  /** Exports to render (multi-export mode) - overridden by `export` if both provided */
+  exports?: string[];
 }
 
 const defaultSections = {
@@ -482,13 +484,22 @@ export function exportToMarkdown(exp: SpecExport, options: MarkdownOptions = {})
  * ```
  */
 export function toMarkdown(spec: OpenPkg, options: ExportMarkdownOptions = {}): string {
-  // Single export mode
+  // Single export mode (takes precedence)
   if (options.export) {
     const exp = spec.exports.find((e) => e.name === options.export || e.id === options.export);
     if (!exp) {
       throw new Error(`Export not found: ${options.export}`);
     }
     return exportToMarkdown(exp, options);
+  }
+
+  // Filter exports if exports[] provided
+  let specExports = spec.exports;
+  if (options.exports?.length) {
+    const ids = new Set(options.exports);
+    specExports = spec.exports.filter((e) => ids.has(e.name) || ids.has(e.id));
+    // Return empty markdown if no matches
+    if (specExports.length === 0) return '';
   }
 
   // Full spec mode - render all exports
@@ -523,7 +534,7 @@ export function toMarkdown(spec: OpenPkg, options: ExportMarkdownOptions = {}): 
 
   // Group by kind
   const byKind: Record<string, SpecExport[]> = {};
-  for (const exp of spec.exports) {
+  for (const exp of specExports) {
     if (!byKind[exp.kind]) byKind[exp.kind] = [];
     byKind[exp.kind].push(exp);
   }

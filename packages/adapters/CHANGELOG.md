@@ -1,5 +1,17 @@
 # @openpkg-ts/adapters
 
+## 0.3.0
+
+### Minor Changes
+
+- bd70dc7: add diagnostics, filter primitives, new CLI commands (breaking, changelog, diagnostics, filter, semver, validate), registry system, render enhancements
+
+### Patch Changes
+
+- Updated dependencies [bd70dc7]
+  - @openpkg-ts/spec@0.31.0
+  - @openpkg-ts/sdk@0.31.0
+
 ## 0.2.2
 
 ### Patch Changes

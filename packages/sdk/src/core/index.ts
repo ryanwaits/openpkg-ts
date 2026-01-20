@@ -1,5 +1,14 @@
 // Query utilities
 
+// Diagnostics utilities
+export {
+  analyzeSpec,
+  type DiagnosticItem,
+  findMissingParamDocs,
+  getDeprecationMessage,
+  hasDeprecatedTag,
+  type SpecDiagnostics,
+} from './diagnostics';
 // Format utilities
 export { formatBadges, getMemberBadges } from './format';
 // Loader utilities

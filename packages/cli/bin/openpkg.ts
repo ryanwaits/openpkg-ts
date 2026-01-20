@@ -3,9 +3,15 @@ import * as path from 'node:path';
 import { getExport, listExports } from '@openpkg-ts/sdk';
 import { Command } from 'commander';
 import pkg from '../package.json';
+import { createBreakingCommand } from '../src/commands/breaking';
+import { createChangelogCommand } from '../src/commands/changelog';
+import { createDiagnosticsCommand } from '../src/commands/diagnostics';
 import { createDiffCommand } from '../src/commands/diff';
+import { createFilterCommand } from '../src/commands/filter';
 import { createDocsCommand } from '../src/commands/docs';
+import { createSemverCommand } from '../src/commands/semver';
 import { createSnapshotCommand } from '../src/commands/snapshot';
+import { createValidateCommand } from '../src/commands/validate';
 
 const program = new Command();
 
@@ -57,5 +63,11 @@ program
 program.addCommand(createSnapshotCommand());
 program.addCommand(createDiffCommand());
 program.addCommand(createDocsCommand());
+program.addCommand(createBreakingCommand());
+program.addCommand(createChangelogCommand());
+program.addCommand(createSemverCommand());
+program.addCommand(createValidateCommand());
+program.addCommand(createDiagnosticsCommand());
+program.addCommand(createFilterCommand());
 
 program.parse();

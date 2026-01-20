@@ -146,6 +146,40 @@ describe('diffSpec', () => {
     const diff = diffSpec(specNoTypes, specWithTypes);
     expect(diff.nonBreaking).toContain('T');
   });
+
+  test('filters by kinds option', () => {
+    const oldSpec: OpenPkg = {
+      openpkg: '0.4.0',
+      meta: { name: 'test' },
+      exports: [
+        { id: 'fn1', name: 'fn1', kind: 'function' },
+        { id: 'var1', name: 'var1', kind: 'variable' },
+      ],
+    };
+    const newSpec: OpenPkg = {
+      openpkg: '0.4.0',
+      meta: { name: 'test' },
+      exports: [],
+    };
+    const diff = diffSpec(oldSpec, newSpec, { kinds: ['function'] });
+    expect(diff.breaking).toContain('fn1');
+    expect(diff.breaking).not.toContain('var1');
+  });
+
+  test('excludes docsOnly when includeDocsOnly is false', () => {
+    const oldSpec: OpenPkg = {
+      openpkg: '0.4.0',
+      meta: { name: 'test' },
+      exports: [{ id: 'foo', name: 'foo', kind: 'function', description: 'Original' }],
+    };
+    const newSpec: OpenPkg = {
+      openpkg: '0.4.0',
+      meta: { name: 'test' },
+      exports: [{ id: 'foo', name: 'foo', kind: 'function', description: 'Updated' }],
+    };
+    const diff = diffSpec(oldSpec, newSpec, { includeDocsOnly: false });
+    expect(diff.docsOnly).toEqual([]);
+  });
 });
 
 describe('categorizeBreakingChanges', () => {

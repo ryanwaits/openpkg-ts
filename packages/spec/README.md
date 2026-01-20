@@ -66,8 +66,8 @@ const diff = diffSpec(baseSpec, headSpec);
 
 console.log(`Added: ${diff.added.length}`);
 console.log(`Removed: ${diff.removed.length}`);
-console.log(`Modified: ${diff.modified.length}`);
 console.log(`Breaking: ${diff.breaking.length}`);
+console.log(`Docs only: ${diff.docsOnly.length}`);
 
 // Get semver recommendation
 const recommendation = recommendSemverBump(diff);
@@ -77,6 +77,21 @@ console.log(`Reason: ${recommendation.reason}`);
 // Calculate next version
 const next = calculateNextVersion('1.2.3', recommendation.bump);
 console.log(`Next version: ${next}`); // '2.0.0'
+```
+
+### DiffOptions
+
+Filter diff results by criteria.
+
+```typescript
+import { diffSpec, type DiffOptions } from '@openpkg-ts/spec';
+
+const options: DiffOptions = {
+  includeDocsOnly: false,  // exclude documentation-only changes
+  kinds: ['function', 'class'],  // filter by export kind
+};
+
+const diff = diffSpec(oldSpec, newSpec, options);
 ```
 
 ## Dereferencing
@@ -101,6 +116,10 @@ import type {
   SpecClass,
   SpecInterface,
   SpecMeta,
+  SpecDiff,
+  DiffOptions,
+  SemverBump,
+  SemverRecommendation,
 } from '@openpkg-ts/spec';
 ```
 
@@ -117,10 +136,10 @@ import type {
 - `dereference(spec)` - Resolve $ref pointers
 
 ### Diffing
-- `diffSpec(base, head)` - Compare specs
+- `diffSpec(base, head, options?)` - Compare specs (supports `DiffOptions`)
 - `recommendSemverBump(diff)` - Suggest version bump
 - `calculateNextVersion(version, bump)` - Calculate next version
-- `categorizeBreakingChanges(diff)` - Group by severity
+- `categorizeBreakingChanges(breaking, old, new)` - Group by severity
 
 ### Types
 - `OpenPkg` - Root spec type
@@ -128,6 +147,8 @@ import type {
 - `SpecType` - Type definition
 - `SpecFunction`, `SpecClass`, `SpecInterface` - Export kinds
 - `SpecDiff` - Diff result type
+- `DiffOptions` - Diff filtering options
+- `SemverBump`, `SemverRecommendation` - Semver types
 
 ## License
 

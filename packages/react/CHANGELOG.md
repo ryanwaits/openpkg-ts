@@ -1,5 +1,13 @@
 # @openpkg-ts/react
 
+## 0.2.3
+
+### Patch Changes
+
+- Updated dependencies [bd70dc7]
+  - @openpkg-ts/spec@0.31.0
+  - @openpkg-ts/sdk@0.31.0
+
 ## 0.2.2
 
 ### Patch Changes

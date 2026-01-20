@@ -1,5 +1,11 @@
 # @openpkg-ts/spec
 
+## 0.31.0
+
+### Minor Changes
+
+- bd70dc7: add diagnostics, filter primitives, new CLI commands (breaking, changelog, diagnostics, filter, semver, validate), registry system, render enhancements
+
 ## 0.27.1
 
 ### Patch Changes

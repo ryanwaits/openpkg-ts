@@ -1,7 +1,7 @@
 import { defineConfig } from 'bunup';
 
 export default defineConfig({
-  entry: ['src/fumadocs/index.ts', 'src/fumadocs/components/index.ts'],
+  entry: ['src/registry.ts', 'src/fumadocs/index.ts', 'src/fumadocs/components/index.ts'],
   outDir: 'dist',
   dts: true,
   clean: true,
