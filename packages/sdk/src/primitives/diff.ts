@@ -8,9 +8,9 @@
 export {
   type BreakingSeverity,
   type CategorizedBreaking,
-  type DiffOptions,
   calculateNextVersion,
   categorizeBreakingChanges,
+  type DiffOptions,
   diffSpec,
   diffSpec as diffSpecs,
   type MemberChangeInfo,

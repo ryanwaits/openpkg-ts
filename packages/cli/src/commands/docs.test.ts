@@ -51,7 +51,8 @@ describe('docs command --adapter', () => {
 
     fs.writeFileSync(specPath, JSON.stringify(testSpec));
 
-    const result = await $`bun packages/cli/bin/openpkg.ts docs ${specPath} --adapter unknown --output ${outDir}`.nothrow();
+    const result =
+      await $`bun packages/cli/bin/openpkg.ts docs ${specPath} --adapter unknown --output ${outDir}`.nothrow();
 
     expect(result.exitCode).toBe(1);
     // Error is written to stderr as JSON

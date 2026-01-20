@@ -3,7 +3,7 @@
  * Pure function that returns a new spec (never mutates input)
  */
 
-import type { OpenPkg, SpecExport, SpecExportKind, SpecType } from '@openpkg-ts/spec';
+import type { OpenPkg, SpecExport, SpecExportKind } from '@openpkg-ts/spec';
 
 export type FilterCriteria = {
   /** Filter by export kinds */
@@ -94,7 +94,11 @@ export function filterSpec(spec: OpenPkg, criteria: FilterCriteria): FilterResul
   const isEmpty = Object.keys(criteria).length === 0;
   if (isEmpty) {
     return {
-      spec: { ...spec, exports: [...spec.exports], types: spec.types ? [...spec.types] : undefined },
+      spec: {
+        ...spec,
+        exports: [...spec.exports],
+        types: spec.types ? [...spec.types] : undefined,
+      },
       matched: total,
       total,
     };

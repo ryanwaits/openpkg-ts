@@ -43,7 +43,8 @@ describe('openpkg filter', () => {
   });
 
   it('filters by kind', async () => {
-    const output = await $`bun packages/cli/bin/openpkg.ts filter ${specPath} --kind function`.text();
+    const output =
+      await $`bun packages/cli/bin/openpkg.ts filter ${specPath} --kind function`.text();
     const result = JSON.parse(output);
 
     expect(result.matched).toBe(3);
@@ -182,7 +183,8 @@ describe('openpkg filter', () => {
     const emptyPath = path.join(tmpDir, 'empty.json');
     fs.writeFileSync(emptyPath, JSON.stringify({ openpkg: '0.4.0', meta: {}, exports: [] }));
 
-    const output = await $`bun packages/cli/bin/openpkg.ts filter ${emptyPath} --kind function`.text();
+    const output =
+      await $`bun packages/cli/bin/openpkg.ts filter ${emptyPath} --kind function`.text();
     const result = JSON.parse(output);
 
     expect(result.matched).toBe(0);

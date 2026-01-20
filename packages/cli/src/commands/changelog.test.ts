@@ -32,7 +32,8 @@ describe('changelog command', () => {
     fs.writeFileSync(oldPath, JSON.stringify(oldSpec));
     fs.writeFileSync(newPath, JSON.stringify(newSpec));
 
-    const result = await $`bun packages/cli/bin/openpkg.ts changelog ${oldPath} ${newPath} --format json`.text();
+    const result =
+      await $`bun packages/cli/bin/openpkg.ts changelog ${oldPath} ${newPath} --format json`.text();
     const parsed = JSON.parse(result);
 
     expect(parsed).toHaveProperty('breaking');

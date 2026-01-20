@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
-import { diffSpec, type DiffOptions } from './diff';
 import type { OpenPkg } from '@openpkg-ts/spec';
+import { type DiffOptions, diffSpec } from './diff';
 
 describe('diff re-exports', () => {
   test('DiffOptions import works from SDK', () => {

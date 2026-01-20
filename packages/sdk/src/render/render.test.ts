@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import type { OpenPkg } from '@openpkg-ts/spec';
 import { toHTML } from './html';
-import { toJSON, type SimplifiedSpec } from './json';
+import { type SimplifiedSpec, toJSON } from './json';
 import { toMarkdown } from './markdown';
 
 const mockSpec: OpenPkg = {

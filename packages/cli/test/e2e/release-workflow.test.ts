@@ -25,9 +25,7 @@ describe('release workflow e2e', () => {
         description: 'Greets a person',
         signatures: [
           {
-            parameters: [
-              { name: 'name', schema: { type: 'string' }, description: 'Person name' },
-            ],
+            parameters: [{ name: 'name', schema: { type: 'string' }, description: 'Person name' }],
             returns: { schema: { type: 'string' }, description: 'Greeting message' },
           },
         ],
@@ -107,7 +105,8 @@ describe('release workflow e2e', () => {
   });
 
   it('generates changelog', async () => {
-    const output = await $`bun packages/cli/bin/openpkg.ts changelog ${oldPath} ${newPath} --format json`.text();
+    const output =
+      await $`bun packages/cli/bin/openpkg.ts changelog ${oldPath} ${newPath} --format json`.text();
     const result = JSON.parse(output);
 
     expect(result.breaking).toBeDefined();

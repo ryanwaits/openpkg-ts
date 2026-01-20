@@ -10,8 +10,6 @@
  * - generateDocs() - generate documentation
  */
 
-// Filter spec
-export { type FilterCriteria, type FilterResult, filterSpec } from './filter';
 // Diff specs
 export {
   type BreakingSeverity,
@@ -79,6 +77,8 @@ export {
   toSearchIndex,
   toSearchIndexJSON,
 } from './docs';
+// Filter spec
+export { type FilterCriteria, type FilterResult, filterSpec } from './filter';
 // Get single export
 export {
   type GetExportOptions,

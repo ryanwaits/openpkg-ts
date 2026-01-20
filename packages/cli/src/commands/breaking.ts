@@ -1,6 +1,11 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { type CategorizedBreaking, categorizeBreakingChanges, diffSpec, type OpenPkg } from '@openpkg-ts/spec';
+import {
+  type CategorizedBreaking,
+  categorizeBreakingChanges,
+  diffSpec,
+  type OpenPkg,
+} from '@openpkg-ts/spec';
 import { Command } from 'commander';
 
 export type BreakingResult = {

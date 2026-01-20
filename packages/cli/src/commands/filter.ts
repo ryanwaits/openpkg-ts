@@ -1,6 +1,6 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { filterSpec, type FilterCriteria } from '@openpkg-ts/sdk';
+import { type FilterCriteria, filterSpec } from '@openpkg-ts/sdk';
 import type { OpenPkg, SpecExportKind } from '@openpkg-ts/spec';
 import { Command } from 'commander';
 
@@ -45,7 +45,9 @@ function parseList(val?: string): string[] | undefined {
 function validateKinds(kinds: string[]): SpecExportKind[] {
   const invalid = kinds.filter((k) => !VALID_KINDS.includes(k as SpecExportKind));
   if (invalid.length > 0) {
-    throw new Error(`Invalid kind(s): ${invalid.join(', ')}. Valid kinds: ${VALID_KINDS.join(', ')}`);
+    throw new Error(
+      `Invalid kind(s): ${invalid.join(', ')}. Valid kinds: ${VALID_KINDS.join(', ')}`,
+    );
   }
   return kinds as SpecExportKind[];
 }
@@ -83,7 +85,7 @@ export function createFilterCommand(): Command {
           output?: string;
           summary?: boolean;
           quiet?: boolean;
-        }
+        },
       ) => {
         try {
           const spec = loadSpec(specPath);
@@ -126,6 +128,6 @@ export function createFilterCommand(): Command {
           console.error(JSON.stringify({ error: error.message }, null, 2));
           process.exit(1);
         }
-      }
+      },
     );
 }

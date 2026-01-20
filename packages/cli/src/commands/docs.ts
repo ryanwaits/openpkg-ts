@@ -76,7 +76,7 @@ export function createDocsCommand(): Command {
           // Dynamic import adapter to trigger self-registration
           let getAdapter: typeof import('@openpkg-ts/adapters').getAdapter;
           try {
-            const adapterModule = await import(`@openpkg-ts/adapters/${options.adapter}`);
+            const _adapterModule = await import(`@openpkg-ts/adapters/${options.adapter}`);
             const registryModule = await import('@openpkg-ts/adapters');
             getAdapter = registryModule.getAdapter;
           } catch {
@@ -133,7 +133,7 @@ export function createDocsCommand(): Command {
         // Single export mode
         if (options.export) {
           const exports = docs.getAllExports();
-          const exp = exports.find(e => e.name === options.export);
+          const exp = exports.find((e) => e.name === options.export);
           if (!exp) {
             console.error(JSON.stringify({ error: `Export not found: ${options.export}` }));
             process.exit(1);

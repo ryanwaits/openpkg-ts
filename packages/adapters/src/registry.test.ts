@@ -1,5 +1,5 @@
-import { describe, expect, test, beforeEach } from 'bun:test';
-import { registerAdapter, getAdapter, listAdapters, type DocAdapter } from './registry';
+import { describe, expect, test } from 'bun:test';
+import { type DocAdapter, getAdapter, listAdapters, registerAdapter } from './registry';
 
 // Clear registry between tests by re-importing fresh module
 describe('adapter registry', () => {
@@ -26,7 +26,7 @@ describe('adapter registry', () => {
     };
     registerAdapter(adapter2);
     const adapters = listAdapters();
-    expect(adapters.some(a => a.id === 'test-adapter')).toBe(true);
-    expect(adapters.some(a => a.id === 'another-adapter')).toBe(true);
+    expect(adapters.some((a) => a.id === 'test-adapter')).toBe(true);
+    expect(adapters.some((a) => a.id === 'another-adapter')).toBe(true);
   });
 });

@@ -1,4 +1,4 @@
-import type { OpenPkg, SpecExport, SpecMember, SpecSignature, SpecTag } from '@openpkg-ts/spec';
+import type { OpenPkg, SpecExport, SpecMember } from '@openpkg-ts/spec';
 
 export interface DiagnosticItem {
   exportId: string;
@@ -33,7 +33,7 @@ export function hasDeprecatedTag(exp: SpecExport): boolean {
  */
 export function getDeprecationMessage(exp: SpecExport): string | undefined {
   const tag = exp.tags?.find((t) => t.name === 'deprecated' || t.name === '@deprecated');
-  if (tag && tag.text.trim()) {
+  if (tag?.text.trim()) {
     return tag.text.trim();
   }
   return undefined;
@@ -56,10 +56,7 @@ export function findMissingParamDocs(exp: SpecExport): string[] {
   return missing;
 }
 
-function checkMemberDescriptions(
-  exp: SpecExport,
-  members: SpecMember[],
-): DiagnosticItem[] {
+function checkMemberDescriptions(exp: SpecExport, members: SpecMember[]): DiagnosticItem[] {
   const items: DiagnosticItem[] = [];
   for (const member of members) {
     if (!member.description?.trim() && member.name) {
