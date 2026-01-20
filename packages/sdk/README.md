@@ -75,6 +75,55 @@ import { diffSpecs } from '@openpkg-ts/sdk';
 
 const diff = diffSpecs(oldSpec, newSpec);
 console.log(`Breaking: ${diff.breaking.length}`);
+
+// With options
+const diff = diffSpecs(oldSpec, newSpec, {
+  includeDocsOnly: false,  // exclude docs-only changes
+  kinds: ['function', 'class'],  // filter by kind
+});
+```
+
+### filterSpec
+
+Immutable spec filtering by criteria.
+
+```typescript
+import { filterSpec } from '@openpkg-ts/sdk';
+
+// Filter by kind
+const { spec, matched, total } = filterSpec(fullSpec, {
+  kinds: ['function', 'class'],
+});
+
+// Filter by tags
+filterSpec(spec, { tags: ['public'] });
+
+// Filter deprecated exports
+filterSpec(spec, { deprecated: true });
+
+// Search by name/description
+filterSpec(spec, { search: 'client' });
+
+// Combine criteria (AND logic)
+filterSpec(spec, {
+  kinds: ['function'],
+  hasDescription: true,
+  deprecated: false,
+});
+```
+
+### analyzeSpec
+
+Analyze spec for quality issues.
+
+```typescript
+import { analyzeSpec } from '@openpkg-ts/sdk';
+
+const diagnostics = analyzeSpec(spec);
+
+console.log(`Missing descriptions: ${diagnostics.missingDescriptions.length}`);
+console.log(`Deprecated without reason: ${diagnostics.deprecatedNoReason.length}`);
+console.log(`Missing param docs: ${diagnostics.missingParamDocs.length}`);
 ```
 
 ## Documentation Generation
@@ -144,6 +193,10 @@ import type {
   ExtractResult,
   DocsInstance,
   SimplifiedSpec,
+  FilterCriteria,
+  FilterResult,
+  SpecDiagnostics,
+  DiffOptions,
 } from '@openpkg-ts/sdk';
 ```
 

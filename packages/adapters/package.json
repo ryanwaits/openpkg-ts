@@ -20,9 +20,13 @@
   "author": "Ryan Waits",
   "type": "module",
   "exports": {
+    ".": {
+      "import": "./src/registry.ts",
+      "types": "./src/registry.ts"
+    },
     "./fumadocs": {
-      "import": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+      "import": "./src/fumadocs/index.ts",
+      "types": "./src/fumadocs/index.ts"
     },
     "./fumadocs/components": {
       "import": "./dist/components/index.js",

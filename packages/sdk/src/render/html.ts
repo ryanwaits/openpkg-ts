@@ -21,6 +21,8 @@ export interface HTMLOptions {
   fullDocument?: boolean;
   /** Export to render (single export mode) */
   export?: string;
+  /** Exports to render (multi-export mode) - overridden by `export` if both provided */
+  exports?: string[];
 }
 
 const defaultCSS = `
@@ -399,13 +401,20 @@ export function toHTML(spec: OpenPkg, options: HTMLOptions = {}): string {
 </html>`;
   }
 
+  // Filter exports if exports[] provided
+  let specExports = spec.exports;
+  if (options.exports?.length) {
+    const ids = new Set(options.exports);
+    specExports = spec.exports.filter((e) => ids.has(e.name) || ids.has(e.id));
+  }
+
   // Full spec mode
   const title = options.title || `${spec.meta.name} API Reference`;
   const description = spec.meta.description ? `<p>${escapeHTML(spec.meta.description)}</p>` : '';
 
   // Group by kind
   const byKind: Record<string, SpecExport[]> = {};
-  for (const exp of spec.exports) {
+  for (const exp of specExports) {
     if (!byKind[exp.kind]) byKind[exp.kind] = [];
     byKind[exp.kind].push(exp);
   }

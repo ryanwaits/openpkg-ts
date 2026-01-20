@@ -6,9 +6,12 @@
  * - getExport() - get detailed spec for a single export
  * - extractSpec() - generate full OpenPkg spec
  * - diffSpecs() - compare two specs
+ * - filterSpec() - filter spec by criteria
  * - generateDocs() - generate documentation
  */
 
+// Filter spec
+export { type FilterCriteria, type FilterResult, filterSpec } from './filter';
 // Diff specs
 export {
   type BreakingSeverity,

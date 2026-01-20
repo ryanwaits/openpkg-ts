@@ -17,6 +17,35 @@
  * ```
  */
 
+import * as fs from 'node:fs';
+import * as path from 'node:path';
+import { createDocs, type DocsInstance } from '@openpkg-ts/sdk';
+import type { OpenPkg } from '@openpkg-ts/spec';
+import { registerAdapter, type DocAdapter } from '../registry';
+
+// Self-register fumadocs adapter
+const fumadocsAdapter: DocAdapter = {
+  id: 'fumadocs',
+  name: 'Fumadocs',
+  generate: async (spec: OpenPkg, outDir: string) => {
+    const docs: DocsInstance = createDocs(spec);
+    const exports = docs.getAllExports();
+
+    if (!fs.existsSync(outDir)) {
+      fs.mkdirSync(outDir, { recursive: true });
+    }
+
+    // Generate markdown files for each export
+    for (const exp of exports) {
+      const content = docs.toMarkdown({ export: exp.id, frontmatter: true, codeSignatures: true });
+      const filename = `${exp.name}.md`;
+      fs.writeFileSync(path.join(outDir, filename), content);
+    }
+  },
+};
+
+registerAdapter(fumadocsAdapter);
+
 // Re-export core SDK types for convenience
 export type {
   AlgoliaRecord,

@@ -25,17 +25,43 @@ export type SpecDiff = {
 };
 
 /**
+ * Options for diffSpec filtering.
+ */
+export interface DiffOptions {
+  /** Include documentation-only changes (default: true) */
+  includeDocsOnly?: boolean;
+  /** Filter by export kinds */
+  kinds?: SpecExportKind[];
+}
+
+/**
  * Compare two OpenPkg specs and compute differences.
  */
-export function diffSpec(oldSpec: OpenPkg, newSpec: OpenPkg): SpecDiff {
+export function diffSpec(oldSpec: OpenPkg, newSpec: OpenPkg, options?: DiffOptions): SpecDiff {
+  const { includeDocsOnly = true, kinds } = options ?? {};
+
+  // Filter exports by kind if specified
+  let oldExports = oldSpec.exports;
+  let newExports = newSpec.exports;
+  if (kinds && kinds.length > 0) {
+    const kindSet = new Set(kinds);
+    oldExports = oldExports.filter((e) => kindSet.has(e.kind));
+    newExports = newExports.filter((e) => kindSet.has(e.kind));
+  }
+
   const result: SpecDiff = {
     breaking: [],
     nonBreaking: [],
     docsOnly: [],
   };
 
-  diffCollections(result, oldSpec.exports, newSpec.exports);
+  diffCollections(result, oldExports, newExports);
   diffCollections(result, oldSpec.types ?? [], newSpec.types ?? []);
+
+  // Filter out docs-only if requested
+  if (!includeDocsOnly) {
+    result.docsOnly = [];
+  }
 
   return result;
 }

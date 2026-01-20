@@ -3,6 +3,7 @@ export { dereference } from './deref';
 export {
   type BreakingSeverity,
   type CategorizedBreaking,
+  type DiffOptions,
   calculateNextVersion,
   categorizeBreakingChanges,
   diffSpec,
