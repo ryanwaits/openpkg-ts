@@ -1,5 +1,13 @@
 # @openpkg-ts/adapters
 
+## 0.3.1
+
+### Patch Changes
+
+- Updated dependencies
+  - @openpkg-ts/spec@0.32.0
+  - @openpkg-ts/sdk@0.32.0
+
 ## 0.3.0
 
 ### Minor Changes

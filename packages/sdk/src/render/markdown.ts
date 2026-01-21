@@ -4,6 +4,7 @@ import {
   formatParameters,
   formatReturnType,
   formatSchema,
+  type FormatSchemaOptions,
   getMethods,
   getProperties,
 } from '../core/query';
@@ -28,6 +29,8 @@ export interface MarkdownOptions {
   codeSignatures?: boolean;
   /** Heading level offset (0 = starts at h1, 1 = starts at h2) */
   headingOffset?: number;
+  /** Collapse unions with more than N members (default: no collapse) */
+  collapseUnionThreshold?: number;
 }
 
 export interface ExportMarkdownOptions extends MarkdownOptions {
@@ -111,13 +114,17 @@ function heading(level: number, text: string, offset = 0): string {
 /**
  * Render parameters section.
  */
-function renderParameters(sig: SpecSignature | undefined, offset = 0): string {
+function renderParameters(
+  sig: SpecSignature | undefined,
+  offset = 0,
+  schemaOpts?: FormatSchemaOptions,
+): string {
   if (!sig?.parameters?.length) return '';
 
   const lines = [heading(2, 'Parameters', offset), ''];
 
   for (const param of sig.parameters) {
-    const type = formatSchema(param.schema);
+    const type = formatSchema(param.schema, schemaOpts);
     const required = param.required !== false ? '' : '?';
     const rest = param.rest ? '...' : '';
 
@@ -141,11 +148,15 @@ function renderParameters(sig: SpecSignature | undefined, offset = 0): string {
 /**
  * Render returns section.
  */
-function renderReturns(sig: SpecSignature | undefined, offset = 0): string {
+function renderReturns(
+  sig: SpecSignature | undefined,
+  offset = 0,
+  schemaOpts?: FormatSchemaOptions,
+): string {
   if (!sig?.returns) return '';
 
   const lines = [heading(2, 'Returns', offset), ''];
-  const type = formatSchema(sig.returns.schema);
+  const type = formatSchema(sig.returns.schema, schemaOpts);
 
   lines.push(`**Type:** \`${type}\``);
   if (sig.returns.description) {
@@ -212,14 +223,18 @@ function renderExamples(examples: (string | SpecExample)[] | undefined, offset =
 /**
  * Render properties section.
  */
-function renderProperties(members: SpecMember[] | undefined, offset = 0): string {
+function renderProperties(
+  members: SpecMember[] | undefined,
+  offset = 0,
+  schemaOpts?: FormatSchemaOptions,
+): string {
   const props = getProperties(members);
   if (!props.length) return '';
 
   const lines = [heading(2, 'Properties', offset), ''];
 
   for (const prop of props) {
-    const type = formatSchema(prop.schema);
+    const type = formatSchema(prop.schema, schemaOpts);
     lines.push(`### \`${prop.name}\``);
     lines.push('');
 
@@ -261,7 +276,11 @@ function renderProperties(members: SpecMember[] | undefined, offset = 0): string
 /**
  * Render methods section.
  */
-function renderMethods(members: SpecMember[] | undefined, offset = 0): string {
+function renderMethods(
+  members: SpecMember[] | undefined,
+  offset = 0,
+  schemaOpts?: FormatSchemaOptions,
+): string {
   const methods = getMethods(members);
   if (!methods.length) return '';
 
@@ -308,7 +327,7 @@ function renderMethods(members: SpecMember[] | undefined, offset = 0): string {
       lines.push('**Parameters:**');
       lines.push('');
       for (const param of sig.parameters) {
-        const paramType = formatSchema(param.schema);
+        const paramType = formatSchema(param.schema, schemaOpts);
         const desc = param.description ? ` - ${param.description}` : '';
         lines.push(`- \`${param.name}\`: \`${paramType}\`${desc}`);
       }
@@ -317,7 +336,7 @@ function renderMethods(members: SpecMember[] | undefined, offset = 0): string {
 
     // Method return
     if (sig?.returns) {
-      const retType = formatSchema(sig.returns.schema);
+      const retType = formatSchema(sig.returns.schema, schemaOpts);
       const desc = sig.returns.description ? ` - ${sig.returns.description}` : '';
       lines.push(`**Returns:** \`${retType}\`${desc}`);
       lines.push('');
@@ -366,6 +385,9 @@ function renderEnumMembers(members: SpecMember[] | undefined, offset = 0): strin
 export function exportToMarkdown(exp: SpecExport, options: MarkdownOptions = {}): string {
   const sections = { ...defaultSections, ...options.sections };
   const offset = options.headingOffset ?? 0;
+  const schemaOpts: FormatSchemaOptions | undefined = options.collapseUnionThreshold
+    ? { collapseUnionThreshold: options.collapseUnionThreshold }
+    : undefined;
   const parts: string[] = [];
 
   // Frontmatter
@@ -425,7 +447,11 @@ export function exportToMarkdown(exp: SpecExport, options: MarkdownOptions = {})
 
   // Deprecation notice
   if (exp.deprecated) {
-    parts.push('> **Deprecated**');
+    const reason =
+      'deprecationReason' in exp && exp.deprecationReason
+        ? `: ${exp.deprecationReason}`
+        : '';
+    parts.push(`> **Deprecated**${reason}`);
     parts.push('');
   }
 
@@ -434,15 +460,15 @@ export function exportToMarkdown(exp: SpecExport, options: MarkdownOptions = {})
 
   switch (exp.kind) {
     case 'function':
-      if (sections.parameters) parts.push(renderParameters(primarySig, offset));
-      if (sections.returns) parts.push(renderReturns(primarySig, offset));
+      if (sections.parameters) parts.push(renderParameters(primarySig, offset, schemaOpts));
+      if (sections.returns) parts.push(renderReturns(primarySig, offset, schemaOpts));
       parts.push(renderThrows(primarySig, offset));
       break;
 
     case 'class':
     case 'interface':
-      if (sections.properties) parts.push(renderProperties(exp.members, offset));
-      if (sections.methods) parts.push(renderMethods(exp.members, offset));
+      if (sections.properties) parts.push(renderProperties(exp.members, offset, schemaOpts));
+      if (sections.methods) parts.push(renderMethods(exp.members, offset, schemaOpts));
       break;
 
     case 'enum':

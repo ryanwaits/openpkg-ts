@@ -21,7 +21,7 @@ export function serializeClass(
   const name = symbol?.getName() ?? node.name?.getText();
   if (!name) return null;
 
-  const deprecated = isSymbolDeprecated(symbol);
+  const { deprecated, reason: deprecationReason } = isSymbolDeprecated(symbol);
   const declSourceFile = node.getSourceFile();
   const { description, tags, examples } = getJSDocComment(node, symbol, checker);
   const source = getSourceLocation(node, declSourceFile);
@@ -114,7 +114,7 @@ export function serializeClass(
     signatures: signatures.length > 0 ? signatures : undefined,
     extends: extendsClause,
     implements: implementsClause?.length ? implementsClause : undefined,
-    ...(deprecated ? { deprecated: true } : {}),
+    ...(deprecated ? { deprecated: true, deprecationReason } : {}),
     ...(examples.length > 0 ? { examples } : {}),
     ...(Object.keys(classFlags).length > 0 ? { flags: classFlags } : {}),
   };
@@ -161,8 +161,10 @@ function serializeProperty(
   const { description, tags } = getJSDocComment(node);
   const visibility = getVisibility(node);
 
-  // Skip private members - in .d.ts files, private members often have no type info
-  if (visibility === 'private') return null;
+  // Skip private/protected members unless includePrivate is set
+  if (!ctx.includePrivate && (visibility === 'private' || visibility === 'protected')) {
+    return null;
+  }
 
   // Get property type
   const type = checker.getTypeAtLocation(node);
@@ -196,6 +198,11 @@ function serializeMethod(node: ts.MethodDeclaration, ctx: SerializerContext): Sp
 
   const { description, tags } = getJSDocComment(node);
   const visibility = getVisibility(node);
+
+  // Skip private/protected members unless includePrivate is set
+  if (!ctx.includePrivate && (visibility === 'private' || visibility === 'protected')) {
+    return null;
+  }
 
   // Get method signatures
   const type = checker.getTypeAtLocation(node);
@@ -277,6 +284,11 @@ function serializeAccessor(
 
   const { description, tags } = getJSDocComment(node);
   const visibility = getVisibility(node);
+
+  // Skip private/protected members unless includePrivate is set
+  if (!ctx.includePrivate && (visibility === 'private' || visibility === 'protected')) {
+    return null;
+  }
 
   const type = checker.getTypeAtLocation(node);
   const schema = buildSchema(type, checker, ctx);

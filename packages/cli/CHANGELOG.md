@@ -1,5 +1,17 @@
 # @openpkg-ts/cli
 
+## 0.4.0
+
+### Minor Changes
+
+- Add deprecationReason field, searchMembers/searchDocs filter options, private member support
+
+### Patch Changes
+
+- Updated dependencies
+  - @openpkg-ts/sdk@0.32.0
+  - @openpkg-ts/adapters@0.3.1
+
 ## 0.3.1
 
 ### Patch Changes

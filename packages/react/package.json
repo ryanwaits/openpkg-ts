@@ -1,6 +1,6 @@
 {
   "name": "@openpkg-ts/react",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "description": "React components for OpenPkg specs",
   "keywords": [
     "openpkg",
@@ -41,8 +41,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@openpkg-ts/spec": "^0.31.0",
-    "@openpkg-ts/sdk": "^0.31.0",
+    "@openpkg-ts/spec": "^0.32.0",
+    "@openpkg-ts/sdk": "^0.32.0",
     "@openpkg-ts/ui": "^0.1.2",
     "lucide-react": "^0.468.0"
   },

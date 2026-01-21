@@ -1,5 +1,11 @@
 # @openpkg-ts/spec
 
+## 0.32.0
+
+### Minor Changes
+
+- Add deprecationReason field, searchMembers/searchDocs filter options, private member support
+
 ## 0.31.1
 
 ### Patch Changes

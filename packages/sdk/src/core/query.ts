@@ -24,6 +24,8 @@ function formatFunctionSchema(schema: Record<string, unknown>): string {
 export interface FormatSchemaOptions {
   /** Include package attribution for external types */
   includePackage?: boolean;
+  /** Collapse unions with more than N members (default: no collapse) */
+  collapseUnionThreshold?: number;
 }
 
 /**
@@ -94,7 +96,18 @@ export function formatSchema(
 
     // Handle anyOf (union)
     if ('anyOf' in schema && Array.isArray(schema.anyOf)) {
-      return schema.anyOf.map((s) => formatSchema(s, options)).join(' | ');
+      const threshold = options?.collapseUnionThreshold;
+      const members = schema.anyOf as SpecSchema[];
+
+      // Collapse large unions if threshold is set
+      if (threshold && members.length > threshold) {
+        const shown = members.slice(0, 3);
+        const remaining = members.length - 3;
+        const shownStr = shown.map((s) => formatSchema(s, options)).join(' | ');
+        return `${shownStr} | ... (${remaining} more)`;
+      }
+
+      return members.map((s) => formatSchema(s, options)).join(' | ');
     }
 
     // Handle allOf (intersection)

@@ -243,6 +243,7 @@ export async function extract(options: ExtractOptions): Promise<ExtractResult> {
     ignore,
     onProgress,
     isDtsSource,
+    includePrivate,
   } = options;
 
   const diagnostics: Diagnostic[] = [];
@@ -295,6 +296,7 @@ export async function extract(options: ExtractOptions): Promise<ExtractResult> {
     maxTypeDepth,
     maxExternalTypeDepth,
     resolveExternalTypes,
+    includePrivate,
   });
   ctx.exportedIds = exportedIds;
 
@@ -318,8 +320,53 @@ export async function extract(options: ExtractOptions): Promise<ExtractResult> {
     try {
       const { declaration, targetSymbol, isTypeOnly } = resolveExportTarget(symbol, typeChecker);
       if (!declaration) {
-        tracker.status = 'skipped';
-        tracker.skipReason = 'no-declaration';
+        // Check if this is a re-export from an external package
+        let externalPackage: string | undefined;
+
+        // Method 1: Check if any declarations point to node_modules
+        const allDecls = [
+          ...(targetSymbol.declarations ?? []),
+          ...(symbol.declarations ?? []),
+        ];
+        for (const decl of allDecls) {
+          const sf = decl.getSourceFile();
+          if (sf?.fileName.includes('node_modules')) {
+            const match = sf.fileName.match(/node_modules\/(@[^/]+\/[^/]+|[^/]+)/);
+            if (match) {
+              externalPackage = match[1];
+              break;
+            }
+          }
+          // Method 2: Check if this is an export specifier with a module specifier
+          if (ts.isExportSpecifier(decl)) {
+            const exportDecl = decl.parent?.parent;
+            if (exportDecl && ts.isExportDeclaration(exportDecl) && exportDecl.moduleSpecifier) {
+              const moduleText = exportDecl.moduleSpecifier.getText().slice(1, -1); // Remove quotes
+              // Check if it's a package (not relative path)
+              if (!moduleText.startsWith('.') && !moduleText.startsWith('/')) {
+                externalPackage = moduleText;
+                break;
+              }
+            }
+          }
+        }
+
+        if (externalPackage) {
+          const externalExport: SpecExport = {
+            id: exportName,
+            name: exportName,
+            kind: 'external',
+            source: {
+              package: externalPackage,
+            },
+          };
+          exports.push(externalExport);
+          tracker.status = 'success';
+          tracker.kind = 'external';
+        } else {
+          tracker.status = 'skipped';
+          tracker.skipReason = 'no-declaration';
+        }
         continue;
       }
 

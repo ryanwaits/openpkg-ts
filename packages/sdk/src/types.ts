@@ -20,6 +20,8 @@ export interface ExtractOptions {
   onProgress?: (current: number, total: number, item: string) => void;
   /** Whether source is a .d.ts file (degraded mode - TSDoc may be missing) */
   isDtsSource?: boolean;
+  /** Include private/protected class members (default: false) */
+  includePrivate?: boolean;
 }
 
 export interface ExtractResult {

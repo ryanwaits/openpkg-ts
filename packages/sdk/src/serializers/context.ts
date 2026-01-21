@@ -19,12 +19,15 @@ export interface SerializerContext {
   visitedTypes: Set<ts.Type>;
   /** Flag to indicate we're processing tuple elements - skip Array prototype methods */
   inTupleElement?: boolean;
+  /** Include private/protected class members (default: false) */
+  includePrivate?: boolean;
 }
 
 export interface CreateContextOptions {
   maxTypeDepth?: number;
   maxExternalTypeDepth?: number;
   resolveExternalTypes?: boolean;
+  includePrivate?: boolean;
 }
 
 export function createContext(
@@ -43,6 +46,7 @@ export function createContext(
     typeRegistry: new TypeRegistry(),
     exportedIds: new Set<string>(),
     visitedTypes: new Set<ts.Type>(),
+    includePrivate: options.includePrivate ?? false,
   };
 }
 

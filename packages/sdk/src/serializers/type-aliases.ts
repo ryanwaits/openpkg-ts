@@ -47,7 +47,7 @@ export function serializeTypeAlias(
   const name = symbol?.getName() ?? node.name?.getText();
   if (!name) return null;
 
-  const deprecated = isSymbolDeprecated(symbol);
+  const { deprecated, reason: deprecationReason } = isSymbolDeprecated(symbol);
   const declSourceFile = node.getSourceFile();
   const { description, tags, examples } = getJSDocComment(node, symbol, ctx.typeChecker);
   const source = getSourceLocation(node, declSourceFile);
@@ -78,7 +78,7 @@ export function serializeTypeAlias(
     source,
     typeParameters,
     schema,
-    ...(deprecated ? { deprecated: true } : {}),
+    ...(deprecated ? { deprecated: true, deprecationReason } : {}),
     ...(examples.length > 0 ? { examples } : {}),
   };
 }

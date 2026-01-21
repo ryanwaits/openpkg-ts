@@ -346,26 +346,39 @@ export function extractTypeParameters(
 
 /**
  * Check if a symbol is marked as deprecated via @deprecated JSDoc tag.
+ * Returns deprecation status and optional reason text.
  */
-export function isSymbolDeprecated(symbol: ts.Symbol | undefined): boolean {
+export function isSymbolDeprecated(symbol: ts.Symbol | undefined): {
+  deprecated: boolean;
+  reason?: string;
+} {
   if (!symbol) {
-    return false;
+    return { deprecated: false };
   }
 
   // Check JSDoc tags on the symbol
   const jsDocTags = symbol.getJsDocTags();
-  if (jsDocTags.some((tag) => tag.name.toLowerCase() === 'deprecated')) {
-    return true;
+  const deprecatedTag = jsDocTags.find((tag) => tag.name.toLowerCase() === 'deprecated');
+  if (deprecatedTag) {
+    const reason = deprecatedTag.text?.map((t) => t.text).join('') || undefined;
+    return { deprecated: true, reason };
   }
 
   // Check declarations for @deprecated tag
   for (const declaration of symbol.getDeclarations() ?? []) {
-    if (ts.getJSDocDeprecatedTag(declaration)) {
-      return true;
+    const tag = ts.getJSDocDeprecatedTag(declaration);
+    if (tag) {
+      let reason: string | undefined;
+      if (typeof tag.comment === 'string') {
+        reason = tag.comment;
+      } else if (Array.isArray(tag.comment)) {
+        reason = tag.comment.map((c) => (typeof c === 'string' ? c : c.text)).join('');
+      }
+      return { deprecated: true, reason };
     }
   }
 
-  return false;
+  return { deprecated: false };
 }
 
 /**

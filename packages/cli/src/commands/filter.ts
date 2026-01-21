@@ -65,6 +65,8 @@ export function createFilterCommand(): Command {
     .option('--has-description', 'Only exports with descriptions')
     .option('--missing-description', 'Only exports without descriptions')
     .option('--search <term>', 'Search name/description (case-insensitive)')
+    .option('--search-members', 'Also search member names/descriptions')
+    .option('--search-docs', 'Also search param/return descriptions and examples')
     .option('--module <path>', 'Filter by source file path (contains)')
     .option('-o, --output <file>', 'Output file (default: stdout)')
     .option('--summary', 'Only output matched/total counts')
@@ -81,6 +83,8 @@ export function createFilterCommand(): Command {
           hasDescription?: boolean;
           missingDescription?: boolean;
           search?: string;
+          searchMembers?: boolean;
+          searchDocs?: boolean;
           module?: string;
           output?: string;
           summary?: boolean;
@@ -103,6 +107,8 @@ export function createFilterCommand(): Command {
           if (options.hasDescription) criteria.hasDescription = true;
           if (options.missingDescription) criteria.hasDescription = false;
           if (options.search) criteria.search = options.search;
+          if (options.searchMembers) criteria.searchMembers = true;
+          if (options.searchDocs) criteria.searchDocs = true;
           if (options.module) criteria.module = options.module;
 
           const result = filterSpec(spec, criteria);

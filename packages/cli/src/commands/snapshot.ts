@@ -11,6 +11,8 @@ interface SnapshotCommandOptions {
   only?: string;
   ignore?: string;
   verify?: boolean;
+  verbose?: boolean;
+  includePrivate?: boolean;
 }
 
 function parseFilter(value: string | undefined): string[] | undefined {
@@ -46,6 +48,8 @@ export function createSnapshotCommand(): Command {
     .option('--only <exports>', 'Filter exports (comma-separated, wildcards supported)')
     .option('--ignore <exports>', 'Ignore exports (comma-separated, wildcards supported)')
     .option('--verify', 'Exit 1 if any exports fail')
+    .option('--verbose', 'Show detailed output including skipped exports')
+    .option('--include-private', 'Include private/protected class members')
     .action(async (entry: string, options: SnapshotCommandOptions) => {
       const entryFile = path.resolve(entry);
 
@@ -56,6 +60,7 @@ export function createSnapshotCommand(): Command {
         schemaExtraction: options.runtime ? 'hybrid' : 'static',
         only: parseFilter(options.only),
         ignore: parseFilter(options.ignore),
+        includePrivate: options.includePrivate,
       };
 
       try {
@@ -72,6 +77,11 @@ export function createSnapshotCommand(): Command {
               extracted: result.verification.extracted,
               skipped: result.verification.skipped,
               failed: result.verification.failed,
+              // Include skipped details in verbose mode
+              ...(options.verbose &&
+                result.verification.details.skipped.length > 0 && {
+                  skippedDetails: result.verification.details.skipped,
+                }),
             },
           }),
           ...(result.runtimeSchemas && {

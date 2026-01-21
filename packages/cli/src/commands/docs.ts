@@ -12,6 +12,7 @@ interface DocsCommandOptions {
   split?: boolean;
   export?: string;
   adapter?: string;
+  collapseUnions?: string;
 }
 
 async function readStdin(): Promise<string> {
@@ -33,7 +34,12 @@ function getExtension(format: OutputFormat): string {
   }
 }
 
-function renderExport(docs: DocsInstance, exportId: string, format: OutputFormat): string {
+function renderExport(
+  docs: DocsInstance,
+  exportId: string,
+  format: OutputFormat,
+  collapseUnionThreshold?: number,
+): string {
   const exp = docs.getExport(exportId);
   if (!exp) throw new Error(`Export not found: ${exportId}`);
 
@@ -43,18 +49,23 @@ function renderExport(docs: DocsInstance, exportId: string, format: OutputFormat
     case 'html':
       return docs.toHTML({ export: exportId });
     default:
-      return docs.toMarkdown({ export: exportId, frontmatter: true, codeSignatures: true });
+      return docs.toMarkdown({
+        export: exportId,
+        frontmatter: true,
+        codeSignatures: true,
+        collapseUnionThreshold,
+      });
   }
 }
 
-function renderFull(docs: DocsInstance, format: OutputFormat): string {
+function renderFull(docs: DocsInstance, format: OutputFormat, collapseUnionThreshold?: number): string {
   switch (format) {
     case 'json':
       return JSON.stringify(docs.toJSON(), null, 2);
     case 'html':
       return docs.toHTML();
     default:
-      return docs.toMarkdown({ frontmatter: true, codeSignatures: true });
+      return docs.toMarkdown({ frontmatter: true, codeSignatures: true, collapseUnionThreshold });
   }
 }
 
@@ -67,6 +78,7 @@ export function createDocsCommand(): Command {
     .option('--split', 'Output one file per export (requires --output as directory)')
     .option('-e, --export <name>', 'Generate docs for a single export by name')
     .option('-a, --adapter <name>', 'Use adapter for generation (default: raw)')
+    .option('--collapse-unions <n>', 'Collapse unions with more than N members (default: no collapse)')
     .action(async (specPath: string, options: DocsCommandOptions) => {
       const format = (options.format || 'md') as OutputFormat;
 
@@ -130,6 +142,11 @@ export function createDocsCommand(): Command {
           docs = createDocs(specFile);
         }
 
+        // Parse collapse unions threshold
+        const collapseUnionThreshold = options.collapseUnions
+          ? parseInt(options.collapseUnions, 10)
+          : undefined;
+
         // Single export mode
         if (options.export) {
           const exports = docs.getAllExports();
@@ -138,7 +155,7 @@ export function createDocsCommand(): Command {
             console.error(JSON.stringify({ error: `Export not found: ${options.export}` }));
             process.exit(1);
           }
-          const output = renderExport(docs, exp.id, format);
+          const output = renderExport(docs, exp.id, format, collapseUnionThreshold);
           if (options.output && options.output !== '-') {
             const outputPath = path.resolve(options.output);
             fs.writeFileSync(outputPath, output);
@@ -165,7 +182,7 @@ export function createDocsCommand(): Command {
           for (const exp of exports) {
             const filename = `${exp.name}${getExtension(format)}`;
             const filePath = path.join(outDir, filename);
-            const content = renderExport(docs, exp.id, format);
+            const content = renderExport(docs, exp.id, format, collapseUnionThreshold);
             fs.writeFileSync(filePath, content);
           }
           console.error(`Wrote ${exports.length} files to ${outDir}`);
@@ -173,7 +190,7 @@ export function createDocsCommand(): Command {
         }
 
         // Single output mode
-        const output = renderFull(docs, format);
+        const output = renderFull(docs, format, collapseUnionThreshold);
 
         if (options.output && options.output !== '-') {
           const outputPath = path.resolve(options.output);

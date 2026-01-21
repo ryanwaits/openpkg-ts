@@ -22,6 +22,10 @@ export type FilterCriteria = {
   search?: string;
   /** Filter by module path (source.file contains this) */
   module?: string;
+  /** Also search member names/descriptions (requires search) */
+  searchMembers?: boolean;
+  /** Also search docs: param descriptions, return descriptions, examples (requires search) */
+  searchDocs?: boolean;
 };
 
 export type FilterResult = {
@@ -66,7 +70,49 @@ function matchesExport(exp: SpecExport, criteria: FilterCriteria): boolean {
     const term = criteria.search.toLowerCase();
     const nameMatch = exp.name.toLowerCase().includes(term);
     const descMatch = exp.description?.toLowerCase().includes(term) ?? false;
-    if (!nameMatch && !descMatch) return false;
+
+    // Search members if enabled
+    let memberMatch = false;
+    if (criteria.searchMembers && exp.members) {
+      memberMatch = exp.members.some(
+        (m) =>
+          m.name?.toLowerCase().includes(term) ||
+          m.description?.toLowerCase().includes(term),
+      );
+    }
+
+    // Search docs if enabled (param/return descriptions, examples)
+    let docsMatch = false;
+    if (criteria.searchDocs) {
+      // Search signatures
+      for (const sig of exp.signatures ?? []) {
+        // Parameter descriptions
+        for (const param of sig.parameters ?? []) {
+          if (param.description?.toLowerCase().includes(term)) {
+            docsMatch = true;
+            break;
+          }
+        }
+        if (docsMatch) break;
+        // Return description
+        if (sig.returns?.description?.toLowerCase().includes(term)) {
+          docsMatch = true;
+          break;
+        }
+      }
+      // Examples
+      if (!docsMatch && exp.examples) {
+        for (const ex of exp.examples) {
+          const exText = typeof ex === 'string' ? ex : ex.code + (ex.description ?? '');
+          if (exText.toLowerCase().includes(term)) {
+            docsMatch = true;
+            break;
+          }
+        }
+      }
+    }
+
+    if (!nameMatch && !descMatch && !memberMatch && !docsMatch) return false;
   }
 
   if (criteria.module) {

@@ -304,6 +304,7 @@ export type SpecExport = {
   examples?: (string | SpecExample)[];
   source?: SpecSource;
   deprecated?: boolean;
+  deprecationReason?: string;
   flags?: Record<string, unknown>;
   tags?: SpecTag[];
   extends?: string;

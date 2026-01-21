@@ -1,6 +1,6 @@
 {
   "name": "@openpkg-ts/adapters",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Framework adapters for OpenPkg - Fumadocs, Docusaurus, Mintlify, etc.",
   "keywords": [
     "openpkg",
@@ -45,8 +45,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@openpkg-ts/sdk": "^0.31.0",
-    "@openpkg-ts/spec": "^0.31.0",
+    "@openpkg-ts/sdk": "^0.32.0",
+    "@openpkg-ts/spec": "^0.32.0",
     "@openpkg-ts/ui": "^0.1.2"
   },
   "peerDependencies": {
