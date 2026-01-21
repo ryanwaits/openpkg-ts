@@ -1,5 +1,11 @@
 # @openpkg-ts/spec
 
+## 0.31.1
+
+### Patch Changes
+
+- fix package exports pointing to src instead of dist
+
 ## 0.31.0
 
 ### Minor Changes

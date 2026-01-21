@@ -1,6 +1,6 @@
 {
   "name": "@openpkg-ts/spec",
-  "version": "0.31.0",
+  "version": "0.31.1",
   "description": "Shared schema, validation, and diff utilities for OpenPkg specs",
   "keywords": [
     "openpkg",
@@ -22,8 +22,8 @@
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "import": "./src/index.ts",
-      "types": "./src/index.ts"
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
     }
   },
   "files": [

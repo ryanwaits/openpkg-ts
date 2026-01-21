@@ -1,6 +1,6 @@
 {
   "name": "@openpkg-ts/cli",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "CLI for OpenPkg TypeScript API extraction and documentation generation",
   "homepage": "https://github.com/ryanwaits/openpkg-ts#readme",
   "repository": {
@@ -9,9 +9,14 @@
     "directory": "packages/cli"
   },
   "type": "module",
+  "main": "./dist/src/index.js",
+  "types": "./dist/src/index.d.ts",
   "bin": {
-    "openpkg": "./bin/openpkg.ts"
+    "openpkg": "./dist/bin/openpkg.js"
   },
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "bunup",
     "dev": "bunup --watch",

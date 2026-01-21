@@ -1,5 +1,11 @@
 # @openpkg-ts/cli
 
+## 0.3.1
+
+### Patch Changes
+
+- fix package exports pointing to src instead of dist
+
 ## 0.3.0
 
 ### Minor Changes
