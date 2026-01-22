@@ -18,7 +18,7 @@
     "format": "bunx biome format --write packages/",
     "changeset": "changeset",
     "version": "changeset version && bun install",
-    "release": "NPM_TOKEN=$NPM_DOCCOV_TOKEN changeset publish"
+    "release": "bun run build && NPM_TOKEN=$NPM_DOCCOV_TOKEN changeset publish"
   },
   "devDependencies": {
     "@biomejs/biome": "2.1.2",
