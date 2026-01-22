@@ -64,10 +64,11 @@ function buildReturnSchema(sig: ts.Signature, ctx: SerializerContext): SpecSigna
 export function serializeFunctionExport(
   node: ts.FunctionDeclaration | ts.ArrowFunction,
   ctx: SerializerContext,
+  nameOverride?: string,
 ): SpecExport | null {
-  // Get name from symbol (works across files) or fall back to node name
+  // Get name from override (for arrow fns), symbol, or node name
   const symbol = ctx.typeChecker.getSymbolAtLocation(node.name ?? node);
-  const name = symbol?.getName() ?? node.name?.getText();
+  const name = nameOverride ?? symbol?.getName() ?? node.name?.getText();
   if (!name) return null;
 
   const { deprecated, reason: deprecationReason } = isSymbolDeprecated(symbol);

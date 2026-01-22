@@ -1,5 +1,14 @@
 # @openpkg-ts/extract
 
+## 0.32.1
+
+### Patch Changes
+
+- Fix optional parameter detection and arrow function serialization
+
+  - Optional params (`?` or default values) now correctly marked `required: false`
+  - Arrow function consts now serialize as `kind: 'function'` instead of `kind: 'variable'`
+
 ## 0.32.0
 
 ### Minor Changes

@@ -45,8 +45,8 @@ export function extractParameters(
       const expandedParams = expandBindingPattern(decl, type, jsdocTags, ctx);
       result.push(...expandedParams);
     } else {
-      // Regular parameter
-      const isOptional = !!(param.flags & 16777216); /* Optional */
+      // Regular parameter - check questionToken or initializer for optionality
+      const isOptional = !!decl?.questionToken || !!decl?.initializer;
 
       // Strip undefined from optional params - optionality is expressed via required: false
       const effectiveType = isOptional ? stripUndefinedFromType(type, checker) : type;

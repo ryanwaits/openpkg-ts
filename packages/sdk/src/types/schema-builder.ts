@@ -641,10 +641,12 @@ function buildFunctionSchema(
     const signatures: SpecSignature[] = callSignatures.map((sig) => {
       const params = sig.getParameters().map((param) => {
         const paramType = checker.getTypeOfSymbolAtLocation(param, param.valueDeclaration!);
+        const decl = param.valueDeclaration as ts.ParameterDeclaration | undefined;
+        const isOptional = !!decl?.questionToken || !!decl?.initializer;
         return {
           name: param.getName(),
           schema: buildSchema(paramType, checker, ctx),
-          required: !(param.flags & ts.SymbolFlags.Optional),
+          required: !isOptional,
         };
       });
 

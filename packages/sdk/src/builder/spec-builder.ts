@@ -800,7 +800,13 @@ function serializeDeclaration(
   } else if (ts.isVariableDeclaration(declaration)) {
     const varStatement = declaration.parent?.parent as ts.VariableStatement | undefined;
     if (varStatement && ts.isVariableStatement(varStatement)) {
-      result = serializeVariable(declaration, varStatement, ctx);
+      // Check if it's an arrow function - serialize as function instead of variable
+      if (declaration.initializer && ts.isArrowFunction(declaration.initializer)) {
+        const varName = ts.isIdentifier(declaration.name) ? declaration.name.text : declaration.name.getText();
+        result = serializeFunctionExport(declaration.initializer, ctx, varName);
+      } else {
+        result = serializeVariable(declaration, varStatement, ctx);
+      }
     }
   } else if (ts.isNamespaceExport(declaration) || ts.isModuleDeclaration(declaration)) {
     try {

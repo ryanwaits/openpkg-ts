@@ -1,5 +1,17 @@
 # @openpkg-ts/cli
 
+## 0.4.2
+
+### Patch Changes
+
+- Fix optional parameter detection and arrow function serialization
+
+  - Optional params (`?` or default values) now correctly marked `required: false`
+  - Arrow function consts now serialize as `kind: 'function'` instead of `kind: 'variable'`
+
+- Updated dependencies
+  - @openpkg-ts/sdk@0.32.1
+
 ## 0.4.1
 
 ### Patch Changes
