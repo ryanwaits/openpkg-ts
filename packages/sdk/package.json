@@ -1,6 +1,6 @@
 {
   "name": "@openpkg-ts/sdk",
-  "version": "0.32.1",
+  "version": "0.33.0",
   "description": "TypeScript API extraction SDK - programmatic primitives for OpenPkg specs",
   "keywords": [
     "openpkg",
@@ -38,7 +38,8 @@
     "test": "bun test"
   },
   "dependencies": {
-    "@openpkg-ts/spec": "^0.32.0",
+    "@openpkg-ts/spec": "^0.33.0",
+    "picomatch": "4.0.3",
     "typescript": "^5.0.0"
   },
   "peerDependencies": {

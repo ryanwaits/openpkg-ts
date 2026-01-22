@@ -37,6 +37,11 @@ import type {
 import { extractParameters, registerReferencedTypes } from '../types/parameters';
 import { buildSchema } from '../types/schema-builder';
 import { normalizeExport, normalizeType } from '../types/schema-normalizer';
+import {
+  extractExternalExport,
+  matchesExternalPattern,
+  resolveExternalModule,
+} from './external-resolver';
 import { mergeRuntimeSchemas } from './schema-merger';
 
 /** Cache for findTypeDefinition results to avoid redundant AST walks */
@@ -352,6 +357,42 @@ export async function extract(options: ExtractOptions): Promise<ExtractResult> {
         }
 
         if (externalPackage) {
+          // Check if we should try to resolve this external package
+          const shouldResolve = matchesExternalPattern(
+            externalPackage,
+            options.externals?.include,
+            options.externals?.exclude,
+          );
+
+          if (shouldResolve) {
+            // Try to resolve the external module
+            const resolvedModule = resolveExternalModule(
+              externalPackage,
+              sourceFile.fileName,
+              program.getCompilerOptions(),
+            );
+
+            if (resolvedModule) {
+              // Extract the export from the resolved module
+              const visitedExternals = new Set<string>();
+              const extractedExport = extractExternalExport(
+                exportName,
+                resolvedModule,
+                program,
+                ctx,
+                visitedExternals,
+              );
+
+              if (extractedExport) {
+                exports.push(extractedExport);
+                tracker.status = 'success';
+                tracker.kind = extractedExport.kind;
+                continue;
+              }
+            }
+          }
+
+          // Fall back to external stub if resolution wasn't attempted or failed
           const externalExport: SpecExport = {
             id: exportName,
             name: exportName,
@@ -522,6 +563,10 @@ export async function extract(options: ExtractOptions): Promise<ExtractResult> {
       ...(options.schemaExtraction === 'hybrid' ? { schemaExtraction: 'hybrid' } : {}),
       ...(isDtsSource && {
         limitations: ['No JSDoc descriptions', 'No @example tags', 'No @param descriptions'],
+      }),
+      // Include skipped exports in generation metadata
+      ...(verification.details.skipped.length > 0 && {
+        skipped: verification.details.skipped,
       }),
     },
   };
@@ -1084,7 +1129,7 @@ function withExportName(entry: SpecExport, exportName: string): SpecExport {
   return {
     ...entry,
     id: exportName,
-    name: entry.name,
+    name: exportName,
   };
 }
 

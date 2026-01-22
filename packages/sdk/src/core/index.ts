@@ -1,5 +1,12 @@
 // Query utilities
 
+// Config utilities
+export {
+  CONFIG_FILENAME,
+  loadConfig,
+  mergeConfig,
+  type OpenpkgConfig,
+} from './config';
 // Diagnostics utilities
 export {
   analyzeSpec,

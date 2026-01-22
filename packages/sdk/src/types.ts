@@ -1,5 +1,15 @@
 import type { OpenPkg } from '@openpkg-ts/spec';
 
+/** Configuration for resolving external package re-exports */
+export interface ExternalsConfig {
+  /** Package patterns to resolve (globs supported, e.g., "@myorg/*") */
+  include?: string[];
+  /** Package patterns to never resolve */
+  exclude?: string[];
+  /** Max transitive depth for resolution (default: 1) */
+  depth?: number;
+}
+
 export interface ExtractOptions {
   entryFile: string;
   baseDir?: string;
@@ -22,6 +32,8 @@ export interface ExtractOptions {
   isDtsSource?: boolean;
   /** Include private/protected class members (default: false) */
   includePrivate?: boolean;
+  /** Configuration for resolving external package re-exports */
+  externals?: ExternalsConfig;
 }
 
 export interface ExtractResult {
@@ -84,9 +96,19 @@ export interface ExportTracker {
   name: string;
   discovered: boolean;
   status: 'pending' | 'success' | 'skipped' | 'failed';
-  skipReason?: 'filtered' | 'no-declaration' | 'internal';
+  skipReason?: 'filtered' | 'no-declaration' | 'internal' | 'external-unresolved';
+  /** Package name for external-unresolved skips */
+  externalPackage?: string;
   error?: string;
   kind?: string;
+}
+
+/** Detail for a skipped export */
+export interface SkippedExportDetail {
+  name: string;
+  reason: 'filtered' | 'no-declaration' | 'internal' | 'external-unresolved';
+  /** Package name when reason is external-unresolved */
+  package?: string;
 }
 
 /** Verification result comparing discovered vs extracted exports */
@@ -95,14 +117,14 @@ export interface ExportVerification {
   discovered: number;
   /** Exports successfully extracted */
   extracted: number;
-  /** Exports skipped (filtered, no-declaration, internal) */
+  /** Exports skipped (filtered, no-declaration, internal, external-unresolved) */
   skipped: number;
   /** Exports that failed during serialization */
   failed: number;
   /** Delta: discovered - extracted */
   delta: number;
   details: {
-    skipped: Array<{ name: string; reason: 'filtered' | 'no-declaration' | 'internal' }>;
+    skipped: SkippedExportDetail[];
     failed: Array<{ name: string; error: string }>;
   };
 }

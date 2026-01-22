@@ -60,9 +60,11 @@ export type {
   Diagnostic,
   ExportTracker,
   ExportVerification,
+  ExternalsConfig,
   ExtractOptions,
   ExtractResult,
   ForgottenExport,
+  SkippedExportDetail,
   TypeReference,
 } from './types';
 // Type utilities

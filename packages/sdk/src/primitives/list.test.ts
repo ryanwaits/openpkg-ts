@@ -120,4 +120,15 @@ describe('listExports', () => {
     const names = result.exports.map((e) => e.name);
     expect(names).toEqual(['alpha', 'mike', 'zebra']);
   });
+
+  test('aliased exports use export name, not original name', async () => {
+    const code = `
+      const internalFunc = () => {};
+      export { internalFunc as publicApi };
+    `;
+
+    const result = await listExports({ entryFile: 'test.ts', content: code });
+
+    expect(result.exports[0].name).toBe('publicApi');
+  });
 });

@@ -449,6 +449,14 @@ export type SpecExtractionLimitation =
   | 'No @example tags'
   | 'No @param descriptions';
 
+/** Skipped export info for generation metadata */
+export type SpecSkippedExport = {
+  name: string;
+  reason: 'filtered' | 'no-declaration' | 'internal' | 'external-unresolved';
+  /** Package name when reason is external-unresolved */
+  package?: string;
+};
+
 /** Minimal generation metadata for v0.4.0 */
 export type SpecGenerationMeta = {
   generator?: string;
@@ -457,6 +465,10 @@ export type SpecGenerationMeta = {
   mode?: SpecExtractionMode;
   /** Known limitations when in declaration-only mode */
   limitations?: SpecExtractionLimitation[];
+  /** Schema extraction method (when using hybrid mode) */
+  schemaExtraction?: 'hybrid';
+  /** Exports that were skipped during extraction */
+  skipped?: SpecSkippedExport[];
 };
 
 export type OpenPkg = {

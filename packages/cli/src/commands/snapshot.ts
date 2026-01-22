@@ -1,6 +1,12 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { type Diagnostic, type ExtractOptions, extractSpec } from '@openpkg-ts/sdk';
+import {
+  type Diagnostic,
+  type ExtractOptions,
+  extractSpec,
+  loadConfig,
+  mergeConfig,
+} from '@openpkg-ts/sdk';
 import { Command } from 'commander';
 
 interface SnapshotCommandOptions {
@@ -13,6 +19,9 @@ interface SnapshotCommandOptions {
   verify?: boolean;
   verbose?: boolean;
   includePrivate?: boolean;
+  externalInclude?: string[];
+  externalExclude?: string[];
+  externalDepth?: string;
 }
 
 function parseFilter(value: string | undefined): string[] | undefined {
@@ -35,7 +44,11 @@ function formatDiagnostics(diagnostics: Diagnostic[]): object[] {
 
 export function createSnapshotCommand(): Command {
   return new Command('snapshot')
-    .description('Generate full OpenPkg spec from TypeScript entry point')
+    .description(
+      'Generate full OpenPkg spec from TypeScript entry point\n\n' +
+        'Config: Reads from openpkg.config.json or package.json "openpkg" field.\n' +
+        'CLI flags override config file settings.',
+    )
     .argument('<entry>', 'Entry point file path')
     .option(
       '-o, --output <file>',
@@ -50,8 +63,32 @@ export function createSnapshotCommand(): Command {
     .option('--verify', 'Exit 1 if any exports fail')
     .option('--verbose', 'Show detailed output including skipped exports')
     .option('--include-private', 'Include private/protected class members')
+    .option(
+      '--external-include <patterns...>',
+      'Resolve re-exports from these packages (globs supported)',
+    )
+    .option('--external-exclude <patterns...>', 'Never resolve from these packages')
+    .option('--external-depth <n>', 'Max transitive depth for external resolution (default: 1)', '1')
     .action(async (entry: string, options: SnapshotCommandOptions) => {
       const entryFile = path.resolve(entry);
+      const entryDir = path.dirname(entryFile);
+
+      // Load config from file (openpkg.config.json or package.json)
+      const fileConfig = loadConfig(entryDir);
+
+      // Build CLI config from flags
+      const cliConfig = options.externalInclude
+        ? {
+            externals: {
+              include: options.externalInclude,
+              exclude: options.externalExclude,
+              depth: parseInt(options.externalDepth ?? '1', 10),
+            },
+          }
+        : {};
+
+      // Merge: CLI overrides file config
+      const mergedConfig = mergeConfig(fileConfig, cliConfig);
 
       const extractOptions: ExtractOptions = {
         entryFile,
@@ -61,10 +98,15 @@ export function createSnapshotCommand(): Command {
         only: parseFilter(options.only),
         ignore: parseFilter(options.ignore),
         includePrivate: options.includePrivate,
+        // External package resolution from merged config
+        ...(mergedConfig.externals && { externals: mergedConfig.externals }),
       };
 
       try {
         const result = await extractSpec(extractOptions);
+
+        // Count external exports (re-exports from external packages without full type info)
+        const externalExports = result.spec.exports.filter((e) => e.kind === 'external');
 
         // Build summary for stderr
         const summary = {
@@ -84,6 +126,18 @@ export function createSnapshotCommand(): Command {
                 }),
             },
           }),
+          ...(externalExports.length > 0 && {
+            external: {
+              count: externalExports.length,
+              // Include details in verbose mode
+              ...(options.verbose && {
+                exports: externalExports.map((e) => ({
+                  name: e.name,
+                  package: e.source?.package,
+                })),
+              }),
+            },
+          }),
           ...(result.runtimeSchemas && {
             runtime: {
               extracted: result.runtimeSchemas.extracted,
@@ -95,6 +149,41 @@ export function createSnapshotCommand(): Command {
 
         // Write summary to stderr
         console.error(JSON.stringify(summary, null, 2));
+
+        // Show user-friendly messages for external exports and skipped exports
+        if (externalExports.length > 0 || (result.verification?.skipped ?? 0) > 0) {
+          console.error(''); // blank line before warnings
+
+          // External exports message
+          if (externalExports.length > 0) {
+            if (options.verbose) {
+              console.error(
+                `⚠ ${externalExports.length} external re-export(s) (install dependencies for full type info):`,
+              );
+              for (const exp of externalExports) {
+                console.error(`  - ${exp.name} from "${exp.source?.package}"`);
+              }
+            } else {
+              console.error(
+                `⚠ ${externalExports.length} external re-export(s) (install dependencies for full type info)`,
+              );
+            }
+          }
+
+          // Skipped exports message
+          const skipped = result.verification?.details.skipped ?? [];
+          if (skipped.length > 0) {
+            if (options.verbose) {
+              console.error(`⚠ ${skipped.length} export(s) skipped:`);
+              for (const skip of skipped) {
+                const pkgInfo = skip.package ? ` from "${skip.package}"` : '';
+                console.error(`  - ${skip.name} (${skip.reason})${pkgInfo}`);
+              }
+            } else {
+              console.error(`⚠ ${skipped.length} export(s) skipped (use --verbose for details)`);
+            }
+          }
+        }
 
         // Check for failures if --verify
         if (options.verify && result.verification && result.verification.failed > 0) {

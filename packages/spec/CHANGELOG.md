@@ -1,5 +1,16 @@
 # @openpkg-ts/spec
 
+## 0.33.0
+
+### Patch Changes
+
+- feat(sdk,cli): external package re-export resolution and config file support
+
+  - Add `--external-include/exclude/depth` flags for resolving re-exports from external packages
+  - Add config file support via `openpkg.config.json` or package.json "openpkg" field
+  - Add `--verbose` flag showing detailed skipped/external export info
+  - Add `SkippedExportDetail` type with skip reasons and package info
+
 ## 0.32.0
 
 ### Minor Changes
