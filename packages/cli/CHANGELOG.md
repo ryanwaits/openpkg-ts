@@ -1,5 +1,11 @@
 # @openpkg-ts/cli
 
+## 0.4.1
+
+### Patch Changes
+
+- fix stale version in built artifacts
+
 ## 0.4.0
 
 ### Minor Changes

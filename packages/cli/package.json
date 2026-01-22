@@ -1,6 +1,6 @@
 {
   "name": "@openpkg-ts/cli",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "CLI for OpenPkg TypeScript API extraction and documentation generation",
   "homepage": "https://github.com/ryanwaits/openpkg-ts#readme",
   "repository": {
