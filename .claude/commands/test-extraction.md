@@ -35,7 +35,7 @@ Confirm version is installed and note it for the report.
 For each repo URL in arguments, clone to `/tmp`:
 
 ```bash
-cd /tmp && gh repo clone <repo-url> <repo-name>-fixture --depth 1
+cd /tmp && gh repo clone <repo-url> <repo-name>-fixture -- --depth 1
 ```
 
 Use `gh repo clone` for GitHub URLs. Suffix with `-fixture` to clarify these are test fixtures.

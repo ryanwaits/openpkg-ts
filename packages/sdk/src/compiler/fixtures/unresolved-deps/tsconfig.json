@@ -1,0 +1,9 @@
+{
+  "extends": "@nonexistent/config",
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "ESNext",
+    "moduleResolution": "bundler"
+  },
+  "include": ["**/*.ts", "**/*.tsx"]
+}

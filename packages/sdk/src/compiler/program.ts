@@ -231,6 +231,18 @@ export function createProgram({
 
     // Resolve project references (workspace packages)
     additionalRootFiles = resolveProjectReferences(configPath, parsedConfig);
+
+    // Include all source files from tsconfig to ensure re-exported modules are loaded
+    // This fixes the case where tsx files aren't auto-loaded due to missing jsx config
+    // (e.g., when extended config can't be resolved from workspace package)
+    const sourceFiles = parsedConfig.fileNames.filter(
+      (f) =>
+        !f.includes('.test.') &&
+        !f.includes('.spec.') &&
+        !f.includes('/dist/') &&
+        !f.includes('/node_modules/'),
+    );
+    additionalRootFiles.push(...sourceFiles);
   }
 
   // Handle JS/TS compiler options conflict

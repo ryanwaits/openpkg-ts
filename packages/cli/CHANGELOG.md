@@ -1,5 +1,13 @@
 # @openpkg-ts/cli
 
+## 0.5.1
+
+### Patch Changes
+
+- Fix local re-export resolution when extended tsconfig can't be resolved. Now includes all tsconfig.fileNames in program root files so tsx re-exports resolve correctly.
+- Updated dependencies
+  - @openpkg-ts/sdk@0.33.1
+
 ## 0.5.0
 
 ### Minor Changes

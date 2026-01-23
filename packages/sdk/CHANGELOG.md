@@ -1,5 +1,11 @@
 # @openpkg-ts/extract
 
+## 0.33.1
+
+### Patch Changes
+
+- Fix local re-export resolution when extended tsconfig can't be resolved. Now includes all tsconfig.fileNames in program root files so tsx re-exports resolve correctly.
+
 ## 0.33.0
 
 ### Minor Changes
