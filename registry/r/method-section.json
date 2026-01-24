@@ -1,0 +1,17 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "method-section",
+  "type": "registry:block",
+  "title": "Method Section",
+  "description": "Container for a single API method with title, signature, and parameters",
+  "dependencies": [],
+  "devDependencies": [],
+  "registryDependencies": [],
+  "files": [
+    {
+      "path": "components/api/method-section/method-section.tsx",
+      "type": "registry:component",
+      "content": "'use client';\n\nimport { useEffect, useRef, type ReactNode } from 'react';\n\nexport interface MethodSectionProps {\n  /** Section ID for scroll sync */\n  id: string;\n  /** Method title (e.g., \"Fetch data\") */\n  title: string;\n  /** Method signature (e.g., \"select(columns?, options?)\") */\n  signature?: string;\n  /** Method description */\n  description?: ReactNode;\n  /** Bullet list notes */\n  notes?: string[];\n  /** Parameter content */\n  children?: ReactNode;\n  /** Custom className */\n  className?: string;\n  /** Register with sync scroll (if using SyncScrollProvider) */\n  registerSection?: (id: string, ref: React.RefObject<HTMLElement | null>) => void;\n  /** Unregister from sync scroll */\n  unregisterSection?: (id: string) => void;\n}\n\n/**\n * Container for a single API method in the documentation.\n */\nexport function MethodSection({\n  id,\n  title,\n  signature,\n  description,\n  notes,\n  children,\n  className,\n  registerSection,\n  unregisterSection,\n}: MethodSectionProps): ReactNode {\n  const ref = useRef<HTMLElement>(null);\n\n  useEffect(() => {\n    if (registerSection && ref.current) {\n      registerSection(id, ref);\n      return () => unregisterSection?.(id);\n    }\n  }, [id, registerSection, unregisterSection]);\n\n  return (\n    <section\n      ref={ref}\n      id={id}\n      data-section={id}\n      className={`openpkg-method-section mb-20 last:mb-0 ${className || ''}`}\n    >\n      <h2 className=\"text-2xl font-semibold tracking-tight text-[#ededed] mb-4\">{title}</h2>\n\n      {signature && (\n        <code className=\"block font-mono text-sm text-[#666666] mb-6\">{signature}</code>\n      )}\n\n      {description && (\n        <div className=\"openpkg-method-description text-[15px] leading-relaxed text-[#a0a0a0] mb-6\">\n          {typeof description === 'string' ? <p>{description}</p> : description}\n        </div>\n      )}\n\n      {notes && notes.length > 0 && (\n        <ul className=\"list-disc list-inside text-[15px] leading-relaxed text-[#a0a0a0] mb-8 space-y-2\">\n          {notes.map((note, i) => (\n            <li key={i}>{note}</li>\n          ))}\n        </ul>\n      )}\n\n      {children && (\n        <div className=\"openpkg-method-params\">\n          <h3 className=\"text-xs font-semibold uppercase tracking-wider text-[#666666] mb-4 pb-2 border-b border-[#262626]\">\n            Parameters\n          </h3>\n          {children}\n        </div>\n      )}\n    </section>\n  );\n}\n"
+    }
+  ]
+}

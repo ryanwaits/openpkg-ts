@@ -1,0 +1,17 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "nested-parameter-container",
+  "type": "registry:component",
+  "title": "Nested Parameter Container",
+  "description": "Bordered container for nested child parameters",
+  "dependencies": [],
+  "devDependencies": [],
+  "registryDependencies": [],
+  "files": [
+    {
+      "path": "components/api/nested-parameter-container/nested-parameter-container.tsx",
+      "type": "registry:component",
+      "content": "'use client';\n\nimport type { ReactNode } from 'react';\n\nexport interface NestedParameterContainerProps {\n  children: ReactNode;\n  level?: number;\n  className?: string;\n}\n\n/**\n * Bordered container for nested child parameters (Stripe-style).\n */\nexport function NestedParameterContainer({\n  children,\n  level = 0,\n  className,\n}: NestedParameterContainerProps): ReactNode {\n  const borderColor = level === 0 ? '#333333' : '#262626';\n\n  return (\n    <div\n      className={`openpkg-nested-container border border-t-0 rounded-b-lg px-5 mb-2 ${className || ''}`}\n      style={{ borderColor }}\n      data-level={level}\n    >\n      {children}\n    </div>\n  );\n}\n"
+    }
+  ]
+}

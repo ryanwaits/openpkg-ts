@@ -1,0 +1,17 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "collapsible-panel",
+  "type": "registry:component",
+  "title": "Collapsible Panel",
+  "description": "Accordion-style panel for Response, Data source, Notes",
+  "dependencies": [],
+  "devDependencies": [],
+  "registryDependencies": [],
+  "files": [
+    {
+      "path": "components/api/collapsible-panel/collapsible-panel.tsx",
+      "type": "registry:component",
+      "content": "'use client';\n\nimport { type ReactNode, useState } from 'react';\n\nexport interface CollapsiblePanelProps {\n  title: string;\n  children: ReactNode;\n  defaultExpanded?: boolean;\n  expanded?: boolean;\n  onExpandedChange?: (expanded: boolean) => void;\n  className?: string;\n}\n\n/**\n * Accordion-style collapsible panel for code examples.\n */\nexport function CollapsiblePanel({\n  title,\n  children,\n  defaultExpanded = false,\n  expanded: controlledExpanded,\n  onExpandedChange,\n  className,\n}: CollapsiblePanelProps): ReactNode {\n  const [internalExpanded, setInternalExpanded] = useState(defaultExpanded);\n  const isControlled = controlledExpanded !== undefined;\n  const expanded = isControlled ? controlledExpanded : internalExpanded;\n\n  const handleToggle = () => {\n    const newValue = !expanded;\n    if (isControlled) {\n      onExpandedChange?.(newValue);\n    } else {\n      setInternalExpanded(newValue);\n    }\n  };\n\n  return (\n    <div className={`openpkg-collapsible-panel ${className || ''}`}>\n      <button\n        type=\"button\"\n        onClick={handleToggle}\n        className={`openpkg-collapsible-trigger flex items-center gap-2.5 w-full px-4 py-3 bg-[#161616] border border-[#262626] cursor-pointer transition-all duration-150 hover:bg-[#1c1c1c] ${\n          expanded ? 'rounded-t-md border-b-transparent mb-0' : 'rounded-md mb-2'\n        }`}\n      >\n        <svg\n          width=\"14\"\n          height=\"14\"\n          viewBox=\"0 0 24 24\"\n          fill=\"none\"\n          stroke=\"currentColor\"\n          strokeWidth=\"2\"\n          className={`text-[#666666] transition-transform duration-200 ${expanded ? 'rotate-90' : ''}`}\n        >\n          <polyline points=\"9 18 15 12 9 6\" />\n        </svg>\n        <span className=\"text-[13px] font-medium text-[#a0a0a0]\">{title}</span>\n      </button>\n\n      {expanded && (\n        <div className=\"openpkg-collapsible-content bg-[#0f0f18] border border-[#262626] border-t-0 rounded-b-md mb-2 overflow-hidden\">\n          {children}\n        </div>\n      )}\n    </div>\n  );\n}\n"
+    }
+  ]
+}

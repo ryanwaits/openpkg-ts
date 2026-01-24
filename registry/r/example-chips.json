@@ -1,0 +1,17 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "example-chips",
+  "type": "registry:component",
+  "title": "Example Chips",
+  "description": "Tab-like chips for switching between code examples",
+  "dependencies": [],
+  "devDependencies": [],
+  "registryDependencies": [],
+  "files": [
+    {
+      "path": "components/api/example-chips/example-chips.tsx",
+      "type": "registry:component",
+      "content": "'use client';\n\nimport type { ReactNode } from 'react';\n\nexport interface ExampleChip {\n  id: string;\n  label: string;\n}\n\nexport interface ExampleChipsProps {\n  examples: ExampleChip[];\n  activeId: string;\n  onSelect: (id: string) => void;\n  className?: string;\n}\n\n/**\n * Tab-like chips for switching between code examples.\n */\nexport function ExampleChips({\n  examples,\n  activeId,\n  onSelect,\n  className,\n}: ExampleChipsProps): ReactNode {\n  return (\n    <div className={`openpkg-example-chips flex flex-wrap gap-2 mb-5 ${className || ''}`}>\n      {examples.map((example) => {\n        const isActive = example.id === activeId;\n        return (\n          <button\n            key={example.id}\n            type=\"button\"\n            onClick={() => onSelect(example.id)}\n            className={`openpkg-example-chip text-xs font-medium px-3 py-1.5 border rounded-md cursor-pointer transition-all duration-150 ${\n              isActive\n                ? 'border-[#666666] text-[#ededed] bg-[#1c1c1c]'\n                : 'border-[#333333] text-[#a0a0a0] bg-transparent hover:border-[#666666] hover:text-[#ededed]'\n            }`}\n            aria-pressed={isActive}\n          >\n            {example.label}\n          </button>\n        );\n      })}\n    </div>\n  );\n}\n"
+    }
+  ]
+}

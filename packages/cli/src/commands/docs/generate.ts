@@ -1,18 +1,26 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { createDocs, type DocsInstance, loadSpec } from '@openpkg-ts/sdk';
-import type { OpenPkg } from '@openpkg-ts/spec';
+import { type DocsInstance, loadSpec, query, toReact } from '@openpkg-ts/sdk';
+import type { OpenPkg, SpecExportKind } from '@openpkg-ts/spec';
 import { Command } from 'commander';
 
-type OutputFormat = 'md' | 'json' | 'html';
+type OutputFormat = 'md' | 'json' | 'html' | 'react';
 
-interface DocsCommandOptions {
+interface GenerateCommandOptions {
   output?: string;
   format?: OutputFormat;
   split?: boolean;
   export?: string;
   adapter?: string;
   collapseUnions?: string;
+  kind?: string;
+  tag?: string;
+  search?: string;
+  deprecated?: boolean;
+  noDeprecated?: boolean;
+  // React layout options
+  variant?: 'full' | 'index';
+  componentsPath?: string;
 }
 
 async function readStdin(): Promise<string> {
@@ -29,9 +37,37 @@ function getExtension(format: OutputFormat): string {
       return '.json';
     case 'html':
       return '.html';
+    case 'react':
+      return '.tsx';
     default:
       return '.md';
   }
+}
+
+function applyFilters(spec: OpenPkg, options: GenerateCommandOptions): OpenPkg {
+  let qb = query(spec);
+
+  if (options.kind) {
+    const kinds = options.kind.split(',').map((k) => k.trim()) as SpecExportKind[];
+    qb = qb.byKind(...kinds);
+  }
+
+  if (options.tag) {
+    const tags = options.tag.split(',').map((t) => t.trim());
+    qb = qb.byTag(...tags);
+  }
+
+  if (options.search) {
+    qb = qb.search(options.search);
+  }
+
+  if (options.deprecated === true) {
+    qb = qb.deprecated(true);
+  } else if (options.deprecated === false) {
+    qb = qb.deprecated(false);
+  }
+
+  return qb.toSpec();
 }
 
 function renderExport(
@@ -58,7 +94,11 @@ function renderExport(
   }
 }
 
-function renderFull(docs: DocsInstance, format: OutputFormat, collapseUnionThreshold?: number): string {
+function renderFull(
+  docs: DocsInstance,
+  format: OutputFormat,
+  collapseUnionThreshold?: number,
+): string {
   switch (format) {
     case 'json':
       return JSON.stringify(docs.toJSON(), null, 2);
@@ -69,23 +109,29 @@ function renderFull(docs: DocsInstance, format: OutputFormat, collapseUnionThres
   }
 }
 
-export function createDocsCommand(): Command {
-  return new Command('docs')
+export function createGenerateCommand(): Command {
+  return new Command('generate')
     .description('Generate documentation from OpenPkg spec')
     .argument('<spec>', 'Path to openpkg.json spec file (use - for stdin)')
     .option('-o, --output <path>', 'Output file or directory (default: stdout)')
-    .option('-f, --format <format>', 'Output format: md, json, html (default: md)', 'md')
+    .option('-f, --format <format>', 'Output format: md, json, html, react (default: md)', 'md')
     .option('--split', 'Output one file per export (requires --output as directory)')
     .option('-e, --export <name>', 'Generate docs for a single export by name')
     .option('-a, --adapter <name>', 'Use adapter for generation (default: raw)')
-    .option('--collapse-unions <n>', 'Collapse unions with more than N members (default: no collapse)')
-    .action(async (specPath: string, options: DocsCommandOptions) => {
+    .option('--collapse-unions <n>', 'Collapse unions with more than N members')
+    .option('-k, --kind <kinds>', 'Filter by kind(s), comma-separated')
+    .option('-t, --tag <tags>', 'Filter by tag(s), comma-separated')
+    .option('-s, --search <term>', 'Search name and description')
+    .option('--deprecated', 'Only include deprecated exports')
+    .option('--no-deprecated', 'Exclude deprecated exports')
+    .option('--variant <variant>', 'React layout variant: full (single page) or index (links)', 'full')
+    .option('--components-path <path>', 'React components import path', '@/components/api')
+    .action(async (specPath: string, options: GenerateCommandOptions) => {
       const format = (options.format || 'md') as OutputFormat;
 
       try {
         // Handle adapter mode
         if (options.adapter && options.adapter !== 'raw') {
-          // Dynamic import adapter to trigger self-registration
           let getAdapter: typeof import('@openpkg-ts/adapters').getAdapter;
           try {
             const _adapterModule = await import(`@openpkg-ts/adapters/${options.adapter}`);
@@ -107,7 +153,6 @@ export function createDocsCommand(): Command {
             process.exit(1);
           }
 
-          // Load spec
           let spec: OpenPkg;
           if (specPath === '-') {
             const input = await readStdin();
@@ -121,31 +166,58 @@ export function createDocsCommand(): Command {
             spec = JSON.parse(fs.readFileSync(specFile, 'utf-8'));
           }
 
+          spec = applyFilters(spec, options);
+
           await adapter.generate(spec, path.resolve(options.output));
           console.error(`Generated docs with ${options.adapter} adapter to ${options.output}`);
           return;
         }
 
-        let docs: DocsInstance;
-
-        // Handle stdin
+        // Load spec
+        let spec: OpenPkg;
         if (specPath === '-') {
           const input = await readStdin();
-          const spec: OpenPkg = JSON.parse(input);
-          docs = loadSpec(spec);
+          spec = JSON.parse(input);
         } else {
           const specFile = path.resolve(specPath);
           if (!fs.existsSync(specFile)) {
             console.error(JSON.stringify({ error: `Spec file not found: ${specFile}` }));
             process.exit(1);
           }
-          docs = createDocs(specFile);
+          spec = JSON.parse(fs.readFileSync(specFile, 'utf-8'));
         }
+
+        // Apply filters
+        spec = applyFilters(spec, options);
+
+        // Create docs instance from filtered spec
+        const docs: DocsInstance = loadSpec(spec);
 
         // Parse collapse unions threshold
         const collapseUnionThreshold = options.collapseUnions
           ? parseInt(options.collapseUnions, 10)
           : undefined;
+
+        // React format mode - generates a single layout file
+        if (format === 'react') {
+          if (!options.output) {
+            console.error(JSON.stringify({ error: '--format react requires --output <directory>' }));
+            process.exit(1);
+          }
+
+          const variant = (options.variant === 'index' ? 'index' : 'full') as 'full' | 'index';
+
+          await toReact(spec, {
+            outDir: path.resolve(options.output),
+            variant,
+            componentsPath: options.componentsPath ?? '@/components/api',
+          });
+          console.error(`Generated React layout to ${options.output}`);
+          console.error(`  - page.tsx: Layout file`);
+          console.error(`  - openpkg.json: Spec data`);
+          console.error(`\nNext: Add components with 'openpkg docs add function-section'`);
+          return;
+        }
 
         // Single export mode
         if (options.export) {
@@ -166,7 +238,7 @@ export function createDocsCommand(): Command {
           return;
         }
 
-        // Split mode: one file per export
+        // Split mode
         if (options.split) {
           if (!options.output) {
             console.error(JSON.stringify({ error: '--split requires --output <directory>' }));

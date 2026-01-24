@@ -1,0 +1,19 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "index-layout",
+  "type": "registry:block",
+  "title": "Index Layout",
+  "description": "API reference index with cards linking to exports",
+  "dependencies": [
+    "@/components"
+  ],
+  "devDependencies": [],
+  "registryDependencies": [],
+  "files": [
+    {
+      "path": "components/api/index-layout/index-layout.tsx",
+      "type": "registry:component",
+      "content": "'use client';\n\nimport type { OpenPkg, SpecExport } from '@openpkg-ts/spec';\n\n// Install export-card via: openpkg docs add export-card\n// import { ExportCard } from '@/components/api/export-card';\n\nexport interface IndexLayoutProps {\n  /** The OpenPkg spec data */\n  spec: OpenPkg;\n  /** Custom className */\n  className?: string;\n  /** Base path for export links (default: /api) */\n  basePath?: string;\n  /** Custom card renderer */\n  renderCard?: (exp: SpecExport, href: string) => React.ReactNode;\n}\n\n/**\n * Default export card placeholder.\n * Replace with ExportCard component once installed.\n */\nfunction DefaultCard({ exp, href }: { exp: SpecExport; href: string }) {\n  return (\n    <a\n      href={href}\n      className=\"block p-4 border rounded-lg hover:bg-muted transition-colors group\"\n    >\n      <h3 className=\"font-semibold font-mono group-hover:underline\">{exp.name}</h3>\n      <p className=\"text-sm text-muted-foreground line-clamp-2 mt-1\">\n        {exp.description || 'No description'}\n      </p>\n      <span className=\"text-xs bg-muted px-2 py-0.5 rounded mt-2 inline-block\">{exp.kind}</span>\n    </a>\n  );\n}\n\n/**\n * API Reference Index Layout.\n * Shows cards linking to individual export pages.\n * Best for docs frameworks with file-based routing.\n *\n * @example\n * ```tsx\n * import spec from './openpkg.json';\n * import { IndexLayout } from '@/components/api/index-layout';\n *\n * export default function APIIndex() {\n *   return <IndexLayout spec={spec} basePath=\"/docs/api\" />;\n * }\n * ```\n */\nexport function IndexLayout({\n  spec,\n  className,\n  basePath = '/api',\n  renderCard,\n}: IndexLayoutProps): React.ReactNode {\n  const exports = spec.exports;\n\n  // Group by kind\n  const groups = [\n    { title: 'Functions', kind: 'function', items: exports.filter((e) => e.kind === 'function') },\n    { title: 'Classes', kind: 'class', items: exports.filter((e) => e.kind === 'class') },\n    {\n      title: 'Types & Interfaces',\n      kind: 'interface',\n      items: exports.filter((e) => e.kind === 'interface' || e.kind === 'type'),\n    },\n    { title: 'Variables', kind: 'variable', items: exports.filter((e) => e.kind === 'variable') },\n    { title: 'Enums', kind: 'enum', items: exports.filter((e) => e.kind === 'enum') },\n  ].filter((g) => g.items.length > 0);\n\n  return (\n    <div className={className}>\n      {/* Header */}\n      <header className=\"mb-12\">\n        <h1 className=\"text-3xl font-bold\">{spec.meta.name}</h1>\n        {spec.meta.description && (\n          <p className=\"text-lg text-muted-foreground mt-2\">{spec.meta.description}</p>\n        )}\n        {spec.meta.version && <p className=\"text-sm text-muted-foreground\">v{spec.meta.version}</p>}\n      </header>\n\n      {/* Grouped cards */}\n      {groups.map((group) => (\n        <section key={group.kind} className=\"mb-12\">\n          <h2 className=\"text-2xl font-bold mb-6\">{group.title}</h2>\n          <div className=\"grid gap-4 md:grid-cols-2 lg:grid-cols-3\">\n            {group.items.map((exp) => {\n              const href = `${basePath}/${exp.name}`;\n              return renderCard ? (\n                <div key={exp.id}>{renderCard(exp, href)}</div>\n              ) : (\n                <DefaultCard key={exp.id} exp={exp} href={href} />\n              );\n            })}\n          </div>\n        </section>\n      ))}\n    </div>\n  );\n}\n"
+    }
+  ]
+}

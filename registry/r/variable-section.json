@@ -1,0 +1,19 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "variable-section",
+  "type": "registry:block",
+  "title": "Variable Section",
+  "description": "Variable/constant documentation section",
+  "dependencies": [
+    "@openpkg-ts/sdk"
+  ],
+  "devDependencies": [],
+  "registryDependencies": [],
+  "files": [
+    {
+      "path": "components/api/variable-section/variable-section.tsx",
+      "type": "registry:component",
+      "content": "'use client';\n\nimport { formatSchema } from '@openpkg-ts/sdk/browser';\nimport type { OpenPkg, SpecExport } from '@openpkg-ts/spec';\nimport type { ReactNode } from 'react';\n\nexport interface VariableSectionProps {\n  export: SpecExport;\n  spec: OpenPkg;\n  className?: string;\n}\n\n/**\n * Headless variable/constant documentation section.\n * Renders type information and value.\n */\nexport function VariableSection({\n  export: exp,\n  spec,\n  className,\n}: VariableSectionProps): ReactNode {\n  const typeValue = typeof exp.type === 'string' ? exp.type : formatSchema(exp.schema);\n  const pkgName = spec.meta.name;\n  const importStatement = `import { ${exp.name} } from '${pkgName}';`;\n\n  // Get const value if available\n  const constValue =\n    exp.schema && typeof exp.schema === 'object'\n      ? (exp.schema as Record<string, unknown>).const\n      : undefined;\n\n  return (\n    <section className={className} data-component=\"variable-section\" data-export={exp.name}>\n      {/* Header */}\n      <header data-slot=\"header\">\n        <h2 data-slot=\"title\">const {exp.name}</h2>\n        {exp.description && <p data-slot=\"description\">{exp.description}</p>}\n        {exp.deprecated && (\n          <p data-slot=\"deprecated\" data-deprecated=\"true\">\n            <strong>Deprecated:</strong> This export is deprecated.\n            {exp.deprecationReason && ` ${exp.deprecationReason}`}\n          </p>\n        )}\n        <code data-slot=\"import\">{importStatement}</code>\n      </header>\n\n      {/* Type */}\n      <div data-slot=\"type\">\n        <h3>Type</h3>\n        <dl>\n          <dt><code>{exp.name}</code></dt>\n          <dd>\n            <code>{typeValue}</code>\n            {constValue !== undefined && (\n              <span data-slot=\"value\"> = {JSON.stringify(constValue)}</span>\n            )}\n          </dd>\n        </dl>\n      </div>\n\n      {/* Example */}\n      <div data-slot=\"example\">\n        <h3>Example</h3>\n        <pre><code>{`${importStatement}\\n\\nconsole.log(${exp.name}); // ${constValue !== undefined ? JSON.stringify(constValue) : typeValue}`}</code></pre>\n      </div>\n    </section>\n  );\n}\n"
+    }
+  ]
+}

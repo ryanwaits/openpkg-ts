@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openpkg.dev/schema/registry.json",
+  "title": "OpenPkg Registry",
+  "description": "shadcn-compatible registry for OpenPkg documentation components",
+  "type": "object",
+  "required": ["name", "homepage", "items"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "name": { "type": "string", "description": "Registry namespace (e.g., openpkg)" },
+    "homepage": { "type": "string", "format": "uri" },
+    "items": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/registryItem" },
+      "minItems": 1,
+      "uniqueItems": true
+    }
+  },
+  "$defs": {
+    "registryItem": {
+      "type": "object",
+      "required": ["name", "type", "files"],
+      "properties": {
+        "name": { "type": "string" },
+        "type": {
+          "type": "string",
+          "enum": ["registry:component", "registry:block", "registry:ui", "registry:hook", "registry:lib"]
+        },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "dependencies": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "devDependencies": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "registryDependencies": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "files": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["path", "type"],
+            "properties": {
+              "path": { "type": "string" },
+              "type": { "type": "string" },
+              "content": { "type": "string" },
+              "target": { "type": "string" }
+            }
+          }
+        },
+        "tailwind": { "type": "object" },
+        "cssVars": { "type": "object" },
+        "css": { "type": "string" }
+      }
+    }
+  }
+}

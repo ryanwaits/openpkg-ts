@@ -22,14 +22,14 @@
   },
   "devDependencies": {
     "@biomejs/biome": "2.1.2",
-    "@changesets/cli": "^2.29.7",
+    "@changesets/cli": "^2.29.8",
     "@types/bun": "latest",
     "ajv": "^8.17.1",
     "ajv-formats": "^3.0.1",
-    "bunup": "^0.11.4",
-    "typescript": "^5.8.3"
+    "bunup": "^0.11.30",
+    "typescript": "^5.9.3"
   },
   "dependencies": {
-    "zod": "^4.3.5"
+    "zod": "^4.3.6"
   }
 }

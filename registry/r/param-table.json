@@ -1,0 +1,19 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "param-table",
+  "type": "registry:component",
+  "title": "Parameter Table",
+  "description": "Function parameters table with types and descriptions",
+  "dependencies": [
+    "@openpkg-ts/sdk"
+  ],
+  "devDependencies": [],
+  "registryDependencies": [],
+  "files": [
+    {
+      "path": "components/api/param-table/param-table.tsx",
+      "type": "registry:component",
+      "content": "'use client';\n\nimport { formatSchema } from '@openpkg-ts/sdk/browser';\nimport type { SpecMember, SpecSignatureParameter } from '@openpkg-ts/spec';\n\nexport interface ParamTableProps {\n  /** Parameters or members to display */\n  items: (SpecSignatureParameter | SpecMember)[];\n  /** Show required indicator */\n  showRequired?: boolean;\n  /** Custom className */\n  className?: string;\n  /** Render custom row */\n  renderRow?: (item: SpecSignatureParameter | SpecMember, index: number) => React.ReactNode;\n}\n\nexport interface ParamRowProps {\n  item: SpecSignatureParameter | SpecMember;\n  showRequired?: boolean;\n}\n\nfunction isParameter(item: SpecSignatureParameter | SpecMember): item is SpecSignatureParameter {\n  return 'required' in item;\n}\n\n/**\n * Individual parameter row component.\n */\nexport function ParamRow({ item, showRequired = true }: ParamRowProps): React.ReactNode {\n  const name = item.name ?? 'arg';\n  const type = formatSchema(item.schema);\n  const description = item.description ?? '';\n  const required = isParameter(item) ? item.required : true;\n\n  return (\n    <tr>\n      <td>\n        <code>{name}</code>\n        {showRequired && required && <span>*</span>}\n        {showRequired && !required && <span>?</span>}\n      </td>\n      <td>\n        <code>{type}</code>\n      </td>\n      <td>{description}</td>\n    </tr>\n  );\n}\n\n/**\n * Headless parameter table component.\n *\n * @example\n * ```tsx\n * <ParamTable items={sig.parameters} />\n *\n * // Custom row rendering\n * <ParamTable\n *   items={sig.parameters}\n *   renderRow={(item) => <CustomRow key={item.name} param={item} />}\n * />\n * ```\n */\nexport function ParamTable({\n  items,\n  showRequired = true,\n  className,\n  renderRow,\n}: ParamTableProps): React.ReactNode {\n  if (!items?.length) return null;\n\n  return (\n    <table className={className}>\n      <thead>\n        <tr>\n          <th>Name</th>\n          <th>Type</th>\n          <th>Description</th>\n        </tr>\n      </thead>\n      <tbody>\n        {items.map((item, index) =>\n          renderRow ? (\n            renderRow(item, index)\n          ) : (\n            <ParamRow key={item.name ?? index} item={item} showRequired={showRequired} />\n          ),\n        )}\n      </tbody>\n    </table>\n  );\n}\n"
+    }
+  ]
+}

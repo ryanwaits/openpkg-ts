@@ -123,7 +123,7 @@ describe('release workflow e2e', () => {
   });
 
   it('generates markdown docs', async () => {
-    const output = await $`bun packages/cli/bin/openpkg.ts docs ${newPath}`.text();
+    const output = await $`bun packages/cli/bin/openpkg.ts docs generate ${newPath}`.text();
 
     expect(output).toContain('greet');
     expect(output).toContain('hello');
@@ -131,7 +131,7 @@ describe('release workflow e2e', () => {
   });
 
   it('generates json docs', async () => {
-    const output = await $`bun packages/cli/bin/openpkg.ts docs ${newPath} --format json`.text();
+    const output = await $`bun packages/cli/bin/openpkg.ts docs generate ${newPath} -f json`.text();
     const result = JSON.parse(output);
 
     expect(result.name).toBe('test-pkg');
@@ -142,7 +142,7 @@ describe('release workflow e2e', () => {
   it('generates fumadocs output', async () => {
     const docsDir = path.join(tmpDir, 'fumadocs-output');
 
-    await $`bun packages/cli/bin/openpkg.ts docs ${newPath} --adapter fumadocs --output ${docsDir}`;
+    await $`bun packages/cli/bin/openpkg.ts docs generate ${newPath} -a fumadocs -o ${docsDir}`;
 
     // Verify directory created
     expect(fs.existsSync(docsDir)).toBe(true);
@@ -177,7 +177,7 @@ describe('release workflow e2e', () => {
       $`bun packages/cli/bin/openpkg.ts semver ${oldPath} ${newPath}`,
       $`bun packages/cli/bin/openpkg.ts changelog ${oldPath} ${newPath} --format json`,
       $`bun packages/cli/bin/openpkg.ts diagnostics ${newPath}`,
-      $`bun packages/cli/bin/openpkg.ts docs ${newPath} --format json`,
+      $`bun packages/cli/bin/openpkg.ts docs generate ${newPath} -f json`,
     ];
 
     for (const step of steps) {

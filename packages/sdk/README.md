@@ -8,10 +8,22 @@ Programmatic SDK for TypeScript API extraction and documentation generation.
 npm install @openpkg-ts/sdk
 ```
 
+## Entry Points
+
+```typescript
+// Full SDK (Node.js)
+import { listExports, extractSpec, query } from '@openpkg-ts/sdk';
+
+// Browser-safe (no fs, path, etc.)
+import { query, loadSpec } from '@openpkg-ts/sdk/browser';
+```
+
+Use `@openpkg-ts/sdk/browser` in React, Vite, Next.js client components.
+
 ## Quick Start
 
 ```typescript
-import { listExports, getExport, extractSpec, createDocs, toMarkdown } from '@openpkg-ts/sdk';
+import { listExports, getExport, extractSpec, createDocs } from '@openpkg-ts/sdk';
 
 // List all exports
 const { exports } = await listExports({ entryFile: './src/index.ts' });
@@ -170,6 +182,56 @@ const searchIndex = toSearchIndex(spec);
 const algoliaRecords = toAlgoliaRecords(spec, { indexName: 'api_docs' });
 ```
 
+## QueryBuilder API
+
+Fluent API for querying specs. Available in both Node.js and browser entry points.
+
+```typescript
+import { query } from '@openpkg-ts/sdk';
+// or: import { query } from '@openpkg-ts/sdk/browser';
+
+// Chain filters
+const functions = query(spec)
+  .byKind('function')
+  .search('create')
+  .find();
+
+// Multiple kinds
+const classesAndInterfaces = query(spec)
+  .byKind('class', 'interface')
+  .find();
+
+// Combine filters
+const documented = query(spec)
+  .byKind('function')
+  .hasDescription()
+  .notDeprecated()
+  .find();
+
+// Get single export
+const createClient = query(spec).byName('createClient').first();
+
+// Search by tags
+const publicAPIs = query(spec).byTag('public').find();
+```
+
+### QueryBuilder Methods
+
+| Method | Description |
+|--------|-------------|
+| `.byKind(...kinds)` | Filter by export kind |
+| `.byName(...names)` | Filter by exact name |
+| `.byId(...ids)` | Filter by export ID |
+| `.byTag(...tags)` | Filter by tags |
+| `.search(term)` | Search name/description |
+| `.hasDescription()` | Only with descriptions |
+| `.missingDescription()` | Only without descriptions |
+| `.deprecated()` | Only deprecated |
+| `.notDeprecated()` | Exclude deprecated |
+| `.find()` | Return all matches |
+| `.first()` | Return first match |
+| `.count()` | Return match count |
+
 ## Query Utilities
 
 ```typescript
@@ -197,8 +259,21 @@ import type {
   FilterResult,
   SpecDiagnostics,
   DiffOptions,
+  QueryBuilder,
 } from '@openpkg-ts/sdk';
 ```
+
+## Browser Entry Point
+
+`@openpkg-ts/sdk/browser` exports only browser-safe utilities:
+
+- `query()` - QueryBuilder
+- `loadSpec()` - Load spec from object
+- `filterSpec()` - Filter spec by criteria
+- `buildSignatureString()` - Format signatures
+- Query utilities (formatParameters, getProperties, etc.)
+
+No Node.js dependencies (fs, path, child_process).
 
 ## License
 

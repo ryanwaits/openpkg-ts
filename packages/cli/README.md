@@ -10,11 +10,24 @@ npm install -g @openpkg-ts/cli
 npx @openpkg-ts/cli <command>
 ```
 
-## Commands
+## Command Structure
+
+Commands organized under `openpkg spec` and `openpkg docs`. Legacy commands work as aliases.
+
+```bash
+openpkg spec snapshot ./src/index.ts -o spec.json
+openpkg spec validate spec.json
+
+openpkg docs init
+openpkg docs generate spec.json -o ./docs
+openpkg docs add function-section
+```
+
+---
+
+## Spec Commands
 
 ### list
-
-List exports from entry point.
 
 ```bash
 openpkg list src/index.ts
@@ -24,31 +37,21 @@ Output: JSON array of `{ name, kind, file, line, description }`
 
 ### get
 
-Get detailed spec for single export.
-
 ```bash
 openpkg get src/index.ts createClient
 ```
 
 Output: JSON with `{ export, types }` - full spec for the export plus referenced types.
 
-### snapshot
-
-Generate full OpenPkg spec from TypeScript.
+### spec snapshot
 
 ```bash
-# Write to file
-openpkg snapshot src/index.ts -o openpkg.json
-
-# Stdout (pipeable)
-openpkg snapshot src/index.ts -o -
-
-# With options
-openpkg snapshot src/index.ts --max-depth 4 --runtime --verify
-openpkg snapshot src/index.ts --only "use*,create*" --ignore "*Internal"
+openpkg spec snapshot src/index.ts -o openpkg.json
+openpkg spec snapshot src/index.ts -o -  # stdout
+openpkg spec snapshot src/index.ts --max-depth 4 --runtime --verify
+openpkg spec snapshot src/index.ts --only "use*,create*" --ignore "*Internal"
 ```
 
-Options:
 | Flag | Description |
 |------|-------------|
 | `-o, --output <file>` | Output file (default: openpkg.json, `-` for stdout) |
@@ -59,157 +62,28 @@ Options:
 | `--ignore <exports>` | Ignore exports (comma-separated, wildcards) |
 | `--verify` | Exit 1 if any exports fail |
 
-### docs
-
-Generate documentation from spec.
+### spec validate
 
 ```bash
-# Markdown (default)
-openpkg docs openpkg.json -o api.md
-
-# HTML
-openpkg docs openpkg.json -f html -o api.html
-
-# JSON (simplified structure)
-openpkg docs openpkg.json -f json
-
-# Split: one file per export
-openpkg docs openpkg.json --split -o docs/api/
-
-# Pipeline: stdin
-openpkg snapshot src/index.ts -o - | openpkg docs - -f md
-
-# With adapter (generates framework-specific output)
-openpkg docs openpkg.json --adapter fumadocs -o docs/api/
+openpkg spec validate openpkg.json
+openpkg spec validate openpkg.json --version 1.0
 ```
 
-Options:
-| Flag | Description |
-|------|-------------|
-| `-o, --output <path>` | Output file or directory (default: stdout) |
-| `-f, --format <fmt>` | Format: `md`, `json`, `html` (default: md) |
-| `--split` | One file per export (requires `-o` as directory) |
-| `-a, --adapter <name>` | Use adapter: `fumadocs`, `raw` (default: raw) |
-
-### diff
-
-Compare two specs for breaking changes.
+### spec diagnostics
 
 ```bash
-openpkg diff old.json new.json
-openpkg diff old.json new.json --summary
+openpkg spec diagnostics openpkg.json
 ```
 
-Output includes:
-- `breaking` - categorized breaking changes
-- `added` - new exports
-- `removed` - removed exports
-- `changed` - modified exports
-- `docsOnly` - documentation-only changes
-- `summary.semverBump` - recommended version bump
-
-### breaking
-
-Check for breaking changes. Exit 1 if any found.
+### spec filter
 
 ```bash
-openpkg breaking old.json new.json
+openpkg spec filter openpkg.json --kind function,class
+openpkg spec filter openpkg.json --has-description -o documented.json
+openpkg spec filter openpkg.json --search "user" --summary
+openpkg spec filter openpkg.json --deprecated --quiet | jq '.exports[].name'
 ```
 
-Output:
-```json
-{
-  "breaking": [
-    { "id": "createClient", "name": "createClient", "kind": "function", "severity": "high", "reason": "signature changed" }
-  ],
-  "count": 1
-}
-```
-
-### semver
-
-Recommend version bump based on changes.
-
-```bash
-openpkg semver old.json new.json
-```
-
-Output:
-```json
-{
-  "bump": "major",
-  "reason": "1 breaking change detected"
-}
-```
-
-### validate
-
-Validate spec against schema.
-
-```bash
-openpkg validate openpkg.json
-openpkg validate openpkg.json --version 1.0
-```
-
-Output:
-```json
-{
-  "valid": true,
-  "errors": []
-}
-```
-
-### changelog
-
-Generate changelog from diff.
-
-```bash
-openpkg changelog old.json new.json
-openpkg changelog old.json new.json --format json
-```
-
-Markdown output:
-```markdown
-## Breaking Changes
-- **Removed** `oldFunction` (function)
-
-## Added
-- `newFunction`
-```
-
-### diagnostics
-
-Analyze spec for quality issues.
-
-```bash
-openpkg diagnostics openpkg.json
-```
-
-Output:
-```json
-{
-  "summary": {
-    "total": 5,
-    "missingDescriptions": 3,
-    "deprecatedNoReason": 1,
-    "missingParamDocs": 1
-  },
-  "diagnostics": { ... }
-}
-```
-
-### filter
-
-Filter spec by various criteria.
-
-```bash
-openpkg filter openpkg.json --kind function,class
-openpkg filter openpkg.json --has-description -o documented.json
-openpkg filter openpkg.json --search "user" --summary
-openpkg filter openpkg.json --deprecated --quiet | jq '.exports[].name'
-```
-
-Options:
 | Flag | Description |
 |------|-------------|
 | `--kind <kinds>` | Filter by kinds (comma-separated) |
@@ -226,16 +100,111 @@ Options:
 | `--summary` | Only output matched/total counts |
 | `--quiet` | Output raw spec only (no wrapper) |
 
-All criteria use AND logic when combined.
+### spec diff
 
-Output (default):
-```json
-{
-  "spec": { ... },
-  "matched": 12,
-  "total": 45
-}
+```bash
+openpkg spec diff old.json new.json
+openpkg spec diff old.json new.json --summary
 ```
+
+### spec breaking
+
+Exit 1 if breaking changes found.
+
+```bash
+openpkg spec breaking old.json new.json
+```
+
+### spec semver
+
+```bash
+openpkg spec semver old.json new.json
+```
+
+### spec changelog
+
+```bash
+openpkg spec changelog old.json new.json
+openpkg spec changelog old.json new.json --format json
+```
+
+---
+
+## Docs Commands
+
+### docs init
+
+Initialize docs configuration.
+
+```bash
+openpkg docs init
+```
+
+Creates `openpkg.config.json` with default settings.
+
+### docs generate
+
+Generate documentation from spec.
+
+```bash
+# Markdown (default)
+openpkg docs generate openpkg.json -o api.md
+
+# React layout (single layout + spec JSON, add components via registry)
+openpkg docs generate openpkg.json -f react -o ./app/api
+
+# HTML
+openpkg docs generate openpkg.json -f html -o api.html
+
+# JSON (simplified structure)
+openpkg docs generate openpkg.json -f json
+
+# Split: one file per export
+openpkg docs generate openpkg.json --split -o docs/api/
+
+# With adapter
+openpkg docs generate openpkg.json -a fumadocs -o docs/api/
+
+# From stdin
+openpkg spec snapshot src/index.ts -o - | openpkg docs generate - -f md
+```
+
+| Flag | Description |
+|------|-------------|
+| `-o, --output <path>` | Output file or directory (default: stdout) |
+| `-f, --format <fmt>` | Format: `md`, `json`, `html`, `react` (default: md) |
+| `--split` | One file per export (requires `-o` as directory) |
+| `-a, --adapter <name>` | Use adapter: `fumadocs`, `raw` (default: raw) |
+
+### docs add
+
+Add components from shadcn-compatible registry.
+
+```bash
+openpkg docs add function-section
+openpkg docs add class-section interface-section
+openpkg docs add export-card param-table signature
+```
+
+### docs list
+
+List available registry components.
+
+```bash
+openpkg docs list
+```
+
+16 components available: layouts, sections, primitives.
+
+### docs view
+
+View component details and dependencies.
+
+```bash
+openpkg docs view function-section
+```
+
+---
 
 ## Pipelines
 
@@ -243,11 +212,11 @@ Commands are composable via stdin/stdout:
 
 ```bash
 # Extract and generate docs
-openpkg snapshot src/index.ts -o - | openpkg docs - -f md > api.md
+openpkg spec snapshot src/index.ts -o - | openpkg docs generate - -f md > api.md
 
 # Extract, verify, then diff
-openpkg snapshot src/index.ts --verify -o new.json
-openpkg diff baseline.json new.json --summary
+openpkg spec snapshot src/index.ts --verify -o new.json
+openpkg spec diff baseline.json new.json --summary
 ```
 
 ## Programmatic Use

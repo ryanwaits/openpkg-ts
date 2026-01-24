@@ -1,6 +1,6 @@
 'use client';
 
-import type { DocsInstance } from '@openpkg-ts/sdk';
+import type { DocsInstance } from '@openpkg-ts/sdk/browser';
 import type { OpenPkg } from '@openpkg-ts/spec';
 import { ClassPage } from './ClassPage';
 import { EnumPage } from './EnumPage';

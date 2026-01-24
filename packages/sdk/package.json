@@ -1,6 +1,6 @@
 {
   "name": "@openpkg-ts/sdk",
-  "version": "0.33.1",
+  "version": "0.34.0",
   "description": "TypeScript API extraction SDK - programmatic primitives for OpenPkg specs",
   "keywords": [
     "openpkg",
@@ -24,6 +24,10 @@
     ".": {
       "import": "./dist/index.js",
       "types": "./dist/index.d.ts"
+    },
+    "./browser": {
+      "import": "./dist/browser.js",
+      "types": "./dist/browser.d.ts"
     }
   },
   "files": [

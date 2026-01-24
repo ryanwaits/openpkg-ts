@@ -1,243 +1,167 @@
-# OpenPkg CLI v0.3.0 - Testing Guide
+# OpenPkg CLI - Usage Guide
 
 ## Setup
 
 ```bash
 # Install globally
-bun add -g @openpkg-ts/cli@0.3.0
+bun add -g @openpkg-ts/cli
 
-# Or use locally
+# Or use directly
 bunx openpkg --help
 ```
 
-## Step 1: Generate a Spec Snapshot
+## Command Structure
 
-First, create a spec from any TypeScript package:
-
-```bash
-# From a local entry point
-openpkg snapshot ./src/index.ts -o v1.json
-
-# Or from installed package
-openpkg snapshot ./node_modules/@openpkg-ts/spec/dist/index.d.ts -o spec-v1.json
-```
-
-## Step 2: Validate the Spec
+Commands organized under `openpkg spec` and `openpkg docs`:
 
 ```bash
-openpkg validate v1.json
+openpkg spec snapshot ./src/index.ts -o spec.json
+openpkg spec validate spec.json
+openpkg spec diff v1.json v2.json
+
+openpkg docs init
+openpkg docs generate spec.json -o ./docs
+openpkg docs add function-section
 ```
 
-**Expected output:**
-```json
-{
-  "valid": true,
-  "errors": []
-}
+Legacy commands still work as aliases (`openpkg snapshot` → `openpkg spec snapshot`).
+
+---
+
+## Spec Commands
+
+### Generate Spec Snapshot
+
+```bash
+# From local entry point
+openpkg spec snapshot ./src/index.ts -o v1.json
+
+# From installed package
+openpkg spec snapshot ./node_modules/@openpkg-ts/spec/dist/index.d.ts -o spec-v1.json
+```
+
+### Validate Spec
+
+```bash
+openpkg spec validate v1.json
 ```
 
 Exit code 0 = valid, 1 = invalid.
 
-## Step 3: Run Diagnostics
-
-Check for doc quality issues:
+### Run Diagnostics
 
 ```bash
-openpkg diagnostics v1.json
+openpkg spec diagnostics v1.json
 ```
 
-**Expected output:**
-```json
-{
-  "summary": {
-    "total": 5,
-    "missingDescriptions": 3,
-    "deprecatedNoReason": 1,
-    "missingParamDocs": 1
-  },
-  "diagnostics": {
-    "missingDescriptions": ["func:myFunc", ...],
-    "deprecatedNoReason": ["type:OldType"],
-    "missingParamDocs": ["func:parseConfig:options"]
-  }
-}
-```
-
-## Step 4: Filter the Spec
-
-### By kind
-```bash
-# Only functions
-openpkg filter v1.json --kind function
-
-# Only types and interfaces
-openpkg filter v1.json --kind type,interface
-```
-
-### By name/search
-```bash
-# Exact name match
-openpkg filter v1.json --name "createDocs,loadSpec"
-
-# Search in name/description
-openpkg filter v1.json --search "parse"
-```
-
-### By metadata
-```bash
-# Only deprecated
-openpkg filter v1.json --deprecated
-
-# Only with descriptions
-openpkg filter v1.json --has-description
-
-# Missing descriptions (doc quality check)
-openpkg filter v1.json --missing-description
-```
-
-### Output options
-```bash
-# Just counts
-openpkg filter v1.json --kind function --summary
-# → { "matched": 12, "total": 45 }
-
-# Raw spec (no wrapper)
-openpkg filter v1.json --kind function --quiet -o functions.json
-```
-
-## Step 5: Make Changes & Create v2
-
-Modify your TypeScript code, then generate a new spec:
+### Filter Spec
 
 ```bash
-openpkg snapshot ./src/index.ts -o v2.json
+# By kind
+openpkg spec filter v1.json --kind function
+openpkg spec filter v1.json --kind type,interface
+
+# By name/search
+openpkg spec filter v1.json --name "createDocs,loadSpec"
+openpkg spec filter v1.json --search "parse"
+
+# By metadata
+openpkg spec filter v1.json --deprecated
+openpkg spec filter v1.json --has-description
+openpkg spec filter v1.json --missing-description
+
+# Output options
+openpkg spec filter v1.json --kind function --summary
+openpkg spec filter v1.json --kind function --quiet -o functions.json
 ```
 
-## Step 6: Diff the Specs
+---
+
+## Version Tracking
+
+### Make Changes & Create v2
 
 ```bash
-openpkg diff v1.json v2.json
+openpkg spec snapshot ./src/index.ts -o v2.json
 ```
 
-**Expected output:**
-```json
-{
-  "added": ["func:newFunction"],
-  "removed": ["func:deletedFunction"],
-  "changed": ["type:ModifiedType"],
-  "breaking": [
-    { "id": "func:deletedFunction", "type": "removed" }
-  ]
-}
-```
-
-## Step 7: Check Breaking Changes
+### Diff Specs
 
 ```bash
-openpkg breaking v1.json v2.json
+openpkg spec diff v1.json v2.json
 ```
 
-**Expected output:**
-```json
-{
-  "breaking": [
-    {
-      "id": "func:parse",
-      "change": "removed",
-      "category": "function",
-      "severity": "major"
-    }
-  ],
-  "count": 1
-}
+### Check Breaking Changes
+
+```bash
+openpkg spec breaking v1.json v2.json
 ```
 
 Exit code 1 if breaking changes found.
 
-## Step 8: Get Semver Recommendation
+### Get Semver Recommendation
 
 ```bash
-openpkg semver v1.json v2.json
+openpkg spec semver v1.json v2.json
 ```
 
-**Expected output:**
-```json
-{
-  "bump": "major",
-  "reason": "Breaking changes: 1 removed export(s)"
-}
-```
+### Generate Changelog
 
-Or for non-breaking:
-```json
-{
-  "bump": "minor",
-  "reason": "New exports added"
-}
-```
-
-## Step 9: Generate Changelog
-
-### Markdown (default)
 ```bash
-openpkg changelog v1.json v2.json
+openpkg spec changelog v1.json v2.json
+openpkg spec changelog v1.json v2.json --format json
 ```
 
-**Expected output:**
-```markdown
-## Breaking Changes
+---
 
-- **Removed** `deletedFunction` (function)
+## Docs Commands
 
-## Added
+### Initialize Docs Project
 
-- `newFunction`
-
-## Changed
-
-- `someType` (docs)
-```
-
-### JSON
 ```bash
-openpkg changelog v1.json v2.json --format json
+openpkg docs init
 ```
 
-## Step 10: Generate Documentation
+Creates `openpkg.config.json` with default settings.
 
-### Full spec to markdown
-```bash
-openpkg docs v1.json -f md -o docs.md
-```
+### Generate Documentation
 
-### Single export
 ```bash
-openpkg docs v1.json -e createDocs -f md
-```
+# Markdown (default)
+openpkg docs generate spec.json -f md -o docs.md
 
-### Split into multiple files
-```bash
-openpkg docs v1.json --split -o ./docs/
-# Creates: ./docs/createDocs.md, ./docs/loadSpec.md, etc.
-```
-
-### Different formats
-```bash
-# JSON (structured)
-openpkg docs v1.json -f json -o docs.json
+# React layout (for custom component composition)
+openpkg docs generate spec.json -f react -o ./app/api
+# Creates layout file + spec JSON, add components via registry
 
 # HTML
-openpkg docs v1.json -f html -o docs.html
+openpkg docs generate spec.json -f html -o docs.html
+
+# Split into files
+openpkg docs generate spec.json --split -o ./docs/
+
+# With adapter
+openpkg docs generate spec.json -a fumadocs -o ./content/api/
 ```
 
-### With adapter (Fumadocs)
+### Add Components from Registry
+
 ```bash
-openpkg docs v1.json -a fumadocs -o ./content/api/
+# List available components
+openpkg docs list
+
+# Add specific components
+openpkg docs add function-section
+openpkg docs add class-section interface-section
+openpkg docs add export-card param-table
 ```
 
-### From stdin
+16 components available: layouts, sections, primitives.
+
+### View Component Details
+
 ```bash
-cat v1.json | openpkg docs - -f md
+openpkg docs view function-section
 ```
 
 ---
@@ -249,26 +173,23 @@ cat v1.json | openpkg docs - -f md
 set -e
 
 # Generate current spec
-openpkg snapshot ./src/index.ts -o current.json
+openpkg spec snapshot ./src/index.ts -o current.json
 
 # Validate
-openpkg validate current.json
+openpkg spec validate current.json
 
 # Compare against baseline
 if [ -f baseline.json ]; then
-  # Check for breaking changes
-  if ! openpkg breaking baseline.json current.json; then
+  if ! openpkg spec breaking baseline.json current.json; then
     echo "Breaking changes detected!"
-    openpkg changelog baseline.json current.json
+    openpkg spec changelog baseline.json current.json
     exit 1
   fi
-
-  # Get semver recommendation
-  openpkg semver baseline.json current.json
+  openpkg spec semver baseline.json current.json
 fi
 
 # Run diagnostics
-openpkg diagnostics current.json
+openpkg spec diagnostics current.json
 ```
 
 ---
@@ -277,11 +198,16 @@ openpkg diagnostics current.json
 
 | Command | Purpose | Exit 1 on |
 |---------|---------|-----------|
-| `validate` | Schema validation | Invalid spec |
-| `diagnostics` | Doc quality check | Never (informational) |
-| `filter` | Query/filter spec | Error only |
-| `diff` | Compare two specs | Never |
-| `breaking` | Breaking change detection | Breaking changes found |
-| `semver` | Version bump recommendation | Error only |
-| `changelog` | Generate changelog | Error only |
-| `docs` | Generate documentation | Error only |
+| `spec snapshot` | Extract spec from TS | Error only |
+| `spec validate` | Schema validation | Invalid spec |
+| `spec diagnostics` | Doc quality check | Never |
+| `spec filter` | Query/filter spec | Error only |
+| `spec diff` | Compare two specs | Never |
+| `spec breaking` | Breaking change detection | Breaking changes found |
+| `spec semver` | Version bump recommendation | Error only |
+| `spec changelog` | Generate changelog | Error only |
+| `docs init` | Initialize config | Error only |
+| `docs generate` | Generate documentation | Error only |
+| `docs add` | Add component from registry | Error only |
+| `docs list` | List available components | Error only |
+| `docs view` | View component details | Error only |

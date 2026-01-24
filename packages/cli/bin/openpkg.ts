@@ -1,17 +1,12 @@
 #!/usr/bin/env bun
-import * as path from 'node:path';
-import { getExport, listExports } from '@openpkg-ts/sdk';
 import { Command } from 'commander';
 import pkg from '../package.json';
 import { createBreakingCommand } from '../src/commands/breaking';
 import { createChangelogCommand } from '../src/commands/changelog';
-import { createDiagnosticsCommand } from '../src/commands/diagnostics';
 import { createDiffCommand } from '../src/commands/diff';
 import { createDocsCommand } from '../src/commands/docs';
-import { createFilterCommand } from '../src/commands/filter';
 import { createSemverCommand } from '../src/commands/semver';
-import { createSnapshotCommand } from '../src/commands/snapshot';
-import { createValidateCommand } from '../src/commands/validate';
+import { createSpecCommand } from '../src/commands/spec';
 
 const program = new Command();
 
@@ -20,54 +15,89 @@ program
   .description('OpenPkg CLI - TypeScript API extraction primitives')
   .version(pkg.version);
 
-program
-  .command('list')
-  .description('List exports from a TypeScript entry point')
-  .argument('<entry>', 'Entry point file path')
-  .action(async (entry: string) => {
-    const entryFile = path.resolve(entry);
-    const result = await listExports({ entryFile });
-
-    if (result.errors.length > 0) {
-      console.error(JSON.stringify({ errors: result.errors }, null, 2));
-      process.exit(1);
-    }
-
-    console.log(JSON.stringify(result.exports, null, 2));
-  });
-
-program
-  .command('get')
-  .description('Get detailed spec for a single export')
-  .argument('<entry>', 'Entry point file path')
-  .argument('<name>', 'Export name')
-  .action(async (entry: string, name: string) => {
-    const entryFile = path.resolve(entry);
-    const result = await getExport({ entryFile, exportName: name });
-
-    if (!result.export) {
-      const errorMsg =
-        result.errors.length > 0 ? result.errors.join('; ') : `Export '${name}' not found`;
-      console.error(JSON.stringify({ error: errorMsg }, null, 2));
-      process.exit(1);
-    }
-
-    // Output export with related types if any
-    const output: Record<string, unknown> = { export: result.export };
-    if (result.types.length > 0) {
-      output.types = result.types;
-    }
-    console.log(JSON.stringify(output, null, 2));
-  });
-
-program.addCommand(createSnapshotCommand());
-program.addCommand(createDiffCommand());
+// =============================================================================
+// Parent commands: spec, docs
+// =============================================================================
+program.addCommand(createSpecCommand());
 program.addCommand(createDocsCommand());
+
+// =============================================================================
+// Version commands (flat)
+// =============================================================================
+program.addCommand(createDiffCommand());
 program.addCommand(createBreakingCommand());
 program.addCommand(createChangelogCommand());
 program.addCommand(createSemverCommand());
-program.addCommand(createValidateCommand());
-program.addCommand(createDiagnosticsCommand());
-program.addCommand(createFilterCommand());
+
+// =============================================================================
+// Backwards-compat aliases
+// =============================================================================
+const specCmd = program.commands.find((c) => c.name() === 'spec')!;
+
+// openpkg snapshot → openpkg spec snapshot
+const snapshotAlias = new Command('snapshot')
+  .description('(alias) → openpkg spec snapshot')
+  .allowUnknownOption()
+  .allowExcessArguments()
+  .action(async () => {
+    const args = process.argv.slice(3);
+    await specCmd.commands.find((c) => c.name() === 'snapshot')!.parseAsync(args, { from: 'user' });
+  });
+program.addCommand(snapshotAlias);
+
+// openpkg list → openpkg spec list
+const listAlias = new Command('list')
+  .description('(alias) → openpkg spec list')
+  .allowUnknownOption()
+  .allowExcessArguments()
+  .action(async () => {
+    const args = process.argv.slice(3);
+    await specCmd.commands.find((c) => c.name() === 'list')!.parseAsync(args, { from: 'user' });
+  });
+program.addCommand(listAlias);
+
+// openpkg get → openpkg spec get
+const getAlias = new Command('get')
+  .description('(alias) → openpkg spec get')
+  .allowUnknownOption()
+  .allowExcessArguments()
+  .action(async () => {
+    const args = process.argv.slice(3);
+    await specCmd.commands.find((c) => c.name() === 'get')!.parseAsync(args, { from: 'user' });
+  });
+program.addCommand(getAlias);
+
+// openpkg validate → openpkg spec validate
+const validateAlias = new Command('validate')
+  .description('(alias) → openpkg spec validate')
+  .allowUnknownOption()
+  .allowExcessArguments()
+  .action(async () => {
+    const args = process.argv.slice(3);
+    await specCmd.commands.find((c) => c.name() === 'validate')!.parseAsync(args, { from: 'user' });
+  });
+program.addCommand(validateAlias);
+
+// openpkg filter → openpkg spec filter
+const filterAlias = new Command('filter')
+  .description('(alias) → openpkg spec filter')
+  .allowUnknownOption()
+  .allowExcessArguments()
+  .action(async () => {
+    const args = process.argv.slice(3);
+    await specCmd.commands.find((c) => c.name() === 'filter')!.parseAsync(args, { from: 'user' });
+  });
+program.addCommand(filterAlias);
+
+// openpkg diagnostics → openpkg spec lint (renamed)
+const diagnosticsAlias = new Command('diagnostics')
+  .description('(alias) → openpkg spec lint')
+  .allowUnknownOption()
+  .allowExcessArguments()
+  .action(async () => {
+    const args = process.argv.slice(3);
+    await specCmd.commands.find((c) => c.name() === 'lint')!.parseAsync(args, { from: 'user' });
+  });
+program.addCommand(diagnosticsAlias);
 
 program.parse();

@@ -9,6 +9,73 @@ export {
   type ImportSectionProps,
 } from '@openpkg-ts/ui/api';
 
+// Layout components (Supabase/Stripe style)
+export { APIReferenceLayout, type APIReferenceLayoutProps } from './APIReferenceLayout';
+export {
+  SyncScrollProvider,
+  type SyncScrollProviderProps,
+  type SyncScrollContextValue,
+  useSyncScroll,
+  useSyncSection,
+} from './SyncScrollProvider';
+export { MethodSection, type MethodSectionProps } from './MethodSection';
+
+// Parameter components (Stripe-style)
+export { APIParameterItem, type APIParameterItemProps } from './APIParameterItem';
+export { NestedParameterToggle, type NestedParameterToggleProps } from './NestedParameterToggle';
+export {
+  NestedParameterContainer,
+  type NestedParameterContainerProps,
+} from './NestedParameterContainer';
+export { ExpandableParameter, type ExpandableParameterProps } from './ExpandableParameter';
+export {
+  EnumValuesSection,
+  type EnumValuesSectionProps,
+  type EnumValue,
+} from './EnumValuesSection';
+
+// Code example components (right column)
+export { ExampleChips, type ExampleChipsProps, type ExampleChip } from './ExampleChips';
+export { CodePanel, type CodePanelProps } from './CodePanel';
+export { CollapsiblePanel, type CollapsiblePanelProps } from './CollapsiblePanel';
+export {
+  ExampleSection,
+  type ExampleSectionProps,
+  type CodeExample,
+} from './ExampleSection';
+
+// Spec-connected components (auto-generate from OpenPkg)
+export {
+  MethodSectionFromSpec,
+  type MethodSectionFromSpecProps,
+} from './MethodSectionFromSpec';
+export {
+  StripeAPIReferencePage,
+  type StripeAPIReferencePageProps,
+} from './StripeAPIReferencePage';
+
+// Hooks
+export {
+  useMethodFromSpec,
+  useMethodsFromSpec,
+  extractMethodData,
+  type MethodData,
+} from '../../hooks/useMethodFromSpec';
+
+// Adapters
+export {
+  specParamToNestedParam,
+  specParamsToNestedParams,
+  resolveSchemaRef,
+  type NestedParameterData,
+} from '../../adapters/spec-to-params';
+export {
+  specExampleToCodeExample,
+  specExamplesToCodeExamples,
+  generateDefaultExample,
+  getLanguagesFromExamples,
+} from '../../adapters/spec-to-examples';
+
 // Local components (spec-specific)
 export type { APIPageProps } from './APIPage';
 export { APIPage } from './APIPage';

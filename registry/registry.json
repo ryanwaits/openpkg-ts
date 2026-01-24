@@ -1,0 +1,294 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry.json",
+  "name": "openpkg",
+  "homepage": "https://openpkg.dev",
+  "items": [
+    {
+      "name": "api-parameter-item",
+      "type": "registry:component",
+      "title": "API Parameter Item",
+      "description": "Single parameter row with name, type, badges, and description",
+      "dependencies": [],
+      "devDependencies": [],
+      "registryDependencies": []
+    },
+    {
+      "name": "api-reference-layout",
+      "type": "registry:block",
+      "title": "API Reference Layout",
+      "description": "Two-column layout with sticky code examples panel",
+      "dependencies": [],
+      "devDependencies": [],
+      "registryDependencies": []
+    },
+    {
+      "name": "class-section",
+      "type": "registry:block",
+      "title": "Class Section",
+      "description": "Complete class documentation section",
+      "dependencies": [
+        "@openpkg-ts/sdk"
+      ],
+      "devDependencies": [],
+      "registryDependencies": []
+    },
+    {
+      "name": "code-panel",
+      "type": "registry:component",
+      "title": "Code Panel",
+      "description": "Syntax-highlighted code block with Rose Pine theme",
+      "dependencies": [],
+      "devDependencies": [],
+      "registryDependencies": []
+    },
+    {
+      "name": "collapsible-method",
+      "type": "registry:component",
+      "title": "Collapsible Method",
+      "description": "Expandable method documentation",
+      "dependencies": [
+        "@openpkg-ts/sdk"
+      ],
+      "devDependencies": [],
+      "registryDependencies": []
+    },
+    {
+      "name": "collapsible-panel",
+      "type": "registry:component",
+      "title": "Collapsible Panel",
+      "description": "Accordion-style panel for Response, Data source, Notes",
+      "dependencies": [],
+      "devDependencies": [],
+      "registryDependencies": []
+    },
+    {
+      "name": "enum-section",
+      "type": "registry:block",
+      "title": "Enum Section",
+      "description": "Enum documentation with members",
+      "dependencies": [],
+      "devDependencies": [],
+      "registryDependencies": []
+    },
+    {
+      "name": "enum-values-section",
+      "type": "registry:component",
+      "title": "Enum Values Section",
+      "description": "Display enum values with optional descriptions",
+      "dependencies": [],
+      "devDependencies": [],
+      "registryDependencies": []
+    },
+    {
+      "name": "example-block",
+      "type": "registry:component",
+      "title": "Example Block",
+      "description": "Code example display",
+      "dependencies": [],
+      "devDependencies": [],
+      "registryDependencies": []
+    },
+    {
+      "name": "example-chips",
+      "type": "registry:component",
+      "title": "Example Chips",
+      "description": "Tab-like chips for switching between code examples",
+      "dependencies": [],
+      "devDependencies": [],
+      "registryDependencies": []
+    },
+    {
+      "name": "example-section",
+      "type": "registry:block",
+      "title": "Example Section",
+      "description": "Complete right-column section with chips, code, and panels",
+      "dependencies": [],
+      "devDependencies": [],
+      "registryDependencies": []
+    },
+    {
+      "name": "expandable-property",
+      "type": "registry:component",
+      "title": "Expandable Property",
+      "description": "Expandable property with nested types",
+      "dependencies": [
+        "@openpkg-ts/sdk"
+      ],
+      "devDependencies": [],
+      "registryDependencies": []
+    },
+    {
+      "name": "export-card",
+      "type": "registry:component",
+      "title": "Export Card",
+      "description": "Summary card for an export",
+      "dependencies": [],
+      "devDependencies": [],
+      "registryDependencies": []
+    },
+    {
+      "name": "export-index-page",
+      "type": "registry:block",
+      "title": "Export Index Page",
+      "description": "Searchable index page for all exports",
+      "dependencies": [],
+      "devDependencies": [],
+      "registryDependencies": [
+        "export-card"
+      ]
+    },
+    {
+      "name": "full-layout",
+      "type": "registry:block",
+      "title": "Full Layout",
+      "description": "Single-page API reference layout with all exports",
+      "dependencies": [
+        "@/components"
+      ],
+      "devDependencies": [],
+      "registryDependencies": []
+    },
+    {
+      "name": "function-section",
+      "type": "registry:block",
+      "title": "Function Section",
+      "description": "Complete function documentation section",
+      "dependencies": [
+        "@openpkg-ts/sdk"
+      ],
+      "devDependencies": [],
+      "registryDependencies": []
+    },
+    {
+      "name": "index-layout",
+      "type": "registry:block",
+      "title": "Index Layout",
+      "description": "API reference index with cards linking to exports",
+      "dependencies": [
+        "@/components"
+      ],
+      "devDependencies": [],
+      "registryDependencies": []
+    },
+    {
+      "name": "interface-section",
+      "type": "registry:block",
+      "title": "Interface Section",
+      "description": "Interface documentation with members table",
+      "dependencies": [
+        "@openpkg-ts/sdk"
+      ],
+      "devDependencies": [],
+      "registryDependencies": []
+    },
+    {
+      "name": "members-table",
+      "type": "registry:component",
+      "title": "Members Table",
+      "description": "Table for class/interface members",
+      "dependencies": [
+        "@openpkg-ts/sdk"
+      ],
+      "devDependencies": [],
+      "registryDependencies": []
+    },
+    {
+      "name": "method-section",
+      "type": "registry:block",
+      "title": "Method Section",
+      "description": "Container for a single API method with title, signature, and parameters",
+      "dependencies": [],
+      "devDependencies": [],
+      "registryDependencies": []
+    },
+    {
+      "name": "method-section-from-spec",
+      "type": "registry:block",
+      "title": "Method Section From Spec",
+      "description": "Auto-generate method documentation from OpenPkg spec",
+      "dependencies": [],
+      "devDependencies": [],
+      "registryDependencies": []
+    },
+    {
+      "name": "nested-parameter-container",
+      "type": "registry:component",
+      "title": "Nested Parameter Container",
+      "description": "Bordered container for nested child parameters",
+      "dependencies": [],
+      "devDependencies": [],
+      "registryDependencies": []
+    },
+    {
+      "name": "nested-parameter-toggle",
+      "type": "registry:component",
+      "title": "Nested Parameter Toggle",
+      "description": "Show/Hide child parameters button with Stripe-style animation",
+      "dependencies": [],
+      "devDependencies": [],
+      "registryDependencies": []
+    },
+    {
+      "name": "param-table",
+      "type": "registry:component",
+      "title": "Parameter Table",
+      "description": "Function parameters table with types and descriptions",
+      "dependencies": [
+        "@openpkg-ts/sdk"
+      ],
+      "devDependencies": [],
+      "registryDependencies": []
+    },
+    {
+      "name": "signature",
+      "type": "registry:component",
+      "title": "Signature",
+      "description": "Type signature display",
+      "dependencies": [
+        "@openpkg-ts/sdk"
+      ],
+      "devDependencies": [],
+      "registryDependencies": []
+    },
+    {
+      "name": "stripe-api-reference-page",
+      "type": "registry:block",
+      "title": "Stripe API Reference Page",
+      "description": "Full Stripe/Supabase-style API reference page with sync scroll",
+      "dependencies": [],
+      "devDependencies": [],
+      "registryDependencies": []
+    },
+    {
+      "name": "sync-scroll-provider",
+      "type": "registry:component",
+      "title": "Sync Scroll Provider",
+      "description": "Context provider for synchronized scrolling between columns",
+      "dependencies": [],
+      "devDependencies": [],
+      "registryDependencies": []
+    },
+    {
+      "name": "type-table",
+      "type": "registry:component",
+      "title": "Type Table",
+      "description": "Type properties table",
+      "dependencies": [
+        "@openpkg-ts/sdk"
+      ],
+      "devDependencies": [],
+      "registryDependencies": []
+    },
+    {
+      "name": "variable-section",
+      "type": "registry:block",
+      "title": "Variable Section",
+      "description": "Variable/constant documentation section",
+      "dependencies": [
+        "@openpkg-ts/sdk"
+      ],
+      "devDependencies": [],
+      "registryDependencies": []
+    }
+  ]
+}

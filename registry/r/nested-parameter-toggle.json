@@ -1,0 +1,17 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "nested-parameter-toggle",
+  "type": "registry:component",
+  "title": "Nested Parameter Toggle",
+  "description": "Show/Hide child parameters button with Stripe-style animation",
+  "dependencies": [],
+  "devDependencies": [],
+  "registryDependencies": [],
+  "files": [
+    {
+      "path": "components/api/nested-parameter-toggle/nested-parameter-toggle.tsx",
+      "type": "registry:component",
+      "content": "'use client';\n\nimport type { ReactNode } from 'react';\n\nexport interface NestedParameterToggleProps {\n  expanded: boolean;\n  onToggle: () => void;\n  count?: number;\n  className?: string;\n}\n\n/**\n * \"Show/Hide child parameters\" toggle button (Stripe-style).\n */\nexport function NestedParameterToggle({\n  expanded,\n  onToggle,\n  count,\n  className,\n}: NestedParameterToggleProps): ReactNode {\n  return (\n    <button\n      type=\"button\"\n      onClick={onToggle}\n      className={`openpkg-nested-toggle inline-flex items-center gap-2 font-sans text-[13px] font-medium text-[#a0a0a0] bg-transparent border border-[#333333] rounded-lg px-4 py-2.5 mt-3 cursor-pointer transition-all duration-150 hover:border-[#666666] hover:text-[#ededed] ${\n        expanded ? 'rounded-b-none border-b-transparent mb-0' : ''\n      } ${className || ''}`}\n      aria-expanded={expanded}\n    >\n      <svg\n        width=\"12\"\n        height=\"12\"\n        viewBox=\"0 0 24 24\"\n        fill=\"none\"\n        stroke=\"currentColor\"\n        strokeWidth=\"2\"\n        className={`transition-transform duration-200 ${expanded ? 'rotate-45' : ''}`}\n      >\n        <line x1=\"12\" y1=\"5\" x2=\"12\" y2=\"19\" />\n        <line x1=\"5\" y1=\"12\" x2=\"19\" y2=\"12\" />\n      </svg>\n      <span>\n        {expanded ? 'Hide' : 'Show'} child parameters\n        {count !== undefined && ` (${count})`}\n      </span>\n    </button>\n  );\n}\n"
+    }
+  ]
+}

@@ -3,7 +3,7 @@
  * Bridges the gap between SpecExport data and the new Stripe-style API components.
  */
 
-import { formatSchema } from '@openpkg-ts/sdk';
+import { formatSchema } from '@openpkg-ts/sdk/browser';
 import type {
   OpenPkg,
   SpecExample,

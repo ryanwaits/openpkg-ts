@@ -1,5 +1,8 @@
 // Query utilities
 
+// Query builder
+export { query, QueryBuilder } from './query-builder';
+
 // Config utilities
 export {
   CONFIG_FILENAME,

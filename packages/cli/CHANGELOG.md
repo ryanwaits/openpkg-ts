@@ -1,5 +1,19 @@
 # @openpkg-ts/cli
 
+## 0.6.0
+
+### Minor Changes
+
+- CLI: docs subcommands (generate/init/add/list), spec subcommand, component registry
+  SDK: browser export, query builder API
+  React: new headless/styled components, adapters
+
+### Patch Changes
+
+- Updated dependencies
+  - @openpkg-ts/sdk@0.34.0
+  - @openpkg-ts/adapters@0.3.3
+
 ## 0.5.1
 
 ### Patch Changes

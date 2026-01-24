@@ -1,6 +1,6 @@
 'use client';
 
-import { formatSchema } from '@openpkg-ts/sdk';
+import { formatSchema } from '@openpkg-ts/sdk/browser';
 import type { SpecSchema, SpecSignatureParameter } from '@openpkg-ts/spec';
 import { cn } from '@openpkg-ts/ui/lib/utils';
 import { ChevronRight } from 'lucide-react';

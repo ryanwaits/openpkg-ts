@@ -1,0 +1,17 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "api-parameter-item",
+  "type": "registry:component",
+  "title": "API Parameter Item",
+  "description": "Single parameter row with name, type, badges, and description",
+  "dependencies": [],
+  "devDependencies": [],
+  "registryDependencies": [],
+  "files": [
+    {
+      "path": "components/api/api-parameter-item/api-parameter-item.tsx",
+      "type": "registry:component",
+      "content": "'use client';\n\nimport type { ReactNode } from 'react';\n\nexport interface APIParameterItemProps {\n  name: string;\n  parentPath?: string;\n  type: string;\n  required?: boolean;\n  optional?: boolean;\n  expandable?: boolean;\n  description?: ReactNode;\n  children?: ReactNode;\n  anchorId?: string;\n  showAnchor?: boolean;\n  className?: string;\n}\n\n/**\n * Single parameter row in Stripe-style documentation.\n */\nexport function APIParameterItem({\n  name,\n  parentPath,\n  type,\n  required,\n  optional,\n  expandable,\n  description,\n  children,\n  anchorId,\n  showAnchor = false,\n  className,\n}: APIParameterItemProps): ReactNode {\n  const handleAnchorClick = () => {\n    if (anchorId && typeof window !== 'undefined') {\n      window.location.hash = anchorId;\n      navigator.clipboard?.writeText(window.location.href);\n    }\n  };\n\n  return (\n    <div\n      id={anchorId}\n      className={`openpkg-param py-5 border-b border-[#262626] last:border-b-0 ${className || ''}`}\n    >\n      <div className=\"openpkg-param-header flex items-center gap-2.5 mb-2 flex-wrap\">\n        {showAnchor && (\n          <button\n            type=\"button\"\n            onClick={handleAnchorClick}\n            className=\"openpkg-anchor-link flex items-center justify-center w-4 h-4 opacity-0 group-hover:opacity-100 hover:opacity-100 text-[#666666] hover:text-[#6cb6ff] cursor-pointer transition-opacity\"\n            aria-label=\"Copy link\"\n          >\n            <svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" strokeWidth=\"2\">\n              <path d=\"M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71\" />\n              <path d=\"M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71\" />\n            </svg>\n          </button>\n        )}\n\n        <span className=\"openpkg-param-name font-mono text-sm font-semibold\">\n          {parentPath && <span className=\"text-[#666666]\">{parentPath}</span>}\n          <span className=\"text-[#ededed]\">{name}</span>\n        </span>\n\n        {required && (\n          <span className=\"openpkg-param-badge text-[11px] font-medium uppercase tracking-wide px-2 py-0.5 rounded bg-[#262626] text-[#666666]\">\n            Required\n          </span>\n        )}\n        {optional && (\n          <span className=\"openpkg-param-badge text-[11px] font-medium uppercase tracking-wide px-2 py-0.5 rounded bg-[#262626] text-[#666666]\">\n            Optional\n          </span>\n        )}\n        {expandable && (\n          <span className=\"openpkg-badge-expandable text-[10px] font-medium px-2 py-0.5 rounded text-[#c4a7e7] bg-[rgba(196,167,231,0.12)]\">\n            Expandable\n          </span>\n        )}\n\n        <span className=\"openpkg-param-type text-[13px] text-[#666666]\">{type}</span>\n      </div>\n\n      {description && (\n        <p className=\"openpkg-param-description text-sm text-[#a0a0a0] leading-relaxed\">\n          {description}\n        </p>\n      )}\n\n      {children}\n    </div>\n  );\n}\n"
+    }
+  ]
+}

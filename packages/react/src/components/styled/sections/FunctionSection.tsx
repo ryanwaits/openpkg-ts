@@ -1,6 +1,6 @@
 'use client';
 
-import { formatSchema } from '@openpkg-ts/sdk';
+import { formatSchema } from '@openpkg-ts/sdk/browser';
 import type { OpenPkg, SpecExport } from '@openpkg-ts/spec';
 import { APIParameterItem, APISection, ParameterList, ResponseBlock } from '@openpkg-ts/ui/docskit';
 import type { ReactNode } from 'react';
