@@ -24,11 +24,15 @@ interface GenerateCommandOptions {
 }
 
 async function readStdin(): Promise<string> {
-  const chunks: Buffer[] = [];
-  for await (const chunk of process.stdin) {
-    chunks.push(chunk);
+  try {
+    const chunks: Buffer[] = [];
+    for await (const chunk of process.stdin) {
+      chunks.push(chunk);
+    }
+    return Buffer.concat(chunks).toString('utf-8');
+  } catch (err) {
+    throw new Error(`stdin read failed: ${err instanceof Error ? err.message : String(err)}`);
   }
-  return Buffer.concat(chunks).toString('utf-8');
 }
 
 function getExtension(format: OutputFormat): string {
@@ -124,7 +128,11 @@ export function createGenerateCommand(): Command {
     .option('-s, --search <term>', 'Search name and description')
     .option('--deprecated', 'Only include deprecated exports')
     .option('--no-deprecated', 'Exclude deprecated exports')
-    .option('--variant <variant>', 'React layout variant: full (single page) or index (links)', 'full')
+    .option(
+      '--variant <variant>',
+      'React layout variant: full (single page) or index (links)',
+      'full',
+    )
     .option('--components-path <path>', 'React components import path', '@/components/api')
     .action(async (specPath: string, options: GenerateCommandOptions) => {
       const format = (options.format || 'md') as OutputFormat;
@@ -201,7 +209,9 @@ export function createGenerateCommand(): Command {
         // React format mode - generates a single layout file
         if (format === 'react') {
           if (!options.output) {
-            console.error(JSON.stringify({ error: '--format react requires --output <directory>' }));
+            console.error(
+              JSON.stringify({ error: '--format react requires --output <directory>' }),
+            );
             process.exit(1);
           }
 
@@ -252,8 +262,18 @@ export function createGenerateCommand(): Command {
 
           const exports = docs.getAllExports();
           for (const exp of exports) {
-            const filename = `${exp.name}${getExtension(format)}`;
+            // Sanitize filename to prevent path traversal
+            const filename = path.basename(`${exp.name}${getExtension(format)}`);
             const filePath = path.join(outDir, filename);
+
+            // Verify resolved path is within outDir
+            const resolvedPath = path.resolve(filePath);
+            const resolvedOutDir = path.resolve(outDir);
+            if (!resolvedPath.startsWith(resolvedOutDir + path.sep)) {
+              console.error(JSON.stringify({ error: `Path traversal detected: ${exp.name}` }));
+              process.exit(1);
+            }
+
             const content = renderExport(docs, exp.id, format, collapseUnionThreshold);
             fs.writeFileSync(filePath, content);
           }

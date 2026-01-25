@@ -3,14 +3,14 @@
  */
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import type { SpecExport, SpecExportKind } from '@openpkg-ts/spec';
 import picomatch from 'picomatch';
 import ts from 'typescript';
-import type { SpecExport, SpecExportKind } from '@openpkg-ts/spec';
-import type { ExternalsConfig } from '../types';
-import type { SerializerContext } from '../serializers/context';
-import { buildSchema } from '../types/schema-builder';
-import { extractParameters, registerReferencedTypes } from '../types/parameters';
 import { extractTypeParametersFromSignature, getJSDocForSignature } from '../ast/utils';
+import type { SerializerContext } from '../serializers/context';
+import type { ExternalsConfig } from '../types';
+import { extractParameters, registerReferencedTypes } from '../types/parameters';
+import { buildSchema } from '../types/schema-builder';
 
 /**
  * Check if a package name matches the include/exclude patterns

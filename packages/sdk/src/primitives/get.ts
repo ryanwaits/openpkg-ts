@@ -167,7 +167,9 @@ function serializeDeclaration(
     if (varStatement && ts.isVariableStatement(varStatement)) {
       // Check if it's an arrow function - serialize as function instead of variable
       if (declaration.initializer && ts.isArrowFunction(declaration.initializer)) {
-        const varName = ts.isIdentifier(declaration.name) ? declaration.name.text : declaration.name.getText();
+        const varName = ts.isIdentifier(declaration.name)
+          ? declaration.name.text
+          : declaration.name.getText();
         result = serializeFunctionExport(declaration.initializer, ctx, varName);
       } else {
         result = serializeVariable(declaration, varStatement, ctx);

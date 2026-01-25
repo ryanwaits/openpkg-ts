@@ -96,11 +96,11 @@ export function CollapsibleMethod({
           <div data-content>
             {member.description && <p>{member.description}</p>}
 
-            {hasParams && (
+            {hasParams && sig?.parameters && (
               <div data-params-section>
                 <h4>Parameters</h4>
                 <ul>
-                  {sig.parameters!.map((param, index) => (
+                  {sig.parameters.map((param, index) => (
                     <li key={param.name ?? index}>
                       <code>
                         {param.name}

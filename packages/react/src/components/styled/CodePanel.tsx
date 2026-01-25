@@ -95,7 +95,12 @@ function highlightLine(line: string, language: string): string {
   let result = escapeHtml(line);
 
   // Language-specific patterns
-  if (language === 'typescript' || language === 'javascript' || language === 'ts' || language === 'js') {
+  if (
+    language === 'typescript' ||
+    language === 'javascript' ||
+    language === 'ts' ||
+    language === 'js'
+  ) {
     result = highlightTS(result);
   } else if (language === 'json') {
     result = highlightJSON(result);
@@ -129,7 +134,8 @@ function highlightTS(line: string): string {
   );
 
   // Keywords
-  const keywords = /\b(import|export|from|const|let|var|function|async|await|return|if|else|for|while|class|interface|type|extends|implements|new|this|true|false|null|undefined)\b/g;
+  const keywords =
+    /\b(import|export|from|const|let|var|function|async|await|return|if|else|for|while|class|interface|type|extends|implements|new|this|true|false|null|undefined)\b/g;
   line = line.replace(
     keywords,
     '<span class="openpkg-syn-keyword" style="color:var(--openpkg-syn-keyword,#c4a7e7)">$1</span>',
@@ -198,7 +204,8 @@ function highlightJSON(line: string): string {
 
 function highlightSQL(line: string): string {
   // Keywords
-  const keywords = /\b(SELECT|FROM|WHERE|AND|OR|INSERT|INTO|VALUES|UPDATE|SET|DELETE|CREATE|TABLE|INDEX|DROP|ALTER|JOIN|LEFT|RIGHT|INNER|OUTER|ON|AS|ORDER|BY|GROUP|HAVING|LIMIT|OFFSET|PRIMARY|KEY|FOREIGN|REFERENCES|NOT|NULL|DEFAULT|UNIQUE|CHECK|CONSTRAINT)\b/gi;
+  const keywords =
+    /\b(SELECT|FROM|WHERE|AND|OR|INSERT|INTO|VALUES|UPDATE|SET|DELETE|CREATE|TABLE|INDEX|DROP|ALTER|JOIN|LEFT|RIGHT|INNER|OUTER|ON|AS|ORDER|BY|GROUP|HAVING|LIMIT|OFFSET|PRIMARY|KEY|FOREIGN|REFERENCES|NOT|NULL|DEFAULT|UNIQUE|CHECK|CONSTRAINT)\b/gi;
   line = line.replace(
     keywords,
     '<span class="openpkg-syn-keyword" style="color:var(--openpkg-syn-keyword,#c4a7e7)">$1</span>',

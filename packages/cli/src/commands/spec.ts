@@ -3,8 +3,8 @@ import * as path from 'node:path';
 import {
   analyzeSpec,
   type Diagnostic,
-  extractSpec,
   type ExtractOptions,
+  extractSpec,
   type FilterCriteria,
   filterSpec,
   getExport,
@@ -36,8 +36,36 @@ const VALID_KINDS: SpecExportKind[] = [
 
 function loadSpec(filePath: string): OpenPkg {
   const resolved = path.resolve(filePath);
-  const content = fs.readFileSync(resolved, 'utf-8');
-  return JSON.parse(content) as OpenPkg;
+  let content: string;
+  let spec: unknown;
+
+  try {
+    content = fs.readFileSync(resolved, 'utf-8');
+  } catch (err) {
+    throw new Error(
+      `Failed to read spec file: ${err instanceof Error ? err.message : String(err)}`,
+    );
+  }
+
+  try {
+    spec = JSON.parse(content);
+  } catch (err) {
+    throw new Error(
+      `Invalid JSON in spec file: ${err instanceof Error ? err.message : String(err)}`,
+    );
+  }
+
+  // Validate spec structure
+  const errors = getValidationErrors(spec);
+  if (errors.length > 0) {
+    const details = errors
+      .slice(0, 5)
+      .map((e) => `${e.instancePath || '/'}: ${e.message}`)
+      .join('; ');
+    throw new Error(`Invalid OpenPkg spec: ${details}`);
+  }
+
+  return spec as OpenPkg;
 }
 
 function parseList(val?: string): string[] | undefined {

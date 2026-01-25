@@ -57,9 +57,7 @@ export function specParamToNestedParam(
 /**
  * Convert multiple parameters to nested parameter data.
  */
-export function specParamsToNestedParams(
-  params: SpecSignatureParameter[],
-): NestedParameterData[] {
+export function specParamsToNestedParams(params: SpecSignatureParameter[]): NestedParameterData[] {
   return params.map((p) => specParamToNestedParam(p));
 }
 

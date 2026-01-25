@@ -1,5 +1,15 @@
 # @openpkg-ts/react
 
+## 0.3.1
+
+### Patch Changes
+
+- Codebase health improvements: bounded caches, path traversal fix, module extraction, stricter linting
+- Updated dependencies
+  - @openpkg-ts/sdk@0.34.1
+  - @openpkg-ts/ui@0.1.5
+  - @openpkg-ts/spec@0.34.1
+
 ## 0.3.0
 
 ### Minor Changes

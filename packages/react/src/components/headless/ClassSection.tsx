@@ -53,7 +53,9 @@ export function ClassSection({
 
   // Separate static and instance members
   const staticProperties = properties.filter((m) => (m.flags as Record<string, boolean>)?.static);
-  const instanceProperties = properties.filter((m) => !(m.flags as Record<string, boolean>)?.static);
+  const instanceProperties = properties.filter(
+    (m) => !(m.flags as Record<string, boolean>)?.static,
+  );
   const staticMethods = methods.filter((m) => (m.flags as Record<string, boolean>)?.static);
   const instanceMethods = methods.filter((m) => !(m.flags as Record<string, boolean>)?.static);
 
@@ -81,9 +83,14 @@ export function ClassSection({
     return (
       <tr key={member.name} data-visibility={member.visibility} data-badges={badges.join(',')}>
         <td>
-          <code>{member.name}{isMethod ? '()' : ''}</code>
+          <code>
+            {member.name}
+            {isMethod ? '()' : ''}
+          </code>
           {badges.map((b) => (
-            <span key={b} data-badge={b}>{b}</span>
+            <span key={b} data-badge={b}>
+              {b}
+            </span>
           ))}
         </td>
         <td>
@@ -99,7 +106,11 @@ export function ClassSection({
       {/* Header */}
       <header data-slot="header">
         <h2 data-slot="title">class {exp.name}</h2>
-        {inheritance && <p data-slot="inheritance"><code>{inheritance}</code></p>}
+        {inheritance && (
+          <p data-slot="inheritance">
+            <code>{inheritance}</code>
+          </p>
+        )}
         {exp.description && <p data-slot="description">{exp.description}</p>}
         <code data-slot="import">{importStatement}</code>
       </header>
@@ -123,7 +134,9 @@ export function ClassSection({
                     <code>{param.name}</code>
                     {param.required === false && <span data-badge="optional">?</span>}
                   </td>
-                  <td><code>{formatSchema(param.schema)}</code></td>
+                  <td>
+                    <code>{formatSchema(param.schema)}</code>
+                  </td>
                   <td>{param.description}</td>
                 </tr>
               ))}
@@ -164,9 +177,7 @@ export function ClassSection({
                 <th>Description</th>
               </tr>
             </thead>
-            <tbody>
-              {instanceMethods.map((m) => renderMemberRow(m, 'method'))}
-            </tbody>
+            <tbody>{instanceMethods.map((m) => renderMemberRow(m, 'method'))}</tbody>
           </table>
         </div>
       )}
@@ -183,9 +194,7 @@ export function ClassSection({
                 <th>Description</th>
               </tr>
             </thead>
-            <tbody>
-              {instanceProperties.map((m) => renderMemberRow(m, 'property'))}
-            </tbody>
+            <tbody>{instanceProperties.map((m) => renderMemberRow(m, 'property'))}</tbody>
           </table>
         </div>
       )}
@@ -193,7 +202,9 @@ export function ClassSection({
       {/* Example */}
       <div data-slot="example">
         <h3>Example</h3>
-        <pre><code>{`${importStatement}\n\nconst instance = new ${exp.name}(${constructorParams.map((p) => p.name).join(', ')});`}</code></pre>
+        <pre>
+          <code>{`${importStatement}\n\nconst instance = new ${exp.name}(${constructorParams.map((p) => p.name).join(', ')});`}</code>
+        </pre>
       </div>
     </section>
   );

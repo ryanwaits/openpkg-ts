@@ -47,8 +47,8 @@
   --openpkg-border-chip-active: #666666;
 
   /* Typography */
-  --openpkg-font-mono: 'JetBrains Mono', 'SF Mono', Consolas, monospace;
-  --openpkg-font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --openpkg-font-mono: "JetBrains Mono", "SF Mono", Consolas, monospace;
+  --openpkg-font-sans: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
 
   /* Border radius */
   --openpkg-radius-sm: 4px;
@@ -166,28 +166,56 @@
    Animation Keyframes
 ============================================================================= */
 @keyframes openpkg-fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes openpkg-slide-down {
-  from { opacity: 0; transform: translateY(-4px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes openpkg-slide-up {
-  from { opacity: 0; transform: translateY(4px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes openpkg-expand {
-  from { opacity: 0; height: 0; }
-  to { opacity: 1; height: var(--radix-collapsible-content-height); }
+  from {
+    opacity: 0;
+    height: 0;
+  }
+  to {
+    opacity: 1;
+    height: var(--radix-collapsible-content-height);
+  }
 }
 
 @keyframes openpkg-collapse {
-  from { opacity: 1; height: var(--radix-collapsible-content-height); }
-  to { opacity: 0; height: 0; }
+  from {
+    opacity: 1;
+    height: var(--radix-collapsible-content-height);
+  }
+  to {
+    opacity: 0;
+    height: 0;
+  }
 }
 
 /* Utility classes for animations */

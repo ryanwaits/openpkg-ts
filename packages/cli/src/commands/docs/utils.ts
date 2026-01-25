@@ -63,7 +63,10 @@ export function getDlxCommand(pkg: string, pm?: PackageManager): ExecCommand {
 /**
  * Get full command array for shadcn CLI
  */
-export function getShadcnCommand(subcommand: string, args: string[] = []): { cmd: string; args: string[] } {
+export function getShadcnCommand(
+  subcommand: string,
+  args: string[] = [],
+): { cmd: string; args: string[] } {
   const dlx = getDlxCommand('shadcn@latest');
   return {
     cmd: dlx.cmd,

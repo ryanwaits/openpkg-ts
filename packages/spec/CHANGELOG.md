@@ -1,5 +1,11 @@
 # @openpkg-ts/spec
 
+## 0.34.1
+
+### Patch Changes
+
+- Codebase health improvements: bounded caches, path traversal fix, module extraction, stricter linting
+
 ## 0.33.0
 
 ### Patch Changes

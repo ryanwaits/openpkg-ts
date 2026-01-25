@@ -79,11 +79,17 @@ export function EnumSection({
                   renderMember(member, index)
                 ) : (
                   <tr key={member.name ?? index}>
-                    <td><code>{member.name}</code></td>
+                    <td>
+                      <code>{member.name}</code>
+                    </td>
                     <td>
                       {(() => {
                         const value = getMemberValue(member);
-                        return value !== undefined ? <code>{String(value)}</code> : <span>auto</span>;
+                        return value !== undefined ? (
+                          <code>{String(value)}</code>
+                        ) : (
+                          <span>auto</span>
+                        );
                       })()}
                     </td>
                     <td>{member.description}</td>
@@ -98,7 +104,9 @@ export function EnumSection({
       {/* Example */}
       <div data-slot="example">
         <h3>Definition</h3>
-        <pre><code>{`${importStatement}\n\n${enumDefinition}`}</code></pre>
+        <pre>
+          <code>{`${importStatement}\n\n${enumDefinition}`}</code>
+        </pre>
       </div>
     </section>
   );

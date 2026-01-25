@@ -1,13 +1,6 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import type {
-  OpenPkg,
-  SpecExport,
-  SpecMember,
-  SpecSchema,
-  SpecSignature,
-  SpecType,
-} from '@openpkg-ts/spec';
+import type { OpenPkg, SpecExport, SpecMember, SpecSchema, SpecSignature } from '@openpkg-ts/spec';
 import { SCHEMA_URL, SCHEMA_VERSION } from '@openpkg-ts/spec';
 import ts from 'typescript';
 import { resolveExportTarget } from '../ast/resolve';
@@ -25,15 +18,7 @@ import { serializeFunctionExport } from '../serializers/functions';
 import { serializeInterface } from '../serializers/interfaces';
 import { serializeTypeAlias } from '../serializers/type-aliases';
 import { serializeVariable } from '../serializers/variables';
-import type {
-  Diagnostic,
-  ExportTracker,
-  ExportVerification,
-  ExtractOptions,
-  ExtractResult,
-  ForgottenExport,
-  TypeReference,
-} from '../types';
+import type { Diagnostic, ExportTracker, ExtractOptions, ExtractResult } from '../types';
 import { extractParameters, registerReferencedTypes } from '../types/parameters';
 import { buildSchema } from '../types/schema-builder';
 import { normalizeExport, normalizeType } from '../types/schema-normalizer';
@@ -43,32 +28,12 @@ import {
   resolveExternalModule,
 } from './external-resolver';
 import { mergeRuntimeSchemas } from './schema-merger';
+import { clearTypeDefinitionCache, getRegexCache } from './type-cache';
+import { buildVerificationSummary, collectForgottenExports } from './verification';
 
-/** Cache for findTypeDefinition results to avoid redundant AST walks */
-let typeDefinitionCache: Map<string, string | undefined> | null = null;
-
-function getTypeDefinitionCache(): Map<string, string | undefined> {
-  if (!typeDefinitionCache) {
-    typeDefinitionCache = new Map();
-  }
-  return typeDefinitionCache;
-}
-
-/** Cache for hasInternalTag results to avoid redundant resolveName calls */
-let internalTagCache: Map<string, boolean> | null = null;
-
-function getInternalTagCache(): Map<string, boolean> {
-  if (!internalTagCache) {
-    internalTagCache = new Map();
-  }
-  return internalTagCache;
-}
-
-/** Clear caches at start of each extraction */
-export function clearTypeDefinitionCache(): void {
-  typeDefinitionCache = null;
-  internalTagCache = null;
-}
+// Re-export for API compatibility
+export { clearTypeDefinitionCache } from './type-cache';
+export { isExternalType } from './verification';
 
 /** Yield to event loop every N exports to allow spinner animation */
 const YIELD_BATCH_SIZE = 5;
@@ -103,106 +68,18 @@ function computeDegradedStats(exports: SpecExport[]): {
   return { exportsWithoutDescription, paramsWithoutDocs, missingExamples };
 }
 
-/** Build verification summary from export tracker data */
-function buildVerificationSummary(
-  discoveredCount: number,
-  extractedCount: number,
-  tracker: Map<string, ExportTracker>,
-): ExportVerification {
-  const skippedDetails: ExportVerification['details']['skipped'] = [];
-  const failedDetails: ExportVerification['details']['failed'] = [];
-
-  for (const entry of tracker.values()) {
-    if (entry.status === 'skipped' && entry.skipReason) {
-      skippedDetails.push({ name: entry.name, reason: entry.skipReason });
-    } else if (entry.status === 'failed' && entry.error) {
-      failedDetails.push({ name: entry.name, error: entry.error });
-    }
-  }
-
-  const skipped = skippedDetails.length;
-  const failed = failedDetails.length;
-  const delta = discoveredCount - extractedCount - skipped;
-
-  return {
-    discovered: discoveredCount,
-    extracted: extractedCount,
-    skipped,
-    failed,
-    delta,
-    details: {
-      skipped: skippedDetails,
-      failed: failedDetails,
-    },
-  };
-}
-
-/** Built-in types that shouldn't be tracked as dangling refs */
-const BUILTIN_TYPES = new Set([
-  'Array',
-  'ArrayBuffer',
-  'ArrayBufferLike',
-  'ArrayLike',
-  'Promise',
-  'Map',
-  'Set',
-  'WeakMap',
-  'WeakSet',
-  'Record',
-  'Partial',
-  'Required',
-  'Pick',
-  'Omit',
-  'Exclude',
-  'Extract',
-  'NonNullable',
-  'Parameters',
-  'ReturnType',
-  'Readonly',
-  'ReadonlyArray',
-  'Awaited',
-  'PromiseLike',
-  'Iterable',
-  'Iterator',
-  'IterableIterator',
-  'Generator',
-  'AsyncGenerator',
-  'AsyncIterable',
-  'AsyncIterator',
-  'AsyncIterableIterator',
-  'Date',
-  'RegExp',
-  'Error',
-  'Function',
-  'Object',
-  'String',
-  'Number',
-  'Boolean',
-  'Symbol',
-  'BigInt',
-  'Uint8Array',
-  'Int8Array',
-  'Uint16Array',
-  'Int16Array',
-  'Uint32Array',
-  'Int32Array',
-  'Float32Array',
-  'Float64Array',
-  'BigInt64Array',
-  'BigUint64Array',
-  'DataView',
-  'SharedArrayBuffer',
-  'ConstructorParameters',
-  'InstanceType',
-  'ThisType',
-]);
-
 /**
  * Match export name against pattern (supports * wildcards)
  */
 function matchesPattern(name: string, pattern: string): boolean {
   if (!pattern.includes('*')) return name === pattern;
-  const regex = new RegExp(`^${pattern.replace(/\*/g, '.*')}$`);
+
+  const regexCache = getRegexCache();
+  let regex = regexCache.get(pattern);
+  if (!regex) {
+    regex = new RegExp(`^${pattern.replace(/\*/g, '.*')}$`);
+    regexCache.set(pattern, regex);
+  }
   return regex.test(name);
 }
 
@@ -218,608 +95,411 @@ function shouldIncludeExport(name: string, only?: string[], ignore?: string[]): 
 }
 
 /**
- * Check if a type name should be skipped (anonymous, generic param, etc.)
+ * Extract API specification from TypeScript source files.
+ *
+ * Analyzes exports from the entry file, serializes them to OpenPkg spec format,
+ * and detects forgotten exports (types referenced but not exported).
+ *
+ * @param options - Extraction configuration
+ * @param options.entryFile - Path to the entry TypeScript file
+ * @param options.baseDir - Base directory for resolving imports (defaults to entryFile dir)
+ * @param options.content - Optional in-memory source content (skips file read)
+ * @param options.maxTypeDepth - Max depth for nested type resolution (default: 10)
+ * @param options.only - Glob patterns to include (e.g., ["get*", "create*"])
+ * @param options.ignore - Glob patterns to exclude (e.g., ["*Internal", "_*"])
+ * @param options.onProgress - Callback fired for each export: (current, total, name) => void
+ * @param options.isDtsSource - Set true when extracting from .d.ts (enables degraded mode)
+ * @param options.externals - Config for resolving re-exports from external packages
+ *
+ * @returns Promise resolving to extraction result
+ * @returns result.spec - The OpenPkg specification object
+ * @returns result.diagnostics - Warnings/errors encountered during extraction
+ * @returns result.verification - Stats comparing discovered vs extracted exports
+ * @returns result.forgottenExports - Types referenced but not exported (internal only)
+ *
+ * @example
+ * ```ts
+ * import { extract } from '@openpkg-ts/sdk';
+ *
+ * const { spec, diagnostics } = await extract({
+ *   entryFile: './src/index.ts',
+ *   onProgress: (i, total, name) => console.log(`${i}/${total}: ${name}`),
+ * });
+ * ```
+ *
+ * @remarks
+ * - Caches are cleared before and after extraction (via try/finally)
+ * - Progress callback yields to event loop every 5 exports for UI responsiveness
+ * - External package re-exports require explicit `externals.include` patterns
  */
-function shouldSkipDanglingRef(name: string): boolean {
-  // Anonymous types
-  if (name.startsWith('__')) return true;
-  // Single uppercase letter (generic params)
-  if (/^[A-Z]$/.test(name)) return true;
-  // Starts with T followed by uppercase (TType, TValue, TWire, etc.)
-  if (/^T[A-Z]/.test(name)) return true;
-  // Common generic names
-  if (['Key', 'Value', 'Item', 'Element'].includes(name)) return true;
-  return false;
-}
-
 export async function extract(options: ExtractOptions): Promise<ExtractResult> {
   // Clear caches at start of each extraction
   clearTypeDefinitionCache();
 
-  const {
-    entryFile,
-    baseDir,
-    content,
-    maxTypeDepth,
-    maxExternalTypeDepth,
-    resolveExternalTypes,
-    includeSchema,
-    only,
-    ignore,
-    onProgress,
-    isDtsSource,
-    includePrivate,
-  } = options;
+  try {
+    const {
+      entryFile,
+      baseDir,
+      content,
+      maxTypeDepth,
+      maxExternalTypeDepth,
+      resolveExternalTypes,
+      includeSchema,
+      only,
+      ignore,
+      onProgress,
+      isDtsSource,
+      includePrivate,
+    } = options;
 
-  const diagnostics: Diagnostic[] = [];
-  let exports: SpecExport[] = [];
+    const diagnostics: Diagnostic[] = [];
+    let exports: SpecExport[] = [];
 
-  // Create program
-  const result = createProgram({ entryFile, baseDir, content });
-  const { program, sourceFile } = result;
+    // Create program
+    const result = createProgram({ entryFile, baseDir, content });
+    const { program, sourceFile } = result;
 
-  if (!sourceFile) {
-    return {
-      spec: createEmptySpec(entryFile, includeSchema, isDtsSource),
-      diagnostics: [{ message: `Could not load source file: ${entryFile}`, severity: 'error' }],
-    };
-  }
-
-  const typeChecker = program.getTypeChecker();
-
-  // Get module symbol and its exports (handles re-exports properly)
-  const moduleSymbol = typeChecker.getSymbolAtLocation(sourceFile);
-  if (!moduleSymbol) {
-    return {
-      spec: createEmptySpec(entryFile, includeSchema, isDtsSource),
-      diagnostics: [{ message: 'Could not get module symbol', severity: 'warning' }],
-    };
-  }
-
-  const exportedSymbols = typeChecker.getExportsOfModule(moduleSymbol);
-
-  // First pass: collect all export names so we can skip them when registering types
-  const exportedIds = new Set<string>();
-  for (const symbol of exportedSymbols) {
-    exportedIds.add(symbol.getName());
-  }
-
-  // Track status of each discovered export through serialization pipeline
-  const exportTracker = new Map<string, ExportTracker>();
-  for (const symbol of exportedSymbols) {
-    const name = symbol.getName();
-    const included = shouldIncludeExport(name, only, ignore);
-    exportTracker.set(name, {
-      name,
-      discovered: true,
-      status: included ? 'pending' : 'skipped',
-      ...(included ? {} : { skipReason: 'filtered' }),
-    });
-  }
-
-  const ctx = createContext(program, sourceFile, {
-    maxTypeDepth,
-    maxExternalTypeDepth,
-    resolveExternalTypes,
-    includePrivate,
-  });
-  ctx.exportedIds = exportedIds;
-
-  // Pre-filter exports to get accurate total for progress reporting
-  const filteredSymbols = exportedSymbols.filter((s) =>
-    shouldIncludeExport(s.getName(), only, ignore),
-  );
-  const total = filteredSymbols.length;
-
-  for (let i = 0; i < filteredSymbols.length; i++) {
-    const symbol = filteredSymbols[i];
-    const exportName = symbol.getName();
-    const tracker = exportTracker.get(exportName)!;
-
-    // Report progress and yield to event loop periodically
-    onProgress?.(i + 1, total, exportName);
-    if (i > 0 && i % YIELD_BATCH_SIZE === 0) {
-      await new Promise((r) => setImmediate(r));
-    }
-
-    try {
-      const { declaration, targetSymbol, isTypeOnly } = resolveExportTarget(symbol, typeChecker);
-      if (!declaration) {
-        // Check if this is a re-export from an external package
-        let externalPackage: string | undefined;
-
-        // Method 1: Check if any declarations point to node_modules
-        const allDecls = [
-          ...(targetSymbol.declarations ?? []),
-          ...(symbol.declarations ?? []),
-        ];
-        for (const decl of allDecls) {
-          const sf = decl.getSourceFile();
-          if (sf?.fileName.includes('node_modules')) {
-            const match = sf.fileName.match(/node_modules\/(@[^/]+\/[^/]+|[^/]+)/);
-            if (match) {
-              externalPackage = match[1];
-              break;
-            }
-          }
-          // Method 2: Check if this is an export specifier with a module specifier
-          if (ts.isExportSpecifier(decl)) {
-            const exportDecl = decl.parent?.parent;
-            if (exportDecl && ts.isExportDeclaration(exportDecl) && exportDecl.moduleSpecifier) {
-              const moduleText = exportDecl.moduleSpecifier.getText().slice(1, -1); // Remove quotes
-              // Check if it's a package (not relative path)
-              if (!moduleText.startsWith('.') && !moduleText.startsWith('/')) {
-                externalPackage = moduleText;
-                break;
-              }
-            }
-          }
-        }
-
-        if (externalPackage) {
-          // Check if we should try to resolve this external package
-          const shouldResolve = matchesExternalPattern(
-            externalPackage,
-            options.externals?.include,
-            options.externals?.exclude,
-          );
-
-          if (shouldResolve) {
-            // Try to resolve the external module
-            const resolvedModule = resolveExternalModule(
-              externalPackage,
-              sourceFile.fileName,
-              program.getCompilerOptions(),
-            );
-
-            if (resolvedModule) {
-              // Extract the export from the resolved module
-              const visitedExternals = new Set<string>();
-              const extractedExport = extractExternalExport(
-                exportName,
-                resolvedModule,
-                program,
-                ctx,
-                visitedExternals,
-              );
-
-              if (extractedExport) {
-                exports.push(extractedExport);
-                tracker.status = 'success';
-                tracker.kind = extractedExport.kind;
-                continue;
-              }
-            }
-          }
-
-          // Fall back to external stub if resolution wasn't attempted or failed
-          const externalExport: SpecExport = {
-            id: exportName,
-            name: exportName,
-            kind: 'external',
-            source: {
-              package: externalPackage,
-            },
-          };
-          exports.push(externalExport);
-          tracker.status = 'success';
-          tracker.kind = 'external';
-        } else {
-          tracker.status = 'skipped';
-          tracker.skipReason = 'no-declaration';
-        }
-        continue;
-      }
-
-      const exp = serializeDeclaration(
-        declaration,
-        symbol,
-        targetSymbol,
-        exportName,
-        ctx,
-        isTypeOnly,
-      );
-      if (exp) {
-        exports.push(exp);
-        tracker.status = 'success';
-        tracker.kind = exp.kind;
-      } else {
-        tracker.status = 'skipped';
-        tracker.skipReason = 'internal';
-      }
-    } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : String(err);
-      tracker.status = 'failed';
-      tracker.error = errorMsg;
-      diagnostics.push({
-        message: `Failed to serialize '${exportName}': ${errorMsg}`,
-        severity: 'warning',
-        code: 'SERIALIZATION_FAILED',
-      });
-    }
-  }
-
-  // Build verification summary from tracker
-  const verification = buildVerificationSummary(
-    exportedSymbols.length,
-    exports.length,
-    exportTracker,
-  );
-
-  // Get package metadata
-  const meta = await getPackageMeta(entryFile, baseDir);
-  const types = ctx.typeRegistry.getAll();
-
-  // Check for forgotten exports (refs to types not defined)
-  const projectBaseDir = baseDir ?? path.dirname(entryFile);
-  const definedTypes = new Set(types.map((t) => t.id));
-  const forgottenExports = collectForgottenExports(
-    exports,
-    types,
-    program,
-    sourceFile,
-    exportedIds,
-    projectBaseDir,
-    definedTypes,
-  );
-  for (const forgotten of forgottenExports) {
-    const refSummary = forgotten.referencedBy
-      .slice(0, 3)
-      .map((r) => `${r.exportName} (${r.location})`)
-      .join(', ');
-    const moreRefs =
-      forgotten.referencedBy.length > 3 ? ` +${forgotten.referencedBy.length - 3} more` : '';
-
-    if (forgotten.isExternal) {
-      diagnostics.push({
-        message: `External type '${forgotten.name}' referenced by: ${refSummary}${moreRefs}`,
-        severity: 'info',
-        code: 'EXTERNAL_TYPE_REF',
-        suggestion: forgotten.definedIn
-          ? `Type is from: ${forgotten.definedIn}`
-          : 'Type is from an external package',
-      });
-    } else {
-      diagnostics.push({
-        message: `Forgotten export: '${forgotten.name}' referenced by: ${refSummary}${moreRefs}`,
-        severity: 'warning',
-        code: 'FORGOTTEN_EXPORT',
-        suggestion: forgotten.fix ?? `Export this type from your public API`,
-        location: forgotten.definedIn ? { file: forgotten.definedIn } : undefined,
-      });
-    }
-  }
-
-  // Check for external type stubs (info only - external stubs are expected)
-  const externalTypes = types.filter((t) => t.kind === 'external');
-  if (externalTypes.length > 0) {
-    diagnostics.push({
-      message: `${externalTypes.length} external type(s) from dependencies: ${externalTypes
-        .slice(0, 5)
-        .map((t) => t.id)
-        .join(', ')}${externalTypes.length > 5 ? '...' : ''}`,
-      severity: 'info',
-      code: 'EXTERNAL_TYPES',
-    });
-  }
-
-  // Runtime Standard JSON Schema extraction (hybrid mode)
-  let runtimeMetadata: ExtractResult['runtimeSchemas'] | undefined;
-
-  if (options.schemaExtraction === 'hybrid') {
-    const projectBaseDir = baseDir || path.dirname(entryFile);
-
-    const runtimeResult = await extractStandardSchemasFromProject(entryFile, projectBaseDir, {
-      target: options.schemaTarget || 'draft-2020-12',
-      timeout: 15000,
-    });
-
-    if (runtimeResult.schemas.size > 0) {
-      const mergeResult = mergeRuntimeSchemas(exports, runtimeResult.schemas);
-      exports = mergeResult.exports;
-
-      // Include extraction method in metadata
-      const method =
-        runtimeResult.info?.method === 'direct-ts'
-          ? `direct-ts (${runtimeResult.info.runtime})`
-          : 'compiled';
-
-      runtimeMetadata = {
-        extracted: runtimeResult.schemas.size,
-        merged: mergeResult.merged,
-        vendors: [...new Set([...runtimeResult.schemas.values()].map((s) => s.vendor))],
-        errors: runtimeResult.errors,
-        method,
+    if (!sourceFile) {
+      return {
+        spec: createEmptySpec(entryFile, includeSchema, isDtsSource),
+        diagnostics: [{ message: `Could not load source file: ${entryFile}`, severity: 'error' }],
       };
     }
 
-    // Add runtime extraction errors as diagnostics
-    for (const error of runtimeResult.errors) {
-      diagnostics.push({
-        message: `Runtime schema extraction: ${error}`,
-        severity: 'warning',
-        code: 'RUNTIME_SCHEMA_ERROR',
+    const typeChecker = program.getTypeChecker();
+
+    // Get module symbol and its exports (handles re-exports properly)
+    const moduleSymbol = typeChecker.getSymbolAtLocation(sourceFile);
+    if (!moduleSymbol) {
+      return {
+        spec: createEmptySpec(entryFile, includeSchema, isDtsSource),
+        diagnostics: [{ message: 'Could not get module symbol', severity: 'warning' }],
+      };
+    }
+
+    const exportedSymbols = typeChecker.getExportsOfModule(moduleSymbol);
+
+    // First pass: collect all export names so we can skip them when registering types
+    const exportedIds = new Set<string>();
+    for (const symbol of exportedSymbols) {
+      exportedIds.add(symbol.getName());
+    }
+
+    // Track status of each discovered export through serialization pipeline
+    const exportTracker = new Map<string, ExportTracker>();
+    for (const symbol of exportedSymbols) {
+      const name = symbol.getName();
+      const included = shouldIncludeExport(name, only, ignore);
+      exportTracker.set(name, {
+        name,
+        discovered: true,
+        status: included ? 'pending' : 'skipped',
+        ...(included ? {} : { skipReason: 'filtered' }),
       });
     }
-  }
 
-  // Normalize exports and types to JSON Schema 2020-12 format
-  // This happens after all extraction (static + runtime schema merging) is complete
-  const normalizedExports = exports.map((exp) =>
-    normalizeExport(exp, { dialect: 'draft-2020-12' }),
-  );
-  const normalizedTypes = types.map((t) => normalizeType(t, { dialect: 'draft-2020-12' }));
-
-  const spec: OpenPkg = {
-    ...(includeSchema ? { $schema: SCHEMA_URL } : {}),
-    openpkg: SCHEMA_VERSION,
-    meta,
-    exports: normalizedExports,
-    types: normalizedTypes,
-    generation: {
-      generator: '@openpkg-ts/sdk',
-      timestamp: new Date().toISOString(),
-      mode: isDtsSource ? 'declaration-only' : 'source',
-      ...(options.schemaExtraction === 'hybrid' ? { schemaExtraction: 'hybrid' } : {}),
-      ...(isDtsSource && {
-        limitations: ['No JSDoc descriptions', 'No @example tags', 'No @param descriptions'],
-      }),
-      // Include skipped exports in generation metadata
-      ...(verification.details.skipped.length > 0 && {
-        skipped: verification.details.skipped,
-      }),
-    },
-  };
-
-  // Filter to only internal forgotten exports (for fix generation)
-  const internalForgotten = forgottenExports.filter((f) => !f.isExternal);
-
-  // Compute degraded mode stats when extracting from .d.ts
-  const degradedMode = isDtsSource
-    ? { reason: 'dts-source' as const, stats: computeDegradedStats(normalizedExports) }
-    : undefined;
-
-  // Add diagnostic if any exports failed verification
-  if (verification.failed > 0) {
-    const failedNames = verification.details.failed.map((f) => f.name).join(', ');
-    diagnostics.push({
-      message: `Export verification: ${verification.failed} export(s) failed: ${failedNames}`,
-      severity: 'warning',
-      code: 'EXPORT_VERIFICATION_FAILED',
-      suggestion: 'Check serialization errors for these exports',
+    const ctx = createContext(program, sourceFile, {
+      maxTypeDepth,
+      maxExternalTypeDepth,
+      resolveExternalTypes,
+      includePrivate,
     });
-  }
+    ctx.exportedIds = exportedIds;
 
-  return {
-    spec,
-    diagnostics,
-    verification,
-    ...(internalForgotten.length > 0 ? { forgottenExports: internalForgotten } : {}),
-    ...(runtimeMetadata ? { runtimeSchemas: runtimeMetadata } : {}),
-    ...(degradedMode ? { degradedMode } : {}),
-  };
-}
+    // Pre-filter exports to get accurate total for progress reporting
+    const filteredSymbols = exportedSymbols.filter((s) =>
+      shouldIncludeExport(s.getName(), only, ignore),
+    );
+    const total = filteredSymbols.length;
 
-/** Location context for type reference tracking */
-type RefLocation = TypeReference['location'];
+    for (let i = 0; i < filteredSymbols.length; i++) {
+      const symbol = filteredSymbols[i];
+      const exportName = symbol.getName();
+      const tracker = exportTracker.get(exportName)!;
 
-/** Mutable state for tracking reference context during traversal */
-interface RefTraversalState {
-  exportName: string;
-  location: RefLocation;
-  path: string[];
-}
+      // Report progress and yield to event loop periodically
+      onProgress?.(i + 1, total, exportName);
+      if (i > 0 && i % YIELD_BATCH_SIZE === 0) {
+        await new Promise((r) => setImmediate(r));
+      }
 
-/**
- * Collect all $ref values with context (which export, location type, path)
- * Uses mutable state with push/pop to avoid allocation overhead
- */
-function collectAllRefsWithContext(
-  obj: unknown,
-  refs: Map<string, TypeReference[]>,
-  state: RefTraversalState,
-): void {
-  if (obj === null || obj === undefined) return;
+      try {
+        const { declaration, targetSymbol, isTypeOnly } = resolveExportTarget(symbol, typeChecker);
+        if (!declaration) {
+          // Check if this is a re-export from an external package
+          let externalPackage: string | undefined;
 
-  if (Array.isArray(obj)) {
-    for (let i = 0; i < obj.length; i++) {
-      state.path.push(`[${i}]`);
-      collectAllRefsWithContext(obj[i], refs, state);
-      state.path.pop();
-    }
-    return;
-  }
+          // Method 1: Check if any declarations point to node_modules
+          const allDecls = [...(targetSymbol.declarations ?? []), ...(symbol.declarations ?? [])];
+          for (const decl of allDecls) {
+            const sf = decl.getSourceFile();
+            if (sf?.fileName.includes('node_modules')) {
+              const match = sf.fileName.match(/node_modules\/(@[^/]+\/[^/]+|[^/]+)/);
+              if (match) {
+                externalPackage = match[1];
+                break;
+              }
+            }
+            // Method 2: Check if this is an export specifier with a module specifier
+            if (ts.isExportSpecifier(decl)) {
+              const exportDecl = decl.parent?.parent;
+              if (exportDecl && ts.isExportDeclaration(exportDecl) && exportDecl.moduleSpecifier) {
+                const moduleText = exportDecl.moduleSpecifier.getText().slice(1, -1); // Remove quotes
+                // Check if it's a package (not relative path)
+                if (!moduleText.startsWith('.') && !moduleText.startsWith('/')) {
+                  externalPackage = moduleText;
+                  break;
+                }
+              }
+            }
+          }
 
-  if (typeof obj === 'object') {
-    const record = obj as Record<string, unknown>;
-    if (typeof record.$ref === 'string' && record.$ref.startsWith('#/types/')) {
-      const typeName = record.$ref.slice('#/types/'.length);
-      const existing = refs.get(typeName) ?? [];
-      existing.push({
-        typeName,
-        exportName: state.exportName,
-        location: state.location,
-        path: state.path.length > 0 ? state.path.join('.') : undefined,
-      });
-      refs.set(typeName, existing);
-    }
+          if (externalPackage) {
+            // Check if we should try to resolve this external package
+            const shouldResolve = matchesExternalPattern(
+              externalPackage,
+              options.externals?.include,
+              options.externals?.exclude,
+            );
 
-    const prevLocation = state.location;
-    for (const [key, value] of Object.entries(record)) {
-      // Infer location from property name
-      if (key === 'returnType' || key === 'returns') state.location = 'return';
-      else if (key === 'parameters' || key === 'params') state.location = 'parameter';
-      else if (key === 'properties' || key === 'members') state.location = 'property';
-      else if (key === 'extends' || key === 'implements') state.location = 'extends';
-      else if (key === 'typeParameters' || key === 'typeParams') state.location = 'type-parameter';
+            if (shouldResolve) {
+              // Try to resolve the external module
+              const resolvedModule = resolveExternalModule(
+                externalPackage,
+                sourceFile.fileName,
+                program.getCompilerOptions(),
+              );
 
-      state.path.push(key);
-      collectAllRefsWithContext(value, refs, state);
-      state.path.pop();
-      state.location = prevLocation;
-    }
-  }
-}
+              if (resolvedModule) {
+                // Extract the export from the resolved module
+                const visitedExternals = new Set<string>();
+                const extractedExport = extractExternalExport(
+                  exportName,
+                  resolvedModule,
+                  program,
+                  ctx,
+                  visitedExternals,
+                );
 
-/**
- * Find where a type is defined in the source files
- */
-function findTypeDefinition(
-  typeName: string,
-  program: ts.Program,
-  sourceFile: ts.SourceFile,
-): string | undefined {
-  const cache = getTypeDefinitionCache();
+                if (extractedExport) {
+                  exports.push(extractedExport);
+                  tracker.status = 'success';
+                  tracker.kind = extractedExport.kind;
+                  continue;
+                }
+              }
+            }
 
-  // Check cache first (includes both found and not-found results)
-  if (cache.has(typeName)) {
-    return cache.get(typeName);
-  }
+            // Fall back to external stub if resolution wasn't attempted or failed
+            const externalExport: SpecExport = {
+              id: exportName,
+              name: exportName,
+              kind: 'external',
+              source: {
+                package: externalPackage,
+              },
+            };
+            exports.push(externalExport);
+            tracker.status = 'success';
+            tracker.kind = 'external';
+          } else {
+            tracker.status = 'skipped';
+            tracker.skipReason = 'no-declaration';
+          }
+          continue;
+        }
 
-  const checker = program.getTypeChecker();
-
-  // Search in the entry source file first
-  const findInNode = (node: ts.Node): string | undefined => {
-    if (
-      (ts.isInterfaceDeclaration(node) ||
-        ts.isTypeAliasDeclaration(node) ||
-        ts.isClassDeclaration(node) ||
-        ts.isEnumDeclaration(node)) &&
-      node.name?.text === typeName
-    ) {
-      const sf = node.getSourceFile();
-      return sf.fileName;
-    }
-
-    return ts.forEachChild(node, findInNode);
-  };
-
-  // Check entry file
-  const entryResult = findInNode(sourceFile);
-  if (entryResult) {
-    cache.set(typeName, entryResult);
-    return entryResult;
-  }
-
-  // Check all source files in program
-  for (const sf of program.getSourceFiles()) {
-    if (sf.isDeclarationFile && !sf.fileName.includes('node_modules')) {
-      const result = findInNode(sf);
-      if (result) {
-        cache.set(typeName, result);
-        return result;
+        const exp = serializeDeclaration(
+          declaration,
+          symbol,
+          targetSymbol,
+          exportName,
+          ctx,
+          isTypeOnly,
+        );
+        if (exp) {
+          exports.push(exp);
+          tracker.status = 'success';
+          tracker.kind = exp.kind;
+        } else {
+          tracker.status = 'skipped';
+          tracker.skipReason = 'internal';
+        }
+      } catch (err) {
+        const errorMsg = err instanceof Error ? err.message : String(err);
+        tracker.status = 'failed';
+        tracker.error = errorMsg;
+        diagnostics.push({
+          message: `Failed to serialize '${exportName}': ${errorMsg}`,
+          severity: 'warning',
+          code: 'SERIALIZATION_FAILED',
+        });
       }
     }
+
+    // Build verification summary from tracker
+    const verification = buildVerificationSummary(
+      exportedSymbols.length,
+      exports.length,
+      exportTracker,
+    );
+
+    // Get package metadata
+    const meta = await getPackageMeta(entryFile, baseDir);
+    const types = ctx.typeRegistry.getAll();
+
+    // Check for forgotten exports (refs to types not defined)
+    const projectBaseDir = baseDir ?? path.dirname(entryFile);
+    const definedTypes = new Set(types.map((t) => t.id));
+    const forgottenExports = collectForgottenExports(
+      exports,
+      types,
+      program,
+      sourceFile,
+      exportedIds,
+      projectBaseDir,
+      definedTypes,
+    );
+    for (const forgotten of forgottenExports) {
+      const refSummary = forgotten.referencedBy
+        .slice(0, 3)
+        .map((r) => `${r.exportName} (${r.location})`)
+        .join(', ');
+      const moreRefs =
+        forgotten.referencedBy.length > 3 ? ` +${forgotten.referencedBy.length - 3} more` : '';
+
+      if (forgotten.isExternal) {
+        diagnostics.push({
+          message: `External type '${forgotten.name}' referenced by: ${refSummary}${moreRefs}`,
+          severity: 'info',
+          code: 'EXTERNAL_TYPE_REF',
+          suggestion: forgotten.definedIn
+            ? `Type is from: ${forgotten.definedIn}`
+            : 'Type is from an external package',
+        });
+      } else {
+        diagnostics.push({
+          message: `Forgotten export: '${forgotten.name}' referenced by: ${refSummary}${moreRefs}`,
+          severity: 'warning',
+          code: 'FORGOTTEN_EXPORT',
+          suggestion: forgotten.fix ?? `Export this type from your public API`,
+          location: forgotten.definedIn ? { file: forgotten.definedIn } : undefined,
+        });
+      }
+    }
+
+    // Check for external type stubs (info only - external stubs are expected)
+    const externalTypes = types.filter((t) => t.kind === 'external');
+    if (externalTypes.length > 0) {
+      diagnostics.push({
+        message: `${externalTypes.length} external type(s) from dependencies: ${externalTypes
+          .slice(0, 5)
+          .map((t) => t.id)
+          .join(', ')}${externalTypes.length > 5 ? '...' : ''}`,
+        severity: 'info',
+        code: 'EXTERNAL_TYPES',
+      });
+    }
+
+    // Runtime Standard JSON Schema extraction (hybrid mode)
+    let runtimeMetadata: ExtractResult['runtimeSchemas'] | undefined;
+
+    if (options.schemaExtraction === 'hybrid') {
+      const projectBaseDir = baseDir || path.dirname(entryFile);
+
+      const runtimeResult = await extractStandardSchemasFromProject(entryFile, projectBaseDir, {
+        target: options.schemaTarget || 'draft-2020-12',
+        timeout: 15000,
+      });
+
+      if (runtimeResult.schemas.size > 0) {
+        const mergeResult = mergeRuntimeSchemas(exports, runtimeResult.schemas);
+        exports = mergeResult.exports;
+
+        // Include extraction method in metadata
+        const method =
+          runtimeResult.info?.method === 'direct-ts'
+            ? `direct-ts (${runtimeResult.info.runtime})`
+            : 'compiled';
+
+        runtimeMetadata = {
+          extracted: runtimeResult.schemas.size,
+          merged: mergeResult.merged,
+          vendors: [...new Set([...runtimeResult.schemas.values()].map((s) => s.vendor))],
+          errors: runtimeResult.errors,
+          method,
+        };
+      }
+
+      // Add runtime extraction errors as diagnostics
+      for (const error of runtimeResult.errors) {
+        diagnostics.push({
+          message: `Runtime schema extraction: ${error}`,
+          severity: 'warning',
+          code: 'RUNTIME_SCHEMA_ERROR',
+        });
+      }
+    }
+
+    // Normalize exports and types to JSON Schema 2020-12 format
+    // This happens after all extraction (static + runtime schema merging) is complete
+    const normalizedExports = exports.map((exp) =>
+      normalizeExport(exp, { dialect: 'draft-2020-12' }),
+    );
+    const normalizedTypes = types.map((t) => normalizeType(t, { dialect: 'draft-2020-12' }));
+
+    const spec: OpenPkg = {
+      ...(includeSchema ? { $schema: SCHEMA_URL } : {}),
+      openpkg: SCHEMA_VERSION,
+      meta,
+      exports: normalizedExports,
+      types: normalizedTypes,
+      generation: {
+        generator: '@openpkg-ts/sdk',
+        timestamp: new Date().toISOString(),
+        mode: isDtsSource ? 'declaration-only' : 'source',
+        ...(options.schemaExtraction === 'hybrid' ? { schemaExtraction: 'hybrid' } : {}),
+        ...(isDtsSource && {
+          limitations: ['No JSDoc descriptions', 'No @example tags', 'No @param descriptions'],
+        }),
+        // Include skipped exports in generation metadata
+        ...(verification.details.skipped.length > 0 && {
+          skipped: verification.details.skipped,
+        }),
+      },
+    };
+
+    // Filter to only internal forgotten exports (for fix generation)
+    const internalForgotten = forgottenExports.filter((f) => !f.isExternal);
+
+    // Compute degraded mode stats when extracting from .d.ts
+    const degradedMode = isDtsSource
+      ? { reason: 'dts-source' as const, stats: computeDegradedStats(normalizedExports) }
+      : undefined;
+
+    // Add diagnostic if any exports failed verification
+    if (verification.failed > 0) {
+      const failedNames = verification.details.failed.map((f) => f.name).join(', ');
+      diagnostics.push({
+        message: `Export verification: ${verification.failed} export(s) failed: ${failedNames}`,
+        severity: 'warning',
+        code: 'EXPORT_VERIFICATION_FAILED',
+        suggestion: 'Check serialization errors for these exports',
+      });
+    }
+
+    return {
+      spec,
+      diagnostics,
+      verification,
+      ...(internalForgotten.length > 0 ? { forgottenExports: internalForgotten } : {}),
+      ...(runtimeMetadata ? { runtimeSchemas: runtimeMetadata } : {}),
+      ...(degradedMode ? { degradedMode } : {}),
+    };
+  } finally {
+    // Clear caches after extraction to prevent memory leaks
+    clearTypeDefinitionCache();
   }
-
-  // Try to find via type checker symbol lookup
-  const symbol = checker.resolveName(typeName, sourceFile, ts.SymbolFlags.Type, false);
-  if (symbol?.declarations?.[0]) {
-    const result = symbol.declarations[0].getSourceFile().fileName;
-    cache.set(typeName, result);
-    return result;
-  }
-
-  // Cache not-found result too
-  cache.set(typeName, undefined);
-  return undefined;
-}
-
-/**
- * Determine if a type is external (from node_modules/dependencies or outside project)
- * @internal Exported for testing
- */
-export function isExternalType(definedIn: string | undefined, baseDir: string): boolean {
-  if (!definedIn) return true;
-  // External if in node_modules
-  if (definedIn.includes('node_modules')) return true;
-  // External if outside project directory (e.g., linked packages)
-  const normalizedDefined = path.resolve(definedIn);
-  const normalizedBase = path.resolve(baseDir);
-  return !normalizedDefined.startsWith(normalizedBase);
-}
-
-/**
- * Check if a type has @internal JSDoc tag
- */
-function hasInternalTag(typeName: string, program: ts.Program, sourceFile: ts.SourceFile): boolean {
-  const cache = getInternalTagCache();
-  const cached = cache.get(typeName);
-  if (cached !== undefined) {
-    return cached;
-  }
-
-  const checker = program.getTypeChecker();
-  const symbol = checker.resolveName(typeName, sourceFile, ts.SymbolFlags.Type, false);
-
-  if (!symbol) {
-    cache.set(typeName, false);
-    return false;
-  }
-
-  const jsTags = symbol.getJsDocTags();
-  const isInternal = jsTags.some((tag) => tag.name === 'internal');
-  cache.set(typeName, isInternal);
-  return isInternal;
-}
-
-/**
- * Find all dangling $ref references with enhanced context
- */
-function collectForgottenExports(
-  exports: SpecExport[],
-  types: SpecType[],
-  program: ts.Program,
-  sourceFile: ts.SourceFile,
-  exportedIds: Set<string>,
-  baseDir: string,
-  definedTypes: Set<string>,
-): ForgottenExport[] {
-  const referencedTypes = new Map<string, TypeReference[]>();
-
-  // Collect refs from exports with context
-  for (const exp of exports) {
-    collectAllRefsWithContext(exp, referencedTypes, {
-      exportName: exp.id || exp.name,
-      location: 'property',
-      path: [],
-    });
-  }
-
-  // Collect refs from types themselves (for nested refs)
-  for (const type of types) {
-    collectAllRefsWithContext(type, referencedTypes, {
-      exportName: type.id,
-      location: 'property',
-      path: [],
-    });
-  }
-
-  const forgottenExports: ForgottenExport[] = [];
-
-  for (const [typeName, references] of referencedTypes) {
-    // Skip if already defined, builtin, or should be skipped
-    if (definedTypes.has(typeName)) continue;
-    if (BUILTIN_TYPES.has(typeName)) continue;
-    if (shouldSkipDanglingRef(typeName)) continue;
-    // Skip types marked @internal - intentionally not exported
-    if (hasInternalTag(typeName, program, sourceFile)) continue;
-    // Skip re-exported types (already in public API)
-    if (exportedIds.has(typeName)) continue;
-
-    const definedIn = findTypeDefinition(typeName, program, sourceFile);
-    const isExternal = isExternalType(definedIn, baseDir);
-
-    forgottenExports.push({
-      name: typeName,
-      definedIn,
-      referencedBy: references,
-      isExternal,
-      fix: isExternal ? undefined : `export { ${typeName} } from '${definedIn ?? './types'}'`,
-    });
-  }
-
-  return forgottenExports;
 }
 
 function serializeDeclaration(
@@ -847,7 +527,9 @@ function serializeDeclaration(
     if (varStatement && ts.isVariableStatement(varStatement)) {
       // Check if it's an arrow function - serialize as function instead of variable
       if (declaration.initializer && ts.isArrowFunction(declaration.initializer)) {
-        const varName = ts.isIdentifier(declaration.name) ? declaration.name.text : declaration.name.getText();
+        const varName = ts.isIdentifier(declaration.name)
+          ? declaration.name.text
+          : declaration.name.getText();
         result = serializeFunctionExport(declaration.initializer, ctx, varName);
       } else {
         result = serializeVariable(declaration, varStatement, ctx);

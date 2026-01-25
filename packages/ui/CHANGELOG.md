@@ -1,5 +1,11 @@
 # @openpkg-ts/ui
 
+## 0.1.5
+
+### Patch Changes
+
+- Codebase health improvements: bounded caches, path traversal fix, module extraction, stricter linting
+
 ## 0.1.4
 
 ### Patch Changes

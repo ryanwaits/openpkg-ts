@@ -9,7 +9,7 @@ import {
 } from '../../adapters/spec-to-examples';
 import { extractMethodData } from '../../hooks/useMethodFromSpec';
 import { APIReferenceLayout } from './APIReferenceLayout';
-import { ExampleSection, type CodeExample } from './ExampleSection';
+import { type CodeExample, ExampleSection } from './ExampleSection';
 import { MethodSectionFromSpec } from './MethodSectionFromSpec';
 import { SyncScrollProvider } from './SyncScrollProvider';
 
@@ -40,8 +40,7 @@ export function StripeAPIReferencePage({
   className,
 }: StripeAPIReferencePageProps): ReactNode {
   // Filter exports
-  const defaultFilter = (exp: SpecExport) =>
-    showAllKinds ? true : exp.kind === 'function';
+  const defaultFilter = (exp: SpecExport) => (showAllKinds ? true : exp.kind === 'function');
   const activeFilter = filter ?? defaultFilter;
   const exports = spec.exports.filter(activeFilter);
 
@@ -60,11 +59,7 @@ export function StripeAPIReferencePage({
           className,
         )}
       >
-        <APIReferenceLayout
-          examples={
-            <ExamplesColumn exports={sortedExports} spec={spec} />
-          }
-        >
+        <APIReferenceLayout examples={<ExamplesColumn exports={sortedExports} spec={spec} />}>
           <DocsColumn exports={sortedExports} spec={spec} />
         </APIReferenceLayout>
       </div>

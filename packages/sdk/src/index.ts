@@ -69,3 +69,6 @@ export type {
 } from './types';
 // Type utilities
 export * from './types/index';
+
+// Utilities
+export { CacheManager, type CacheManagerOptions } from './utils';

@@ -1,6 +1,6 @@
 {
   "name": "@openpkg-ts/spec",
-  "version": "0.33.0",
+  "version": "0.34.1",
   "description": "Shared schema, validation, and diff utilities for OpenPkg specs",
   "keywords": [
     "openpkg",
@@ -45,7 +45,7 @@
   "devDependencies": {
     "@types/bun": "latest",
     "@types/node": "^20.0.0",
-    "bunup": "latest",
+    "bunup": "^0.16.20",
     "typescript": "^5.0.0"
   },
   "publishConfig": {

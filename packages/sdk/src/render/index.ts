@@ -17,11 +17,6 @@ export type {
 export { toJSON, toJSONString } from './json';
 export type { ExportMarkdownOptions, MarkdownOptions } from './markdown';
 export { exportToMarkdown, toMarkdown } from './markdown';
-
-// React layout generator
-export type { ReactLayoutOptions } from './react';
-export { toReact, toReactString } from './react';
-
 // Navigation generator
 export type {
   DocusaurusSidebar,
@@ -36,3 +31,6 @@ export type {
   NavOptions,
 } from './nav';
 export { toDocusaurusSidebarJS, toFumadocsMetaJSON, toNavigation } from './nav';
+// React layout generator
+export type { ReactLayoutOptions } from './react';
+export { toReact, toReactString } from './react';

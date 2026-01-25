@@ -1,9 +1,9 @@
-import { describe, expect, test, afterEach } from 'bun:test';
-import { render, cleanup } from '@testing-library/react';
-import { MethodSection } from '../styled/MethodSection';
-import { NestedParameterToggle } from '../styled/NestedParameterToggle';
-import { NestedParameterContainer } from '../styled/NestedParameterContainer';
+import { afterEach, describe, expect, test } from 'bun:test';
+import { cleanup, render } from '@testing-library/react';
 import { ExampleChips } from '../styled/ExampleChips';
+import { MethodSection } from '../styled/MethodSection';
+import { NestedParameterContainer } from '../styled/NestedParameterContainer';
+import { NestedParameterToggle } from '../styled/NestedParameterToggle';
 
 afterEach(() => {
   cleanup();
@@ -25,7 +25,7 @@ describe('Component Snapshots', () => {
           notes={['This is an async function', 'Returns a Promise']}
         >
           <div>Parameters go here</div>
-        </MethodSection>
+        </MethodSection>,
       );
 
       expect(container.innerHTML).toMatchSnapshot();
@@ -33,13 +33,9 @@ describe('Component Snapshots', () => {
 
     test('renders method section without notes', () => {
       const { container } = render(
-        <MethodSection
-          id="getUser"
-          title="getUser"
-          signature="getUser(id: string): User | null"
-        >
+        <MethodSection id="getUser" title="getUser" signature="getUser(id: string): User | null">
           <div>Parameters</div>
-        </MethodSection>
+        </MethodSection>,
       );
 
       expect(container.innerHTML).toMatchSnapshot();
@@ -49,11 +45,7 @@ describe('Component Snapshots', () => {
   describe('NestedParameterToggle', () => {
     test('collapsed state', () => {
       const { container } = render(
-        <NestedParameterToggle
-          expanded={false}
-          onToggle={() => {}}
-          count={3}
-        />
+        <NestedParameterToggle expanded={false} onToggle={() => {}} count={3} />,
       );
 
       expect(container.innerHTML).toMatchSnapshot();
@@ -61,11 +53,7 @@ describe('Component Snapshots', () => {
 
     test('expanded state', () => {
       const { container } = render(
-        <NestedParameterToggle
-          expanded={true}
-          onToggle={() => {}}
-          count={3}
-        />
+        <NestedParameterToggle expanded={true} onToggle={() => {}} count={3} />,
       );
 
       expect(container.innerHTML).toMatchSnapshot();
@@ -78,7 +66,7 @@ describe('Component Snapshots', () => {
         <NestedParameterContainer>
           <div>Child parameter 1</div>
           <div>Child parameter 2</div>
-        </NestedParameterContainer>
+        </NestedParameterContainer>,
       );
 
       expect(container.innerHTML).toMatchSnapshot();
@@ -88,7 +76,7 @@ describe('Component Snapshots', () => {
       const { container } = render(
         <NestedParameterContainer level={2}>
           <div>Deeply nested</div>
-        </NestedParameterContainer>
+        </NestedParameterContainer>,
       );
 
       expect(container.innerHTML).toMatchSnapshot();
@@ -106,7 +94,7 @@ describe('Component Snapshots', () => {
           ]}
           activeId="with-filter"
           onSelect={() => {}}
-        />
+        />,
       );
 
       expect(container.innerHTML).toMatchSnapshot();
@@ -118,7 +106,7 @@ describe('Component Snapshots', () => {
           examples={[{ id: 'only', label: 'Only option' }]}
           activeId="only"
           onSelect={() => {}}
-        />
+        />,
       );
 
       expect(container.innerHTML).toMatchSnapshot();

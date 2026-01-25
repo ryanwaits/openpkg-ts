@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import type { OpenPkg, SpecExport } from '@openpkg-ts/spec';
-import { query, QueryBuilder } from './query-builder';
+import { QueryBuilder, query } from './query-builder';
 
 function makeSpec(exports: SpecExport[]): OpenPkg {
   return {

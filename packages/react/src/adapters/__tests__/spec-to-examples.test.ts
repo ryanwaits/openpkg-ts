@@ -1,10 +1,10 @@
 import { describe, expect, test } from 'bun:test';
 import type { SpecExample } from '@openpkg-ts/spec';
 import {
-  specExampleToCodeExample,
-  specExamplesToCodeExamples,
   generateDefaultExample,
   getLanguagesFromExamples,
+  specExamplesToCodeExamples,
+  specExampleToCodeExample,
 } from '../spec-to-examples';
 
 // =============================================================================
@@ -199,9 +199,7 @@ describe('getLanguagesFromExamples', () => {
   });
 
   test('defaults undefined language to typescript', () => {
-    const examples = [
-      { id: '1', label: 'A', code: 'a' },
-    ];
+    const examples = [{ id: '1', label: 'A', code: 'a' }];
     const result = getLanguagesFromExamples(examples);
     expect(result).toEqual(['typescript']);
   });

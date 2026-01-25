@@ -32,72 +32,48 @@ program.addCommand(createSemverCommand());
 // =============================================================================
 // Backwards-compat aliases
 // =============================================================================
-const specCmd = program.commands.find((c) => c.name() === 'spec')!;
+const specCmd = program.commands.find((c) => c.name() === 'spec');
+if (!specCmd) {
+  throw new Error('Internal error: spec command not found');
+}
+
+/** Helper to get a subcommand safely */
+function getSubcommand(parent: Command, name: string): Command {
+  const cmd = parent.commands.find((c) => c.name() === name);
+  if (!cmd) {
+    throw new Error(`Internal error: ${name} subcommand not found`);
+  }
+  return cmd;
+}
+
+/** Create an alias command that forwards to a subcommand */
+function createAlias(aliasName: string, targetName: string, description: string): Command {
+  return new Command(aliasName)
+    .description(description)
+    .allowUnknownOption()
+    .allowExcessArguments()
+    .action(async () => {
+      const args = process.argv.slice(3);
+      await getSubcommand(specCmd, targetName).parseAsync(args, { from: 'user' });
+    });
+}
 
 // openpkg snapshot → openpkg spec snapshot
-const snapshotAlias = new Command('snapshot')
-  .description('(alias) → openpkg spec snapshot')
-  .allowUnknownOption()
-  .allowExcessArguments()
-  .action(async () => {
-    const args = process.argv.slice(3);
-    await specCmd.commands.find((c) => c.name() === 'snapshot')!.parseAsync(args, { from: 'user' });
-  });
-program.addCommand(snapshotAlias);
+program.addCommand(createAlias('snapshot', 'snapshot', '(alias) → openpkg spec snapshot'));
 
 // openpkg list → openpkg spec list
-const listAlias = new Command('list')
-  .description('(alias) → openpkg spec list')
-  .allowUnknownOption()
-  .allowExcessArguments()
-  .action(async () => {
-    const args = process.argv.slice(3);
-    await specCmd.commands.find((c) => c.name() === 'list')!.parseAsync(args, { from: 'user' });
-  });
-program.addCommand(listAlias);
+program.addCommand(createAlias('list', 'list', '(alias) → openpkg spec list'));
 
 // openpkg get → openpkg spec get
-const getAlias = new Command('get')
-  .description('(alias) → openpkg spec get')
-  .allowUnknownOption()
-  .allowExcessArguments()
-  .action(async () => {
-    const args = process.argv.slice(3);
-    await specCmd.commands.find((c) => c.name() === 'get')!.parseAsync(args, { from: 'user' });
-  });
-program.addCommand(getAlias);
+program.addCommand(createAlias('get', 'get', '(alias) → openpkg spec get'));
 
 // openpkg validate → openpkg spec validate
-const validateAlias = new Command('validate')
-  .description('(alias) → openpkg spec validate')
-  .allowUnknownOption()
-  .allowExcessArguments()
-  .action(async () => {
-    const args = process.argv.slice(3);
-    await specCmd.commands.find((c) => c.name() === 'validate')!.parseAsync(args, { from: 'user' });
-  });
-program.addCommand(validateAlias);
+program.addCommand(createAlias('validate', 'validate', '(alias) → openpkg spec validate'));
 
 // openpkg filter → openpkg spec filter
-const filterAlias = new Command('filter')
-  .description('(alias) → openpkg spec filter')
-  .allowUnknownOption()
-  .allowExcessArguments()
-  .action(async () => {
-    const args = process.argv.slice(3);
-    await specCmd.commands.find((c) => c.name() === 'filter')!.parseAsync(args, { from: 'user' });
-  });
-program.addCommand(filterAlias);
+program.addCommand(createAlias('filter', 'filter', '(alias) → openpkg spec filter'));
 
 // openpkg diagnostics → openpkg spec lint (renamed)
-const diagnosticsAlias = new Command('diagnostics')
-  .description('(alias) → openpkg spec lint')
-  .allowUnknownOption()
-  .allowExcessArguments()
-  .action(async () => {
-    const args = process.argv.slice(3);
-    await specCmd.commands.find((c) => c.name() === 'lint')!.parseAsync(args, { from: 'user' });
-  });
-program.addCommand(diagnosticsAlias);
+program.addCommand(createAlias('diagnostics', 'lint', '(alias) → openpkg spec lint'));
 
 program.parse();

@@ -1,10 +1,10 @@
 import type { OpenPkg, SpecExample, SpecExport, SpecMember, SpecSignature } from '@openpkg-ts/spec';
 import {
   buildSignatureString,
+  type FormatSchemaOptions,
   formatParameters,
   formatReturnType,
   formatSchema,
-  type FormatSchemaOptions,
   getMethods,
   getProperties,
 } from '../core/query';
@@ -448,9 +448,7 @@ export function exportToMarkdown(exp: SpecExport, options: MarkdownOptions = {})
   // Deprecation notice
   if (exp.deprecated) {
     const reason =
-      'deprecationReason' in exp && exp.deprecationReason
-        ? `: ${exp.deprecationReason}`
-        : '';
+      'deprecationReason' in exp && exp.deprecationReason ? `: ${exp.deprecationReason}` : '';
     parts.push(`> **Deprecated**${reason}`);
     parts.push('');
   }

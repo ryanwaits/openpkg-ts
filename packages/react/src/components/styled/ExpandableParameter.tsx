@@ -75,9 +75,7 @@ export function ExpandableParameter({
         showAnchor={level > 0}
       >
         {/* Enum values inline (no toggle needed) */}
-        {enumValues.length > 0 && !nestedParams.length && (
-          <EnumValuesSection values={enumValues} />
-        )}
+        {enumValues.length > 0 && !nestedParams.length && <EnumValuesSection values={enumValues} />}
 
         {/* Nested params with toggle */}
         {nestedParams.length > 0 && (

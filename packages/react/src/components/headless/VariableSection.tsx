@@ -14,11 +14,7 @@ export interface VariableSectionProps {
  * Headless variable/constant documentation section.
  * Renders type information and value.
  */
-export function VariableSection({
-  export: exp,
-  spec,
-  className,
-}: VariableSectionProps): ReactNode {
+export function VariableSection({ export: exp, spec, className }: VariableSectionProps): ReactNode {
   const typeValue = typeof exp.type === 'string' ? exp.type : formatSchema(exp.schema);
   const pkgName = spec.meta.name;
   const importStatement = `import { ${exp.name} } from '${pkgName}';`;
@@ -48,7 +44,9 @@ export function VariableSection({
       <div data-slot="type">
         <h3>Type</h3>
         <dl>
-          <dt><code>{exp.name}</code></dt>
+          <dt>
+            <code>{exp.name}</code>
+          </dt>
           <dd>
             <code>{typeValue}</code>
             {constValue !== undefined && (
@@ -61,7 +59,9 @@ export function VariableSection({
       {/* Example */}
       <div data-slot="example">
         <h3>Example</h3>
-        <pre><code>{`${importStatement}\n\nconsole.log(${exp.name}); // ${constValue !== undefined ? JSON.stringify(constValue) : typeValue}`}</code></pre>
+        <pre>
+          <code>{`${importStatement}\n\nconsole.log(${exp.name}); // ${constValue !== undefined ? JSON.stringify(constValue) : typeValue}`}</code>
+        </pre>
       </div>
     </section>
   );

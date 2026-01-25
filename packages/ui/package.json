@@ -1,6 +1,6 @@
 {
   "name": "@openpkg-ts/ui",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "UI primitives and components for OpenPkg documentation",
   "homepage": "https://github.com/ryanwaits/openpkg-ts#readme",
   "repository": {
@@ -49,7 +49,7 @@
     "lucide-react": "^0.555.0",
     "seti-icons": "^0.0.4",
     "tailwind-merge": "^2.5.0",
-    "zod": "^3.25.0"
+    "zod": "^4.3.6"
   },
   "peerDependencies": {
     "react": "^18 || ^19",
@@ -58,7 +58,7 @@
   "devDependencies": {
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
-    "bunup": "latest",
+    "bunup": "^0.16.20",
     "typescript": "^5.0.0"
   }
 }

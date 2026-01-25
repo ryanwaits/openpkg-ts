@@ -22,7 +22,9 @@ function makeExport(overrides: Partial<SpecExport> & { name: string }): SpecExpo
   };
 }
 
-function makeParam(overrides: Partial<SpecSignatureParameter> & { name: string }): SpecSignatureParameter {
+function makeParam(
+  overrides: Partial<SpecSignatureParameter> & { name: string },
+): SpecSignatureParameter {
   return {
     required: true,
     schema: { type: 'string' },

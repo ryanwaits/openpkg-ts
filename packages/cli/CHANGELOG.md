@@ -1,5 +1,14 @@
 # @openpkg-ts/cli
 
+## 0.6.1
+
+### Patch Changes
+
+- Codebase health improvements: bounded caches, path traversal fix, module extraction, stricter linting
+- Updated dependencies
+  - @openpkg-ts/sdk@0.34.1
+  - @openpkg-ts/adapters@0.3.4
+
 ## 0.6.0
 
 ### Minor Changes

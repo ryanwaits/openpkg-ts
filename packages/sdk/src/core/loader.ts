@@ -1,5 +1,6 @@
 import * as fs from 'node:fs';
 import type { OpenPkg, SpecExport, SpecExportKind, SpecType } from '@openpkg-ts/spec';
+import { validateSpec } from '@openpkg-ts/spec';
 import { type HTMLOptions, toHTML } from '../render/html';
 import {
   type JSONOptions,
@@ -113,10 +114,31 @@ export function loadSpec(spec: OpenPkg): DocsInstance {
  * ```
  */
 export function createDocs(input: string | OpenPkg): DocsInstance {
-  const spec: OpenPkg =
-    typeof input === 'string' ? JSON.parse(fs.readFileSync(input, 'utf-8')) : input;
+  let spec: unknown;
 
-  return createDocsInstance(spec);
+  if (typeof input === 'string') {
+    try {
+      spec = JSON.parse(fs.readFileSync(input, 'utf-8'));
+    } catch (err) {
+      throw new Error(
+        `Failed to parse spec file: ${err instanceof Error ? err.message : String(err)}`,
+      );
+    }
+  } else {
+    spec = input;
+  }
+
+  // Validate spec structure
+  const validation = validateSpec(spec);
+  if (!validation.ok) {
+    const errors = validation.errors
+      .slice(0, 5)
+      .map((e) => `${e.instancePath || '/'}: ${e.message}`)
+      .join('; ');
+    throw new Error(`Invalid OpenPkg spec: ${errors}`);
+  }
+
+  return createDocsInstance(spec as OpenPkg);
 }
 
 function createDocsInstance(spec: OpenPkg): DocsInstance {

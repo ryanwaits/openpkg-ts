@@ -3,7 +3,8 @@ import * as path from 'node:path';
 import { Command } from 'commander';
 
 const COMPONENTS_JSON = 'components.json';
-const REGISTRY_URL = 'https://raw.githubusercontent.com/anthropics/openpkg-ts/main/registry/r/{name}.json';
+const REGISTRY_URL =
+  'https://raw.githubusercontent.com/anthropics/openpkg-ts/main/registry/r/{name}.json';
 
 interface ComponentsJson {
   $schema: string;

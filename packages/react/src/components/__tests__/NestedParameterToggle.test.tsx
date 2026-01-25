@@ -1,5 +1,5 @@
-import { describe, expect, test, mock, afterEach } from 'bun:test';
-import { render, screen, fireEvent, cleanup } from '@testing-library/react';
+import { afterEach, describe, expect, mock, test } from 'bun:test';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { NestedParameterToggle } from '../styled/NestedParameterToggle';
 
 afterEach(() => {
@@ -35,9 +35,7 @@ describe('NestedParameterToggle', () => {
 
     test('displays count when provided', () => {
       const onToggle = mock(() => {});
-      render(
-        <NestedParameterToggle expanded={false} onToggle={onToggle} count={5} />
-      );
+      render(<NestedParameterToggle expanded={false} onToggle={onToggle} count={5} />);
 
       expect(screen.getByText(/\(5\)/)).toBeDefined();
     });
@@ -45,11 +43,7 @@ describe('NestedParameterToggle', () => {
     test('applies custom className', () => {
       const onToggle = mock(() => {});
       render(
-        <NestedParameterToggle
-          expanded={false}
-          onToggle={onToggle}
-          className="custom-toggle"
-        />
+        <NestedParameterToggle expanded={false} onToggle={onToggle} className="custom-toggle" />,
       );
 
       const button = screen.getByRole('button');

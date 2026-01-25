@@ -75,9 +75,7 @@ function matchesExport(exp: SpecExport, criteria: FilterCriteria): boolean {
     let memberMatch = false;
     if (criteria.searchMembers && exp.members) {
       memberMatch = exp.members.some(
-        (m) =>
-          m.name?.toLowerCase().includes(term) ||
-          m.description?.toLowerCase().includes(term),
+        (m) => m.name?.toLowerCase().includes(term) || m.description?.toLowerCase().includes(term),
       );
     }
 

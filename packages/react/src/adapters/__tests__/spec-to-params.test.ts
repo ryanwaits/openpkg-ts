@@ -1,16 +1,18 @@
 import { describe, expect, test } from 'bun:test';
 import type { SpecSchema, SpecSignatureParameter } from '@openpkg-ts/spec';
 import {
-  specParamToNestedParam,
-  specParamsToNestedParams,
   resolveSchemaRef,
+  specParamsToNestedParams,
+  specParamToNestedParam,
 } from '../spec-to-params';
 
 // =============================================================================
 // Test Helpers
 // =============================================================================
 
-function makeParam(overrides: Partial<SpecSignatureParameter> & { name: string }): SpecSignatureParameter {
+function makeParam(
+  overrides: Partial<SpecSignatureParameter> & { name: string },
+): SpecSignatureParameter {
   return {
     required: true,
     schema: { type: 'string' },

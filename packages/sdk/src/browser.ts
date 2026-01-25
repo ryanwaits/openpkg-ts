@@ -4,6 +4,19 @@
  * Does NOT include extraction, file I/O, or Node.js-dependent code.
  */
 
+// Diagnostics (analysis only, no file I/O)
+export {
+  analyzeSpec,
+  type DiagnosticItem,
+  findMissingParamDocs,
+  getDeprecationMessage,
+  hasDeprecatedTag,
+  type SpecDiagnostics,
+} from './core/diagnostics';
+// Format utilities
+export { formatBadges, getMemberBadges } from './core/format';
+// Types only (no runtime code)
+export type { DocsInstance, LoadOptions } from './core/loader';
 // Query utilities (pure functions)
 export {
   buildSignatureString,
@@ -24,23 +37,8 @@ export {
   type SpecMappedType,
   sortByName,
 } from './core/query';
-
 // Query builder
-export { query, QueryBuilder } from './core/query-builder';
-
-// Format utilities
-export { formatBadges, getMemberBadges } from './core/format';
-
-// Diagnostics (analysis only, no file I/O)
-export {
-  analyzeSpec,
-  type DiagnosticItem,
-  findMissingParamDocs,
-  getDeprecationMessage,
-  hasDeprecatedTag,
-  type SpecDiagnostics,
-} from './core/diagnostics';
-
+export { QueryBuilder, query } from './core/query-builder';
 // Search utilities
 export {
   type AlgoliaRecord,
@@ -53,6 +51,3 @@ export {
   toSearchIndex,
   toSearchIndexJSON,
 } from './core/search';
-
-// Types only (no runtime code)
-export type { DocsInstance, LoadOptions } from './core/loader';

@@ -1,8 +1,5 @@
 // Query utilities
 
-// Query builder
-export { query, QueryBuilder } from './query-builder';
-
 // Config utilities
 export {
   CONFIG_FILENAME,
@@ -47,6 +44,8 @@ export {
   type SpecMappedType,
   sortByName,
 } from './query';
+// Query builder
+export { QueryBuilder, query } from './query-builder';
 // Search utilities
 export {
   type AlgoliaRecord,

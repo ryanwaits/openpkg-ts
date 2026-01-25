@@ -163,10 +163,12 @@ export function openpkgSource(options: OpenPkgSourceOptions): Source<{
   const groupedByKind = new Map<SpecExportKind, SpecExport[]>();
   for (const exp of exports) {
     const kind = exp.kind as SpecExportKind;
-    if (!groupedByKind.has(kind)) {
-      groupedByKind.set(kind, []);
+    const group = groupedByKind.get(kind);
+    if (group) {
+      group.push(exp);
+    } else {
+      groupedByKind.set(kind, [exp]);
     }
-    groupedByKind.get(kind)!.push(exp);
   }
 
   // Create root meta for the API section

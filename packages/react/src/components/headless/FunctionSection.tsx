@@ -148,7 +148,13 @@ export function FunctionSection({
       {/* Example */}
       <div data-slot="example">
         <h3>Example</h3>
-        {renderExample ? renderExample(exampleCode, 'typescript') : <pre><code>{exampleCode}</code></pre>}
+        {renderExample ? (
+          renderExample(exampleCode, 'typescript')
+        ) : (
+          <pre>
+            <code>{exampleCode}</code>
+          </pre>
+        )}
       </div>
     </section>
   );

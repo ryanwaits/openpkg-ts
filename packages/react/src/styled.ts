@@ -8,19 +8,43 @@ export {
   specParamToAPIParam,
   specSchemaToAPISchema,
 } from './adapters/spec-to-docskit';
-
+export {
+  generateDefaultExample,
+  specExampleToCodeExample,
+} from './adapters/spec-to-examples';
+// Adapters for spec conversion
+export type { NestedParameterData } from './adapters/spec-to-params';
+export {
+  resolveSchemaRef,
+  specParamsToNestedParams,
+  specParamToNestedParam,
+} from './adapters/spec-to-params';
 // Also re-export headless components for composition
 export * from './components/headless';
-
 // Original styled components
+// Supabase/Stripe style layout components
+// Stripe-style parameter components
+// Code example components (right column)
+// Spec-connected components
 export type {
   APIPageProps,
+  APIParameterItemProps,
+  APIReferenceLayoutProps,
   ClassPageProps,
   ClassSectionProps,
+  CodeExample,
+  CodePanelProps,
   CodeTab,
   CodeTabsProps,
+  CollapsiblePanelProps,
   EnumPageProps,
   EnumSectionProps,
+  EnumValue,
+  EnumValuesSectionProps,
+  ExampleChip,
+  ExampleChipsProps,
+  ExampleSectionProps,
+  ExpandableParameterProps,
   ExportCardProps,
   ExportIndexPageProps,
   ExportSectionProps,
@@ -30,18 +54,33 @@ export type {
   ImportSectionProps,
   InterfacePageProps,
   InterfaceSectionProps,
+  MethodSectionFromSpecProps,
+  MethodSectionProps,
+  NestedParameterContainerProps,
+  NestedParameterToggleProps,
   NestedPropertyItemProps,
   ParameterItemProps,
+  StripeAPIReferencePageProps,
+  SyncScrollContextValue,
+  SyncScrollProviderProps,
   VariablePageProps,
   VariableSectionProps,
 } from './components/styled';
 export {
   APIPage,
+  APIParameterItem,
+  APIReferenceLayout,
   ClassPage,
   ClassSection,
+  CodePanel,
   CodeTabs,
+  CollapsiblePanel,
   EnumPage,
   EnumSection,
+  EnumValuesSection,
+  ExampleChips,
+  ExampleSection,
+  ExpandableParameter,
   ExportCard,
   ExportIndexPage,
   ExportSection,
@@ -51,85 +90,22 @@ export {
   ImportSection,
   InterfacePage,
   InterfaceSection,
+  MethodSection,
+  MethodSectionFromSpec,
+  NestedParameterContainer,
+  NestedParameterToggle,
   ParameterItem,
-  VariablePage,
-  VariableSection,
-} from './components/styled';
-
-// Supabase/Stripe style layout components
-export type {
-  APIReferenceLayoutProps,
-  SyncScrollProviderProps,
-  SyncScrollContextValue,
-  MethodSectionProps,
-} from './components/styled';
-export {
-  APIReferenceLayout,
+  StripeAPIReferencePage,
   SyncScrollProvider,
   useSyncScroll,
   useSyncSection,
-  MethodSection,
+  VariablePage,
+  VariableSection,
 } from './components/styled';
-
-// Stripe-style parameter components
-export type {
-  APIParameterItemProps,
-  NestedParameterToggleProps,
-  NestedParameterContainerProps,
-  ExpandableParameterProps,
-  EnumValuesSectionProps,
-  EnumValue,
-} from './components/styled';
-export {
-  APIParameterItem,
-  NestedParameterToggle,
-  NestedParameterContainer,
-  ExpandableParameter,
-  EnumValuesSection,
-} from './components/styled';
-
-// Code example components (right column)
-export type {
-  ExampleChipsProps,
-  ExampleChip,
-  CodePanelProps,
-  CollapsiblePanelProps,
-  ExampleSectionProps,
-  CodeExample,
-} from './components/styled';
-export {
-  ExampleChips,
-  CodePanel,
-  CollapsiblePanel,
-  ExampleSection,
-} from './components/styled';
-
-// Spec-connected components
-export type {
-  MethodSectionFromSpecProps,
-  StripeAPIReferencePageProps,
-} from './components/styled';
-export {
-  MethodSectionFromSpec,
-  StripeAPIReferencePage,
-} from './components/styled';
-
 // Hooks for spec data
 export type { MethodData } from './hooks/useMethodFromSpec';
 export {
+  extractMethodData,
   useMethodFromSpec,
   useMethodsFromSpec,
-  extractMethodData,
 } from './hooks/useMethodFromSpec';
-
-// Adapters for spec conversion
-export type { NestedParameterData } from './adapters/spec-to-params';
-export {
-  specParamToNestedParam,
-  specParamsToNestedParams,
-  resolveSchemaRef,
-} from './adapters/spec-to-params';
-export {
-  specExampleToCodeExample,
-  generateDefaultExample,
-} from './adapters/spec-to-examples';

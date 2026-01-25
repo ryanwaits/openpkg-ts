@@ -216,9 +216,7 @@ export function ExportIndexPage({
       {filteredGroups.length === 0 && (
         <div data-slot="empty">
           <p>
-            {isFiltering
-              ? 'No exports match your search.'
-              : 'No exports found in this package.'}
+            {isFiltering ? 'No exports match your search.' : 'No exports found in this package.'}
           </p>
           {isFiltering && (
             <button

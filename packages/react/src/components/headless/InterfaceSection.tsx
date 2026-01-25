@@ -48,11 +48,22 @@ export function InterfaceSection({
       : `${kindLabel} ${exp.name} { }`;
 
   return (
-    <section className={className} data-component="interface-section" data-export={exp.name} data-kind={exp.kind}>
+    <section
+      className={className}
+      data-component="interface-section"
+      data-export={exp.name}
+      data-kind={exp.kind}
+    >
       {/* Header */}
       <header data-slot="header">
-        <h2 data-slot="title">{kindLabel} {exp.name}</h2>
-        {exp.extends && <p data-slot="extends"><code>extends {exp.extends}</code></p>}
+        <h2 data-slot="title">
+          {kindLabel} {exp.name}
+        </h2>
+        {exp.extends && (
+          <p data-slot="extends">
+            <code>extends {exp.extends}</code>
+          </p>
+        )}
         {exp.description && <p data-slot="description">{exp.description}</p>}
         {exp.deprecated && (
           <p data-slot="deprecated" data-deprecated="true">
@@ -85,7 +96,9 @@ export function InterfaceSection({
                       <code>{prop.name}</code>
                       {prop.required === false && <span data-badge="optional">?</span>}
                     </td>
-                    <td><code>{formatSchema(prop.schema)}</code></td>
+                    <td>
+                      <code>{formatSchema(prop.schema)}</code>
+                    </td>
                     <td>{prop.description}</td>
                   </tr>
                 ),
@@ -110,8 +123,12 @@ export function InterfaceSection({
             <tbody>
               {methods.map((method, index) => (
                 <tr key={method.name ?? index}>
-                  <td><code>{method.name}()</code></td>
-                  <td><code>{formatMethodSignature(method)}</code></td>
+                  <td>
+                    <code>{method.name}()</code>
+                  </td>
+                  <td>
+                    <code>{formatMethodSignature(method)}</code>
+                  </td>
                   <td>{method.description}</td>
                 </tr>
               ))}
@@ -123,7 +140,9 @@ export function InterfaceSection({
       {/* Example */}
       <div data-slot="example">
         <h3>Definition</h3>
-        <pre><code>{`${importStatement}\n\n${typeDefinition}`}</code></pre>
+        <pre>
+          <code>{`${importStatement}\n\n${typeDefinition}`}</code>
+        </pre>
       </div>
     </section>
   );

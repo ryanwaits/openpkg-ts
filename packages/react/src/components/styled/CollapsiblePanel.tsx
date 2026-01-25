@@ -1,7 +1,7 @@
 'use client';
 
-import * as Collapsible from '@radix-ui/react-collapsible';
 import { cn } from '@openpkg-ts/ui/lib/utils';
+import * as Collapsible from '@radix-ui/react-collapsible';
 import { ChevronRight } from 'lucide-react';
 import { type ReactNode, useState } from 'react';
 

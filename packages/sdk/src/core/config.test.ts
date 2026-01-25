@@ -1,8 +1,8 @@
-import { describe, expect, test, beforeEach, afterEach } from 'bun:test';
+import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
 import * as fs from 'node:fs';
-import * as path from 'node:path';
 import * as os from 'node:os';
-import { loadConfig, mergeConfig, CONFIG_FILENAME } from './config';
+import * as path from 'node:path';
+import { CONFIG_FILENAME, loadConfig, mergeConfig } from './config';
 
 describe('config', () => {
   let tmpDir: string;
@@ -29,10 +29,7 @@ describe('config', () => {
           depth: 2,
         },
       };
-      fs.writeFileSync(
-        path.join(tmpDir, CONFIG_FILENAME),
-        JSON.stringify(config),
-      );
+      fs.writeFileSync(path.join(tmpDir, CONFIG_FILENAME), JSON.stringify(config));
 
       const result = loadConfig(tmpDir);
       expect(result).toEqual(config);
@@ -57,10 +54,7 @@ describe('config', () => {
       const fileConfig = { externals: { include: ['file-config'] } };
       const pkgConfig = { externals: { include: ['pkg-config'] } };
 
-      fs.writeFileSync(
-        path.join(tmpDir, CONFIG_FILENAME),
-        JSON.stringify(fileConfig),
-      );
+      fs.writeFileSync(path.join(tmpDir, CONFIG_FILENAME), JSON.stringify(fileConfig));
       fs.writeFileSync(
         path.join(tmpDir, 'package.json'),
         JSON.stringify({ name: 'test-pkg', openpkg: pkgConfig }),
@@ -78,10 +72,7 @@ describe('config', () => {
     });
 
     test('returns null for package.json without openpkg field', () => {
-      fs.writeFileSync(
-        path.join(tmpDir, 'package.json'),
-        JSON.stringify({ name: 'test-pkg' }),
-      );
+      fs.writeFileSync(path.join(tmpDir, 'package.json'), JSON.stringify({ name: 'test-pkg' }));
 
       const result = loadConfig(tmpDir);
       expect(result).toBeNull();

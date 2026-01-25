@@ -33,9 +33,7 @@ export function MethodSectionFromSpec({
 }: MethodSectionFromSpecProps): ReactNode {
   // Resolve export
   const exp =
-    typeof exportProp === 'string'
-      ? spec.exports.find((e) => e.name === exportProp)
-      : exportProp;
+    typeof exportProp === 'string' ? spec.exports.find((e) => e.name === exportProp) : exportProp;
 
   if (!exp) {
     return null;
