@@ -70,7 +70,7 @@ export function getInheritedMembers(
     ? classType.getSymbol()?.valueDeclaration &&
       checker.getTypeOfSymbolAtLocation(
         classType.getSymbol()!,
-        classType.getSymbol()!.valueDeclaration!,
+        classType.getSymbol()?.valueDeclaration!,
       )
     : classType;
 

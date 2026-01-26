@@ -25,7 +25,7 @@ describe('toPagefindRecords', () => {
     const [record] = records;
     expect(record.weighted_sections).toBeDefined();
 
-    const nameSection = record.weighted_sections!.find((s) => s.text === 'greet');
+    const nameSection = record.weighted_sections?.find((s) => s.text === 'greet');
     expect(nameSection?.weight).toBe(10); // default name weight
   });
 
@@ -38,8 +38,8 @@ describe('toPagefindRecords', () => {
     expect(records).toHaveLength(1);
     const [record] = records;
 
-    const nameSection = record.weighted_sections!.find((s) => s.text === 'greet');
-    const descSection = record.weighted_sections!.find((s) => s.text === 'Greets a person');
+    const nameSection = record.weighted_sections?.find((s) => s.text === 'greet');
+    const descSection = record.weighted_sections?.find((s) => s.text === 'Greets a person');
 
     expect(nameSection?.weight).toBe(100);
     expect(descSection?.weight).toBe(50);

@@ -166,7 +166,7 @@ describe('docs command', () => {
 
       const fn = docs.getExport('createClient');
       expect(fn).toBeDefined();
-      expect(fn!.kind).toBe('function');
+      expect(fn?.kind).toBe('function');
     });
 
     test('getExportsByKind filters correctly', () => {
@@ -358,35 +358,35 @@ describe('docs command', () => {
       const fn = json.exports.find((e) => e.name === 'createClient');
 
       expect(fn).toBeDefined();
-      expect(fn!.id).toBe('createClient');
-      expect(fn!.name).toBe('createClient');
-      expect(fn!.kind).toBe('function');
-      expect(fn!.signature).toBeDefined();
-      expect(fn!.deprecated).toBe(false);
+      expect(fn?.id).toBe('createClient');
+      expect(fn?.name).toBe('createClient');
+      expect(fn?.kind).toBe('function');
+      expect(fn?.signature).toBeDefined();
+      expect(fn?.deprecated).toBe(false);
     });
 
     test('function export has parameters and returns', () => {
       const json = toJSON(testSpec) as SimplifiedSpec;
       const fn = json.exports.find((e) => e.name === 'createClient');
 
-      expect(fn!.parameters).toBeDefined();
-      expect(fn!.parameters!.length).toBe(1);
-      expect(fn!.parameters![0].name).toBe('config');
-      expect(fn!.returns).toBeDefined();
+      expect(fn?.parameters).toBeDefined();
+      expect(fn?.parameters?.length).toBe(1);
+      expect(fn?.parameters?.[0].name).toBe('config');
+      expect(fn?.returns).toBeDefined();
     });
 
     test('class export has members', () => {
       const json = toJSON(testSpec) as SimplifiedSpec;
       const cls = json.exports.find((e) => e.name === 'ApiClient');
 
-      expect(cls!.members).toBeDefined();
-      expect(cls!.members!.length).toBe(2);
+      expect(cls?.members).toBeDefined();
+      expect(cls?.members?.length).toBe(2);
 
-      const prop = cls!.members!.find((m) => m.name === 'baseUrl');
-      expect(prop!.kind).toBe('property');
+      const prop = cls?.members?.find((m) => m.name === 'baseUrl');
+      expect(prop?.kind).toBe('property');
 
-      const method = cls!.members!.find((m) => m.name === 'fetch');
-      expect(method!.kind).toBe('method');
+      const method = cls?.members?.find((m) => m.name === 'fetch');
+      expect(method?.kind).toBe('method');
     });
 
     test('single export mode', () => {
@@ -417,10 +417,10 @@ describe('docs command', () => {
       const json = toJSON(testSpec) as SimplifiedSpec;
       const fn = json.exports.find((e) => e.name === 'createClient');
 
-      expect(fn!.examples).toBeDefined();
-      expect(fn!.examples!.length).toBe(1);
-      expect(fn!.examples![0].code).toContain('createClient');
-      expect(fn!.examples![0].title).toBe('Basic Usage');
+      expect(fn?.examples).toBeDefined();
+      expect(fn?.examples?.length).toBe(1);
+      expect(fn?.examples?.[0].code).toContain('createClient');
+      expect(fn?.examples?.[0].title).toBe('Basic Usage');
     });
   });
 

@@ -63,7 +63,7 @@ export function FunctionSection({ export: exp, spec }: FunctionSectionProps): Re
       {/* Parameters */}
       {hasParams && (
         <ParameterList title="Parameters">
-          {sig.parameters!.map((param, index) => {
+          {sig.parameters?.map((param, index) => {
             const apiParam = specParamToAPIParam(param);
             return (
               <APIParameterItem

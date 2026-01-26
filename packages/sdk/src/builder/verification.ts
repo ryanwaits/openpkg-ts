@@ -4,17 +4,12 @@
 
 import * as path from 'node:path';
 import type { SpecExport, SpecType } from '@openpkg-ts/spec';
-import ts from 'typescript';
-import type {
-  ExportTracker,
-  ExportVerification,
-  ForgottenExport,
-  TypeReference,
-} from '../types';
+import type ts from 'typescript';
+import type { ExportTracker, ExportVerification, ForgottenExport, TypeReference } from '../types';
 import { findTypeDefinition, hasInternalTag } from './type-cache';
 
 /** Built-in types that shouldn't be tracked as dangling refs */
-export const BUILTIN_TYPES = new Set([
+export const BUILTIN_TYPES: Set<string> = new Set([
   'Array',
   'ArrayBuffer',
   'ArrayBufferLike',

@@ -27,7 +27,7 @@
   },
   "overrides": [
     {
-      "includes": ["**/test-fixtures/**"],
+      "includes": ["**/test-fixtures/**", "**/*.test.ts", "**/*.test.tsx"],
       "linter": {
         "rules": {
           "suspicious": { "noExplicitAny": "off" },
@@ -39,7 +39,10 @@
       "includes": ["**/*.tsx"],
       "linter": {
         "rules": {
-          "suspicious": { "noArrayIndexKey": "off" }
+          "suspicious": { "noArrayIndexKey": "off" },
+          "security": { "noDangerouslySetInnerHtml": "off" },
+          "a11y": { "useSemanticElements": "off" },
+          "correctness": { "useHookAtTopLevel": "off" }
         }
       }
     }

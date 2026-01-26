@@ -126,7 +126,7 @@ export function FullAPIReferencePage({
       if (!groups.has(kind)) {
         groups.set(kind, []);
       }
-      groups.get(kind)!.push(exp);
+      groups.get(kind)?.push(exp);
     }
     return groups;
   }, [filteredExports]);

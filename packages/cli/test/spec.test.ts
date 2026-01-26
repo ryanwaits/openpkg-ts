@@ -106,7 +106,7 @@ describe('spec command (extractSpec)', () => {
 
       const classExport = result.spec.exports.find((e) => e.kind === 'class');
       expect(classExport).toBeDefined();
-      expect(classExport!.name).toBe('Service');
+      expect(classExport?.name).toBe('Service');
     });
 
     test('extracts enum exports', async () => {
@@ -286,9 +286,9 @@ describe('spec command (extractSpec)', () => {
 
       // Verification is always included
       expect(result.verification).toBeDefined();
-      expect(typeof result.verification!.discovered).toBe('number');
-      expect(typeof result.verification!.extracted).toBe('number');
-      expect(typeof result.verification!.failed).toBe('number');
+      expect(typeof result.verification?.discovered).toBe('number');
+      expect(typeof result.verification?.extracted).toBe('number');
+      expect(typeof result.verification?.failed).toBe('number');
     });
 
     test('verification tracks filtered exports', async () => {
@@ -299,7 +299,7 @@ describe('spec command (extractSpec)', () => {
       });
 
       // Some exports should be skipped due to filter
-      expect(result.verification!.skipped).toBeGreaterThan(0);
+      expect(result.verification?.skipped).toBeGreaterThan(0);
     });
 
     test('verification details include skip reasons', async () => {
@@ -309,9 +309,9 @@ describe('spec command (extractSpec)', () => {
         only: ['createUser'],
       });
 
-      if (result.verification!.skipped > 0) {
-        expect(result.verification!.details.skipped.length).toBeGreaterThan(0);
-        expect(result.verification!.details.skipped[0].reason).toBe('filtered');
+      if (result.verification?.skipped > 0) {
+        expect(result.verification?.details.skipped.length).toBeGreaterThan(0);
+        expect(result.verification?.details.skipped[0].reason).toBe('filtered');
       }
     });
   });
@@ -391,7 +391,7 @@ describe('spec command (extractSpec)', () => {
 
       const fn = result.spec.exports.find((e) => e.kind === 'function');
       expect(fn).toBeDefined();
-      expect(fn!.signatures).toBeDefined();
+      expect(fn?.signatures).toBeDefined();
     });
 
     test('interface exports have members', async () => {
@@ -402,7 +402,7 @@ describe('spec command (extractSpec)', () => {
 
       const iface = result.spec.exports.find((e) => e.kind === 'interface');
       expect(iface).toBeDefined();
-      expect(iface!.members).toBeDefined();
+      expect(iface?.members).toBeDefined();
     });
   });
 

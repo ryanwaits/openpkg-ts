@@ -149,7 +149,6 @@ export function ExampleSection({
  */
 function useSyncScrollSafe() {
   try {
-    // eslint-disable-next-line react-hooks/rules-of-hooks
     return useSyncScroll();
   } catch {
     return null;

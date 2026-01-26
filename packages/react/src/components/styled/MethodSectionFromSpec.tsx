@@ -3,7 +3,6 @@
 import type { OpenPkg, SpecExport } from '@openpkg-ts/spec';
 import { cn } from '@openpkg-ts/ui/lib/utils';
 import type { ReactNode } from 'react';
-import { specParamToNestedParam } from '../../adapters/spec-to-params';
 import { extractMethodData } from '../../hooks/useMethodFromSpec';
 import { ExpandableParameter } from './ExpandableParameter';
 import { MethodSection } from './MethodSection';

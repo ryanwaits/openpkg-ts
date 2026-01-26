@@ -479,11 +479,11 @@ describe('normalizeExport', () => {
       ],
     };
     const result = normalizeExport(input);
-    expect(result.signatures![0].parameters![0].schema).toEqual({
+    expect(result.signatures?.[0].parameters?.[0].schema).toEqual({
       type: 'integer',
       'x-ts-type': 'bigint',
     });
-    expect(result.signatures![0].returns!.schema).toEqual({ type: 'null', 'x-ts-type': 'void' });
+    expect(result.signatures?.[0].returns?.schema).toEqual({ type: 'null', 'x-ts-type': 'void' });
   });
 
   test('normalizes export members', () => {
@@ -500,7 +500,7 @@ describe('normalizeExport', () => {
       ],
     };
     const result = normalizeExport(input);
-    expect(result.members![0].schema).toEqual({ type: 'string', 'x-ts-type': 'symbol' });
+    expect(result.members?.[0].schema).toEqual({ type: 'string', 'x-ts-type': 'symbol' });
   });
 });
 
@@ -1034,8 +1034,8 @@ describe('normalizeExport with members schema generation', () => {
     };
     const result = normalizeExport(input);
     expect(result.members).toBeDefined();
-    expect(result.members!.length).toBe(1);
-    expect(result.members![0].name).toBe('id');
+    expect(result.members?.length).toBe(1);
+    expect(result.members?.[0].name).toBe('id');
   });
 });
 
@@ -1188,8 +1188,8 @@ describe('extract pipeline integration', () => {
 
     const result = normalizeExport(functionExport);
 
-    expect(result.signatures![0].parameters![0].schema).toEqual({ 'x-ts-type': 'unknown' });
-    expect(result.signatures![0].returns!.schema).toEqual({
+    expect(result.signatures?.[0].parameters?.[0].schema).toEqual({ 'x-ts-type': 'unknown' });
+    expect(result.signatures?.[0].returns?.schema).toEqual({
       anyOf: [
         { type: 'string' },
         { type: 'null', 'x-ts-type': 'void' },
@@ -1799,7 +1799,7 @@ describe('AJV validation - normalized output is valid JSON Schema', () => {
       // Function exports don't generate schema from members
       expect(result.signatures).toBeDefined();
       // Verify normalized signatures are valid (using null instead of void for JSON Schema validity)
-      const sigSchema = result.signatures![0].returns!.schema;
+      const sigSchema = result.signatures?.[0].returns?.schema;
       expect(validateSchema(sigSchema as Record<string, unknown>)).toBe(true);
     });
 
@@ -1817,7 +1817,7 @@ describe('AJV validation - normalized output is valid JSON Schema', () => {
       };
       const result = normalizeExport(exp);
       // void normalizes to null with x-ts-type extension
-      expect(result.signatures![0].returns!.schema).toEqual({ type: 'null', 'x-ts-type': 'void' });
+      expect(result.signatures?.[0].returns?.schema).toEqual({ type: 'null', 'x-ts-type': 'void' });
     });
   });
 

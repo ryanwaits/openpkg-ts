@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import type { OpenPkg, SpecExport, SpecSignatureParameter } from '@openpkg-ts/spec';
-import { extractMethodData, type MethodData } from '../useMethodFromSpec';
+import { extractMethodData } from '../useMethodFromSpec';
 
 // =============================================================================
 // Test Helpers

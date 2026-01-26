@@ -21,13 +21,13 @@ describe('getExport', () => {
 
       expect(result.errors).toHaveLength(0);
       expect(result.export).not.toBeNull();
-      expect(result.export!.kind).toBe('function');
-      expect(result.export!.signatures).toBeDefined();
-      expect(result.export!.signatures).toHaveLength(1);
+      expect(result.export?.kind).toBe('function');
+      expect(result.export?.signatures).toBeDefined();
+      expect(result.export?.signatures).toHaveLength(1);
 
-      const sig = result.export!.signatures![0];
+      const sig = result.export?.signatures?.[0];
       expect(sig.parameters).toHaveLength(1);
-      expect(sig.parameters![0].name).toBe('config');
+      expect(sig.parameters?.[0].name).toBe('config');
     });
 
     test('gets arrow function export', async () => {
@@ -42,7 +42,7 @@ describe('getExport', () => {
       expect(result.export).not.toBeNull();
       // Arrow functions assigned to const are classified as variables at declaration level
       // but listExports detects them as functions via type analysis
-      expect(['function', 'variable']).toContain(result.export!.kind);
+      expect(['function', 'variable']).toContain(result.export?.kind);
     });
 
     test('gets function with overloads', async () => {
@@ -59,9 +59,9 @@ describe('getExport', () => {
       const result = await getExport({ entryFile: 'test.ts', exportName: 'parse', content: code });
 
       expect(result.errors).toHaveLength(0);
-      expect(result.export!.kind).toBe('function');
+      expect(result.export?.kind).toBe('function');
       // Should have multiple signatures for overloads
-      expect(result.export!.signatures!.length).toBeGreaterThanOrEqual(1);
+      expect(result.export?.signatures?.length).toBeGreaterThanOrEqual(1);
     });
   });
 
@@ -81,11 +81,11 @@ describe('getExport', () => {
 
       expect(result.errors).toHaveLength(0);
       expect(result.export).not.toBeNull();
-      expect(result.export!.kind).toBe('interface');
-      expect(result.export!.members).toBeDefined();
-      expect(result.export!.members!.length).toBe(2);
+      expect(result.export?.kind).toBe('interface');
+      expect(result.export?.members).toBeDefined();
+      expect(result.export?.members?.length).toBe(2);
 
-      const baseUrl = result.export!.members!.find((m: { name: string }) => m.name === 'baseUrl');
+      const baseUrl = result.export?.members?.find((m: { name: string }) => m.name === 'baseUrl');
       expect(baseUrl).toBeDefined();
     });
 
@@ -101,10 +101,10 @@ describe('getExport', () => {
       const result = await getExport({ entryFile: 'test.ts', exportName: 'Client', content: code });
 
       expect(result.errors).toHaveLength(0);
-      expect(result.export!.kind).toBe('interface');
-      expect(result.export!.members).toBeDefined();
+      expect(result.export?.kind).toBe('interface');
+      expect(result.export?.members).toBeDefined();
 
-      const fetch = result.export!.members!.find((m: { name: string }) => m.name === 'fetch');
+      const fetch = result.export?.members?.find((m: { name: string }) => m.name === 'fetch');
       expect(fetch).toBeDefined();
     });
   });
@@ -122,7 +122,7 @@ describe('getExport', () => {
 
       expect(result.errors).toHaveLength(0);
       expect(result.export).not.toBeNull();
-      expect(result.export!.kind).toBe('type');
+      expect(result.export?.kind).toBe('type');
     });
 
     test('gets mapped type', async () => {
@@ -138,7 +138,7 @@ describe('getExport', () => {
       });
 
       expect(result.errors).toHaveLength(0);
-      expect(result.export!.kind).toBe('type');
+      expect(result.export?.kind).toBe('type');
     });
   });
 
@@ -169,11 +169,11 @@ describe('getExport', () => {
 
       expect(result.errors).toHaveLength(0);
       expect(result.export).not.toBeNull();
-      expect(result.export!.kind).toBe('class');
-      expect(result.export!.members).toBeDefined();
+      expect(result.export?.kind).toBe('class');
+      expect(result.export?.members).toBeDefined();
 
       // Should have baseUrl property and request method
-      const members = result.export!.members!;
+      const members = result.export?.members!;
       expect(members.some((m: { name: string }) => m.name === 'baseUrl')).toBe(true);
       expect(members.some((m: { name: string }) => m.name === 'request')).toBe(true);
     });
@@ -190,9 +190,9 @@ describe('getExport', () => {
       const result = await getExport({ entryFile: 'test.ts', exportName: 'Utils', content: code });
 
       expect(result.errors).toHaveLength(0);
-      expect(result.export!.kind).toBe('class');
+      expect(result.export?.kind).toBe('class');
 
-      const members = result.export!.members!;
+      const members = result.export?.members!;
       const version = members.find((m: { name: string }) => m.name === 'VERSION');
       const format = members.find((m: { name: string }) => m.name === 'format');
       expect(version).toBeDefined();
@@ -220,9 +220,9 @@ describe('getExport', () => {
 
       expect(result.errors).toHaveLength(0);
       expect(result.export).not.toBeNull();
-      expect(result.export!.kind).toBe('enum');
-      expect(result.export!.members).toBeDefined();
-      expect(result.export!.members!.length).toBe(4);
+      expect(result.export?.kind).toBe('enum');
+      expect(result.export?.members).toBeDefined();
+      expect(result.export?.members?.length).toBe(4);
     });
 
     test('gets string enum', async () => {
@@ -238,8 +238,8 @@ describe('getExport', () => {
       const result = await getExport({ entryFile: 'test.ts', exportName: 'Status', content: code });
 
       expect(result.errors).toHaveLength(0);
-      expect(result.export!.kind).toBe('enum');
-      expect(result.export!.members!.length).toBe(3);
+      expect(result.export?.kind).toBe('enum');
+      expect(result.export?.members?.length).toBe(3);
     });
   });
 
@@ -258,7 +258,7 @@ describe('getExport', () => {
 
       expect(result.errors).toHaveLength(0);
       expect(result.export).not.toBeNull();
-      expect(result.export!.kind).toBe('variable');
+      expect(result.export?.kind).toBe('variable');
     });
 
     test('gets typed const', async () => {
@@ -274,7 +274,7 @@ describe('getExport', () => {
       });
 
       expect(result.errors).toHaveLength(0);
-      expect(result.export!.kind).toBe('variable');
+      expect(result.export?.kind).toBe('variable');
     });
   });
 

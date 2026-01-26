@@ -96,8 +96,8 @@ export function FunctionSection({
         <div data-slot="returns">
           <h3>Returns</h3>
           <p>
-            <code>{formatSchema(sig.returns!.schema)}</code>
-            {sig.returns!.description && <span> — {sig.returns!.description}</span>}
+            <code>{formatSchema(sig.returns?.schema)}</code>
+            {sig.returns?.description && <span> — {sig.returns?.description}</span>}
           </p>
         </div>
       )}
@@ -107,7 +107,7 @@ export function FunctionSection({
         <div data-slot="throws">
           <h3>Throws</h3>
           <ul>
-            {sig.throws!.map((t, i) => (
+            {sig.throws?.map((t, i) => (
               <li key={i}>
                 {t.type && <code>{t.type}</code>}
                 {t.type && t.description && ' — '}
@@ -131,7 +131,7 @@ export function FunctionSection({
               </tr>
             </thead>
             <tbody>
-              {exp.typeParameters!.map((tp) => (
+              {exp.typeParameters?.map((tp) => (
                 <tr key={tp.name}>
                   <td>
                     <code>{tp.name}</code>

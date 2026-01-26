@@ -61,7 +61,7 @@ function groupByKind(exports: SpecExport[]): CategoryGroup[] {
   return KIND_ORDER.filter((kind) => groups.has(kind)).map((kind) => ({
     kind,
     label: KIND_LABELS[kind],
-    exports: groups.get(kind)!.sort((a, b) => a.name.localeCompare(b.name)),
+    exports: groups.get(kind)?.sort((a, b) => a.name.localeCompare(b.name)),
   }));
 }
 

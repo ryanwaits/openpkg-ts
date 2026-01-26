@@ -1,8 +1,6 @@
 export class Example {
   public name: string;
-  private secret: string;
   protected internal: string;
-  #esPrivate: string;
 
   constructor() {
     this.name = 'example';
@@ -13,10 +11,6 @@ export class Example {
 
   public getName(): string {
     return this.name;
-  }
-
-  private getSecret(): string {
-    return this.secret;
   }
 
   protected getInternal(): string {

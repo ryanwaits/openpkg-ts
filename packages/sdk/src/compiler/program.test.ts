@@ -21,14 +21,14 @@ describe('createProgram local re-export resolution', () => {
     const getDataExport = exports.find((e) => e.getName() === 'getData');
 
     expect(getDataExport).toBeDefined();
-    expect(getDataExport!.flags & ts.SymbolFlags.Alias).toBeTruthy();
+    expect(getDataExport?.flags & ts.SymbolFlags.Alias).toBeTruthy();
 
     // Aliased symbol should have declarations
     const aliased = checker.getAliasedSymbol(getDataExport!);
     expect(aliased.declarations?.length).toBeGreaterThan(0);
 
     // Verify the declaration is in the correct file
-    const decl = aliased.declarations![0];
+    const decl = aliased.declarations?.[0];
     expect(decl.getSourceFile().fileName).toContain('subdir/data.ts');
   });
 
@@ -46,7 +46,7 @@ describe('createProgram local re-export resolution', () => {
 
     const aliased = checker.getAliasedSymbol(dataResultExport!);
     expect(aliased.declarations?.length).toBeGreaterThan(0);
-    expect(aliased.declarations![0].getSourceFile().fileName).toContain('subdir/data.ts');
+    expect(aliased.declarations?.[0].getSourceFile().fileName).toContain('subdir/data.ts');
   });
 
   test('resolves tsx re-exports when extended config is unresolvable', () => {
@@ -67,7 +67,7 @@ describe('createProgram local re-export resolution', () => {
     const dataProviderExport = exports.find((e) => e.getName() === 'DataProvider');
 
     expect(dataProviderExport).toBeDefined();
-    expect(dataProviderExport!.flags & ts.SymbolFlags.Alias).toBeTruthy();
+    expect(dataProviderExport?.flags & ts.SymbolFlags.Alias).toBeTruthy();
 
     // Key assertion: aliased symbol should have declarations
     // Before fix: 0 declarations (undefined)
@@ -75,6 +75,6 @@ describe('createProgram local re-export resolution', () => {
     const aliased = checker.getAliasedSymbol(dataProviderExport!);
     const declCount = aliased.declarations?.length ?? 0;
     expect(declCount).toBeGreaterThan(0);
-    expect(aliased.declarations![0].getSourceFile().fileName).toContain('contexts/data.tsx');
+    expect(aliased.declarations?.[0].getSourceFile().fileName).toContain('contexts/data.tsx');
   });
 });

@@ -8,7 +8,6 @@ import picomatch from 'picomatch';
 import ts from 'typescript';
 import { extractTypeParametersFromSignature, getJSDocForSignature } from '../ast/utils';
 import type { SerializerContext } from '../serializers/context';
-import type { ExternalsConfig } from '../types';
 import { extractParameters, registerReferencedTypes } from '../types/parameters';
 import { buildSchema } from '../types/schema-builder';
 

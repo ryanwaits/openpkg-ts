@@ -149,7 +149,7 @@ export function APIParameterItem({
   const [expanded, setExpanded] = useState(false);
   const [copied, setCopied] = useState(false);
   const hasNested = children?.properties && Object.keys(children.properties).length > 0;
-  const _nestedCount = hasNested ? Object.keys(children!.properties!).length : 0;
+  const _nestedCount = hasNested ? Object.keys(children?.properties!).length : 0;
 
   const handleCopy = () => {
     navigator.clipboard.writeText(name);

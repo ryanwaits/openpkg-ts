@@ -11,7 +11,6 @@ import {
   listExports,
   loadConfig,
   mergeConfig,
-  type SpecDiagnostics,
 } from '@openpkg-ts/sdk';
 import type { OpenPkg, SchemaVersion, SpecExportKind, SpecGenerationMeta } from '@openpkg-ts/spec';
 import { getValidationErrors } from '@openpkg-ts/spec';
