@@ -31,8 +31,9 @@ export function loadConfig(cwd: string): OpenpkgConfig | null {
     try {
       const content = fs.readFileSync(configPath, 'utf-8');
       return JSON.parse(content) as OpenpkgConfig;
-    } catch {
-      // Invalid JSON, skip
+    } catch (err) {
+      const msg = err instanceof SyntaxError ? err.message : String(err);
+      console.warn(`Warning: Invalid JSON in ${CONFIG_FILENAME}: ${msg}`);
     }
   }
 
@@ -45,8 +46,9 @@ export function loadConfig(cwd: string): OpenpkgConfig | null {
       if (pkg.openpkg) {
         return pkg.openpkg as OpenpkgConfig;
       }
-    } catch {
-      // Invalid JSON, skip
+    } catch (err) {
+      const msg = err instanceof SyntaxError ? err.message : String(err);
+      console.warn(`Warning: Invalid JSON in package.json: ${msg}`);
     }
   }
 

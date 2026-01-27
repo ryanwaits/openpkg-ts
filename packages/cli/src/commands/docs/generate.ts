@@ -48,16 +48,42 @@ function getExtension(format: OutputFormat): string {
   }
 }
 
+const VALID_KINDS = [
+  'function',
+  'class',
+  'variable',
+  'interface',
+  'type',
+  'enum',
+  'module',
+  'namespace',
+  'reference',
+  'external',
+] as const;
+
 function applyFilters(spec: OpenPkg, options: GenerateCommandOptions): OpenPkg {
   let qb = query(spec);
 
   if (options.kind) {
-    const kinds = options.kind.split(',').map((k) => k.trim()) as SpecExportKind[];
-    qb = qb.byKind(...kinds);
+    const kinds = options.kind
+      .split(',')
+      .map((k) => k.trim())
+      .filter(Boolean);
+    const invalid = kinds.filter((k) => !VALID_KINDS.includes(k as (typeof VALID_KINDS)[number]));
+    if (invalid.length) {
+      throw new Error(`Invalid kind(s): ${invalid.join(', ')}. Valid: ${VALID_KINDS.join(', ')}`);
+    }
+    qb = qb.byKind(...(kinds as SpecExportKind[]));
   }
 
   if (options.tag) {
-    const tags = options.tag.split(',').map((t) => t.trim());
+    const tags = options.tag
+      .split(',')
+      .map((t) => t.trim())
+      .filter(Boolean);
+    if (tags.length === 0) {
+      throw new Error('--tag requires at least one non-empty tag');
+    }
     qb = qb.byTag(...tags);
   }
 
@@ -138,6 +164,17 @@ export function createGenerateCommand(): Command {
       const format = (options.format || 'md') as OutputFormat;
 
       try {
+        // Validate --collapse-unions early (used by both adapter and standard mode)
+        if (options.collapseUnions) {
+          const n = parseInt(options.collapseUnions, 10);
+          if (Number.isNaN(n) || n < 1) {
+            console.error(
+              JSON.stringify({ error: '--collapse-unions must be a positive integer' }),
+            );
+            process.exit(1);
+          }
+        }
+
         // Handle adapter mode
         if (options.adapter && options.adapter !== 'raw') {
           let getAdapter: typeof import('@openpkg-ts/adapters').getAdapter;
@@ -164,14 +201,24 @@ export function createGenerateCommand(): Command {
           let spec: OpenPkg;
           if (specPath === '-') {
             const input = await readStdin();
-            spec = JSON.parse(input);
+            try {
+              spec = JSON.parse(input);
+            } catch (err) {
+              const msg = err instanceof SyntaxError ? err.message : String(err);
+              throw new Error(`Invalid JSON in stdin: ${msg}`);
+            }
           } else {
             const specFile = path.resolve(specPath);
             if (!fs.existsSync(specFile)) {
               console.error(JSON.stringify({ error: `Spec file not found: ${specFile}` }));
               process.exit(1);
             }
-            spec = JSON.parse(fs.readFileSync(specFile, 'utf-8'));
+            try {
+              spec = JSON.parse(fs.readFileSync(specFile, 'utf-8'));
+            } catch (err) {
+              const msg = err instanceof SyntaxError ? err.message : String(err);
+              throw new Error(`Invalid JSON in ${specPath}: ${msg}`);
+            }
           }
 
           spec = applyFilters(spec, options);
@@ -185,14 +232,24 @@ export function createGenerateCommand(): Command {
         let spec: OpenPkg;
         if (specPath === '-') {
           const input = await readStdin();
-          spec = JSON.parse(input);
+          try {
+            spec = JSON.parse(input);
+          } catch (err) {
+            const msg = err instanceof SyntaxError ? err.message : String(err);
+            throw new Error(`Invalid JSON in stdin: ${msg}`);
+          }
         } else {
           const specFile = path.resolve(specPath);
           if (!fs.existsSync(specFile)) {
             console.error(JSON.stringify({ error: `Spec file not found: ${specFile}` }));
             process.exit(1);
           }
-          spec = JSON.parse(fs.readFileSync(specFile, 'utf-8'));
+          try {
+            spec = JSON.parse(fs.readFileSync(specFile, 'utf-8'));
+          } catch (err) {
+            const msg = err instanceof SyntaxError ? err.message : String(err);
+            throw new Error(`Invalid JSON in ${specPath}: ${msg}`);
+          }
         }
 
         // Apply filters

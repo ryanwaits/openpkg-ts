@@ -2,10 +2,10 @@ import { describe, expect, test } from 'bun:test';
 import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
-import type { OpenPkg } from '@openpkg-ts/spec';
 import { $ } from 'bun';
 
-const testSpec: OpenPkg = {
+const testSpec = {
+  openpkg: '0.4.0',
   meta: { name: 'test-pkg', version: '1.0.0' },
   exports: [
     { id: 'fn-hello', name: 'hello', kind: 'function', signatures: [] },
@@ -22,7 +22,7 @@ describe('docs command --adapter', () => {
 
     fs.writeFileSync(specPath, JSON.stringify(testSpec));
 
-    await $`bun packages/cli/bin/openpkg.ts docs ${specPath} --adapter fumadocs --output ${outDir}`.text();
+    await $`bun packages/cli/bin/openpkg.ts docs generate ${specPath} --adapter fumadocs --output ${outDir}`.text();
 
     expect(fs.existsSync(outDir)).toBe(true);
     expect(fs.existsSync(path.join(outDir, 'hello.md'))).toBe(true);
@@ -37,7 +37,8 @@ describe('docs command --adapter', () => {
 
     fs.writeFileSync(specPath, JSON.stringify(testSpec));
 
-    const result = await $`bun packages/cli/bin/openpkg.ts docs ${specPath} --adapter raw`.text();
+    const result =
+      await $`bun packages/cli/bin/openpkg.ts docs generate ${specPath} --adapter raw`.text();
 
     expect(result).toContain('hello');
 
@@ -52,7 +53,7 @@ describe('docs command --adapter', () => {
     fs.writeFileSync(specPath, JSON.stringify(testSpec));
 
     const result =
-      await $`bun packages/cli/bin/openpkg.ts docs ${specPath} --adapter unknown --output ${outDir}`.nothrow();
+      await $`bun packages/cli/bin/openpkg.ts docs generate ${specPath} --adapter unknown --output ${outDir}`.nothrow();
 
     expect(result.exitCode).toBe(1);
     // Error is written to stderr as JSON

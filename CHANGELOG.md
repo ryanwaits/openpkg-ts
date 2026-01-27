@@ -23,6 +23,19 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+#### `@openpkg-ts/sdk`
+
+- **Extraction Warnings**: Schema extraction now tracks non-fatal warnings instead of silently skipping failures
+  - New `ExtractionWarning` type with codes: `SCHEMA_FAILED`, `TYPEBOX_FAILED`, `PARSE_FAILED`, `CLEANUP_FAILED`, `TSCONFIG_INVALID`
+  - `StandardSchemaExtractionOutput.warnings` array captures individual schema failures
+  - `ExtractResult.runtimeSchemas.warnings` propagates warnings to extraction results
+  - Warnings are also added to `diagnostics` array with appropriate codes
+
+#### `@openpkg-ts/cli`
+
+- `openpkg spec snapshot --quiet` - Suppress extraction warnings in output
+- `openpkg spec snapshot --strict` - Exit 1 if any extraction warnings present
+
 - `normalizeSchema()` - Convert SpecSchema DSL to JSON Schema 2020-12
 - `normalizeExport()` - Normalize a SpecExport including nested schemas
 - `normalizeType()` - Normalize a SpecType including nested schemas

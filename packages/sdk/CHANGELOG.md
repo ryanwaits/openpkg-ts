@@ -1,5 +1,11 @@
 # @openpkg-ts/extract
 
+## 0.35.0
+
+### Minor Changes
+
+- Add configurable maxProperties limit with onTruncation callback for object type serialization
+
 ## 0.34.1
 
 ### Patch Changes

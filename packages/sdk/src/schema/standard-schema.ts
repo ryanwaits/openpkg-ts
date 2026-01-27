@@ -11,6 +11,9 @@ import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
 
+/** Maximum buffer size for subprocess stdout/stderr (10MB) */
+const MAX_BUFFER_SIZE = 10 * 1024 * 1024;
+
 /**
  * Target version for JSON Schema generation.
  * @see https://standardschema.dev/json-schema
@@ -72,11 +75,42 @@ export interface ExtractStandardSchemasOptions {
 }
 
 /**
+ * Warning codes for extraction diagnostics.
+ *
+ * - `SCHEMA_FAILED`: Standard Schema extraction failed (e.g., ~standard.jsonSchema.output() threw)
+ * - `TYPEBOX_FAILED`: TypeBox schema sanitization failed
+ * - `PARSE_FAILED`: Failed to parse subprocess JSON output
+ * - `CLEANUP_FAILED`: Failed to delete temp worker script file
+ * - `TSCONFIG_INVALID`: Could not parse tsconfig.json (uses defaults)
+ */
+export type ExtractionWarningCode =
+  | 'SCHEMA_FAILED'
+  | 'TYPEBOX_FAILED'
+  | 'PARSE_FAILED'
+  | 'CLEANUP_FAILED'
+  | 'TSCONFIG_INVALID'
+  | 'OUTPUT_TRUNCATED';
+
+/**
+ * Warning from extraction process.
+ * Captures non-fatal issues during schema extraction.
+ */
+export interface ExtractionWarning {
+  /** Warning type identifier */
+  code: ExtractionWarningCode;
+  /** Human-readable description */
+  message: string;
+  /** Export name if applicable */
+  exportName?: string;
+}
+
+/**
  * Result of Standard Schema extraction.
  */
 export interface StandardSchemaExtractionOutput {
   schemas: Map<string, StandardSchemaExtractionResult>;
   errors: string[];
+  warnings: ExtractionWarning[];
 }
 
 /**
@@ -220,6 +254,7 @@ async function extract() {
     const absPath = path.resolve(modulePath);
     const mod = await import(pathToFileURL(absPath).href);
     const results = [];
+    const warnings = [];
 
     // Build exports map - handle both ESM and CJS (where exports are in mod.default)
     const exports = {};
@@ -252,7 +287,7 @@ async function extract() {
             inputSchema
           });
         } catch (e) {
-          // Skip schemas that fail to extract
+          warnings.push({ code: 'SCHEMA_FAILED', message: String(e), exportName: name });
         }
         continue;
       }
@@ -266,15 +301,15 @@ async function extract() {
             outputSchema: sanitizeTypeBoxSchema(value)
           });
         } catch (e) {
-          // Skip schemas that fail to extract
+          warnings.push({ code: 'TYPEBOX_FAILED', message: String(e), exportName: name });
         }
         continue;
       }
     }
 
-    console.log(JSON.stringify({ success: true, results }));
+    console.log(JSON.stringify({ success: true, results, warnings }));
   } catch (e) {
-    console.log(JSON.stringify({ success: false, error: e.message }));
+    console.log(JSON.stringify({ success: false, error: e.message, warnings: [] }));
   }
 }
 
@@ -312,6 +347,7 @@ async function extract() {
     const absPath = path.resolve(modulePath);
     const mod = await import(pathToFileURL(absPath).href);
     const results: Array<{exportName: string; vendor: string; outputSchema: unknown; inputSchema?: unknown}> = [];
+    const warnings: Array<{code: string; message: string; exportName?: string}> = [];
 
     // Build exports map
     const exports: Record<string, unknown> = {};
@@ -340,7 +376,9 @@ async function extract() {
             const outputSchema = (jsonSchema.output as Function)(options);
             const inputSchema = typeof jsonSchema.input === 'function' ? (jsonSchema.input as Function)(options) : undefined;
             results.push({ exportName: name, vendor: std.vendor as string, outputSchema, inputSchema });
-          } catch {}
+          } catch (e) {
+            warnings.push({ code: 'SCHEMA_FAILED', message: String(e), exportName: name });
+          }
           continue;
         }
       }
@@ -349,13 +387,15 @@ async function extract() {
       if (isTypeBoxSchema(value)) {
         try {
           results.push({ exportName: name, vendor: 'typebox', outputSchema: sanitizeTypeBoxSchema(value) });
-        } catch {}
+        } catch (e) {
+          warnings.push({ code: 'TYPEBOX_FAILED', message: String(e), exportName: name });
+        }
       }
     }
 
-    console.log(JSON.stringify({ success: true, results }));
+    console.log(JSON.stringify({ success: true, results, warnings }));
   } catch (e) {
-    console.log(JSON.stringify({ success: false, error: (e as Error).message }));
+    console.log(JSON.stringify({ success: false, error: (e as Error).message, warnings: [] }));
   }
 }
 
@@ -379,6 +419,7 @@ export async function extractStandardSchemasFromTs(
   const result: StandardSchemaExtractionOutput = {
     schemas: new Map(),
     errors: [],
+    warnings: [],
   };
 
   // Detect available TS runtime
@@ -414,20 +455,34 @@ export async function extractStandardSchemasFromTs(
 
       let stdout = '';
       let stderr = '';
+      let stdoutTruncated = false;
+      let stderrTruncated = false;
 
       child.stdout.on('data', (data) => {
-        stdout += data.toString();
+        if (stdout.length < MAX_BUFFER_SIZE) {
+          const chunk = data.toString();
+          stdout += chunk.slice(0, MAX_BUFFER_SIZE - stdout.length);
+          if (stdout.length >= MAX_BUFFER_SIZE) stdoutTruncated = true;
+        }
       });
 
       child.stderr.on('data', (data) => {
-        stderr += data.toString();
+        if (stderr.length < MAX_BUFFER_SIZE) {
+          const chunk = data.toString();
+          stderr += chunk.slice(0, MAX_BUFFER_SIZE - stderr.length);
+          if (stderr.length >= MAX_BUFFER_SIZE) stderrTruncated = true;
+        }
       });
 
       child.on('close', (code) => {
         // Cleanup temp file
         try {
           fs.unlinkSync(workerPath);
-        } catch {}
+        } catch (cleanupErr: unknown) {
+          if ((cleanupErr as NodeJS.ErrnoException)?.code !== 'ENOENT') {
+            result.warnings.push({ code: 'CLEANUP_FAILED', message: String(cleanupErr) });
+          }
+        }
 
         if (code !== 0) {
           result.errors.push(
@@ -453,8 +508,26 @@ export async function extractStandardSchemasFromTs(
               inputSchema: item.inputSchema,
             });
           }
+
+          // Propagate warnings from subprocess
+          if (Array.isArray(parsed.warnings)) {
+            for (const w of parsed.warnings) {
+              result.warnings.push({
+                code: w.code as ExtractionWarningCode,
+                message: w.message,
+                exportName: w.exportName,
+              });
+            }
+          }
         } catch (e) {
           result.errors.push(`Failed to parse extraction output: ${e}`);
+        }
+
+        if (stdoutTruncated) {
+          result.warnings.push({ code: 'OUTPUT_TRUNCATED', message: 'stdout exceeded 10MB buffer limit' });
+        }
+        if (stderrTruncated) {
+          result.warnings.push({ code: 'OUTPUT_TRUNCATED', message: 'stderr exceeded 10MB buffer limit' });
         }
 
         resolve(result);
@@ -464,7 +537,11 @@ export async function extractStandardSchemasFromTs(
         // Cleanup temp file
         try {
           fs.unlinkSync(workerPath);
-        } catch {}
+        } catch (cleanupErr: unknown) {
+          if ((cleanupErr as NodeJS.ErrnoException)?.code !== 'ENOENT') {
+            result.warnings.push({ code: 'CLEANUP_FAILED', message: String(cleanupErr) });
+          }
+        }
         result.errors.push(`Subprocess error: ${err.message}`);
         resolve(result);
       });
@@ -473,7 +550,11 @@ export async function extractStandardSchemasFromTs(
     // Cleanup temp file on error
     try {
       fs.unlinkSync(workerPath);
-    } catch {}
+    } catch (cleanupErr: unknown) {
+      if ((cleanupErr as NodeJS.ErrnoException)?.code !== 'ENOENT') {
+        result.warnings.push({ code: 'CLEANUP_FAILED', message: String(cleanupErr) });
+      }
+    }
     result.errors.push(`Failed to create worker script: ${e}`);
     return result;
   }
@@ -500,8 +581,9 @@ function readTsconfigOutDir(baseDir: string): string | null {
       // Normalize: handle "./build" vs "build"
       return tsconfig.compilerOptions.outDir.replace(/^\.\//, '');
     }
-  } catch {
-    // Ignore parse errors - use defaults
+  } catch (_e) {
+    // Invalid JSON or read error - fall through to return null
+    // Caller will use default output directories (dist/, build/, etc.)
   }
 
   return null;
@@ -587,6 +669,7 @@ export async function extractStandardSchemas(
   const result: StandardSchemaExtractionOutput = {
     schemas: new Map(),
     errors: [],
+    warnings: [],
   };
 
   if (!fs.existsSync(compiledJsPath)) {
@@ -605,13 +688,23 @@ export async function extractStandardSchemas(
 
     let stdout = '';
     let stderr = '';
+    let stdoutTruncated = false;
+    let stderrTruncated = false;
 
     child.stdout.on('data', (data) => {
-      stdout += data.toString();
+      if (stdout.length < MAX_BUFFER_SIZE) {
+        const chunk = data.toString();
+        stdout += chunk.slice(0, MAX_BUFFER_SIZE - stdout.length);
+        if (stdout.length >= MAX_BUFFER_SIZE) stdoutTruncated = true;
+      }
     });
 
     child.stderr.on('data', (data) => {
-      stderr += data.toString();
+      if (stderr.length < MAX_BUFFER_SIZE) {
+        const chunk = data.toString();
+        stderr += chunk.slice(0, MAX_BUFFER_SIZE - stderr.length);
+        if (stderr.length >= MAX_BUFFER_SIZE) stderrTruncated = true;
+      }
     });
 
     child.on('close', (code) => {
@@ -637,8 +730,26 @@ export async function extractStandardSchemas(
             inputSchema: item.inputSchema,
           });
         }
+
+        // Propagate warnings from subprocess
+        if (Array.isArray(parsed.warnings)) {
+          for (const w of parsed.warnings) {
+            result.warnings.push({
+              code: w.code as ExtractionWarningCode,
+              message: w.message,
+              exportName: w.exportName,
+            });
+          }
+        }
       } catch (e) {
         result.errors.push(`Failed to parse extraction output: ${e}`);
+      }
+
+      if (stdoutTruncated) {
+        result.warnings.push({ code: 'OUTPUT_TRUNCATED', message: 'stdout exceeded 10MB buffer limit' });
+      }
+      if (stderrTruncated) {
+        result.warnings.push({ code: 'OUTPUT_TRUNCATED', message: 'stderr exceeded 10MB buffer limit' });
       }
 
       resolve(result);
@@ -730,5 +841,6 @@ export async function extractStandardSchemasFromProject(
   return {
     schemas: new Map(),
     errors: [`Could not find compiled JS for ${entryFile}.${hint}`],
+    warnings: [],
   };
 }

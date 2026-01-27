@@ -173,7 +173,7 @@ describe('getExport', () => {
       expect(result.export?.members).toBeDefined();
 
       // Should have baseUrl property and request method
-      const members = result.export?.members!;
+      const members = result.export?.members ?? [];
       expect(members.some((m: { name: string }) => m.name === 'baseUrl')).toBe(true);
       expect(members.some((m: { name: string }) => m.name === 'request')).toBe(true);
     });
@@ -192,7 +192,7 @@ describe('getExport', () => {
       expect(result.errors).toHaveLength(0);
       expect(result.export?.kind).toBe('class');
 
-      const members = result.export?.members!;
+      const members = result.export?.members ?? [];
       const version = members.find((m: { name: string }) => m.name === 'VERSION');
       const format = members.find((m: { name: string }) => m.name === 'format');
       expect(version).toBeDefined();
@@ -368,7 +368,8 @@ describe('getExport', () => {
       expect(result.export).not.toBeNull();
 
       // Verify spec structure
-      const exp = result.export!;
+      const exp = result.export;
+      if (!exp) throw new Error('Export not found');
       expect(exp.kind).toBe('function');
       expect(exp.name).toBe('create');
       expect(typeof exp.description).toBe('string');

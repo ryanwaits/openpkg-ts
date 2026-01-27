@@ -1,5 +1,13 @@
 # @openpkg-ts/react
 
+## 0.3.2
+
+### Patch Changes
+
+- Updated dependencies
+  - @openpkg-ts/sdk@0.35.0
+  - @openpkg-ts/ui@0.1.6
+
 ## 0.3.1
 
 ### Patch Changes

@@ -50,7 +50,8 @@ export function serializeClass(
           methodsByName.set(methodMember.name, methodMember);
         } else {
           // Keep first description/tags if missing
-          const existing = methodsByName.get(methodMember.name)!;
+          const existing = methodsByName.get(methodMember.name);
+          if (!existing) continue;
           if (!existing.description && methodMember.description) {
             existing.description = methodMember.description;
           }

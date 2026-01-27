@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
+import { afterEach, beforeEach, describe, expect, jest, test } from 'bun:test';
 import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
@@ -64,11 +64,26 @@ describe('config', () => {
       expect(result).toEqual(fileConfig);
     });
 
-    test('returns null for invalid JSON in config file', () => {
+    test('returns null and warns for invalid JSON in config file', () => {
+      const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
       fs.writeFileSync(path.join(tmpDir, CONFIG_FILENAME), '{ invalid json }');
 
       const result = loadConfig(tmpDir);
       expect(result).toBeNull();
+      expect(warnSpy).toHaveBeenCalledTimes(1);
+      expect(warnSpy.mock.calls[0][0]).toContain('openpkg.config.json');
+      warnSpy.mockRestore();
+    });
+
+    test('returns null and warns for invalid JSON in package.json', () => {
+      const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+      fs.writeFileSync(path.join(tmpDir, 'package.json'), '{ bad json }');
+
+      const result = loadConfig(tmpDir);
+      expect(result).toBeNull();
+      expect(warnSpy).toHaveBeenCalledTimes(1);
+      expect(warnSpy.mock.calls[0][0]).toContain('package.json');
+      warnSpy.mockRestore();
     });
 
     test('returns null for package.json without openpkg field', () => {

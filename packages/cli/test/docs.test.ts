@@ -241,7 +241,8 @@ describe('docs command', () => {
     });
 
     test('exportToMarkdown renders single export', () => {
-      const exp = testSpec.exports.find((e) => e.name === 'createClient')!;
+      const exp = testSpec.exports.find((e) => e.name === 'createClient');
+      if (!exp) throw new Error('Export not found');
       const markdown = exportToMarkdown(exp, { frontmatter: true, codeSignatures: true });
 
       expect(markdown).toContain('# createClient');

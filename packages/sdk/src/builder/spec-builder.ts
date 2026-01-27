@@ -150,6 +150,8 @@ export async function extract(options: ExtractOptions): Promise<ExtractResult> {
       onProgress,
       isDtsSource,
       includePrivate,
+      maxProperties,
+      onTruncation,
     } = options;
 
     const diagnostics: Diagnostic[] = [];
@@ -203,6 +205,8 @@ export async function extract(options: ExtractOptions): Promise<ExtractResult> {
       maxExternalTypeDepth,
       resolveExternalTypes,
       includePrivate,
+      maxProperties,
+      onTruncation,
     });
     ctx.exportedIds = exportedIds;
 
@@ -215,7 +219,8 @@ export async function extract(options: ExtractOptions): Promise<ExtractResult> {
     for (let i = 0; i < filteredSymbols.length; i++) {
       const symbol = filteredSymbols[i];
       const exportName = symbol.getName();
-      const tracker = exportTracker.get(exportName)!;
+      const tracker = exportTracker.get(exportName);
+      if (!tracker) continue;
 
       // Report progress and yield to event loop periodically
       onProgress?.(i + 1, total, exportName);
@@ -427,6 +432,7 @@ export async function extract(options: ExtractOptions): Promise<ExtractResult> {
           merged: mergeResult.merged,
           vendors: [...new Set([...runtimeResult.schemas.values()].map((s) => s.vendor))],
           errors: runtimeResult.errors,
+          warnings: runtimeResult.warnings,
           method,
         };
       }
@@ -437,6 +443,15 @@ export async function extract(options: ExtractOptions): Promise<ExtractResult> {
           message: `Runtime schema extraction: ${error}`,
           severity: 'warning',
           code: 'RUNTIME_SCHEMA_ERROR',
+        });
+      }
+
+      // Add runtime extraction warnings as diagnostics
+      for (const warning of runtimeResult.warnings) {
+        diagnostics.push({
+          message: `Schema extraction skipped${warning.exportName ? ` (${warning.exportName})` : ''}: ${warning.message}`,
+          severity: 'warning',
+          code: warning.code,
         });
       }
     }

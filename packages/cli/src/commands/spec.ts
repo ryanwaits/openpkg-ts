@@ -110,6 +110,8 @@ function createSnapshotSubcommand(): Command {
     .option('--ignore <exports>', 'Ignore exports (comma-separated)')
     .option('--verify', 'Exit 1 if any exports fail')
     .option('--verbose', 'Show detailed output')
+    .option('--quiet', 'Suppress extraction warnings')
+    .option('--strict', 'Exit 1 if any extraction warnings')
     .option('--include-private', 'Include private/protected class members')
     .option('--external-include <patterns...>', 'Resolve re-exports from these packages')
     .option('--external-exclude <patterns...>', 'Never resolve from these packages')
@@ -166,6 +168,30 @@ function createSnapshotSubcommand(): Command {
         };
 
         console.error(JSON.stringify(summary, null, 2));
+
+        // Display extraction warnings (unless --quiet)
+        const extractionWarnings = result.runtimeSchemas?.warnings ?? [];
+        if (extractionWarnings.length > 0 && !options.quiet) {
+          console.error(`\nSkipped ${extractionWarnings.length} schema(s) with extraction errors:`);
+          for (const w of extractionWarnings) {
+            console.error(`  - ${w.exportName ?? 'unknown'}: ${w.code} - ${w.message}`);
+          }
+        }
+
+        // Exit 1 if --strict and warnings exist
+        if (options.strict && extractionWarnings.length > 0) {
+          console.error(
+            JSON.stringify(
+              {
+                error: 'Extraction warnings present (--strict mode)',
+                warnings: extractionWarnings,
+              },
+              null,
+              2,
+            ),
+          );
+          process.exit(1);
+        }
 
         if (options.verify && result.verification && result.verification.failed > 0) {
           console.error(

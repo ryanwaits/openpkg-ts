@@ -34,6 +34,10 @@ export interface ExtractOptions {
   includePrivate?: boolean;
   /** Configuration for resolving external package re-exports */
   externals?: ExternalsConfig;
+  /** Max properties to serialize per object type (default: 20) */
+  maxProperties?: number;
+  /** Callback when properties are truncated */
+  onTruncation?: (typeName: string, actual: number, limit: number) => void;
 }
 
 export interface ExtractResult {
@@ -50,6 +54,8 @@ export interface ExtractResult {
     vendors: string[];
     /** Any errors encountered during runtime extraction */
     errors: string[];
+    /** Non-fatal warnings from extraction (e.g., individual schema failures) */
+    warnings: Array<{ code: string; message: string; exportName?: string }>;
     /** Extraction method used: 'compiled' or 'direct-ts (runtime)' */
     method?: string;
   };

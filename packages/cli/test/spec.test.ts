@@ -439,6 +439,37 @@ describe('spec command (extractSpec)', () => {
     });
   });
 
+  describe('runtimeSchemas warnings', () => {
+    test('runtimeSchemas includes warnings array when hybrid mode', async () => {
+      const result = await extractSpec({
+        entryFile: 'test.ts',
+        content: FIXTURE_CODE.basic,
+        schemaExtraction: 'hybrid',
+      });
+
+      // runtimeSchemas may not exist if no schemas found, but structure should be correct
+      if (result.runtimeSchemas) {
+        expect(result.runtimeSchemas.warnings).toBeInstanceOf(Array);
+      }
+    });
+
+    test('warnings have correct structure', async () => {
+      const result = await extractSpec({
+        entryFile: 'test.ts',
+        content: FIXTURE_CODE.basic,
+        schemaExtraction: 'hybrid',
+      });
+
+      if (result.runtimeSchemas?.warnings && result.runtimeSchemas.warnings.length > 0) {
+        for (const warning of result.runtimeSchemas.warnings) {
+          expect(typeof warning.code).toBe('string');
+          expect(typeof warning.message).toBe('string');
+          // exportName is optional
+        }
+      }
+    });
+  });
+
   describe('performance', () => {
     test('spec generation completes in reasonable time', async () => {
       const start = performance.now();

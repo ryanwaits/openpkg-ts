@@ -1,5 +1,11 @@
 # @openpkg-ts/ui
 
+## 0.1.6
+
+### Patch Changes
+
+- Add configurable maxProperties limit with onTruncation callback for object type serialization
+
 ## 0.1.5
 
 ### Patch Changes

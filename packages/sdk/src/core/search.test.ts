@@ -50,7 +50,7 @@ describe('toPagefindRecords', () => {
 
     // With default weights, name has highest weight
     const defaultRecords = toPagefindRecords(spec);
-    const defaultSections = defaultRecords[0].weighted_sections!;
+    const defaultSections = defaultRecords[0].weighted_sections ?? [];
     const defaultMaxWeight = Math.max(...defaultSections.map((s) => s.weight));
     const defaultHighest = defaultSections.find((s) => s.weight === defaultMaxWeight);
     expect(defaultHighest?.text).toBe('greet'); // name has default 10, desc 5
@@ -59,7 +59,7 @@ describe('toPagefindRecords', () => {
     const customRecords = toPagefindRecords(spec, {
       weights: { name: 1, description: 100, signature: 1 },
     });
-    const customSections = customRecords[0].weighted_sections!;
+    const customSections = customRecords[0].weighted_sections ?? [];
     const customMaxWeight = Math.max(...customSections.map((s) => s.weight));
     const customHighest = customSections.find((s) => s.weight === customMaxWeight);
     expect(customHighest?.text).toBe('Greets a person'); // description now highest

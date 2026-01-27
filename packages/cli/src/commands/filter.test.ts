@@ -20,7 +20,7 @@ describe('openpkg filter', () => {
         id: 'e',
         name: 'taggedFn',
         kind: 'function',
-        tags: [{ name: 'beta' }],
+        tags: [{ name: 'beta', text: 'beta' }],
         description: 'Beta feature',
       },
       {
@@ -181,7 +181,10 @@ describe('openpkg filter', () => {
 
   it('handles empty spec', async () => {
     const emptyPath = path.join(tmpDir, 'empty.json');
-    fs.writeFileSync(emptyPath, JSON.stringify({ openpkg: '0.4.0', meta: {}, exports: [] }));
+    fs.writeFileSync(
+      emptyPath,
+      JSON.stringify({ openpkg: '0.4.0', meta: { name: 'empty' }, exports: [] }),
+    );
 
     const output =
       await $`bun packages/cli/bin/openpkg.ts filter ${emptyPath} --kind function`.text();

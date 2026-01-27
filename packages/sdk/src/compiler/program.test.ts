@@ -13,18 +13,21 @@ describe('createProgram local re-export resolution', () => {
     const sourceFile = program.getSourceFile(entryFile);
 
     expect(sourceFile).toBeDefined();
+    if (!sourceFile) throw new Error('sourceFile not found');
 
-    const moduleSymbol = checker.getSymbolAtLocation(sourceFile!);
+    const moduleSymbol = checker.getSymbolAtLocation(sourceFile);
     expect(moduleSymbol).toBeDefined();
+    if (!moduleSymbol) throw new Error('moduleSymbol not found');
 
-    const exports = checker.getExportsOfModule(moduleSymbol!);
+    const exports = checker.getExportsOfModule(moduleSymbol);
     const getDataExport = exports.find((e) => e.getName() === 'getData');
 
     expect(getDataExport).toBeDefined();
-    expect(getDataExport?.flags & ts.SymbolFlags.Alias).toBeTruthy();
+    if (!getDataExport) throw new Error('getDataExport not found');
+    expect(getDataExport.flags & ts.SymbolFlags.Alias).toBeTruthy();
 
     // Aliased symbol should have declarations
-    const aliased = checker.getAliasedSymbol(getDataExport!);
+    const aliased = checker.getAliasedSymbol(getDataExport);
     expect(aliased.declarations?.length).toBeGreaterThan(0);
 
     // Verify the declaration is in the correct file
@@ -37,14 +40,17 @@ describe('createProgram local re-export resolution', () => {
     const { program } = createProgram({ entryFile });
     const checker = program.getTypeChecker();
     const sourceFile = program.getSourceFile(entryFile);
+    if (!sourceFile) throw new Error('sourceFile not found');
 
-    const moduleSymbol = checker.getSymbolAtLocation(sourceFile!);
-    const exports = checker.getExportsOfModule(moduleSymbol!);
+    const moduleSymbol = checker.getSymbolAtLocation(sourceFile);
+    if (!moduleSymbol) throw new Error('moduleSymbol not found');
+    const exports = checker.getExportsOfModule(moduleSymbol);
     const dataResultExport = exports.find((e) => e.getName() === 'DataResult');
 
     expect(dataResultExport).toBeDefined();
+    if (!dataResultExport) throw new Error('dataResultExport not found');
 
-    const aliased = checker.getAliasedSymbol(dataResultExport!);
+    const aliased = checker.getAliasedSymbol(dataResultExport);
     expect(aliased.declarations?.length).toBeGreaterThan(0);
     expect(aliased.declarations?.[0].getSourceFile().fileName).toContain('subdir/data.ts');
   });
@@ -61,18 +67,21 @@ describe('createProgram local re-export resolution', () => {
     const sourceFile = program.getSourceFile(entryFile);
 
     expect(sourceFile).toBeDefined();
+    if (!sourceFile) throw new Error('sourceFile not found');
 
-    const moduleSymbol = checker.getSymbolAtLocation(sourceFile!);
-    const exports = checker.getExportsOfModule(moduleSymbol!);
+    const moduleSymbol = checker.getSymbolAtLocation(sourceFile);
+    if (!moduleSymbol) throw new Error('moduleSymbol not found');
+    const exports = checker.getExportsOfModule(moduleSymbol);
     const dataProviderExport = exports.find((e) => e.getName() === 'DataProvider');
 
     expect(dataProviderExport).toBeDefined();
-    expect(dataProviderExport?.flags & ts.SymbolFlags.Alias).toBeTruthy();
+    if (!dataProviderExport) throw new Error('dataProviderExport not found');
+    expect(dataProviderExport.flags & ts.SymbolFlags.Alias).toBeTruthy();
 
     // Key assertion: aliased symbol should have declarations
     // Before fix: 0 declarations (undefined)
     // After fix: 1+ declarations
-    const aliased = checker.getAliasedSymbol(dataProviderExport!);
+    const aliased = checker.getAliasedSymbol(dataProviderExport);
     const declCount = aliased.declarations?.length ?? 0;
     expect(declCount).toBeGreaterThan(0);
     expect(aliased.declarations?.[0].getSourceFile().fileName).toContain('contexts/data.tsx');

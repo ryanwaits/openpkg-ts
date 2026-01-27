@@ -307,7 +307,8 @@ export function ClientCode(props: {
 
   // Single tab - render without tabs
   if (codeblocks.length === 1) {
-    const tab = highlighted.get(0)!;
+    const tab = highlighted.get(0);
+    if (!tab) return null;
     const handlers = getHandlers(tab.options);
     const { background: _background, ...highlightedStyle } = tab.highlighted.style;
 

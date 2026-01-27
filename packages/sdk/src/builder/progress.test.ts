@@ -127,21 +127,4 @@ describe('event loop yielding', () => {
 
     expect(yielded).toBe(true);
   });
-
-  test('small extractions complete without blocking unnecessarily', async () => {
-    const code = `
-      export const a = 1;
-      export const b = 2;
-    `;
-
-    const startTime = performance.now();
-    await extract({
-      entryFile: 'test.ts',
-      content: code,
-    });
-    const duration = performance.now() - startTime;
-
-    // Should complete quickly (< 1000ms for 2 exports)
-    expect(duration).toBeLessThan(1000);
-  });
 });

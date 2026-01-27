@@ -47,9 +47,10 @@ describe('openpkg diagnostics', () => {
     const specPath = path.join(tmpDir, 'bad.json');
     fs.writeFileSync(specPath, '{ invalid json');
 
-    const output = await $`bun packages/cli/bin/openpkg.ts diagnostics ${specPath}`.text();
-    const result = JSON.parse(output);
+    const proc = await $`bun packages/cli/bin/openpkg.ts diagnostics ${specPath}`.nothrow().quiet();
+    const result = JSON.parse(proc.stderr.toString());
 
+    expect(proc.exitCode).toBe(1);
     expect(result.error).toBeDefined();
   });
 });

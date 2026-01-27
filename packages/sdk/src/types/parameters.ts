@@ -38,7 +38,8 @@ export function extractParameters(
 
   for (const param of signature.getParameters()) {
     const decl = param.valueDeclaration as ts.ParameterDeclaration | undefined;
-    const type = checker.getTypeOfSymbolAtLocation(param, decl ?? param.valueDeclaration!);
+    if (!decl) continue;
+    const type = checker.getTypeOfSymbolAtLocation(param, decl);
 
     // Check if this is a destructured parameter (ObjectBindingPattern)
     if (decl && ts.isObjectBindingPattern(decl.name)) {
@@ -289,8 +290,12 @@ export function registerReferencedTypes(type: ts.Type, ctx: SerializerContext, d
   // Handle object properties (traverse into object members)
   if (type.flags & ts.TypeFlags.Object) {
     const props = type.getProperties();
-    for (const prop of props.slice(0, 20)) {
-      // Limit to 20 properties
+    const limit = ctx.maxProperties;
+    if (props.length > limit && ctx.onTruncation) {
+      const typeName = type.getSymbol()?.getName() ?? 'anonymous';
+      ctx.onTruncation(typeName, props.length, limit);
+    }
+    for (const prop of props.slice(0, limit)) {
       const propType = checker.getTypeOfSymbol(prop);
       registerReferencedTypes(propType, ctx, depth + 1);
     }

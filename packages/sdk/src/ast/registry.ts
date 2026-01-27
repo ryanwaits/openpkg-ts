@@ -231,8 +231,14 @@ export class TypeRegistry {
 
     const props: Record<string, unknown> = {};
     const required: string[] = [];
+    const limit = ctx.maxProperties;
 
-    for (const prop of properties.slice(0, 20)) {
+    if (properties.length > limit && ctx.onTruncation) {
+      const typeName = type.getSymbol()?.getName() ?? 'anonymous';
+      ctx.onTruncation(typeName, properties.length, limit);
+    }
+
+    for (const prop of properties.slice(0, limit)) {
       const propName = prop.getName();
       if (propName.startsWith('_')) continue;
 

@@ -31,7 +31,11 @@ interface ComponentsJson {
 function loadComponentsJson(): ComponentsJson | null {
   const configPath = path.resolve(COMPONENTS_JSON);
   if (!fs.existsSync(configPath)) return null;
-  return JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+  try {
+    return JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+  } catch {
+    return null;
+  }
 }
 
 export function createInitCommand(): Command {

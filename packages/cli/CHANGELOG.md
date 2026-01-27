@@ -1,5 +1,14 @@
 # @openpkg-ts/cli
 
+## 0.6.2
+
+### Patch Changes
+
+- Add configurable maxProperties limit with onTruncation callback for object type serialization
+- Updated dependencies
+  - @openpkg-ts/sdk@0.35.0
+  - @openpkg-ts/adapters@0.3.5
+
 ## 0.6.1
 
 ### Patch Changes

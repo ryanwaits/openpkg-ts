@@ -21,6 +21,10 @@ export interface SerializerContext {
   inTupleElement?: boolean;
   /** Include private/protected class members (default: false) */
   includePrivate?: boolean;
+  /** Max properties to serialize per object type (default: 20) */
+  maxProperties: number;
+  /** Callback when properties are truncated */
+  onTruncation?: (typeName: string, actual: number, limit: number) => void;
 }
 
 export interface CreateContextOptions {
@@ -28,6 +32,8 @@ export interface CreateContextOptions {
   maxExternalTypeDepth?: number;
   resolveExternalTypes?: boolean;
   includePrivate?: boolean;
+  maxProperties?: number;
+  onTruncation?: (typeName: string, actual: number, limit: number) => void;
 }
 
 export function createContext(
@@ -47,6 +53,8 @@ export function createContext(
     exportedIds: new Set<string>(),
     visitedTypes: new Set<ts.Type>(),
     includePrivate: options.includePrivate ?? false,
+    maxProperties: options.maxProperties ?? 20,
+    onTruncation: options.onTruncation,
   };
 }
 
@@ -66,13 +74,13 @@ export function getInheritedMembers(
   const inheritedNames = new Set<string>();
 
   // For static members, we need to get the constructor type
-  const typeToWalk = isStatic
-    ? classType.getSymbol()?.valueDeclaration &&
-      checker.getTypeOfSymbolAtLocation(
-        classType.getSymbol()!,
-        classType.getSymbol()?.valueDeclaration!,
-      )
-    : classType;
+  let typeToWalk: ts.Type | undefined = classType;
+  if (isStatic) {
+    const symbol = classType.getSymbol();
+    const valueDecl = symbol?.valueDeclaration;
+    typeToWalk =
+      symbol && valueDecl ? checker.getTypeOfSymbolAtLocation(symbol, valueDecl) : undefined;
+  }
 
   if (!typeToWalk) return inherited;
 

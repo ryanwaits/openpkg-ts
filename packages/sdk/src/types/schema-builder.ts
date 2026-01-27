@@ -639,9 +639,10 @@ function buildFunctionSchema(
 ): SpecSchema {
   const buildSignatures = () => {
     const signatures: SpecSignature[] = callSignatures.map((sig) => {
-      const params = sig.getParameters().map((param) => {
-        const paramType = checker.getTypeOfSymbolAtLocation(param, param.valueDeclaration!);
+      const params = sig.getParameters().flatMap((param) => {
         const decl = param.valueDeclaration as ts.ParameterDeclaration | undefined;
+        if (!decl) return [];
+        const paramType = checker.getTypeOfSymbolAtLocation(param, decl);
         const isOptional = !!decl?.questionToken || !!decl?.initializer;
         return {
           name: param.getName(),
