@@ -1,4 +1,4 @@
-import type { ValidateFunction } from 'ajv';
+import type { AnySchemaObject, ValidateFunction } from 'ajv';
 import Ajv from 'ajv/dist/2020.js';
 import addFormats from 'ajv-formats';
 
@@ -10,11 +10,14 @@ import schemaV040 from '../schemas/v0.4.0/openpkg.schema.json';
 
 import type { OpenPkg } from './types';
 
+/** Concrete schema versions (excludes 'latest' alias) */
+export type ConcreteSchemaVersion = '0.1.0' | '0.2.0' | '0.3.0' | '0.4.0';
+
 /** Supported schema versions */
-export type SchemaVersion = '0.1.0' | '0.2.0' | '0.3.0' | '0.4.0' | 'latest';
+export type SchemaVersion = ConcreteSchemaVersion | 'latest';
 
 /** Current/latest schema version */
-export const LATEST_VERSION: SchemaVersion = '0.4.0';
+export const LATEST_VERSION: ConcreteSchemaVersion = '0.4.0';
 
 export type SpecError = {
   instancePath: string;
@@ -23,11 +26,11 @@ export type SpecError = {
 };
 
 // Schema registry
-const schemas: Record<string, unknown> = {
-  '0.1.0': schemaV010,
-  '0.2.0': schemaV020,
-  '0.3.0': schemaV030,
-  '0.4.0': schemaV040,
+const schemas: Record<ConcreteSchemaVersion, AnySchemaObject> = {
+  '0.1.0': schemaV010 as AnySchemaObject,
+  '0.2.0': schemaV020 as AnySchemaObject,
+  '0.3.0': schemaV030 as AnySchemaObject,
+  '0.4.0': schemaV040 as AnySchemaObject,
 };
 
 // Ajv instance (shared)
@@ -50,23 +53,21 @@ const validatorCache = new Map<string, ValidateFunction<OpenPkg>>();
  * @returns Compiled Ajv validator
  */
 function getValidator(version: SchemaVersion = 'latest'): ValidateFunction<OpenPkg> {
-  const resolvedVersion = version === 'latest' ? LATEST_VERSION : version;
+  const resolvedVersion: ConcreteSchemaVersion = version === 'latest' ? LATEST_VERSION : version;
 
   let validator = validatorCache.get(resolvedVersion);
   if (validator) {
     return validator;
   }
 
-  const schema = schemas[resolvedVersion];
+  const schema = schemas[resolvedVersion] as AnySchemaObject | undefined;
   if (!schema) {
     throw new Error(
       `Unknown schema version: ${resolvedVersion}. Available: ${Object.keys(schemas).join(', ')}`,
     );
   }
 
-  // Cast to any to avoid strict Ajv type checking on dynamic schemas
-  // biome-ignore lint/suspicious/noExplicitAny: Ajv schema type is dynamically loaded
-  validator = ajv.compile<OpenPkg>(schema as any);
+  validator = ajv.compile<OpenPkg>(schema);
   validatorCache.set(resolvedVersion, validator);
   return validator;
 }
