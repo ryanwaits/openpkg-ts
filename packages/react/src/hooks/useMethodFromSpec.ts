@@ -55,7 +55,7 @@ export function useMethodFromSpec(spec: OpenPkg, exportName: string): MethodData
     const exp = spec.exports.find((e) => e.name === exportName);
     if (!exp) return null;
 
-    return extractMethodData(exp, spec);
+    return extractMethodData(exp);
   }, [spec, exportName]);
 }
 
@@ -66,14 +66,14 @@ export function useMethodsFromSpec(spec: OpenPkg): MethodData[] {
   return useMemo(() => {
     return spec.exports
       .filter((exp) => exp.kind === 'function')
-      .map((exp) => extractMethodData(exp, spec));
+      .map((exp) => extractMethodData(exp));
   }, [spec]);
 }
 
 /**
  * Pure function to extract method data from an export.
  */
-export function extractMethodData(exp: SpecExport, _spec: OpenPkg): MethodData {
+export function extractMethodData(exp: SpecExport): MethodData {
   const sig = exp.signatures?.[0];
   const params = sig?.parameters ?? [];
 

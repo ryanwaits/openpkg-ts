@@ -524,10 +524,16 @@ export async function extractStandardSchemasFromTs(
         }
 
         if (stdoutTruncated) {
-          result.warnings.push({ code: 'OUTPUT_TRUNCATED', message: 'stdout exceeded 10MB buffer limit' });
+          result.warnings.push({
+            code: 'OUTPUT_TRUNCATED',
+            message: 'stdout exceeded 10MB buffer limit',
+          });
         }
         if (stderrTruncated) {
-          result.warnings.push({ code: 'OUTPUT_TRUNCATED', message: 'stderr exceeded 10MB buffer limit' });
+          result.warnings.push({
+            code: 'OUTPUT_TRUNCATED',
+            message: 'stderr exceeded 10MB buffer limit',
+          });
         }
 
         resolve(result);
@@ -746,10 +752,16 @@ export async function extractStandardSchemas(
       }
 
       if (stdoutTruncated) {
-        result.warnings.push({ code: 'OUTPUT_TRUNCATED', message: 'stdout exceeded 10MB buffer limit' });
+        result.warnings.push({
+          code: 'OUTPUT_TRUNCATED',
+          message: 'stdout exceeded 10MB buffer limit',
+        });
       }
       if (stderrTruncated) {
-        result.warnings.push({ code: 'OUTPUT_TRUNCATED', message: 'stderr exceeded 10MB buffer limit' });
+        result.warnings.push({
+          code: 'OUTPUT_TRUNCATED',
+          message: 'stderr exceeded 10MB buffer limit',
+        });
       }
 
       resolve(result);
