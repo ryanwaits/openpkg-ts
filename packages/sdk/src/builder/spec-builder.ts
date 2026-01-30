@@ -317,7 +317,6 @@ export async function extract(options: ExtractOptions): Promise<ExtractResult> {
         const exp = serializeDeclaration(
           declaration,
           symbol,
-          targetSymbol,
           exportName,
           ctx,
           isTypeOnly,
@@ -520,7 +519,6 @@ export async function extract(options: ExtractOptions): Promise<ExtractResult> {
 function serializeDeclaration(
   declaration: ts.Declaration,
   exportSymbol: ts.Symbol,
-  _targetSymbol: ts.Symbol,
   exportName: string,
   ctx: SerializerContext,
   isTypeOnly = false,

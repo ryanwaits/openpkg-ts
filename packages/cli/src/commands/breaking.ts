@@ -4,7 +4,7 @@ import {
   diffSpec,
 } from '@openpkg-ts/spec';
 import { Command } from 'commander';
-import { loadSpec } from './utils.js';
+import { handleCommandError, loadSpec } from './utils';
 
 export type BreakingResult = {
   breaking: CategorizedBreaking[];
@@ -35,9 +35,7 @@ export function createBreakingCommand(): Command {
           process.exit(1);
         }
       } catch (err) {
-        const error = err instanceof Error ? err : new Error(String(err));
-        console.error(JSON.stringify({ error: error.message }, null, 2));
-        process.exit(1);
+        handleCommandError(err);
       }
     });
 }

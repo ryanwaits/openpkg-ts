@@ -3,6 +3,12 @@ import * as path from 'node:path';
 import type { OpenPkg } from '@openpkg-ts/spec';
 import { getValidationErrors } from '@openpkg-ts/spec';
 
+export function handleCommandError(err: unknown): never {
+  const error = err instanceof Error ? err : new Error(String(err));
+  console.error(JSON.stringify({ error: error.message }, null, 2));
+  process.exit(1);
+}
+
 export function loadSpec(filePath: string): OpenPkg {
   const resolved = path.resolve(filePath);
   let content: string;

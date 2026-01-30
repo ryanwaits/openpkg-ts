@@ -15,7 +15,7 @@ import {
 import type { OpenPkg, SchemaVersion, SpecExportKind, SpecGenerationMeta } from '@openpkg-ts/spec';
 import { getValidationErrors } from '@openpkg-ts/spec';
 import { Command } from 'commander';
-import { loadSpec } from './utils.js';
+import { handleCommandError, loadSpec } from './utils';
 
 // =============================================================================
 // Spec parent command with subcommands: snapshot, validate, filter, lint, list, get
@@ -185,9 +185,7 @@ function createSnapshotSubcommand(): Command {
           console.error(`Wrote ${outputPath}`);
         }
       } catch (err) {
-        const error = err instanceof Error ? err : new Error(String(err));
-        console.error(JSON.stringify({ error: error.message }, null, 2));
-        process.exit(1);
+        handleCommandError(err);
       }
     });
 }
@@ -210,9 +208,7 @@ function createValidateSubcommand(): Command {
 
         if (errors.length > 0) process.exit(1);
       } catch (err) {
-        const error = err instanceof Error ? err : new Error(String(err));
-        console.error(JSON.stringify({ error: error.message }, null, 2));
-        process.exit(1);
+        handleCommandError(err);
       }
     });
 }
@@ -278,9 +274,7 @@ function createFilterSubcommand(): Command {
           console.log(json);
         }
       } catch (err) {
-        const error = err instanceof Error ? err : new Error(String(err));
-        console.error(JSON.stringify({ error: error.message }, null, 2));
-        process.exit(1);
+        handleCommandError(err);
       }
     });
 }
@@ -338,9 +332,7 @@ function createLintSubcommand(): Command {
 
         console.log(JSON.stringify(result, null, 2));
       } catch (err) {
-        const error = err instanceof Error ? err : new Error(String(err));
-        console.error(JSON.stringify({ error: error.message }, null, 2));
-        process.exit(1);
+        handleCommandError(err);
       }
     });
 }

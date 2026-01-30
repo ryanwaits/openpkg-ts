@@ -3,6 +3,7 @@ import * as path from 'node:path';
 import { type DocsInstance, loadSpec, query, toReact } from '@openpkg-ts/sdk';
 import type { OpenPkg, SpecExportKind } from '@openpkg-ts/spec';
 import { Command } from 'commander';
+import { handleCommandError } from '../utils';
 
 type OutputFormat = 'md' | 'json' | 'html' | 'react';
 
@@ -349,9 +350,7 @@ export function createGenerateCommand(): Command {
           console.log(output);
         }
       } catch (err) {
-        const error = err instanceof Error ? err : new Error(String(err));
-        console.error(JSON.stringify({ error: error.message }));
-        process.exit(1);
+        handleCommandError(err);
       }
     });
 }

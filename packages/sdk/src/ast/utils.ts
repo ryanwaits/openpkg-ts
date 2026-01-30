@@ -279,6 +279,23 @@ export function getParamDescription(
   return undefined;
 }
 
+function extractVarianceModifiers(modifiers: readonly ts.Modifier[] | undefined): {
+  variance?: 'in' | 'out' | 'inout';
+  isConst?: boolean;
+} {
+  if (!modifiers) return {};
+  let hasIn = false;
+  let hasOut = false;
+  let isConst: boolean | undefined;
+  for (const mod of modifiers) {
+    if (mod.kind === ts.SyntaxKind.InKeyword) hasIn = true;
+    if (mod.kind === ts.SyntaxKind.OutKeyword) hasOut = true;
+    if (mod.kind === ts.SyntaxKind.ConstKeyword) isConst = true;
+  }
+  const variance = hasIn && hasOut ? 'inout' : hasIn ? 'in' : hasOut ? 'out' : undefined;
+  return { variance, isConst };
+}
+
 type DeclarationWithTypeParams =
   | ts.FunctionDeclaration
   | ts.ClassDeclaration
@@ -316,23 +333,7 @@ export function extractTypeParameters(
       defaultType = checker.typeToString(defType);
     }
 
-    // Check for variance and const modifiers
-    let variance: 'in' | 'out' | 'inout' | undefined;
-    let isConst: boolean | undefined;
-
-    const modifiers = ts.getModifiers(tp);
-    if (modifiers) {
-      let hasIn = false;
-      let hasOut = false;
-      for (const mod of modifiers) {
-        if (mod.kind === ts.SyntaxKind.InKeyword) hasIn = true;
-        if (mod.kind === ts.SyntaxKind.OutKeyword) hasOut = true;
-        if (mod.kind === ts.SyntaxKind.ConstKeyword) isConst = true;
-      }
-      if (hasIn && hasOut) variance = 'inout';
-      else if (hasIn) variance = 'in';
-      else if (hasOut) variance = 'out';
-    }
+    const { variance, isConst } = extractVarianceModifiers(ts.getModifiers(tp));
 
     return {
       name,
@@ -440,19 +441,7 @@ export function extractTypeParametersFromSignature(
     const declarations = tpSymbol?.getDeclarations() ?? [];
     for (const decl of declarations) {
       if (ts.isTypeParameterDeclaration(decl)) {
-        const modifiers = ts.getModifiers(decl);
-        if (modifiers) {
-          let hasIn = false;
-          let hasOut = false;
-          for (const mod of modifiers) {
-            if (mod.kind === ts.SyntaxKind.InKeyword) hasIn = true;
-            if (mod.kind === ts.SyntaxKind.OutKeyword) hasOut = true;
-            if (mod.kind === ts.SyntaxKind.ConstKeyword) isConst = true;
-          }
-          if (hasIn && hasOut) variance = 'inout';
-          else if (hasIn) variance = 'in';
-          else if (hasOut) variance = 'out';
-        }
+        ({ variance, isConst } = extractVarianceModifiers(ts.getModifiers(decl)));
         break;
       }
     }

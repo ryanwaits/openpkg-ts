@@ -202,7 +202,6 @@ function buildContent(exp: SpecExport, options: SearchOptions = {}): string {
  */
 function createSearchRecord(
   exp: SpecExport,
-  _packageName: string,
   options: SearchOptions = {},
 ): SearchRecord {
   const { baseUrl = '/api', slugify = defaultSlugify } = options;
@@ -237,7 +236,7 @@ function createSearchRecord(
  * ```
  */
 export function toSearchIndex(spec: OpenPkg, options: SearchOptions = {}): SearchIndex {
-  const records = spec.exports.map((exp) => createSearchRecord(exp, spec.meta.name, options));
+  const records = spec.exports.map((exp) => createSearchRecord(exp, options));
 
   return {
     records,

@@ -1,6 +1,6 @@
 import { Command } from 'commander';
-import { type DiffResult, enrichDiff } from './diff.js';
-import { loadSpec } from './utils.js';
+import { type DiffResult, enrichDiff } from './diff';
+import { handleCommandError, loadSpec } from './utils';
 
 /**
  * Format diff result as markdown changelog
@@ -63,9 +63,7 @@ export function createChangelogCommand(): Command {
           console.log(formatMarkdown(diff));
         }
       } catch (err) {
-        const error = err instanceof Error ? err : new Error(String(err));
-        console.error(JSON.stringify({ error: error.message }, null, 2));
-        process.exit(1);
+        handleCommandError(err);
       }
     });
 }

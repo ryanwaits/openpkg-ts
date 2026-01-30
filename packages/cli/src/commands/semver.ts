@@ -1,6 +1,6 @@
 import { diffSpec, recommendSemverBump, type SemverBump } from '@openpkg-ts/spec';
 import { Command } from 'commander';
-import { loadSpec } from './utils.js';
+import { handleCommandError, loadSpec } from './utils';
 
 export type SemverResult = {
   bump: SemverBump;
@@ -28,9 +28,7 @@ export function createSemverCommand(): Command {
         console.log(JSON.stringify(result, null, 2));
         // Always exit 0 - this is a recommendation only
       } catch (err) {
-        const error = err instanceof Error ? err : new Error(String(err));
-        console.error(JSON.stringify({ error: error.message }, null, 2));
-        process.exit(1);
+        handleCommandError(err);
       }
     });
 }
