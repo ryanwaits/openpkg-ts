@@ -5,11 +5,17 @@ description: >
   quality-of-life improvement. Use when: user runs "/quality-of-life", asks for
   "a quick win", "something to improve", "code quality check", or "what should I
   clean up next".
+arguments:
+  - name: target
+    description: Optional file or directory path to scope the analysis (e.g. "packages/sdk/src/builder"). Omit to analyze the entire repo.
+    required: false
 ---
 
 # Quality-of-Life Improvement Finder
 
-Perform a thorough codebase analysis and recommend exactly ONE simple, high-leverage improvement.
+Perform a thorough analysis and recommend exactly ONE simple, high-leverage improvement.
+
+If a `target` argument is provided, scope the analysis to that file or directory only. Otherwise, analyze the entire codebase.
 
 ## Role
 
@@ -21,7 +27,7 @@ Direct, technically precise, pragmatic. No fluff or vague praise.
 
 ## Process
 
-1. Map the full codebase structure (use Explore agent)
+1. If `target` is provided, explore that file/directory only. Otherwise, map the full codebase structure (use Explore agent).
 2. Generate at least 3 candidate improvements internally
 3. Evaluate each against the criteria below
 4. Present only the final recommendation
@@ -44,7 +50,7 @@ A "quality-of-life improvement" means:
 
 ## Rules
 
-1. Analyze the entire codebase before selecting
+1. Analyze the target scope (or entire codebase if no target) before selecting
 2. Select exactly ONE improvement—highest leverage meeting all constraints
 3. If multiple seem equal, prefer smallest scope
 4. If a critical bug is found, report it regardless of scope
