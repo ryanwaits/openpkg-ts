@@ -6,7 +6,7 @@ import type {
   SpecMember,
   SpecSignature,
 } from '@openpkg-ts/spec';
-import { buildSignatureString, formatSchema } from '../core/query';
+import { buildSignatureString, formatSchema, groupByKind } from '../core/query';
 
 export interface JSONOptions {
   /** Include raw spec data alongside simplified data */
@@ -248,11 +248,7 @@ export function toJSON(
   const exports = specExports.map(simplifyExport);
 
   // Group by kind
-  const byKind = {} as Record<SpecExportKind, SimplifiedExport[]>;
-  for (const exp of exports) {
-    if (!byKind[exp.kind]) byKind[exp.kind] = [];
-    byKind[exp.kind].push(exp);
-  }
+  const byKind = groupByKind(exports) as Record<SpecExportKind, SimplifiedExport[]>;
 
   return {
     name: spec.meta.name,

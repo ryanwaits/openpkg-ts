@@ -1,4 +1,4 @@
-import type { SpecSchema, SpecSignature } from '@openpkg-ts/spec';
+import type { SpecSchema, SpecSchemaRef, SpecSignature } from '@openpkg-ts/spec';
 import ts from 'typescript';
 import type { SerializerContext } from '../serializers/context';
 
@@ -306,7 +306,7 @@ function buildSchemaInternal(
     // Only create $ref for named types (not anonymous __type)
     if (symbol && !isAnonymous(type)) {
       const name = symbol.getName();
-      const schema: SpecSchema = { $ref: `#/types/${name}` };
+      const schema: SpecSchemaRef = { $ref: `#/types/${name}` };
 
       // For generic types, still include typeArguments even on revisit
       const typeRef = type as ts.TypeReference;
@@ -315,9 +315,7 @@ function buildSchemaInternal(
         if (typeArgs && typeArgs.length > 0) {
           // Temporarily remove this type from visited to allow typeArg resolution
           ctx.visitedTypes.delete(type);
-          (schema as Record<string, unknown>).typeArguments = typeArgs.map((t) =>
-            buildSchema(t, checker, ctx),
-          );
+          schema.typeArguments = typeArgs.map((t) => buildSchema(t, checker, ctx));
           ctx.visitedTypes.add(type);
         }
       }

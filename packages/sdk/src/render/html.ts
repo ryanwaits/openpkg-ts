@@ -1,11 +1,13 @@
 import type { OpenPkg, SpecExample, SpecExport, SpecMember, SpecSignature } from '@openpkg-ts/spec';
 import {
+  KIND_ORDER,
   buildSignatureString,
   formatParameters,
   formatReturnType,
   formatSchema,
   getMethods,
   getProperties,
+  groupByKind,
 } from '../core/query';
 
 export interface HTMLOptions {
@@ -413,11 +415,7 @@ export function toHTML(spec: OpenPkg, options: HTMLOptions = {}): string {
   const description = spec.meta.description ? `<p>${escapeHTML(spec.meta.description)}</p>` : '';
 
   // Group by kind
-  const byKind: Record<string, SpecExport[]> = {};
-  for (const exp of specExports) {
-    if (!byKind[exp.kind]) byKind[exp.kind] = [];
-    byKind[exp.kind].push(exp);
-  }
+  const byKind = groupByKind(specExports);
 
   // Build navigation
   const navItems = Object.entries(byKind)
@@ -430,8 +428,7 @@ export function toHTML(spec: OpenPkg, options: HTMLOptions = {}): string {
   const nav = `<nav><ul>${navItems}</ul></nav>`;
 
   // Render sections
-  const kindOrder = ['function', 'class', 'interface', 'type', 'enum', 'variable'];
-  const sections = kindOrder
+  const sections = KIND_ORDER
     .filter((kind) => byKind[kind]?.length)
     .map((kind) => {
       const exports = byKind[kind].map(renderExport).join('');

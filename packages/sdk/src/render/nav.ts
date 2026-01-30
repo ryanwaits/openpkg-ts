@@ -1,5 +1,5 @@
 import type { OpenPkg, SpecExport, SpecExportKind } from '@openpkg-ts/spec';
-import { sortByName } from '../core/query';
+import { KIND_ORDER, sortByName } from '../core/query';
 
 export type NavFormat = 'fumadocs' | 'docusaurus' | 'generic';
 export type GroupBy = 'kind' | 'module' | 'tag' | 'none';
@@ -178,21 +178,9 @@ function toGenericNav(spec: OpenPkg, options: NavOptions): GenericNav {
 
   // Sort groups by kind order if grouping by kind
   if (groupBy === 'kind') {
-    const kindOrder: SpecExportKind[] = [
-      'function',
-      'class',
-      'interface',
-      'type',
-      'enum',
-      'variable',
-      'namespace',
-      'module',
-      'reference',
-      'external',
-    ];
     groups.sort((a, b) => {
-      const aIdx = kindOrder.indexOf(a.title.toLowerCase().replace(/s$/, '') as SpecExportKind);
-      const bIdx = kindOrder.indexOf(b.title.toLowerCase().replace(/s$/, '') as SpecExportKind);
+      const aIdx = KIND_ORDER.indexOf(a.title.toLowerCase().replace(/s$/, '') as SpecExportKind);
+      const bIdx = KIND_ORDER.indexOf(b.title.toLowerCase().replace(/s$/, '') as SpecExportKind);
       return aIdx - bIdx;
     });
   }

@@ -1,5 +1,6 @@
 import type { OpenPkg, SpecExample, SpecExport, SpecMember, SpecSignature } from '@openpkg-ts/spec';
 import {
+  KIND_ORDER,
   buildSignatureString,
   type FormatSchemaOptions,
   formatParameters,
@@ -7,6 +8,7 @@ import {
   formatSchema,
   getMethods,
   getProperties,
+  groupByKind,
 } from '../core/query';
 
 export interface MarkdownOptions {
@@ -557,15 +559,10 @@ export function toMarkdown(spec: OpenPkg, options: ExportMarkdownOptions = {}): 
   }
 
   // Group by kind
-  const byKind: Record<string, SpecExport[]> = {};
-  for (const exp of specExports) {
-    if (!byKind[exp.kind]) byKind[exp.kind] = [];
-    byKind[exp.kind].push(exp);
-  }
+  const byKind = groupByKind(specExports);
 
   // Render by kind
-  const kindOrder = ['function', 'class', 'interface', 'type', 'enum', 'variable'];
-  for (const kind of kindOrder) {
+  for (const kind of KIND_ORDER) {
     const exports = byKind[kind];
     if (!exports?.length) continue;
 

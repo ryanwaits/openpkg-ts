@@ -1,6 +1,7 @@
 import type {
   OpenPkg,
   SpecExport,
+  SpecExportKind,
   SpecMember,
   SpecSchema,
   SpecSignature,
@@ -375,6 +376,32 @@ export function groupByVisibility(members?: SpecMember[]): {
  */
 export function sortByName<T extends { name: string }>(items: T[]): T[] {
   return [...items].sort((a, b) => a.name.localeCompare(b.name));
+}
+
+/** Canonical kind ordering for rendering grouped exports. */
+export const KIND_ORDER: SpecExportKind[] = [
+  'function',
+  'class',
+  'interface',
+  'type',
+  'enum',
+  'variable',
+  'namespace',
+  'module',
+  'reference',
+  'external',
+];
+
+/**
+ * Group items by their `kind` field.
+ */
+export function groupByKind<T extends { kind: string }>(items: T[]): Record<string, T[]> {
+  const groups: Record<string, T[]> = {};
+  for (const item of items) {
+    if (!groups[item.kind]) groups[item.kind] = [];
+    groups[item.kind].push(item);
+  }
+  return groups;
 }
 
 /**
