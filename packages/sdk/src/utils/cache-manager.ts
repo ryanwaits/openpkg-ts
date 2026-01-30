@@ -101,6 +101,29 @@ export class CacheManager<K, V> {
   }
 
   /**
+   * Get cached value or compute, cache, and return it.
+   * Unlike has()+get(), this correctly updates LRU order in a single operation.
+   */
+  getOrCompute(key: K, compute: () => V): V {
+    const entry = this.cache.get(key);
+
+    if (entry) {
+      if (entry.expiresAt && Date.now() > entry.expiresAt) {
+        this.cache.delete(key);
+      } else {
+        // Move to end (most recently used)
+        this.cache.delete(key);
+        this.cache.set(key, entry);
+        return entry.value;
+      }
+    }
+
+    const value = compute();
+    this.set(key, value);
+    return value;
+  }
+
+  /**
    * Delete a specific key from the cache.
    */
   delete(key: K): boolean {
