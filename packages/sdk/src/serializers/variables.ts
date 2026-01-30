@@ -1,6 +1,6 @@
 import type { SpecExport } from '@openpkg-ts/spec';
 import type ts from 'typescript';
-import { getJSDocComment, getSourceLocation, isSymbolDeprecated } from '../ast/utils';
+import { extractExportMetadata } from './shared';
 import { extractSchemaType } from '../schema/registry';
 // Import adapters to ensure they're registered (side effect)
 import '../schema/adapters';
@@ -17,10 +17,8 @@ export function serializeVariable(
   const name = symbol?.getName() ?? node.name.getText();
   if (!name) return null;
 
-  const { deprecated, reason: deprecationReason } = isSymbolDeprecated(symbol);
-  const declSourceFile = node.getSourceFile();
-  const { description, tags, examples } = getJSDocComment(statement, symbol, ctx.typeChecker);
-  const source = getSourceLocation(node, declSourceFile);
+  const { description, tags, examples, source, deprecated, deprecationReason } =
+    extractExportMetadata(node, symbol, ctx.typeChecker, statement);
   const type = ctx.typeChecker.getTypeAtLocation(node);
 
   // Check if this is a schema library type (Zod, Valibot, TypeBox, ArkType)

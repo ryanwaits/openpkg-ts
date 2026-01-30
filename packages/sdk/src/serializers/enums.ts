@@ -1,7 +1,8 @@
 import type { SpecExport, SpecMember, SpecSchema } from '@openpkg-ts/spec';
 import type ts from 'typescript';
-import { getJSDocComment, getSourceLocation, isSymbolDeprecated } from '../ast/utils';
+import { getJSDocComment } from '../ast/utils';
 import type { SerializerContext } from './context';
+import { extractExportMetadata } from './shared';
 
 export function serializeEnum(node: ts.EnumDeclaration, ctx: SerializerContext): SpecExport | null {
   const { typeChecker: checker } = ctx;
@@ -9,10 +10,8 @@ export function serializeEnum(node: ts.EnumDeclaration, ctx: SerializerContext):
   const name = symbol?.getName() ?? node.name?.getText();
   if (!name) return null;
 
-  const { deprecated, reason: deprecationReason } = isSymbolDeprecated(symbol);
-  const declSourceFile = node.getSourceFile();
-  const { description, tags, examples } = getJSDocComment(node, symbol, checker);
-  const source = getSourceLocation(node, declSourceFile);
+  const { description, tags, examples, source, deprecated, deprecationReason } =
+    extractExportMetadata(node, symbol, checker);
 
   const members: SpecMember[] = node.members.map((member) => {
     const memberSymbol = checker.getSymbolAtLocation(member.name);

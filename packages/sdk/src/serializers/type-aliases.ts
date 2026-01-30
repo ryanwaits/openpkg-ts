@@ -1,14 +1,10 @@
 import type { SpecExport, SpecSchema } from '@openpkg-ts/spec';
 import ts from 'typescript';
-import {
-  extractTypeParameters,
-  getJSDocComment,
-  getSourceLocation,
-  isSymbolDeprecated,
-} from '../ast/utils';
+import { extractTypeParameters } from '../ast/utils';
 import { registerReferencedTypes } from '../types/parameters';
 import { buildSchema } from '../types/schema-builder';
 import type { SerializerContext } from './context';
+import { extractExportMetadata } from './shared';
 
 /**
  * Build schema from an intersection type node, preserving structure as allOf.
@@ -47,10 +43,8 @@ export function serializeTypeAlias(
   const name = symbol?.getName() ?? node.name?.getText();
   if (!name) return null;
 
-  const { deprecated, reason: deprecationReason } = isSymbolDeprecated(symbol);
-  const declSourceFile = node.getSourceFile();
-  const { description, tags, examples } = getJSDocComment(node, symbol, ctx.typeChecker);
-  const source = getSourceLocation(node, declSourceFile);
+  const { description, tags, examples, source, deprecated, deprecationReason } =
+    extractExportMetadata(node, symbol, ctx.typeChecker);
 
   // Extract type parameters like <T, K extends Base>
   const typeParameters = extractTypeParameters(node, ctx.typeChecker);
