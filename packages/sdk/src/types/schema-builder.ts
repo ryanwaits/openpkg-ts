@@ -32,7 +32,7 @@ export const BUILTIN_TYPE_SCHEMAS: Record<string, SpecSchema> = {
 };
 
 // Primitive type names
-const PRIMITIVES = new Set([
+export const PRIMITIVES = new Set([
   'string',
   'number',
   'boolean',

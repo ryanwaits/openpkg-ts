@@ -6,7 +6,7 @@ import * as path from 'node:path';
 import type { SpecExport, SpecExportKind } from '@openpkg-ts/spec';
 import picomatch from 'picomatch';
 import ts from 'typescript';
-import { extractTypeParametersFromSignature, getJSDocForSignature } from '../ast/utils';
+import { extractTypeParametersFromSignature, getExportKind, getJSDocForSignature } from '../ast/utils';
 import type { SerializerContext } from '../serializers/context';
 import { extractParameters, registerReferencedTypes } from '../types/parameters';
 import { buildSchema } from '../types/schema-builder';
@@ -110,27 +110,6 @@ function findPackageJson(
 /**
  * Determine the export kind from a TypeScript symbol
  */
-function determineExportKind(symbol: ts.Symbol, checker: ts.TypeChecker): SpecExportKind {
-  const declarations = symbol.declarations ?? [];
-  const decl = declarations[0];
-
-  if (!decl) return 'variable';
-
-  if (ts.isFunctionDeclaration(decl) || ts.isFunctionExpression(decl)) return 'function';
-  if (ts.isClassDeclaration(decl)) return 'class';
-  if (ts.isInterfaceDeclaration(decl)) return 'interface';
-  if (ts.isTypeAliasDeclaration(decl)) return 'type';
-  if (ts.isEnumDeclaration(decl)) return 'enum';
-  if (ts.isModuleDeclaration(decl)) return 'namespace';
-
-  // Check if it's a variable with a function type
-  if (ts.isVariableDeclaration(decl)) {
-    const type = checker.getTypeAtLocation(decl);
-    if (type.getCallSignatures().length > 0) return 'function';
-  }
-
-  return 'variable';
-}
 
 /**
  * Extract a specific export from a resolved external module
@@ -188,7 +167,8 @@ export function extractExternalExport(
     }
   }
 
-  const kind = determineExportKind(resolvedSymbol, checker);
+  const decl = (resolvedSymbol.declarations ?? [])[0];
+  const kind = decl ? getExportKind(decl, checker.getTypeAtLocation(decl)) : 'variable' as SpecExportKind;
 
   // Get JSDoc info
   const docComment = resolvedSymbol.getDocumentationComment(checker);

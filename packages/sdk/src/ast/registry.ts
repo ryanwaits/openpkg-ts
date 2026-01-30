@@ -1,22 +1,7 @@
 import type { SpecType, SpecTypeKind } from '@openpkg-ts/spec';
 import ts from 'typescript';
 import type { SerializerContext } from '../serializers/context';
-import { ARRAY_PROTOTYPE_METHODS, buildSchema } from '../types/schema-builder';
-
-const PRIMITIVES = new Set([
-  'string',
-  'number',
-  'boolean',
-  'void',
-  'any',
-  'undefined',
-  'null',
-  'never',
-  'unknown',
-  'object',
-  'symbol',
-  'bigint',
-]);
+import { ARRAY_PROTOTYPE_METHODS, buildSchema, PRIMITIVES } from '../types/schema-builder';
 
 /** Built-in types that shouldn't be registered */
 const BUILTINS = new Set([

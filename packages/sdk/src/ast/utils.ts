@@ -1,6 +1,7 @@
 import type {
   SpecExample,
   SpecExampleLanguage,
+  SpecExportKind,
   SpecSource,
   SpecTag,
   SpecTagParam,
@@ -454,4 +455,16 @@ export function extractTypeParametersFromSignature(
       ...(isConst ? { const: isConst } : {}),
     };
   });
+}
+
+/** Classify a declaration node into an export kind */
+export function getExportKind(declaration: ts.Declaration, type: ts.Type): SpecExportKind {
+  if (ts.isFunctionDeclaration(declaration) || ts.isFunctionExpression(declaration)) return 'function';
+  if (ts.isClassDeclaration(declaration)) return 'class';
+  if (ts.isInterfaceDeclaration(declaration)) return 'interface';
+  if (ts.isTypeAliasDeclaration(declaration)) return 'type';
+  if (ts.isEnumDeclaration(declaration)) return 'enum';
+  if (ts.isModuleDeclaration(declaration) || ts.isNamespaceExport(declaration)) return 'namespace';
+  if (ts.isVariableDeclaration(declaration) && type.getCallSignatures().length > 0) return 'function';
+  return 'variable';
 }

@@ -3,7 +3,7 @@
  */
 import * as path from 'node:path';
 import ts from 'typescript';
-import { isSymbolDeprecated } from '../ast/utils';
+import { getExportKind, isSymbolDeprecated } from '../ast/utils';
 import { createProgram } from '../compiler/program';
 
 export interface ListExportsOptions {
@@ -147,35 +147,6 @@ function extractExportItem(
   };
 }
 
-function getExportKind(declaration: ts.Declaration, type: ts.Type): ExportItem['kind'] {
-  if (ts.isFunctionDeclaration(declaration) || ts.isFunctionExpression(declaration)) {
-    return 'function';
-  }
-  if (ts.isClassDeclaration(declaration)) {
-    return 'class';
-  }
-  if (ts.isInterfaceDeclaration(declaration)) {
-    return 'interface';
-  }
-  if (ts.isTypeAliasDeclaration(declaration)) {
-    return 'type';
-  }
-  if (ts.isEnumDeclaration(declaration)) {
-    return 'enum';
-  }
-  if (ts.isModuleDeclaration(declaration) || ts.isNamespaceExport(declaration)) {
-    return 'namespace';
-  }
-  if (ts.isVariableDeclaration(declaration)) {
-    // Check if variable is a function
-    const callSigs = type.getCallSignatures();
-    if (callSigs.length > 0) {
-      return 'function';
-    }
-    return 'variable';
-  }
-  return 'variable';
-}
 
 function getDescriptionPreview(symbol: ts.Symbol, checker: ts.TypeChecker): string | undefined {
   const docs = symbol.getDocumentationComment(checker);
