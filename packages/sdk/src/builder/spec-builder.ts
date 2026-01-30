@@ -550,40 +550,16 @@ function serializeDeclaration(
         result = serializeVariable(declaration, varStatement, ctx);
       }
     }
-  } else if (ts.isNamespaceExport(declaration) || ts.isModuleDeclaration(declaration)) {
+  } else if (
+    ts.isNamespaceExport(declaration) ||
+    ts.isModuleDeclaration(declaration) ||
+    ts.isNamespaceImport(declaration) ||
+    ts.isSourceFile(declaration)
+  ) {
     try {
       result = serializeNamespaceExport(exportSymbol, exportName, ctx);
     } catch {
-      // Fallback for namespace exports with parent chain issues
-      result = {
-        id: exportName,
-        name: exportName,
-        kind: 'namespace',
-        tags: [],
-        members: [],
-        examples: [],
-      };
-    }
-  } else if (ts.isNamespaceImport(declaration)) {
-    // Handle `import * as foo` re-exported as `export { foo }`
-    try {
-      result = serializeNamespaceExport(exportSymbol, exportName, ctx);
-    } catch {
-      // Fallback for namespace imports with parent chain issues
-      result = {
-        id: exportName,
-        name: exportName,
-        kind: 'namespace',
-        tags: [],
-        members: [],
-        examples: [],
-      };
-    }
-  } else if (ts.isSourceFile(declaration)) {
-    try {
-      result = serializeNamespaceExport(exportSymbol, exportName, ctx);
-    } catch {
-      // Fallback for source file exports with parent chain issues
+      // Fallback for namespace/module exports with parent chain issues
       result = {
         id: exportName,
         name: exportName,
