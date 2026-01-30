@@ -2,8 +2,8 @@
 
 import { Check, Copy } from 'lucide-react';
 import * as React from 'react';
-import { useState } from 'react';
 import { cn } from '@/lib/utils';
+import { useCopyToClipboard } from '@/hooks/use-copy-to-clipboard';
 import { EndpointBadge, type HttpMethod } from './endpoint-badge';
 
 export interface EndpointHeaderProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -19,12 +19,10 @@ const EndpointHeader: React.ForwardRefExoticComponent<
   EndpointHeaderProps & React.RefAttributes<HTMLDivElement>
 > = React.forwardRef<HTMLDivElement, EndpointHeaderProps>(
   ({ className, method, path, copyable = true, ...props }, ref) => {
-    const [copied, setCopied] = useState(false);
+    const [copied, copy] = useCopyToClipboard();
 
     const handleCopy = () => {
-      navigator.clipboard.writeText(path);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1200);
+      copy(path);
     };
 
     return (

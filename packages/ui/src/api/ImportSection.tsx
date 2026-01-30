@@ -1,8 +1,8 @@
 'use client';
 
 import { Check, Copy } from 'lucide-react';
-import { useState } from 'react';
 import { cn } from '@/lib/utils';
+import { useCopyToClipboard } from '@/hooks/use-copy-to-clipboard';
 
 export interface ImportSectionProps {
   /** Import statement text */
@@ -16,12 +16,10 @@ export interface ImportSectionProps {
  * Monospace styling with copy button.
  */
 export function ImportSection({ importStatement, className }: ImportSectionProps): React.ReactNode {
-  const [copied, setCopied] = useState(false);
+  const [copied, copy] = useCopyToClipboard();
 
   const handleCopy = () => {
-    navigator.clipboard.writeText(importStatement);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1200);
+    copy(importStatement);
   };
 
   return (

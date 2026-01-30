@@ -4,6 +4,7 @@ import { Check, ChevronRight, Copy } from 'lucide-react';
 import type * as React from 'react';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
+import { useCopyToClipboard } from '@/hooks/use-copy-to-clipboard';
 
 export interface APIParameterSchema {
   /** Type name */
@@ -47,16 +48,10 @@ function NestedProperty({
   depth?: number;
 }): React.ReactNode {
   const [expanded, setExpanded] = useState(false);
-  const [copied, setCopied] = useState(false);
+  const [copied, copy] = useCopyToClipboard();
   const type = schema.typeString ?? schema.type ?? 'unknown';
   const hasNested = schema.properties && Object.keys(schema.properties).length > 0;
   const _nestedCount = hasNested && schema.properties ? Object.keys(schema.properties).length : 0;
-
-  const handleCopy = () => {
-    navigator.clipboard.writeText(name);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1200);
-  };
 
   return (
     <div className={cn('border-t border-border first:border-t-0', depth > 0 && 'ml-4')}>
@@ -99,7 +94,7 @@ function NestedProperty({
               {/* Copy button on hover */}
               <button
                 type="button"
-                onClick={handleCopy}
+                onClick={() => copy(name)}
                 className="p-1 rounded text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
                 aria-label="Copy name"
               >
@@ -147,16 +142,10 @@ export function APIParameterItem({
   className,
 }: APIParameterItemProps): React.ReactNode {
   const [expanded, setExpanded] = useState(false);
-  const [copied, setCopied] = useState(false);
+  const [copied, copy] = useCopyToClipboard();
   const hasNested = children?.properties && Object.keys(children.properties).length > 0;
   const _nestedCount =
     hasNested && children?.properties ? Object.keys(children.properties).length : 0;
-
-  const handleCopy = () => {
-    navigator.clipboard.writeText(name);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1200);
-  };
 
   return (
     <div className={cn('border-b border-border last:border-b-0', className)}>
@@ -201,7 +190,7 @@ export function APIParameterItem({
               {/* Copy button on hover */}
               <button
                 type="button"
-                onClick={handleCopy}
+                onClick={() => copy(name)}
                 className="p-1 rounded text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
                 aria-label="Copy name"
               >

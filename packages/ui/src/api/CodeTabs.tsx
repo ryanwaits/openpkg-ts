@@ -3,6 +3,7 @@
 import { Check, Copy } from 'lucide-react';
 import { type ReactNode, useState } from 'react';
 import { cn } from '@/lib/utils';
+import { useCopyToClipboard } from '@/hooks/use-copy-to-clipboard';
 
 export interface CodeTab {
   /** Tab label */
@@ -35,15 +36,13 @@ export function CodeTabs({
   className,
 }: CodeTabsProps): React.ReactNode {
   const [activeIndex, setActiveIndex] = useState(defaultIndex);
-  const [copied, setCopied] = useState(false);
+  const [copied, copy] = useCopyToClipboard();
 
   const activeTab = tabs[activeIndex];
 
   const handleCopy = () => {
     if (!activeTab) return;
-    navigator.clipboard.writeText(activeTab.code);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1200);
+    copy(activeTab.code);
   };
 
   if (!tabs.length) return null;

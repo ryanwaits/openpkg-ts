@@ -5,6 +5,7 @@ import { Check, Copy, ExternalLink } from 'lucide-react';
 import type * as React from 'react';
 import { useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
+import { useCopyToClipboard } from '@/hooks/use-copy-to-clipboard';
 import { theme } from '../code.config';
 import { getHandlers } from '../code.handlers';
 import { CodeBlockSkeleton } from '../code.skeleton';
@@ -44,7 +45,7 @@ export function APICodePanel({
   className,
 }: APICodePanelProps): React.ReactNode {
   const [selectedLang, setSelectedLang] = useState(examples[0]?.languageId ?? languages[0]?.id);
-  const [copied, setCopied] = useState(false);
+  const [copied, copy] = useCopyToClipboard();
   const [highlighted, setHighlighted] = useState<HighlightedCode | null>(null);
 
   const currentExample = examples.find((e) => e.languageId === selectedLang);
@@ -74,9 +75,7 @@ export function APICodePanel({
   }, [code, lang]);
 
   const handleCopy = () => {
-    navigator.clipboard.writeText(code);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1200);
+    copy(code);
   };
 
   const handlers = getHandlers({ copyButton: false });
