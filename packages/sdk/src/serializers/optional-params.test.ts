@@ -14,7 +14,7 @@ describe('optional parameter detection', () => {
     expect(fn).toBeDefined();
     expect(fn?.kind).toBe('function');
 
-    const signatures = (fn as any).signatures;
+    const signatures = fn!.signatures;
     expect(signatures).toHaveLength(1);
 
     const params = signatures[0].parameters;
@@ -38,7 +38,7 @@ describe('optional parameter detection', () => {
     const fn = result.spec.exports.find((e) => e.name === 'test');
     expect(fn).toBeDefined();
 
-    const signatures = (fn as any).signatures;
+    const signatures = fn!.signatures;
     const params = signatures[0].parameters;
 
     expect(params[0].name).toBe('a');
@@ -59,7 +59,7 @@ describe('optional parameter detection', () => {
     const fn = result.spec.exports.find((e) => e.name === 'test');
     expect(fn).toBeDefined();
 
-    const signatures = (fn as any).signatures;
+    const signatures = fn!.signatures;
     const params = signatures[0].parameters;
 
     expect(params).toHaveLength(1);
@@ -76,7 +76,7 @@ describe('optional parameter detection', () => {
     });
 
     const fn = result.spec.exports.find((e) => e.name === 'test');
-    const signatures = (fn as any).signatures;
+    const signatures = fn!.signatures;
     const params = signatures[0].parameters;
 
     expect(params[0].required).toBe(true);
@@ -93,7 +93,7 @@ describe('optional parameter detection', () => {
     });
 
     const fn = result.spec.exports.find((e) => e.name === 'test');
-    const signatures = (fn as any).signatures;
+    const signatures = fn!.signatures;
     const params = signatures[0].parameters;
 
     expect(params[0].name).toBe('a');

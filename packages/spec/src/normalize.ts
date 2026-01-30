@@ -56,49 +56,18 @@ function normalizeGeneration(gen: OpenPkg['generation']): OpenPkg['generation'] 
   return gen;
 }
 
-function normalizeExport(item: SpecExport): SpecExport {
-  const clone: SpecExport = structuredClone(item);
+function normalizeEntry<T extends SpecExport | SpecType>(
+  item: T,
+  arrayFields: Array<keyof T>,
+): T {
+  const clone: T = structuredClone(item);
 
-  // Ensure array fields exist
-  for (const field of arrayFieldsByExport) {
+  for (const field of arrayFields) {
     if (!Array.isArray(clone[field] as unknown)) {
       (clone as Record<string, unknown>)[field as string] = [];
     }
   }
 
-  // Fix type field: schema expects string, move object to schema field
-  if (clone.type !== undefined && typeof clone.type !== 'string') {
-    // Move object type to schema if schema is empty
-    if (!clone.schema) {
-      clone.schema = clone.type;
-    }
-    delete clone.type;
-  }
-
-  // Normalize tags to only have name and text (remove extra properties)
-  if (clone.tags && clone.tags.length > 0) {
-    clone.tags = clone.tags.map(normalizeTag);
-  }
-
-  // Normalize members
-  if (clone.members && clone.members.length > 0) {
-    clone.members = clone.members.map(normalizeMember);
-  }
-
-  return clone;
-}
-
-function normalizeType(item: SpecType): SpecType {
-  const clone: SpecType = structuredClone(item);
-
-  // Ensure array fields exist
-  for (const field of arrayFieldsByType) {
-    if (!Array.isArray(clone[field] as unknown)) {
-      (clone as Record<string, unknown>)[field as string] = [];
-    }
-  }
-
-  // Fix type field: schema expects string, move object to schema field
   if (clone.type !== undefined && typeof clone.type !== 'string') {
     if (!clone.schema) {
       clone.schema = clone.type;
@@ -106,18 +75,19 @@ function normalizeType(item: SpecType): SpecType {
     delete clone.type;
   }
 
-  // Normalize tags to only have name and text
   if (clone.tags && clone.tags.length > 0) {
     clone.tags = clone.tags.map(normalizeTag);
   }
 
-  // Normalize members
   if (clone.members && clone.members.length > 0) {
     clone.members = clone.members.map(normalizeMember);
   }
 
   return clone;
 }
+
+const normalizeExport = (item: SpecExport) => normalizeEntry(item, arrayFieldsByExport);
+const normalizeType = (item: SpecType) => normalizeEntry(item, arrayFieldsByType);
 
 /**
  * Normalize a tag to only have known fields.
