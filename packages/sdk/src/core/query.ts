@@ -486,3 +486,16 @@ export function formatMappedType(mappedType: SpecMappedType): string {
 
   return `{ ${readonlyMod}[${keyStr}]${optionalMod}: ${valueStr} }`;
 }
+
+/** Find a single export by name or id, throws if not found */
+export function findExport(spec: OpenPkg, name: string): SpecExport {
+  const exp = spec.exports.find((e) => e.name === name || e.id === name);
+  if (!exp) throw new Error(`Export not found: ${name}`);
+  return exp;
+}
+
+/** Filter exports by a list of names/ids */
+export function filterExports(spec: OpenPkg, names: string[]): SpecExport[] {
+  const ids = new Set(names);
+  return spec.exports.filter((e) => ids.has(e.name) || ids.has(e.id));
+}

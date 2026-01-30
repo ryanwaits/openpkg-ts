@@ -4,22 +4,19 @@ import type { OpenPkg, SpecExport, SpecMember, SpecSchema, SpecSignature } from 
 import { SCHEMA_URL, SCHEMA_VERSION } from '@openpkg-ts/spec';
 import ts from 'typescript';
 import { resolveExportTarget } from '../ast/resolve';
-import {
-  extractTypeParametersFromSignature,
-  getJSDocForSignature,
-  isSymbolDeprecated,
-} from '../ast/utils';
+import { isSymbolDeprecated } from '../ast/utils';
 import { createProgram } from '../compiler/program';
 import { extractStandardSchemasFromProject } from '../schema/standard-schema';
 import { serializeClass } from '../serializers/classes';
 import { createContext, type SerializerContext } from '../serializers/context';
+import { buildSignatures } from '../serializers/shared';
 import { serializeEnum } from '../serializers/enums';
 import { serializeFunctionExport } from '../serializers/functions';
 import { serializeInterface } from '../serializers/interfaces';
 import { serializeTypeAlias } from '../serializers/type-aliases';
 import { serializeVariable } from '../serializers/variables';
 import type { Diagnostic, ExportTracker, ExtractOptions, ExtractResult } from '../types';
-import { extractParameters, registerReferencedTypes } from '../types/parameters';
+import { registerReferencedTypes } from '../types/parameters';
 import { buildSchema } from '../types/schema-builder';
 import { normalizeExport, normalizeType } from '../types/schema-normalizer';
 import {
@@ -679,26 +676,7 @@ function serializeNamespaceMember(
   // Build signatures for functions
   let signatures: SpecSignature[] | undefined;
   if (kind === 'function' && callSignatures.length > 0) {
-    signatures = callSignatures.map((sig, index) => {
-      const params = extractParameters(sig, ctx);
-      const returnType = checker.getReturnTypeOfSignature(sig);
-      registerReferencedTypes(returnType, ctx);
-      const returnSchema = buildSchema(returnType, ctx.typeChecker, ctx);
-
-      // Get per-overload JSDoc
-      const sigDoc = getJSDocForSignature(sig, checker);
-      const sigTypeParams = extractTypeParametersFromSignature(sig, ctx.typeChecker);
-
-      return {
-        parameters: params,
-        returns: { schema: returnSchema },
-        ...(sigDoc.description ? { description: sigDoc.description } : {}),
-        ...(sigDoc.tags.length > 0 ? { tags: sigDoc.tags } : {}),
-        ...(sigDoc.examples.length > 0 ? { examples: sigDoc.examples } : {}),
-        ...(sigTypeParams ? { typeParameters: sigTypeParams } : {}),
-        ...(callSignatures.length > 1 ? { overloadIndex: index } : {}),
-      };
-    });
+    signatures = buildSignatures(callSignatures, checker, ctx);
   }
 
   // Build schema for non-function members

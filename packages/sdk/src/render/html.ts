@@ -2,6 +2,8 @@ import type { OpenPkg, SpecExample, SpecExport, SpecMember, SpecSignature } from
 import {
   KIND_ORDER,
   buildSignatureString,
+  filterExports,
+  findExport,
   formatParameters,
   formatReturnType,
   formatSchema,
@@ -373,11 +375,7 @@ export function toHTML(spec: OpenPkg, options: HTMLOptions = {}): string {
 
   // Single export mode
   if (options.export) {
-    const exp = spec.exports.find((e) => e.name === options.export || e.id === options.export);
-    if (!exp) {
-      throw new Error(`Export not found: ${options.export}`);
-    }
-
+    const exp = findExport(spec, options.export);
     const content = renderExport(exp);
 
     if (!fullDocument) return content;
@@ -406,8 +404,7 @@ export function toHTML(spec: OpenPkg, options: HTMLOptions = {}): string {
   // Filter exports if exports[] provided
   let specExports = spec.exports;
   if (options.exports?.length) {
-    const ids = new Set(options.exports);
-    specExports = spec.exports.filter((e) => ids.has(e.name) || ids.has(e.id));
+    specExports = filterExports(spec, options.exports);
   }
 
   // Full spec mode

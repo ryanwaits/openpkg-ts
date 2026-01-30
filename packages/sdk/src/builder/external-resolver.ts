@@ -6,9 +6,10 @@ import * as path from 'node:path';
 import type { SpecExport, SpecExportKind } from '@openpkg-ts/spec';
 import picomatch from 'picomatch';
 import ts from 'typescript';
-import { extractTypeParametersFromSignature, getExportKind, getJSDocForSignature } from '../ast/utils';
+import { getExportKind } from '../ast/utils';
 import type { SerializerContext } from '../serializers/context';
-import { extractParameters, registerReferencedTypes } from '../types/parameters';
+import { buildSignatures } from '../serializers/shared';
+import { registerReferencedTypes } from '../types/parameters';
 import { buildSchema } from '../types/schema-builder';
 
 /**
@@ -193,26 +194,7 @@ export function extractExternalExport(
     const callSignatures = type.getCallSignatures();
 
     if (callSignatures.length > 0) {
-      const signatures = callSignatures.map((sig, index) => {
-        const params = extractParameters(sig, ctx);
-        const returnType = checker.getReturnTypeOfSignature(sig);
-        registerReferencedTypes(returnType, ctx);
-        const returnSchema = buildSchema(returnType, checker, ctx);
-        const sigDoc = getJSDocForSignature(sig, checker);
-        const sigTypeParams = extractTypeParametersFromSignature(sig, checker);
-
-        return {
-          parameters: params,
-          returns: { schema: returnSchema },
-          ...(sigDoc.description && { description: sigDoc.description }),
-          ...(sigDoc.tags.length > 0 && { tags: sigDoc.tags }),
-          ...(sigDoc.examples.length > 0 && { examples: sigDoc.examples }),
-          ...(sigTypeParams && { typeParameters: sigTypeParams }),
-          ...(callSignatures.length > 1 && { overloadIndex: index }),
-        };
-      });
-
-      (specExport as Record<string, unknown>).signatures = signatures;
+      (specExport as Record<string, unknown>).signatures = buildSignatures(callSignatures, checker, ctx);
     }
   } else if (kind === 'interface' || kind === 'type' || kind === 'class') {
     // For types/interfaces/classes, build the schema

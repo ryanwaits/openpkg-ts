@@ -6,7 +6,7 @@ import type {
   SpecMember,
   SpecSignature,
 } from '@openpkg-ts/spec';
-import { buildSignatureString, formatSchema, groupByKind } from '../core/query';
+import { buildSignatureString, filterExports, findExport, formatSchema, groupByKind } from '../core/query';
 
 export interface JSONOptions {
   /** Include raw spec data alongside simplified data */
@@ -230,18 +230,13 @@ export function toJSON(
 ): SimplifiedSpec | SimplifiedExport {
   // Single export mode (takes precedence)
   if (options.export) {
-    const exp = spec.exports.find((e) => e.name === options.export || e.id === options.export);
-    if (!exp) {
-      throw new Error(`Export not found: ${options.export}`);
-    }
-    return simplifyExport(exp);
+    return simplifyExport(findExport(spec, options.export));
   }
 
   // Filter exports if exports[] provided
   let specExports = spec.exports;
   if (options.exports?.length) {
-    const ids = new Set(options.exports);
-    specExports = spec.exports.filter((e) => ids.has(e.name) || ids.has(e.id));
+    specExports = filterExports(spec, options.exports);
   }
 
   // Full spec mode

@@ -2,6 +2,8 @@ import type { OpenPkg, SpecExample, SpecExport, SpecMember, SpecSignature } from
 import {
   KIND_ORDER,
   buildSignatureString,
+  filterExports,
+  findExport,
   type FormatSchemaOptions,
   formatParameters,
   formatReturnType,
@@ -512,18 +514,13 @@ export function exportToMarkdown(exp: SpecExport, options: MarkdownOptions = {})
 export function toMarkdown(spec: OpenPkg, options: ExportMarkdownOptions = {}): string {
   // Single export mode (takes precedence)
   if (options.export) {
-    const exp = spec.exports.find((e) => e.name === options.export || e.id === options.export);
-    if (!exp) {
-      throw new Error(`Export not found: ${options.export}`);
-    }
-    return exportToMarkdown(exp, options);
+    return exportToMarkdown(findExport(spec, options.export), options);
   }
 
   // Filter exports if exports[] provided
   let specExports = spec.exports;
   if (options.exports?.length) {
-    const ids = new Set(options.exports);
-    specExports = spec.exports.filter((e) => ids.has(e.name) || ids.has(e.id));
+    specExports = filterExports(spec, options.exports);
     // Return empty markdown if no matches
     if (specExports.length === 0) return '';
   }

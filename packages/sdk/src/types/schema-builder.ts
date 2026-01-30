@@ -276,7 +276,6 @@ export function buildSchema(
   type: ts.Type,
   checker: ts.TypeChecker,
   ctx?: SerializerContext,
-  _depth = 0, // deprecated, use ctx.currentDepth instead
 ): SpecSchema {
   const schema = buildSchemaInternal(type, checker, ctx);
   return ensureNonEmptySchema(schema, type, checker);
