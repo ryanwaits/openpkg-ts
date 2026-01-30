@@ -21,12 +21,12 @@
   "type": "module",
   "exports": {
     ".": {
-      "import": "./src/registry.ts",
-      "types": "./src/registry.ts"
+      "import": "./dist/registry.js",
+      "types": "./dist/registry.d.ts"
     },
     "./fumadocs": {
-      "import": "./src/fumadocs/index.ts",
-      "types": "./src/fumadocs/index.ts"
+      "import": "./dist/fumadocs/index.js",
+      "types": "./dist/fumadocs/index.d.ts"
     },
     "./fumadocs/components": {
       "import": "./dist/components/index.js",
