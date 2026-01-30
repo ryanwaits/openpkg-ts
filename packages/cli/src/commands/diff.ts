@@ -1,5 +1,3 @@
-import * as fs from 'node:fs';
-import * as path from 'node:path';
 import {
   type CategorizedBreaking,
   categorizeBreakingChanges,
@@ -10,6 +8,7 @@ import {
   type SpecExportKind,
 } from '@openpkg-ts/spec';
 import { Command } from 'commander';
+import { loadSpec } from './utils.js';
 
 /**
  * A changed export with details about what changed
@@ -45,12 +44,6 @@ export interface RemovedExport {
   id: string;
   name: string;
   kind: SpecExportKind;
-}
-
-function loadSpec(filePath: string): OpenPkg {
-  const resolved = path.resolve(filePath);
-  const content = fs.readFileSync(resolved, 'utf-8');
-  return JSON.parse(content) as OpenPkg;
 }
 
 function toExportMap(spec: OpenPkg): Map<string, { name: string; kind: SpecExportKind }> {

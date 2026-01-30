@@ -1,14 +1,6 @@
-import * as fs from 'node:fs';
-import * as path from 'node:path';
-import type { OpenPkg } from '@openpkg-ts/spec';
 import { Command } from 'commander';
 import { type DiffResult, enrichDiff } from './diff.js';
-
-function loadSpec(filePath: string): OpenPkg {
-  const resolved = path.resolve(filePath);
-  const content = fs.readFileSync(resolved, 'utf-8');
-  return JSON.parse(content) as OpenPkg;
-}
+import { loadSpec } from './utils.js';
 
 /**
  * Format diff result as markdown changelog

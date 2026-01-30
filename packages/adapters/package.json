@@ -30,8 +30,8 @@
       "types": "./dist/fumadocs/index.d.ts"
     },
     "./fumadocs/components": {
-      "import": "./dist/components/index.js",
-      "types": "./dist/components/index.d.ts"
+      "import": "./dist/fumadocs/components/index.js",
+      "types": "./dist/fumadocs/components/index.d.ts"
     },
     "./fumadocs/css": "./src/fumadocs/styles/docskit.css"
   },

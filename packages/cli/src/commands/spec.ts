@@ -15,6 +15,7 @@ import {
 import type { OpenPkg, SchemaVersion, SpecExportKind, SpecGenerationMeta } from '@openpkg-ts/spec';
 import { getValidationErrors } from '@openpkg-ts/spec';
 import { Command } from 'commander';
+import { loadSpec } from './utils.js';
 
 // =============================================================================
 // Spec parent command with subcommands: snapshot, validate, filter, lint, list, get
@@ -32,40 +33,6 @@ const VALID_KINDS: SpecExportKind[] = [
   'reference',
   'external',
 ];
-
-function loadSpec(filePath: string): OpenPkg {
-  const resolved = path.resolve(filePath);
-  let content: string;
-  let spec: unknown;
-
-  try {
-    content = fs.readFileSync(resolved, 'utf-8');
-  } catch (err) {
-    throw new Error(
-      `Failed to read spec file: ${err instanceof Error ? err.message : String(err)}`,
-    );
-  }
-
-  try {
-    spec = JSON.parse(content);
-  } catch (err) {
-    throw new Error(
-      `Invalid JSON in spec file: ${err instanceof Error ? err.message : String(err)}`,
-    );
-  }
-
-  // Validate spec structure
-  const errors = getValidationErrors(spec);
-  if (errors.length > 0) {
-    const details = errors
-      .slice(0, 5)
-      .map((e) => `${e.instancePath || '/'}: ${e.message}`)
-      .join('; ');
-    throw new Error(`Invalid OpenPkg spec: ${details}`);
-  }
-
-  return spec as OpenPkg;
-}
 
 function parseList(val?: string): string[] | undefined {
   if (!val) return undefined;

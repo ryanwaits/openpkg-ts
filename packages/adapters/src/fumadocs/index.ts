@@ -21,7 +21,7 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { createDocs, type DocsInstance } from '@openpkg-ts/sdk';
 import type { OpenPkg } from '@openpkg-ts/spec';
-import { type DocAdapter, registerAdapter } from '../registry';
+import { type DocAdapter, registerAdapter } from '@openpkg-ts/adapters';
 
 // Self-register fumadocs adapter
 const fumadocsAdapter: DocAdapter = {

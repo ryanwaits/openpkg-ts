@@ -6,6 +6,7 @@ import type { OpenPkg } from '@openpkg-ts/spec';
 import { $ } from 'bun';
 
 const oldSpec: OpenPkg = {
+  openpkg: '0.4.0',
   meta: { name: 'test-pkg', version: '1.0.0' },
   exports: [
     { id: 'fn-greet', name: 'greet', kind: 'function', signatures: [] },
@@ -15,6 +16,7 @@ const oldSpec: OpenPkg = {
 };
 
 const newSpec: OpenPkg = {
+  openpkg: '0.4.0',
   meta: { name: 'test-pkg', version: '2.0.0' },
   exports: [
     { id: 'fn-greet', name: 'greet', kind: 'function', signatures: [] },

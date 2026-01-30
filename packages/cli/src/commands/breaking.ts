@@ -1,23 +1,15 @@
-import * as fs from 'node:fs';
-import * as path from 'node:path';
 import {
   type CategorizedBreaking,
   categorizeBreakingChanges,
   diffSpec,
-  type OpenPkg,
 } from '@openpkg-ts/spec';
 import { Command } from 'commander';
+import { loadSpec } from './utils.js';
 
 export type BreakingResult = {
   breaking: CategorizedBreaking[];
   count: number;
 };
-
-function loadSpec(filePath: string): OpenPkg {
-  const resolved = path.resolve(filePath);
-  const content = fs.readFileSync(resolved, 'utf-8');
-  return JSON.parse(content) as OpenPkg;
-}
 
 export function createBreakingCommand(): Command {
   return new Command('breaking')

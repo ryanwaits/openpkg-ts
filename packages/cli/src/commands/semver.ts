@@ -1,18 +1,11 @@
-import * as fs from 'node:fs';
-import * as path from 'node:path';
-import { diffSpec, type OpenPkg, recommendSemverBump, type SemverBump } from '@openpkg-ts/spec';
+import { diffSpec, recommendSemverBump, type SemverBump } from '@openpkg-ts/spec';
 import { Command } from 'commander';
+import { loadSpec } from './utils.js';
 
 export type SemverResult = {
   bump: SemverBump;
   reason: string;
 };
-
-function loadSpec(filePath: string): OpenPkg {
-  const resolved = path.resolve(filePath);
-  const content = fs.readFileSync(resolved, 'utf-8');
-  return JSON.parse(content) as OpenPkg;
-}
 
 export function createSemverCommand(): Command {
   return new Command('semver')
