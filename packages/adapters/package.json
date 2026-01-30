@@ -19,6 +19,7 @@
   "license": "MIT",
   "author": "Ryan Waits",
   "type": "module",
+  "main": "./dist/registry.js",
   "exports": {
     ".": {
       "import": "./dist/registry.js",
