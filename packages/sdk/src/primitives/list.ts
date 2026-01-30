@@ -148,11 +148,6 @@ function extractExportItem(
 }
 
 function getExportKind(declaration: ts.Declaration, type: ts.Type): ExportItem['kind'] {
-  // Handle namespace re-exports (export * as X from './module')
-  // These resolve to SourceFile declarations
-  if (ts.isSourceFile(declaration)) {
-    return 'namespace';
-  }
   if (ts.isFunctionDeclaration(declaration) || ts.isFunctionExpression(declaration)) {
     return 'function';
   }

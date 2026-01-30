@@ -390,7 +390,9 @@ export function calculateNextVersion(currentVersion: string, bump: SemverBump): 
     return currentVersion;
   }
 
-  let [, major, minor, patch] = match.map(Number);
+  let major = parseInt(match[1], 10);
+  let minor = parseInt(match[2], 10);
+  let patch = parseInt(match[3], 10);
 
   switch (bump) {
     case 'major':

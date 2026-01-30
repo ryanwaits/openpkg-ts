@@ -3,7 +3,7 @@ import * as path from 'node:path';
 import { type DocsInstance, loadSpec, query, toReact } from '@openpkg-ts/sdk';
 import type { OpenPkg, SpecExportKind } from '@openpkg-ts/spec';
 import { Command } from 'commander';
-import { handleCommandError } from '../utils';
+import { handleCommandError, loadSpecInput } from '../utils';
 
 type OutputFormat = 'md' | 'json' | 'html' | 'react';
 
@@ -22,18 +22,6 @@ interface GenerateCommandOptions {
   // React layout options
   variant?: 'full' | 'index';
   componentsPath?: string;
-}
-
-async function readStdin(): Promise<string> {
-  try {
-    const chunks: Buffer[] = [];
-    for await (const chunk of process.stdin) {
-      chunks.push(chunk);
-    }
-    return Buffer.concat(chunks).toString('utf-8');
-  } catch (err) {
-    throw new Error(`stdin read failed: ${err instanceof Error ? err.message : String(err)}`);
-  }
 }
 
 function getExtension(format: OutputFormat): string {
@@ -199,29 +187,7 @@ export function createGenerateCommand(): Command {
             process.exit(1);
           }
 
-          let spec: OpenPkg;
-          if (specPath === '-') {
-            const input = await readStdin();
-            try {
-              spec = JSON.parse(input);
-            } catch (err) {
-              const msg = err instanceof SyntaxError ? err.message : String(err);
-              throw new Error(`Invalid JSON in stdin: ${msg}`);
-            }
-          } else {
-            const specFile = path.resolve(specPath);
-            if (!fs.existsSync(specFile)) {
-              console.error(JSON.stringify({ error: `Spec file not found: ${specFile}` }));
-              process.exit(1);
-            }
-            try {
-              spec = JSON.parse(fs.readFileSync(specFile, 'utf-8'));
-            } catch (err) {
-              const msg = err instanceof SyntaxError ? err.message : String(err);
-              throw new Error(`Invalid JSON in ${specPath}: ${msg}`);
-            }
-          }
-
+          let spec = await loadSpecInput(specPath);
           spec = applyFilters(spec, options);
 
           await adapter.generate(spec, path.resolve(options.output));
@@ -229,31 +195,8 @@ export function createGenerateCommand(): Command {
           return;
         }
 
-        // Load spec
-        let spec: OpenPkg;
-        if (specPath === '-') {
-          const input = await readStdin();
-          try {
-            spec = JSON.parse(input);
-          } catch (err) {
-            const msg = err instanceof SyntaxError ? err.message : String(err);
-            throw new Error(`Invalid JSON in stdin: ${msg}`);
-          }
-        } else {
-          const specFile = path.resolve(specPath);
-          if (!fs.existsSync(specFile)) {
-            console.error(JSON.stringify({ error: `Spec file not found: ${specFile}` }));
-            process.exit(1);
-          }
-          try {
-            spec = JSON.parse(fs.readFileSync(specFile, 'utf-8'));
-          } catch (err) {
-            const msg = err instanceof SyntaxError ? err.message : String(err);
-            throw new Error(`Invalid JSON in ${specPath}: ${msg}`);
-          }
-        }
-
-        // Apply filters
+        // Load spec and apply filters
+        let spec = await loadSpecInput(specPath);
         spec = applyFilters(spec, options);
 
         // Create docs instance from filtered spec
