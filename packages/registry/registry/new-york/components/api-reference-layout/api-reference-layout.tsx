@@ -50,6 +50,7 @@ export function APIReferenceLayout({
           'sm:py-10 sm:px-6',
           'lg:py-12 lg:px-12 lg:pl-16',
           'lg:border-r lg:border-[var(--openpkg-border-subtle,#262626)]',
+          'bg-[var(--openpkg-bg-root,#0c0c0c)]',
           'openpkg-animate-fade-in',
         )}
         style={{ gridColumn: '1' }}
