@@ -1,5 +1,12 @@
 import { createDocs, type DocsInstance } from '@openpkg-ts/sdk';
-import type { OpenPkg, SpecExport, SpecExportKind } from '@openpkg-ts/spec';
+import {
+  type OpenPkg,
+  type SpecExport,
+  type SpecExportKind,
+  DISPLAY_DISPLAY_KIND_ORDER,
+  KIND_LABELS,
+  KIND_SLUGS,
+} from '@openpkg-ts/spec';
 import type { Source, VirtualFile } from 'fumadocs-core/source';
 
 export interface OpenPkgSourceOptions {
@@ -50,34 +57,6 @@ export interface OpenPkgMetaData {
   pages: string[];
   defaultOpen?: boolean;
 }
-
-const KIND_ORDER: SpecExportKind[] = ['function', 'class', 'interface', 'type', 'enum', 'variable'];
-
-const KIND_LABELS: Partial<Record<SpecExportKind, string>> = {
-  function: 'Functions',
-  class: 'Classes',
-  interface: 'Interfaces',
-  type: 'Types',
-  enum: 'Enums',
-  variable: 'Variables',
-  namespace: 'Namespaces',
-  module: 'Modules',
-  reference: 'References',
-  external: 'External',
-};
-
-const KIND_SLUGS: Partial<Record<SpecExportKind, string>> = {
-  function: 'functions',
-  class: 'classes',
-  interface: 'interfaces',
-  type: 'types',
-  enum: 'enums',
-  variable: 'variables',
-  namespace: 'namespaces',
-  module: 'modules',
-  reference: 'references',
-  external: 'externals',
-};
 
 function pluralizeKind(kind: SpecExportKind): string {
   return KIND_SLUGS[kind] || `${kind}s`;
@@ -179,7 +158,7 @@ export function openpkgSource(options: OpenPkgSourceOptions): Source<{
     rootPages.push('index');
   }
 
-  for (const kind of KIND_ORDER) {
+  for (const kind of DISPLAY_KIND_ORDER) {
     if (groupedByKind.has(kind)) {
       rootPages.push(`...${pluralizeKind(kind)}`);
     }
@@ -211,7 +190,7 @@ export function openpkgSource(options: OpenPkgSourceOptions): Source<{
   }
 
   // Create pages and meta for each kind group
-  for (const kind of KIND_ORDER) {
+  for (const kind of DISPLAY_KIND_ORDER) {
     const kindExports = groupedByKind.get(kind);
     if (!kindExports || kindExports.length === 0) continue;
 
