@@ -49,8 +49,8 @@ export function APIReferenceLayout({
           'py-8 px-4',
           'sm:py-10 sm:px-6',
           'lg:py-12 lg:px-12 lg:pl-16',
-          'lg:border-r lg:border-[var(--openpkg-border-subtle,#262626)]',
-          'bg-[var(--openpkg-bg-root,#0c0c0c)]',
+          'lg:border-r lg:border-[var(--openpkg-border-subtle)]',
+          'bg-[var(--openpkg-bg-root)]',
           'openpkg-animate-fade-in',
         )}
         style={{ gridColumn: '1' }}
@@ -61,12 +61,12 @@ export function APIReferenceLayout({
       <div
         className={cn(
           'openpkg-api-layout-right',
-          'border-t border-[var(--openpkg-border-subtle,#262626)] lg:border-t-0',
+          'border-t border-[var(--openpkg-border-subtle)] lg:border-t-0',
           'py-8 px-4',
           'sm:py-10 sm:px-6',
           'lg:sticky lg:top-0 lg:h-screen lg:overflow-y-auto',
           'lg:py-12 lg:px-12 lg:pl-8',
-          'bg-[var(--openpkg-bg-root,#0c0c0c)]',
+          'bg-[var(--openpkg-bg-root)]',
           'openpkg-animate-fade-in',
         )}
         style={{
@@ -82,7 +82,7 @@ export function APIReferenceLayout({
           __html: `
             @media (min-width: 1024px) {
               .openpkg-api-layout {
-                grid-template-columns: var(--openpkg-left-width, 58%) var(--openpkg-right-width, 42%);
+                grid-template-columns: var(--openpkg-left-width) var(--openpkg-right-width);
                 align-items: start;
               }
             }

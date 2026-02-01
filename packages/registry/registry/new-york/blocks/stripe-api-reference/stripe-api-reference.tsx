@@ -36,8 +36,8 @@ export function StripeAPIReferencePage({
       <div
         className={cn(
           'openpkg-stripe-api-page',
-          'bg-[var(--openpkg-bg-root,#0c0c0c)]',
-          'text-[var(--openpkg-text-primary,#ededed)]',
+          'bg-[var(--openpkg-bg-root)]',
+          'text-[var(--openpkg-text-primary)]',
           'font-[var(--openpkg-font-sans)]',
           'min-h-screen',
           className,

@@ -35,7 +35,7 @@ export function CodeBlock({
         meta: flags,
       }}
       className={cn(
-        'my-0 border-[var(--openpkg-border-subtle,#262626)]',
+        'my-0 border-[var(--openpkg-border-subtle)]',
         className,
       )}
     />

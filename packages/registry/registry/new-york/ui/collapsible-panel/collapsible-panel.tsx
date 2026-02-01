@@ -56,12 +56,12 @@ export function CollapsiblePanel({
           'openpkg-collapsible-trigger',
           'flex items-center gap-2.5 w-full',
           'px-4 py-3',
-          'bg-[var(--openpkg-bg-collapsible,#161616)]',
-          'border border-[var(--openpkg-border-subtle,#262626)]',
+          'bg-[var(--openpkg-bg-collapsible)]',
+          'border border-[var(--openpkg-border-subtle)]',
           'rounded-md',
           'cursor-pointer',
           'transition-all duration-150',
-          'hover:bg-[var(--openpkg-bg-tertiary,#1c1c1c)]',
+          'hover:bg-[var(--openpkg-bg-tertiary)]',
           expanded && 'rounded-b-none border-b-transparent mb-0',
           !expanded && 'mb-2',
         )}
@@ -69,12 +69,12 @@ export function CollapsiblePanel({
         <ChevronRight
           size={14}
           className={cn(
-            'text-[var(--openpkg-text-muted,#666666)]',
+            'text-[var(--openpkg-text-muted)]',
             'transition-transform duration-200',
             expanded && 'rotate-90',
           )}
         />
-        <span className="text-[13px] font-medium text-[var(--openpkg-text-secondary,#a0a0a0)]">
+        <span className="text-[13px] font-medium text-[var(--openpkg-text-secondary)]">
           {title}
         </span>
       </button>
@@ -91,8 +91,8 @@ export function CollapsiblePanel({
         <div
           className={cn(
             'min-h-0 overflow-hidden',
-            'bg-[var(--openpkg-bg-code,#0f0f18)]',
-            'border border-[var(--openpkg-border-subtle,#262626)]',
+            'bg-[var(--openpkg-bg-code)]',
+            'border border-[var(--openpkg-border-subtle)]',
             'border-t-0',
             'rounded-b-md',
             'mb-2',

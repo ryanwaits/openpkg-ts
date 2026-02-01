@@ -1,50 +1,51 @@
 /**
- * Design tokens for Supabase/Stripe-style API documentation.
- * Rose Pine inspired syntax highlighting with dark theme.
+ * OpenPKG design tokens.
+ * Light by default, dark via .dark class, [data-theme="dark"], or prefers-color-scheme.
+ * Override any --openpkg-* variable to match your theme.
  */
 
 :root {
-  /* Background colors (dark-first) */
-  --openpkg-bg-root: #0c0c0c;
-  --openpkg-bg-primary: #0f0f0f;
-  --openpkg-bg-secondary: #171717;
-  --openpkg-bg-tertiary: #1c1c1c;
-  --openpkg-bg-code: #0f0f18;
-  --openpkg-bg-code-header: #141420;
-  --openpkg-bg-badge: #262626;
+  /* Background colors — light default */
+  --openpkg-bg-root: #ffffff;
+  --openpkg-bg-primary: #fafafa;
+  --openpkg-bg-secondary: #f5f5f5;
+  --openpkg-bg-tertiary: #eeeeee;
+  --openpkg-bg-code: #f8f8fc;
+  --openpkg-bg-code-header: #f0f0f8;
+  --openpkg-bg-badge: #e5e5e5;
   --openpkg-bg-chip: transparent;
   --openpkg-bg-chip-active: transparent;
-  --openpkg-bg-collapsible: #161616;
-  --openpkg-bg-details: #141414;
+  --openpkg-bg-collapsible: #f8f8f8;
+  --openpkg-bg-details: #fafafa;
 
   /* Text colors */
-  --openpkg-text-primary: #ededed;
-  --openpkg-text-secondary: #a0a0a0;
-  --openpkg-text-muted: #666666;
-  --openpkg-text-code: #e4e4e7;
+  --openpkg-text-primary: #1a1a1a;
+  --openpkg-text-secondary: #525252;
+  --openpkg-text-muted: #737373;
+  --openpkg-text-code: #1a1a1a;
 
-  /* Syntax highlighting - Rose Pine */
-  --openpkg-syn-keyword: #c4a7e7;
-  --openpkg-syn-string: #9ccfd8;
-  --openpkg-syn-function: #ebbcba;
-  --openpkg-syn-property: #c4a7e7;
-  --openpkg-syn-variable: #e4e4e7;
-  --openpkg-syn-punctuation: #6e6a86;
-  --openpkg-syn-number: #f6c177;
-  --openpkg-syn-boolean: #eb6f92;
-  --openpkg-syn-comment: #6e6a86;
+  /* Syntax highlighting — light */
+  --openpkg-syn-keyword: #8b5cf6;
+  --openpkg-syn-string: #059669;
+  --openpkg-syn-function: #dc2626;
+  --openpkg-syn-property: #7c3aed;
+  --openpkg-syn-variable: #1a1a1a;
+  --openpkg-syn-punctuation: #6b7280;
+  --openpkg-syn-number: #d97706;
+  --openpkg-syn-boolean: #be185d;
+  --openpkg-syn-comment: #9ca3af;
 
   /* Accent colors */
-  --openpkg-accent-green: #3ecf8e;
-  --openpkg-accent-blue: #6cb6ff;
-  --openpkg-accent-purple: #c4a7e7;
-  --openpkg-accent-link: #6cb6ff;
+  --openpkg-accent-green: #16a34a;
+  --openpkg-accent-blue: #2563eb;
+  --openpkg-accent-purple: #7c3aed;
+  --openpkg-accent-link: #2563eb;
 
   /* Border colors */
-  --openpkg-border-subtle: #262626;
-  --openpkg-border-medium: #333333;
-  --openpkg-border-chip: #333333;
-  --openpkg-border-chip-active: #666666;
+  --openpkg-border-subtle: #e5e5e5;
+  --openpkg-border-medium: #d4d4d4;
+  --openpkg-border-chip: #d4d4d4;
+  --openpkg-border-chip-active: #a3a3a3;
 
   /* Typography */
   --openpkg-font-mono: "JetBrains Mono", "SF Mono", Consolas, monospace;
@@ -60,18 +61,9 @@
   --openpkg-transition-fast: 150ms ease;
   --openpkg-transition-normal: 200ms ease;
   --openpkg-transition-slow: 300ms ease;
-
-  /* Responsive breakpoints (for reference) */
-  --openpkg-breakpoint-sm: 640px;
-  --openpkg-breakpoint-md: 768px;
-  --openpkg-breakpoint-lg: 1024px;
-  --openpkg-breakpoint-xl: 1280px;
-  --openpkg-breakpoint-2xl: 1536px;
 }
 
-/* =============================================================================
-   Dark Mode - Explicit .dark class
-============================================================================= */
+/* Dark mode — explicit class or data attribute */
 .dark,
 [data-theme="dark"] {
   --openpkg-bg-root: #0c0c0c;
@@ -87,138 +79,87 @@
   --openpkg-text-secondary: #a0a0a0;
   --openpkg-text-muted: #666666;
   --openpkg-text-code: #e4e4e7;
+  --openpkg-accent-green: #3ecf8e;
+  --openpkg-accent-blue: #6cb6ff;
+  --openpkg-accent-purple: #c4a7e7;
+  --openpkg-accent-link: #6cb6ff;
   --openpkg-border-subtle: #262626;
   --openpkg-border-medium: #333333;
   --openpkg-border-chip: #333333;
   --openpkg-border-chip-active: #666666;
+  --openpkg-syn-keyword: #c4a7e7;
+  --openpkg-syn-string: #9ccfd8;
+  --openpkg-syn-function: #ebbcba;
+  --openpkg-syn-property: #c4a7e7;
+  --openpkg-syn-variable: #e4e4e7;
+  --openpkg-syn-punctuation: #6e6a86;
+  --openpkg-syn-number: #f6c177;
+  --openpkg-syn-boolean: #eb6f92;
+  --openpkg-syn-comment: #6e6a86;
 }
 
-/* =============================================================================
-   Light Mode - Explicit .light class
-============================================================================= */
-.light,
-[data-theme="light"] {
-  --openpkg-bg-root: #ffffff;
-  --openpkg-bg-primary: #fafafa;
-  --openpkg-bg-secondary: #f5f5f5;
-  --openpkg-bg-tertiary: #eeeeee;
-  --openpkg-bg-code: #f8f8fc;
-  --openpkg-bg-code-header: #f0f0f8;
-  --openpkg-bg-badge: #e5e5e5;
-  --openpkg-bg-collapsible: #f8f8f8;
-  --openpkg-bg-details: #fafafa;
-  --openpkg-text-primary: #1a1a1a;
-  --openpkg-text-secondary: #525252;
-  --openpkg-text-muted: #737373;
-  --openpkg-text-code: #1a1a1a;
-  --openpkg-border-subtle: #e5e5e5;
-  --openpkg-border-medium: #d4d4d4;
-  --openpkg-border-chip: #d4d4d4;
-  --openpkg-border-chip-active: #a3a3a3;
-
-  /* Light mode syntax - adjust for readability */
-  --openpkg-syn-keyword: #8b5cf6;
-  --openpkg-syn-string: #059669;
-  --openpkg-syn-function: #dc2626;
-  --openpkg-syn-property: #7c3aed;
-  --openpkg-syn-variable: #1a1a1a;
-  --openpkg-syn-punctuation: #6b7280;
-  --openpkg-syn-number: #d97706;
-  --openpkg-syn-boolean: #be185d;
-  --openpkg-syn-comment: #9ca3af;
-}
-
-/* =============================================================================
-   System Preference (when no explicit class)
-============================================================================= */
-@media (prefers-color-scheme: light) {
-  :root:not(.dark):not([data-theme="dark"]) {
-    --openpkg-bg-root: #ffffff;
-    --openpkg-bg-primary: #fafafa;
-    --openpkg-bg-secondary: #f5f5f5;
-    --openpkg-bg-tertiary: #eeeeee;
-    --openpkg-bg-code: #f8f8fc;
-    --openpkg-bg-code-header: #f0f0f8;
-    --openpkg-bg-badge: #e5e5e5;
-    --openpkg-bg-collapsible: #f8f8f8;
-    --openpkg-bg-details: #fafafa;
-    --openpkg-text-primary: #1a1a1a;
-    --openpkg-text-secondary: #525252;
-    --openpkg-text-muted: #737373;
-    --openpkg-text-code: #1a1a1a;
-    --openpkg-border-subtle: #e5e5e5;
-    --openpkg-border-medium: #d4d4d4;
-    --openpkg-border-chip: #d4d4d4;
-    --openpkg-border-chip-active: #a3a3a3;
-    --openpkg-syn-keyword: #8b5cf6;
-    --openpkg-syn-string: #059669;
-    --openpkg-syn-function: #dc2626;
-    --openpkg-syn-property: #7c3aed;
-    --openpkg-syn-variable: #1a1a1a;
-    --openpkg-syn-punctuation: #6b7280;
-    --openpkg-syn-number: #d97706;
-    --openpkg-syn-boolean: #be185d;
-    --openpkg-syn-comment: #9ca3af;
+/* Dark mode — system preference */
+@media (prefers-color-scheme: dark) {
+  :root:not(.light):not([data-theme="light"]) {
+    --openpkg-bg-root: #0c0c0c;
+    --openpkg-bg-primary: #0f0f0f;
+    --openpkg-bg-secondary: #171717;
+    --openpkg-bg-tertiary: #1c1c1c;
+    --openpkg-bg-code: #0f0f18;
+    --openpkg-bg-code-header: #141420;
+    --openpkg-bg-badge: #262626;
+    --openpkg-bg-collapsible: #161616;
+    --openpkg-bg-details: #141414;
+    --openpkg-text-primary: #ededed;
+    --openpkg-text-secondary: #a0a0a0;
+    --openpkg-text-muted: #666666;
+    --openpkg-text-code: #e4e4e7;
+    --openpkg-accent-green: #3ecf8e;
+    --openpkg-accent-blue: #6cb6ff;
+    --openpkg-accent-purple: #c4a7e7;
+    --openpkg-accent-link: #6cb6ff;
+    --openpkg-border-subtle: #262626;
+    --openpkg-border-medium: #333333;
+    --openpkg-border-chip: #333333;
+    --openpkg-border-chip-active: #666666;
+    --openpkg-syn-keyword: #c4a7e7;
+    --openpkg-syn-string: #9ccfd8;
+    --openpkg-syn-function: #ebbcba;
+    --openpkg-syn-property: #c4a7e7;
+    --openpkg-syn-variable: #e4e4e7;
+    --openpkg-syn-punctuation: #6e6a86;
+    --openpkg-syn-number: #f6c177;
+    --openpkg-syn-boolean: #eb6f92;
+    --openpkg-syn-comment: #6e6a86;
   }
 }
 
-/* =============================================================================
-   Animation Keyframes
-============================================================================= */
+/* Animation keyframes */
 @keyframes openpkg-fade-in {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 @keyframes openpkg-slide-down {
-  from {
-    opacity: 0;
-    transform: translateY(-4px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes openpkg-slide-up {
-  from {
-    opacity: 0;
-    transform: translateY(4px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes openpkg-expand {
-  from {
-    opacity: 0;
-    height: 0;
-  }
-  to {
-    opacity: 1;
-    height: var(--radix-collapsible-content-height);
-  }
+  from { opacity: 0; height: 0; }
+  to { opacity: 1; height: var(--radix-collapsible-content-height); }
 }
 
 @keyframes openpkg-collapse {
-  from {
-    opacity: 1;
-    height: var(--radix-collapsible-content-height);
-  }
-  to {
-    opacity: 0;
-    height: 0;
-  }
+  from { opacity: 1; height: var(--radix-collapsible-content-height); }
+  to { opacity: 0; height: 0; }
 }
 
-/* Utility classes for animations */
 .openpkg-animate-fade-in {
   animation: openpkg-fade-in var(--openpkg-transition-normal) ease-out;
 }

@@ -27,14 +27,14 @@ export function NestedParameterContainer({
         'openpkg-nested-container',
         'border border-t-0',
         level === 0
-          ? 'border-[var(--openpkg-border-medium,#333333)]'
-          : 'border-[var(--openpkg-border-subtle,#262626)]',
+          ? 'border-[var(--openpkg-border-medium)]'
+          : 'border-[var(--openpkg-border-subtle)]',
         'rounded-b-lg',
         'px-5',
         'mb-2',
         '[&>.openpkg-param]:py-5',
         '[&>.openpkg-param]:border-b',
-        '[&>.openpkg-param]:border-[var(--openpkg-border-subtle,#262626)]',
+        '[&>.openpkg-param]:border-[var(--openpkg-border-subtle)]',
         '[&>.openpkg-param:last-child]:border-b-0',
         className,
       )}

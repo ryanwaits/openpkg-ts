@@ -54,7 +54,7 @@ export function MethodSection({
       <h2
         className={cn(
           'text-2xl font-semibold tracking-tight',
-          'text-[var(--openpkg-text-primary,#ededed)]',
+          'text-[var(--openpkg-text-primary)]',
           'mb-4',
         )}
       >
@@ -65,7 +65,7 @@ export function MethodSection({
         <code
           className={cn(
             'block font-mono text-sm',
-            'text-[var(--openpkg-text-muted,#666666)]',
+            'text-[var(--openpkg-text-muted)]',
             'mb-6',
           )}
         >
@@ -78,10 +78,10 @@ export function MethodSection({
           className={cn(
             'openpkg-method-description',
             'text-[15px] leading-relaxed',
-            'text-[var(--openpkg-text-secondary,#a0a0a0)]',
+            'text-[var(--openpkg-text-secondary)]',
             'mb-6',
-            '[&_a]:text-[var(--openpkg-accent-link,#6cb6ff)] [&_a]:no-underline [&_a]:font-medium hover:[&_a]:underline',
-            '[&_code]:bg-[var(--openpkg-bg-badge,#262626)] [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:rounded [&_code]:font-mono [&_code]:text-[13px]',
+            '[&_a]:text-[var(--openpkg-accent-link)] [&_a]:no-underline [&_a]:font-medium hover:[&_a]:underline',
+            '[&_code]:bg-[var(--openpkg-bg-badge)] [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:rounded [&_code]:font-mono [&_code]:text-[13px]',
           )}
         >
           {typeof description === 'string' ? <p>{description}</p> : description}
@@ -94,7 +94,7 @@ export function MethodSection({
             'openpkg-method-notes',
             'list-disc list-inside',
             'text-[15px] leading-relaxed',
-            'text-[var(--openpkg-text-secondary,#a0a0a0)]',
+            'text-[var(--openpkg-text-secondary)]',
             'mb-8 space-y-2',
           )}
         >
@@ -109,9 +109,9 @@ export function MethodSection({
           <h3
             className={cn(
               'text-xs font-semibold uppercase tracking-wider',
-              'text-[var(--openpkg-text-muted,#666666)]',
+              'text-[var(--openpkg-text-muted)]',
               'mb-4 pb-2',
-              'border-b border-[var(--openpkg-border-subtle,#262626)]',
+              'border-b border-[var(--openpkg-border-subtle)]',
             )}
           >
             Parameters

@@ -1,5 +1,11 @@
 # @openpkg-ts/ui
 
+## 0.2.0
+
+### Minor Changes
+
+- Make components theme-agnostic: remove all hardcoded dark fallbacks from registry components, flip tokens.css to light-first defaults with dark mode via .dark/[data-theme="dark"]/prefers-color-scheme. Consumers override --openpkg-\* vars to match their theme.
+
 ## 0.1.7
 
 ### Patch Changes

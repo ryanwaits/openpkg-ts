@@ -68,7 +68,7 @@ export function APIParameterItem({
       id={anchorId}
       className={cn(
         'openpkg-param',
-        'py-5 border-b border-[var(--openpkg-border-subtle,#262626)]',
+        'py-5 border-b border-[var(--openpkg-border-subtle)]',
         'last:border-b-0',
         className,
       )}
@@ -84,8 +84,8 @@ export function APIParameterItem({
               'openpkg-anchor-link',
               'flex items-center justify-center w-4 h-4',
               'opacity-0 group-hover:opacity-100 hover:opacity-100',
-              'text-[var(--openpkg-text-muted,#666666)]',
-              'hover:text-[var(--openpkg-accent-blue,#6cb6ff)]',
+              'text-[var(--openpkg-text-muted)]',
+              'hover:text-[var(--openpkg-accent-blue)]',
               'cursor-pointer transition-opacity',
             )}
             aria-label="Copy link"
@@ -97,9 +97,9 @@ export function APIParameterItem({
         {/* Name with parent path */}
         <span className="openpkg-param-name font-mono text-sm font-semibold">
           {parentPath && (
-            <span className="text-[var(--openpkg-text-muted,#666666)]">{parentPath}</span>
+            <span className="text-[var(--openpkg-text-muted)]">{parentPath}</span>
           )}
-          <span className="text-[var(--openpkg-text-primary,#ededed)]">{name}</span>
+          <span className="text-[var(--openpkg-text-primary)]">{name}</span>
         </span>
 
         {/* Badges */}
@@ -109,8 +109,8 @@ export function APIParameterItem({
               'openpkg-param-badge',
               'text-[11px] font-medium uppercase tracking-wide',
               'px-2 py-0.5 rounded',
-              'bg-[var(--openpkg-bg-badge,#262626)]',
-              'text-[var(--openpkg-text-muted,#666666)]',
+              'bg-[var(--openpkg-bg-badge)]',
+              'text-[var(--openpkg-text-muted)]',
             )}
           >
             Required
@@ -122,8 +122,8 @@ export function APIParameterItem({
               'openpkg-param-badge',
               'text-[11px] font-medium uppercase tracking-wide',
               'px-2 py-0.5 rounded',
-              'bg-[var(--openpkg-bg-badge,#262626)]',
-              'text-[var(--openpkg-text-muted,#666666)]',
+              'bg-[var(--openpkg-bg-badge)]',
+              'text-[var(--openpkg-text-muted)]',
             )}
           >
             Optional
@@ -135,7 +135,7 @@ export function APIParameterItem({
               'openpkg-badge-expandable',
               'text-[10px] font-medium',
               'px-2 py-0.5 rounded',
-              'text-[var(--openpkg-accent-purple,#c4a7e7)]',
+              'text-[var(--openpkg-accent-purple)]',
               'bg-[rgba(196,167,231,0.12)]',
             )}
           >
@@ -144,7 +144,7 @@ export function APIParameterItem({
         )}
 
         {/* Type */}
-        <span className="openpkg-param-type text-[13px] text-[var(--openpkg-text-muted,#666666)]">
+        <span className="openpkg-param-type text-[13px] text-[var(--openpkg-text-muted)]">
           {type}
         </span>
       </div>
@@ -154,9 +154,9 @@ export function APIParameterItem({
         <p
           className={cn(
             'openpkg-param-description',
-            'text-sm text-[var(--openpkg-text-secondary,#a0a0a0)]',
+            'text-sm text-[var(--openpkg-text-secondary)]',
             'leading-relaxed',
-            '[&_code]:font-mono [&_code]:text-[13px] [&_code]:bg-[var(--openpkg-bg-badge,#262626)] [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:rounded',
+            '[&_code]:font-mono [&_code]:text-[13px] [&_code]:bg-[var(--openpkg-bg-badge)] [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:rounded',
           )}
         >
           {description}

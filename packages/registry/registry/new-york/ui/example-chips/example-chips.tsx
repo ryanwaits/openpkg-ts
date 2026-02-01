@@ -49,16 +49,16 @@ export function ExampleChips({
               'transition-all duration-150',
               isActive
                 ? [
-                    'border-[var(--openpkg-border-chip-active,#666666)]',
-                    'text-[var(--openpkg-text-primary,#ededed)]',
-                    'bg-[var(--openpkg-bg-tertiary,#1c1c1c)]',
+                    'border-[var(--openpkg-border-chip-active)]',
+                    'text-[var(--openpkg-text-primary)]',
+                    'bg-[var(--openpkg-bg-tertiary)]',
                   ]
                 : [
-                    'border-[var(--openpkg-border-chip,#333333)]',
-                    'text-[var(--openpkg-text-secondary,#a0a0a0)]',
+                    'border-[var(--openpkg-border-chip)]',
+                    'text-[var(--openpkg-text-secondary)]',
                     'bg-transparent',
-                    'hover:border-[var(--openpkg-text-muted,#666666)]',
-                    'hover:text-[var(--openpkg-text-primary,#ededed)]',
+                    'hover:border-[var(--openpkg-text-muted)]',
+                    'hover:text-[var(--openpkg-text-primary)]',
                   ],
             )}
             aria-pressed={isActive}

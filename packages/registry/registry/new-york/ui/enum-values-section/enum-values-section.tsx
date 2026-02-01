@@ -36,9 +36,9 @@ export function EnumValuesSection({
         className={cn(
           'openpkg-enum-header',
           'text-[11px] font-medium',
-          'text-[var(--openpkg-text-muted,#666666)]',
+          'text-[var(--openpkg-text-muted)]',
           'mb-2.5 pb-2',
-          'border-b border-[var(--openpkg-border-subtle,#262626)]',
+          'border-b border-[var(--openpkg-border-subtle)]',
         )}
       >
         {header}
@@ -59,7 +59,7 @@ export function EnumValuesSection({
               className={cn(
                 'openpkg-enum-value-name',
                 'font-mono text-xs font-medium',
-                'text-[var(--openpkg-syn-string,#9ccfd8)]',
+                'text-[var(--openpkg-syn-string)]',
                 'bg-[rgba(156,207,216,0.1)]',
                 'px-1.5 py-0.5 rounded',
                 'inline-block mb-1',
@@ -72,9 +72,9 @@ export function EnumValuesSection({
               <p
                 className={cn(
                   'openpkg-enum-value-description',
-                  'text-xs text-[var(--openpkg-text-secondary,#a0a0a0)]',
+                  'text-xs text-[var(--openpkg-text-secondary)]',
                   'leading-relaxed',
-                  '[&_code]:font-mono [&_code]:text-[11px] [&_code]:bg-[var(--openpkg-bg-badge,#262626)] [&_code]:px-1 [&_code]:py-0.5 [&_code]:rounded',
+                  '[&_code]:font-mono [&_code]:text-[11px] [&_code]:bg-[var(--openpkg-bg-badge)] [&_code]:px-1 [&_code]:py-0.5 [&_code]:rounded',
                 )}
               >
                 {item.description}

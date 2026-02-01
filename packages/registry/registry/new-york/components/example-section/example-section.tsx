@@ -108,9 +108,9 @@ export function ExampleSection({
             className={cn(
               'openpkg-panel-note',
               'p-4',
-              'text-[13px] text-[var(--openpkg-text-secondary,#a0a0a0)]',
+              'text-[13px] text-[var(--openpkg-text-secondary)]',
               'leading-relaxed',
-              '[&_code]:font-mono [&_code]:text-xs [&_code]:bg-[var(--openpkg-bg-badge,#262626)] [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:rounded',
+              '[&_code]:font-mono [&_code]:text-xs [&_code]:bg-[var(--openpkg-bg-badge)] [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:rounded',
             )}
           >
             {typeof notes === 'string' ? <p>{notes}</p> : notes}
