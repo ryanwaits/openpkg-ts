@@ -60,3 +60,12 @@ export { WithNotes } from './notes';
 export { Tabs, TabsContent, TabsList, TabsTrigger } from './tabs';
 export { TooltipLink, tooltip } from './tooltip';
 export { wordWrap } from './word-wrap';
+// Migrated from ui/api
+export { CodeTabs, type CodeTab, type CodeTabsProps } from './code.tabs-legacy';
+export { ImportSection, type ImportSectionProps } from './import-section';
+export {
+  TypeBadge,
+  type TypeBadgeProps,
+  type TypeColor,
+  typeBadgeVariants,
+} from './type-badge';

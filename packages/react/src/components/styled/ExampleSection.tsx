@@ -2,7 +2,7 @@
 
 import { cn } from '@openpkg-ts/ui/lib/utils';
 import { type ReactNode, useEffect, useRef, useState } from 'react';
-import { CodePanel } from './CodePanel';
+import { CodeBlock } from './CodeBlock';
 import { CollapsiblePanel } from './CollapsiblePanel';
 import { ExampleChips } from './ExampleChips';
 import { useSyncScroll } from './SyncScrollProvider';
@@ -99,7 +99,7 @@ export function ExampleSection({
 
       {/* Main code panel */}
       {activeExample && (
-        <CodePanel
+        <CodeBlock
           code={activeExample.code}
           language={activeExample.language ?? 'typescript'}
           showLineNumbers
@@ -110,7 +110,7 @@ export function ExampleSection({
       {dataSource && (
         <CollapsiblePanel title="Data source">
           <div className="p-4">
-            <CodePanel code={dataSource} language="sql" />
+            <CodeBlock code={dataSource} language="sql" />
           </div>
         </CollapsiblePanel>
       )}
@@ -119,7 +119,7 @@ export function ExampleSection({
       {response && (
         <CollapsiblePanel title="Response">
           <div className="p-4">
-            <CodePanel code={response} language="json" />
+            <CodeBlock code={response} language="json" />
           </div>
         </CollapsiblePanel>
       )}

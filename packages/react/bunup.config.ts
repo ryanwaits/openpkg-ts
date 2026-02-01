@@ -1,14 +1,25 @@
 import { defineConfig } from 'bunup';
 
-export default defineConfig({
-  entry: ['src/index.ts', 'src/styled.ts'],
+const shared = {
   outDir: 'dist',
   dts: true,
-  clean: true,
-  format: ['esm'],
-  target: 'browser',
-  external: ['react', 'react-dom', 'tailwindcss', 'next'],
+  format: ['esm'] as const,
+  target: 'browser' as const,
+  external: ['react', 'react-dom', 'tailwindcss', /^next(\/.*)?$/],
   define: {
     'process.env.NODE_ENV': '"production"',
   },
-});
+};
+
+export default defineConfig([
+  {
+    ...shared,
+    entry: ['src/styled.ts'],
+    clean: true,
+  },
+  {
+    ...shared,
+    entry: ['src/index.ts'],
+    clean: false,
+  },
+]);

@@ -14,10 +14,6 @@
     "dist"
   ],
   "exports": {
-    "./api": {
-      "types": "./dist/api/index.d.ts",
-      "import": "./dist/api/index.js"
-    },
     "./badge": {
       "types": "./dist/badge/index.d.ts",
       "import": "./dist/badge/index.js"

@@ -1,5 +1,30 @@
 // Styled components - pre-styled with Tailwind v4
 
+// Adapters for converting spec data to component props
+export {
+  buildImportStatement,
+  getLanguagesFromExamples,
+  specExamplesToCodeExamples,
+  specParamToAPIParam,
+  specSchemaToAPISchema,
+} from '../../adapters/spec-to-docskit';
+export {
+  generateDefaultExample,
+  specExampleToCodeExample,
+} from '../../adapters/spec-to-examples';
+export type { NestedParameterData } from '../../adapters/spec-to-params';
+export {
+  resolveSchemaRef,
+  specParamsToNestedParams,
+  specParamToNestedParam,
+} from '../../adapters/spec-to-params';
+// Hooks for spec data
+export type { MethodData } from '../../hooks/useMethodFromSpec';
+export {
+  extractMethodData,
+  useMethodFromSpec,
+  useMethodsFromSpec,
+} from '../../hooks/useMethodFromSpec';
 // Re-export from @openpkg-ts/ui
 export {
   type CodeTab,
@@ -7,21 +32,7 @@ export {
   type CodeTabsProps,
   ImportSection,
   type ImportSectionProps,
-} from '@openpkg-ts/ui/api';
-// Adapters
-export {
-  type NestedParameterData,
-  resolveSchemaRef,
-  specParamsToNestedParams,
-  specParamToNestedParam,
-} from '../../adapters/spec-to-params';
-// Hooks
-export {
-  extractMethodData,
-  type MethodData,
-  useMethodFromSpec,
-  useMethodsFromSpec,
-} from '../../hooks/useMethodFromSpec';
+} from '@openpkg-ts/ui/docskit';
 // Local components (spec-specific)
 export type { APIPageProps } from './APIPage';
 export { APIPage } from './APIPage';
@@ -31,7 +42,10 @@ export { APIParameterItem, type APIParameterItemProps } from './APIParameterItem
 export { APIReferenceLayout, type APIReferenceLayoutProps } from './APIReferenceLayout';
 export type { ClassPageProps } from './ClassPage';
 export { ClassPage } from './ClassPage';
-export { CodePanel, type CodePanelProps } from './CodePanel';
+export { CodeBlock, type CodeBlockProps } from './CodeBlock';
+/** @deprecated Use CodeBlock instead */
+export { CodeBlock as CodePanel } from './CodeBlock';
+export type { CodeBlockProps as CodePanelProps } from './CodeBlock';
 export { CollapsiblePanel, type CollapsiblePanelProps } from './CollapsiblePanel';
 export type { EnumPageProps } from './EnumPage';
 export { EnumPage } from './EnumPage';
@@ -69,9 +83,6 @@ export {
   type NestedParameterContainerProps,
 } from './NestedParameterContainer';
 export { NestedParameterToggle, type NestedParameterToggleProps } from './NestedParameterToggle';
-export type { NestedPropertyItemProps, ParameterItemProps } from './ParameterItem';
-/** @deprecated Use APIParameterItem from @openpkg-ts/ui with specParamToAPIParam adapter */
-export { ParameterItem } from './ParameterItem';
 export {
   StripeAPIReferencePage,
   type StripeAPIReferencePageProps,

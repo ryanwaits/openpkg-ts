@@ -19,12 +19,6 @@ const sharedConfig = {
 
 export default defineConfig([
   {
-    entry: ['src/api/index.ts'],
-    outDir: 'dist/api',
-    clean: true,
-    ...sharedConfig,
-  },
-  {
     entry: ['src/badge/index.ts'],
     outDir: 'dist/badge',
     ...sharedConfig,

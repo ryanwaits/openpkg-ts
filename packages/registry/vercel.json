@@ -1,0 +1,4 @@
+{
+  "buildCommand": "bun run registry:build",
+  "outputDirectory": "public"
+}

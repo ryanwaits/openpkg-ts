@@ -1,0 +1,11 @@
+{
+  "name": "@openpkg-ts/registry",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "registry:build": "shadcn build"
+  },
+  "devDependencies": {
+    "shadcn": "^3.8.1"
+  }
+}

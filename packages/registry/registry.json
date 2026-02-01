@@ -1,0 +1,360 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry.json",
+  "name": "openpkg",
+  "homepage": "https://openpkg.dev",
+  "items": [
+    {
+      "name": "api-parameter-item",
+      "type": "registry:ui",
+      "title": "API Parameter Item",
+      "description": "Single parameter row with name, type, badges, and description",
+      "dependencies": ["@openpkg-ts/ui", "lucide-react"],
+      "files": [
+        {
+          "path": "registry/new-york/ui/api-parameter-item/api-parameter-item.tsx",
+          "type": "registry:ui"
+        }
+      ]
+    },
+    {
+      "name": "code-block",
+      "type": "registry:ui",
+      "title": "Code Block",
+      "description": "Syntax-highlighted code block powered by CodeHike",
+      "dependencies": ["@openpkg-ts/ui"],
+      "files": [
+        {
+          "path": "registry/new-york/ui/code-block/code-block.tsx",
+          "type": "registry:ui"
+        }
+      ]
+    },
+    {
+      "name": "collapsible-panel",
+      "type": "registry:ui",
+      "title": "Collapsible Panel",
+      "description": "Accordion-style panel with CSS grid transition",
+      "dependencies": ["@openpkg-ts/ui", "lucide-react"],
+      "files": [
+        {
+          "path": "registry/new-york/ui/collapsible-panel/collapsible-panel.tsx",
+          "type": "registry:ui"
+        }
+      ]
+    },
+    {
+      "name": "enum-values-section",
+      "type": "registry:ui",
+      "title": "Enum Values Section",
+      "description": "Display enum values with optional descriptions",
+      "dependencies": ["@openpkg-ts/ui"],
+      "files": [
+        {
+          "path": "registry/new-york/ui/enum-values-section/enum-values-section.tsx",
+          "type": "registry:ui"
+        }
+      ]
+    },
+    {
+      "name": "example-chips",
+      "type": "registry:ui",
+      "title": "Example Chips",
+      "description": "Tab-like chips for switching between code examples",
+      "dependencies": ["@openpkg-ts/ui"],
+      "files": [
+        {
+          "path": "registry/new-york/ui/example-chips/example-chips.tsx",
+          "type": "registry:ui"
+        }
+      ]
+    },
+    {
+      "name": "export-card",
+      "type": "registry:ui",
+      "title": "Export Card",
+      "description": "Summary card for an export with kind badge and hover effects",
+      "dependencies": ["@openpkg-ts/ui"],
+      "files": [
+        {
+          "path": "registry/new-york/ui/export-card/export-card.tsx",
+          "type": "registry:ui"
+        }
+      ]
+    },
+    {
+      "name": "nested-parameter-container",
+      "type": "registry:ui",
+      "title": "Nested Parameter Container",
+      "description": "Bordered container for nested child parameters",
+      "dependencies": ["@openpkg-ts/ui"],
+      "files": [
+        {
+          "path": "registry/new-york/ui/nested-parameter-container/nested-parameter-container.tsx",
+          "type": "registry:ui"
+        }
+      ]
+    },
+    {
+      "name": "nested-parameter-toggle",
+      "type": "registry:ui",
+      "title": "Nested Parameter Toggle",
+      "description": "Show/Hide child parameters button with animation",
+      "dependencies": ["@openpkg-ts/ui", "lucide-react"],
+      "files": [
+        {
+          "path": "registry/new-york/ui/nested-parameter-toggle/nested-parameter-toggle.tsx",
+          "type": "registry:ui"
+        }
+      ]
+    },
+    {
+      "name": "use-method-from-spec",
+      "type": "registry:hook",
+      "title": "useMethodFromSpec",
+      "description": "Extract method data from OpenPkg spec exports",
+      "dependencies": ["@openpkg-ts/sdk", "@openpkg-ts/spec"],
+      "files": [
+        {
+          "path": "registry/new-york/hooks/use-method-from-spec/use-method-from-spec.ts",
+          "type": "registry:hook"
+        }
+      ]
+    },
+    {
+      "name": "use-sync-scroll",
+      "type": "registry:hook",
+      "title": "useSyncScroll",
+      "description": "Synchronized scrolling between left and right columns",
+      "files": [
+        {
+          "path": "registry/new-york/hooks/use-sync-scroll/use-sync-scroll.tsx",
+          "type": "registry:hook"
+        }
+      ]
+    },
+    {
+      "name": "expandable-parameter",
+      "type": "registry:component",
+      "title": "Expandable Parameter",
+      "description": "Compound parameter with nested object properties and enum values",
+      "dependencies": ["@openpkg-ts/sdk", "@openpkg-ts/spec", "@openpkg-ts/ui"],
+      "registryDependencies": ["api-parameter-item", "enum-values-section", "nested-parameter-container", "nested-parameter-toggle"],
+      "files": [
+        {
+          "path": "registry/new-york/components/expandable-parameter/expandable-parameter.tsx",
+          "type": "registry:component"
+        }
+      ]
+    },
+    {
+      "name": "method-section",
+      "type": "registry:component",
+      "title": "Method Section",
+      "description": "Container for a single API method with title, signature, and parameters",
+      "dependencies": ["@openpkg-ts/ui"],
+      "registryDependencies": ["use-sync-scroll"],
+      "files": [
+        {
+          "path": "registry/new-york/components/method-section/method-section.tsx",
+          "type": "registry:component"
+        }
+      ]
+    },
+    {
+      "name": "method-section-from-spec",
+      "type": "registry:component",
+      "title": "Method Section From Spec",
+      "description": "Auto-generate method documentation from OpenPkg spec",
+      "dependencies": ["@openpkg-ts/spec", "@openpkg-ts/ui"],
+      "registryDependencies": ["expandable-parameter", "method-section", "use-method-from-spec"],
+      "files": [
+        {
+          "path": "registry/new-york/components/method-section-from-spec/method-section-from-spec.tsx",
+          "type": "registry:component"
+        }
+      ]
+    },
+    {
+      "name": "example-section",
+      "type": "registry:component",
+      "title": "Example Section",
+      "description": "Complete right-column section with chips, code, and panels",
+      "dependencies": ["@openpkg-ts/ui"],
+      "registryDependencies": ["code-block", "collapsible-panel", "example-chips", "use-sync-scroll"],
+      "files": [
+        {
+          "path": "registry/new-york/components/example-section/example-section.tsx",
+          "type": "registry:component"
+        }
+      ]
+    },
+    {
+      "name": "api-reference-layout",
+      "type": "registry:component",
+      "title": "API Reference Layout",
+      "description": "Two-column layout with sticky code examples panel",
+      "dependencies": ["@openpkg-ts/ui"],
+      "files": [
+        {
+          "path": "registry/new-york/components/api-reference-layout/api-reference-layout.tsx",
+          "type": "registry:component"
+        }
+      ]
+    },
+    {
+      "name": "function-section",
+      "type": "registry:component",
+      "title": "Function Section",
+      "description": "Complete function documentation section with parameters and returns",
+      "dependencies": ["@openpkg-ts/sdk", "@openpkg-ts/spec", "@openpkg-ts/ui"],
+      "files": [
+        {
+          "path": "registry/new-york/components/function-section/function-section.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "registry/new-york/components/function-section/spec-to-docskit.ts",
+          "type": "registry:lib"
+        }
+      ]
+    },
+    {
+      "name": "class-section",
+      "type": "registry:component",
+      "title": "Class Section",
+      "description": "Complete class documentation section with constructor, methods, and properties",
+      "dependencies": ["@openpkg-ts/sdk", "@openpkg-ts/spec", "@openpkg-ts/ui"],
+      "files": [
+        {
+          "path": "registry/new-york/components/class-section/class-section.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "registry/new-york/components/class-section/spec-to-docskit.ts",
+          "type": "registry:lib"
+        }
+      ]
+    },
+    {
+      "name": "interface-section",
+      "type": "registry:component",
+      "title": "Interface Section",
+      "description": "Interface/type documentation section with properties and methods",
+      "dependencies": ["@openpkg-ts/sdk", "@openpkg-ts/spec", "@openpkg-ts/ui"],
+      "files": [
+        {
+          "path": "registry/new-york/components/interface-section/interface-section.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "registry/new-york/components/interface-section/spec-to-docskit.ts",
+          "type": "registry:lib"
+        }
+      ]
+    },
+    {
+      "name": "enum-section",
+      "type": "registry:component",
+      "title": "Enum Section",
+      "description": "Enum documentation section with members",
+      "dependencies": ["@openpkg-ts/spec", "@openpkg-ts/ui"],
+      "files": [
+        {
+          "path": "registry/new-york/components/enum-section/enum-section.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "registry/new-york/components/enum-section/spec-to-docskit.ts",
+          "type": "registry:lib"
+        }
+      ]
+    },
+    {
+      "name": "variable-section",
+      "type": "registry:component",
+      "title": "Variable Section",
+      "description": "Variable/constant documentation section",
+      "dependencies": ["@openpkg-ts/sdk", "@openpkg-ts/spec", "@openpkg-ts/ui"],
+      "files": [
+        {
+          "path": "registry/new-york/components/variable-section/variable-section.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "registry/new-york/components/variable-section/spec-to-docskit.ts",
+          "type": "registry:lib"
+        }
+      ]
+    },
+    {
+      "name": "export-section",
+      "type": "registry:component",
+      "title": "Export Section",
+      "description": "Router component rendering appropriate section by export kind",
+      "dependencies": ["@openpkg-ts/spec"],
+      "registryDependencies": ["function-section", "class-section", "interface-section", "enum-section", "variable-section"],
+      "files": [
+        {
+          "path": "registry/new-york/components/export-section/export-section.tsx",
+          "type": "registry:component"
+        }
+      ]
+    },
+    {
+      "name": "export-index-page",
+      "type": "registry:block",
+      "title": "Export Index Page",
+      "description": "Searchable grid of all exports grouped by category",
+      "dependencies": ["@openpkg-ts/spec", "@openpkg-ts/ui", "lucide-react"],
+      "registryDependencies": ["export-card"],
+      "files": [
+        {
+          "path": "registry/new-york/blocks/export-index-page/export-index-page.tsx",
+          "type": "registry:block"
+        }
+      ]
+    },
+    {
+      "name": "full-api-reference",
+      "type": "registry:block",
+      "title": "Full API Reference",
+      "description": "Single-page API reference with all exports and optional TOC",
+      "dependencies": ["@openpkg-ts/spec", "@openpkg-ts/ui"],
+      "registryDependencies": ["export-section"],
+      "files": [
+        {
+          "path": "registry/new-york/blocks/full-api-reference/full-api-reference.tsx",
+          "type": "registry:block"
+        }
+      ]
+    },
+    {
+      "name": "stripe-api-reference",
+      "type": "registry:block",
+      "title": "Stripe API Reference",
+      "description": "Two-column synced API reference with code examples",
+      "dependencies": ["@openpkg-ts/spec", "@openpkg-ts/ui"],
+      "registryDependencies": ["api-reference-layout", "method-section-from-spec", "example-section", "use-sync-scroll", "use-method-from-spec"],
+      "files": [
+        {
+          "path": "registry/new-york/blocks/stripe-api-reference/stripe-api-reference.tsx",
+          "type": "registry:block"
+        }
+      ]
+    },
+    {
+      "name": "api-page",
+      "type": "registry:block",
+      "title": "API Page",
+      "description": "Router dispatching to index or detail page by export ID",
+      "dependencies": ["@openpkg-ts/sdk", "@openpkg-ts/spec"],
+      "registryDependencies": ["export-section", "export-index-page"],
+      "files": [
+        {
+          "path": "registry/new-york/blocks/api-page/api-page.tsx",
+          "type": "registry:block"
+        }
+      ]
+    }
+  ]
+}
