@@ -3,7 +3,7 @@ import {
   type OpenPkg,
   type SpecExport,
   type SpecExportKind,
-  DISPLAY_DISPLAY_KIND_ORDER,
+  DISPLAY_KIND_ORDER,
   KIND_LABELS,
   KIND_SLUGS,
 } from '@openpkg-ts/spec';
