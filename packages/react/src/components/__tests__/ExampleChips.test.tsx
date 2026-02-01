@@ -1,5 +1,6 @@
+import '../../../test-setup';
 import { afterEach, describe, expect, mock, test } from 'bun:test';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, within } from '@testing-library/react';
 import { type ExampleChip, ExampleChips } from '../styled/ExampleChips';
 
 afterEach(() => {
@@ -24,18 +25,24 @@ describe('ExampleChips', () => {
   describe('rendering', () => {
     test('renders all example chips', () => {
       const onSelect = mock(() => {});
-      render(<ExampleChips examples={mockExamples} activeId="basic" onSelect={onSelect} />);
+      const { container } = render(
+        <ExampleChips examples={mockExamples} activeId="basic" onSelect={onSelect} />,
+      );
+      const q = within(container);
 
-      expect(screen.getByText('Basic')).toBeDefined();
-      expect(screen.getByText('With filter')).toBeDefined();
-      expect(screen.getByText('With order')).toBeDefined();
+      expect(q.getByText('Basic')).toBeDefined();
+      expect(q.getByText('With filter')).toBeDefined();
+      expect(q.getByText('With order')).toBeDefined();
     });
 
     test('renders as buttons', () => {
       const onSelect = mock(() => {});
-      render(<ExampleChips examples={mockExamples} activeId="basic" onSelect={onSelect} />);
+      const { container } = render(
+        <ExampleChips examples={mockExamples} activeId="basic" onSelect={onSelect} />,
+      );
+      const q = within(container);
 
-      const buttons = screen.getAllByRole('button');
+      const buttons = q.getAllByRole('button');
       expect(buttons).toHaveLength(3);
     });
 
@@ -58,17 +65,23 @@ describe('ExampleChips', () => {
   describe('active state', () => {
     test('marks active chip with aria-pressed', () => {
       const onSelect = mock(() => {});
-      render(<ExampleChips examples={mockExamples} activeId="with-filter" onSelect={onSelect} />);
+      const { container } = render(
+        <ExampleChips examples={mockExamples} activeId="with-filter" onSelect={onSelect} />,
+      );
+      const q = within(container);
 
-      const activeButton = screen.getByText('With filter');
+      const activeButton = q.getByText('With filter');
       expect(activeButton.getAttribute('aria-pressed')).toBe('true');
     });
 
     test('marks inactive chips as not pressed', () => {
       const onSelect = mock(() => {});
-      render(<ExampleChips examples={mockExamples} activeId="basic" onSelect={onSelect} />);
+      const { container } = render(
+        <ExampleChips examples={mockExamples} activeId="basic" onSelect={onSelect} />,
+      );
+      const q = within(container);
 
-      const inactiveButton = screen.getByText('With filter');
+      const inactiveButton = q.getByText('With filter');
       expect(inactiveButton.getAttribute('aria-pressed')).toBe('false');
     });
   });
@@ -76,25 +89,34 @@ describe('ExampleChips', () => {
   describe('interaction', () => {
     test('calls onSelect when chip is clicked', () => {
       const onSelect = mock(() => {});
-      render(<ExampleChips examples={mockExamples} activeId="basic" onSelect={onSelect} />);
+      const { container } = render(
+        <ExampleChips examples={mockExamples} activeId="basic" onSelect={onSelect} />,
+      );
+      const q = within(container);
 
-      fireEvent.click(screen.getByText('With filter'));
+      fireEvent.click(q.getByText('With filter'));
       expect(onSelect).toHaveBeenCalledWith('with-filter');
     });
 
     test('calls onSelect with correct id for each chip', () => {
       const onSelect = mock(() => {});
-      render(<ExampleChips examples={mockExamples} activeId="basic" onSelect={onSelect} />);
+      const { container } = render(
+        <ExampleChips examples={mockExamples} activeId="basic" onSelect={onSelect} />,
+      );
+      const q = within(container);
 
-      fireEvent.click(screen.getByText('With order'));
+      fireEvent.click(q.getByText('With order'));
       expect(onSelect).toHaveBeenCalledWith('with-order');
     });
 
     test('allows clicking already active chip', () => {
       const onSelect = mock(() => {});
-      render(<ExampleChips examples={mockExamples} activeId="basic" onSelect={onSelect} />);
+      const { container } = render(
+        <ExampleChips examples={mockExamples} activeId="basic" onSelect={onSelect} />,
+      );
+      const q = within(container);
 
-      fireEvent.click(screen.getByText('Basic'));
+      fireEvent.click(q.getByText('Basic'));
       expect(onSelect).toHaveBeenCalledWith('basic');
     });
   });
@@ -110,15 +132,16 @@ describe('ExampleChips', () => {
 
     test('handles single example', () => {
       const onSelect = mock(() => {});
-      render(
+      const { container } = render(
         <ExampleChips
           examples={[{ id: 'only', label: 'Only one' }]}
           activeId="only"
           onSelect={onSelect}
         />,
       );
+      const q = within(container);
 
-      expect(screen.getByText('Only one')).toBeDefined();
+      expect(q.getByText('Only one')).toBeDefined();
     });
   });
 });

@@ -1,15 +1,18 @@
-import { JSDOM } from 'jsdom';
+import { Window } from 'happy-dom';
 
-const dom = new JSDOM('<!DOCTYPE html><html><body></body></html>', {
-  url: 'http://localhost',
-  pretendToBeVisual: true,
+const window = new Window({ url: 'http://localhost' });
+
+Object.assign(globalThis, {
+  window,
+  document: window.document,
+  navigator: window.navigator,
+  HTMLElement: window.HTMLElement,
+  Element: window.Element,
+  Node: window.Node,
+  Text: window.Text,
+  DocumentFragment: window.DocumentFragment,
+  getComputedStyle: window.getComputedStyle.bind(window),
+  requestAnimationFrame: window.requestAnimationFrame.bind(window),
+  cancelAnimationFrame: window.cancelAnimationFrame.bind(window),
+  MutationObserver: window.MutationObserver,
 });
-
-global.document = dom.window.document;
-global.window = dom.window as unknown as Window & typeof globalThis;
-global.navigator = dom.window.navigator;
-global.HTMLElement = dom.window.HTMLElement;
-global.Element = dom.window.Element;
-global.Node = dom.window.Node;
-global.Text = dom.window.Text;
-global.DocumentFragment = dom.window.DocumentFragment;
