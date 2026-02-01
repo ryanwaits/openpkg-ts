@@ -4,6 +4,7 @@ import type { OpenPkg, SpecExport, SpecExportKind } from '@openpkg-ts/spec';
 import { APIReferencePage } from '@openpkg-ts/ui/docskit';
 import { cn } from '@openpkg-ts/ui/lib/utils';
 import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { type ExportKind, KIND_LABELS, KIND_ORDER } from '../shared';
 import { ExportSection } from './sections/ExportSection';
 
 export interface FullAPIReferencePageProps {
@@ -22,18 +23,6 @@ export interface FullAPIReferencePageProps {
   /** Custom className */
   className?: string;
 }
-
-type ExportKind = 'function' | 'class' | 'interface' | 'type' | 'enum' | 'variable';
-
-const KIND_ORDER: ExportKind[] = ['function', 'class', 'interface', 'type', 'enum', 'variable'];
-const KIND_LABELS: Record<ExportKind, string> = {
-  function: 'Functions',
-  class: 'Classes',
-  interface: 'Interfaces',
-  type: 'Types',
-  enum: 'Enums',
-  variable: 'Variables',
-};
 
 /** Get display title for an export based on kind */
 function getExportTitle(exp: SpecExport): string {

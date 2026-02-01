@@ -1,8 +1,9 @@
 'use client';
 
 import type { ReactNode } from 'react';
+import type { ExportKind } from '../shared';
 
-export type ExportKind = 'function' | 'type' | 'variable' | 'class' | 'interface' | 'enum';
+export type { ExportKind };
 
 export interface ExportCardProps {
   /** Function/export name */

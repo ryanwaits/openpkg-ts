@@ -2,7 +2,8 @@
 
 import type { OpenPkg, SpecExport } from '@openpkg-ts/spec';
 import { type ReactNode, useMemo, useState } from 'react';
-import { ExportCard, type ExportKind } from './ExportCard';
+import { type ExportKind, KIND_LABELS, groupExportsByKind } from '../shared';
+import { ExportCard } from './ExportCard';
 
 export interface ExportIndexPageProps {
   /** OpenPkg spec */
@@ -23,50 +24,6 @@ export interface ExportIndexPageProps {
   renderCard?: (exp: SpecExport, href: string) => ReactNode;
   /** Custom search input renderer */
   renderSearch?: (value: string, onChange: (value: string) => void) => ReactNode;
-}
-
-interface CategoryGroup {
-  kind: ExportKind;
-  label: string;
-  slug: string;
-  exports: SpecExport[];
-}
-
-const KIND_ORDER: ExportKind[] = ['function', 'class', 'interface', 'type', 'enum', 'variable'];
-const KIND_LABELS: Record<ExportKind, string> = {
-  function: 'Functions',
-  class: 'Classes',
-  interface: 'Interfaces',
-  type: 'Types',
-  enum: 'Enums',
-  variable: 'Variables',
-};
-const KIND_SLUGS: Record<ExportKind, string> = {
-  function: 'functions',
-  class: 'classes',
-  interface: 'interfaces',
-  type: 'types',
-  enum: 'enums',
-  variable: 'variables',
-};
-
-function groupByKind(exports: SpecExport[]): CategoryGroup[] {
-  const groups: Map<ExportKind, SpecExport[]> = new Map();
-
-  for (const exp of exports) {
-    const kind = (exp.kind as ExportKind) || 'variable';
-    const normalizedKind = KIND_ORDER.includes(kind) ? kind : 'variable';
-    const list = groups.get(normalizedKind) || [];
-    list.push(exp);
-    groups.set(normalizedKind, list);
-  }
-
-  return KIND_ORDER.filter((kind) => groups.has(kind)).map((kind) => ({
-    kind,
-    label: KIND_LABELS[kind],
-    slug: KIND_SLUGS[kind],
-    exports: groups.get(kind)?.sort((a, b) => a.name.localeCompare(b.name)),
-  }));
 }
 
 /**
@@ -96,7 +53,7 @@ export function ExportIndexPage({
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState<ExportKind | 'all'>('all');
 
-  const allGroups = useMemo(() => groupByKind(spec.exports), [spec.exports]);
+  const allGroups = useMemo(() => groupExportsByKind(spec.exports), [spec.exports]);
 
   // Filter by search and category
   const filteredGroups = useMemo(() => {
