@@ -140,6 +140,20 @@ export function formatSchema(
       return 'object';
     }
 
+    // Handle const (exact literal value)
+    if ('const' in schema && schema.const !== undefined) {
+      const v = schema.const;
+      return withPackage(typeof v === 'string' ? `"${v}"` : String(v));
+    }
+
+    // Handle enum (literal union shorthand)
+    if ('enum' in schema && Array.isArray(schema.enum)) {
+      const vals = (schema.enum as unknown[]).map((v) =>
+        typeof v === 'string' ? `"${v}"` : String(v),
+      );
+      return withPackage(vals.join(' | '));
+    }
+
     // Handle basic type
     if ('type' in schema && typeof schema.type === 'string') {
       return withPackage(schema.type);
