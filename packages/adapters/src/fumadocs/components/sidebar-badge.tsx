@@ -1,19 +1,8 @@
-import type { SpecExportKind } from '@openpkg-ts/spec';
+import { KIND_LABELS, type SpecExportKind } from '@openpkg-ts/spec';
 import { type KindBadgeKind, KindBadge as UIKindBadge } from '@openpkg-ts/ui/badge';
 import { createElement, type ReactNode } from 'react';
 
-export const SUPPORTED_KINDS: Set<string> = new Set([
-  'function',
-  'class',
-  'interface',
-  'type',
-  'enum',
-  'variable',
-  'namespace',
-  'module',
-  'reference',
-  'external',
-]);
+export const SUPPORTED_KINDS: Set<string> = new Set(Object.keys(KIND_LABELS));
 
 export interface SidebarKindBadgeProps {
   kind: SpecExportKind;
