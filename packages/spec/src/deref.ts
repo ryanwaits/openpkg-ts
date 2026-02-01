@@ -5,7 +5,7 @@ type SpecLike = Record<string, unknown>;
 type TypeLookup = Map<string, SpecType>;
 
 export function dereference(spec: OpenPkg): OpenPkg {
-  const clone: OpenPkg = JSON.parse(JSON.stringify(spec));
+  const clone: OpenPkg = structuredClone(spec);
   const typeLookup = buildTypeLookup(clone.types);
 
   const visit = (value: unknown, seen: Set<string>): unknown => {
@@ -80,8 +80,8 @@ function resolveTypeRef(id: string, lookup: TypeLookup, seen: Set<string>): Spec
   seen.add(id);
 
   if (target.schema) {
-    return JSON.parse(JSON.stringify(target.schema));
+    return structuredClone(target.schema);
   }
 
-  return JSON.parse(JSON.stringify(target));
+  return structuredClone(target);
 }
