@@ -31,6 +31,11 @@ export const BUILTIN_TYPE_SCHEMAS: Record<string, SpecSchema> = {
   BigUint64Array: { type: 'string', format: 'byte' },
 };
 
+/** Attach a JSON Schema extension field (x-ts-*) to a schema. */
+function setSchemaExtension(schema: SpecSchema, key: string, value: unknown): void {
+  (schema as Record<string, unknown>)[key] = value;
+}
+
 // Primitive type names
 export const PRIMITIVES = new Set([
   'string',
@@ -523,7 +528,7 @@ function buildSchemaInternal(
             typeArguments: typeArgs.map((t) => buildSchema(t, checker, ctx)),
           };
           if (packageOrigin) {
-            (schema as Record<string, unknown>)['x-ts-package'] = packageOrigin;
+            setSchemaExtension(schema, 'x-ts-package', packageOrigin);
           }
           return schema;
         });
@@ -533,7 +538,7 @@ function buildSchemaInternal(
         typeArguments: typeArgs.map((t) => buildSchema(t, checker, ctx)),
       };
       if (packageOrigin) {
-        (schema as Record<string, unknown>)['x-ts-package'] = packageOrigin;
+        setSchemaExtension(schema, 'x-ts-package', packageOrigin);
       }
       return schema;
     }
@@ -561,7 +566,7 @@ function buildSchemaInternal(
             typeArguments: aliasTypeArgs.map((t) => buildSchema(t, checker, ctx)),
           };
           if (packageOrigin) {
-            (schema as Record<string, unknown>)['x-ts-package'] = packageOrigin;
+            setSchemaExtension(schema, 'x-ts-package', packageOrigin);
           }
           return schema;
         });
@@ -571,7 +576,7 @@ function buildSchemaInternal(
         typeArguments: aliasTypeArgs.map((t) => buildSchema(t, checker, ctx)),
       };
       if (packageOrigin) {
-        (schema as Record<string, unknown>)['x-ts-package'] = packageOrigin;
+        setSchemaExtension(schema, 'x-ts-package', packageOrigin);
       }
       return schema;
     }
@@ -605,7 +610,7 @@ function buildSchemaInternal(
       const packageOrigin = getTypeOrigin(type, checker);
       const schema: SpecSchema = { $ref: `#/types/${name}` };
       if (packageOrigin) {
-        (schema as Record<string, unknown>)['x-ts-package'] = packageOrigin;
+        setSchemaExtension(schema, 'x-ts-package', packageOrigin);
       }
       return schema;
     }
@@ -707,7 +712,7 @@ function buildObjectSchema(
 
     // Add x-ts-type for empty properties to provide context
     if (Object.keys(props).length === 0 && originalType) {
-      (schema as Record<string, unknown>)['x-ts-type'] = checker.typeToString(originalType);
+      setSchemaExtension(schema, 'x-ts-type', checker.typeToString(originalType));
     }
 
     return schema;
