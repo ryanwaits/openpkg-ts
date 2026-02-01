@@ -2,7 +2,7 @@ import type { SpecExportKind } from '@openpkg-ts/spec';
 import { type KindBadgeKind, KindBadge as UIKindBadge } from '@openpkg-ts/ui/badge';
 import { createElement, type ReactNode } from 'react';
 
-const SUPPORTED_KINDS: Set<string> = new Set([
+export const SUPPORTED_KINDS: Set<string> = new Set([
   'function',
   'class',
   'interface',

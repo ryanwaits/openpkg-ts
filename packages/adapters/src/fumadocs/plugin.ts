@@ -2,7 +2,7 @@ import type { SpecExportKind } from '@openpkg-ts/spec';
 import type { Item } from 'fumadocs-core/page-tree';
 import type { LoaderPlugin } from 'fumadocs-core/source';
 import { createElement } from 'react';
-import { SidebarKindBadge } from './components/sidebar-badge';
+import { SUPPORTED_KINDS, SidebarKindBadge } from './components/sidebar-badge';
 import type { OpenPkgPageData } from './source';
 
 // Re-export for backward compatibility
@@ -10,19 +10,6 @@ export {
   SidebarKindBadge as KindBadge,
   type SidebarKindBadgeProps as KindBadgeProps,
 } from './components/sidebar-badge';
-
-const SUPPORTED_KINDS = new Set<string>([
-  'function',
-  'class',
-  'interface',
-  'type',
-  'enum',
-  'variable',
-  'namespace',
-  'module',
-  'reference',
-  'external',
-]);
 
 export interface OpenpkgPluginOptions {
   /** Show kind badges in sidebar (default: true) */
