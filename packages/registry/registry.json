@@ -1,6 +1,6 @@
 {
   "$schema": "https://ui.shadcn.com/schema/registry.json",
-  "name": "openpkg",
+  "name": "@openpkg-ts",
   "homepage": "https://openpkg.dev",
   "items": [
     {
@@ -138,7 +138,7 @@
       "title": "Expandable Parameter",
       "description": "Compound parameter with nested object properties and enum values",
       "dependencies": ["@openpkg-ts/sdk", "@openpkg-ts/spec", "@openpkg-ts/ui"],
-      "registryDependencies": ["api-parameter-item", "enum-values-section", "nested-parameter-container", "nested-parameter-toggle"],
+      "registryDependencies": ["@openpkg-ts/api-parameter-item", "@openpkg-ts/enum-values-section", "@openpkg-ts/nested-parameter-container", "@openpkg-ts/nested-parameter-toggle"],
       "files": [
         {
           "path": "registry/new-york/components/expandable-parameter/expandable-parameter.tsx",
@@ -152,7 +152,7 @@
       "title": "Method Section",
       "description": "Container for a single API method with title, signature, and parameters",
       "dependencies": ["@openpkg-ts/ui"],
-      "registryDependencies": ["use-sync-scroll"],
+      "registryDependencies": ["@openpkg-ts/use-sync-scroll"],
       "files": [
         {
           "path": "registry/new-york/components/method-section/method-section.tsx",
@@ -166,7 +166,7 @@
       "title": "Method Section From Spec",
       "description": "Auto-generate method documentation from OpenPkg spec",
       "dependencies": ["@openpkg-ts/spec", "@openpkg-ts/ui"],
-      "registryDependencies": ["expandable-parameter", "method-section", "use-method-from-spec"],
+      "registryDependencies": ["@openpkg-ts/expandable-parameter", "@openpkg-ts/method-section", "@openpkg-ts/use-method-from-spec"],
       "files": [
         {
           "path": "registry/new-york/components/method-section-from-spec/method-section-from-spec.tsx",
@@ -180,7 +180,7 @@
       "title": "Example Section",
       "description": "Complete right-column section with chips, code, and panels",
       "dependencies": ["@openpkg-ts/ui"],
-      "registryDependencies": ["code-block", "collapsible-panel", "example-chips", "use-sync-scroll"],
+      "registryDependencies": ["@openpkg-ts/code-block", "@openpkg-ts/collapsible-panel", "@openpkg-ts/example-chips", "@openpkg-ts/use-sync-scroll"],
       "files": [
         {
           "path": "registry/new-york/components/example-section/example-section.tsx",
@@ -292,7 +292,7 @@
       "title": "Export Section",
       "description": "Router component rendering appropriate section by export kind",
       "dependencies": ["@openpkg-ts/spec"],
-      "registryDependencies": ["function-section", "class-section", "interface-section", "enum-section", "variable-section"],
+      "registryDependencies": ["@openpkg-ts/function-section", "@openpkg-ts/class-section", "@openpkg-ts/interface-section", "@openpkg-ts/enum-section", "@openpkg-ts/variable-section"],
       "files": [
         {
           "path": "registry/new-york/components/export-section/export-section.tsx",
@@ -306,7 +306,7 @@
       "title": "Export Index Page",
       "description": "Searchable grid of all exports grouped by category",
       "dependencies": ["@openpkg-ts/spec", "@openpkg-ts/ui", "lucide-react"],
-      "registryDependencies": ["export-card"],
+      "registryDependencies": ["@openpkg-ts/export-card"],
       "files": [
         {
           "path": "registry/new-york/blocks/export-index-page/export-index-page.tsx",
@@ -320,7 +320,7 @@
       "title": "Full API Reference",
       "description": "Single-page API reference with all exports and optional TOC",
       "dependencies": ["@openpkg-ts/spec", "@openpkg-ts/ui"],
-      "registryDependencies": ["export-section"],
+      "registryDependencies": ["@openpkg-ts/export-section"],
       "files": [
         {
           "path": "registry/new-york/blocks/full-api-reference/full-api-reference.tsx",
@@ -334,7 +334,7 @@
       "title": "Stripe API Reference",
       "description": "Two-column synced API reference with code examples",
       "dependencies": ["@openpkg-ts/spec", "@openpkg-ts/ui"],
-      "registryDependencies": ["api-reference-layout", "method-section-from-spec", "example-section", "use-sync-scroll", "use-method-from-spec"],
+      "registryDependencies": ["@openpkg-ts/api-reference-layout", "@openpkg-ts/method-section-from-spec", "@openpkg-ts/example-section", "@openpkg-ts/use-sync-scroll", "@openpkg-ts/use-method-from-spec"],
       "files": [
         {
           "path": "registry/new-york/blocks/stripe-api-reference/stripe-api-reference.tsx",
@@ -348,7 +348,7 @@
       "title": "API Page",
       "description": "Router dispatching to index or detail page by export ID",
       "dependencies": ["@openpkg-ts/sdk", "@openpkg-ts/spec"],
-      "registryDependencies": ["export-section", "export-index-page"],
+      "registryDependencies": ["@openpkg-ts/export-section", "@openpkg-ts/export-index-page"],
       "files": [
         {
           "path": "registry/new-york/blocks/api-page/api-page.tsx",
