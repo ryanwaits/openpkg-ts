@@ -1,5 +1,12 @@
 # @openpkg-ts/ui
 
+## 0.1.7
+
+### Patch Changes
+
+- ui: Add docskit.css stylesheet (codehike theme + dk-\* Tailwind mappings + selection utility) and fix styles/tokens.css packaging by including src/styles in files field.
+  adapters: Fix DISPLAY_DISPLAY_KIND_ORDER typo in fumadocs source.
+
 ## 0.1.6
 
 ### Patch Changes
