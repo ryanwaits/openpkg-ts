@@ -1,5 +1,11 @@
 # @openpkg-ts/ui
 
+## 0.3.1
+
+### Patch Changes
+
+- Replace GitHub Light/Dark CodeHike themes with custom syntax theme
+
 ## 0.3.0
 
 ### Minor Changes

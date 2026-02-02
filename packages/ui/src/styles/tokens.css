@@ -25,15 +25,15 @@
   --openpkg-text-code: #1a1a1a;
 
   /* Syntax highlighting — light */
-  --openpkg-syn-keyword: #8b5cf6;
-  --openpkg-syn-string: #059669;
-  --openpkg-syn-function: #dc2626;
+  --openpkg-syn-keyword: #c9555a;
+  --openpkg-syn-string: #b8860b;
+  --openpkg-syn-function: #1a1a1a;
   --openpkg-syn-property: #7c3aed;
-  --openpkg-syn-variable: #1a1a1a;
-  --openpkg-syn-punctuation: #6b7280;
-  --openpkg-syn-number: #d97706;
-  --openpkg-syn-boolean: #be185d;
-  --openpkg-syn-comment: #9ca3af;
+  --openpkg-syn-variable: #3a3a3a;
+  --openpkg-syn-punctuation: #999999;
+  --openpkg-syn-number: #b8860b;
+  --openpkg-syn-boolean: #c9555a;
+  --openpkg-syn-comment: #999999;
 
   /* Accent colors */
   --openpkg-accent-green: #16a34a;
@@ -113,15 +113,15 @@
   --openpkg-border-medium: #333333;
   --openpkg-border-chip: #333333;
   --openpkg-border-chip-active: #666666;
-  --openpkg-syn-keyword: #c4a7e7;
-  --openpkg-syn-string: #9ccfd8;
-  --openpkg-syn-function: #ebbcba;
+  --openpkg-syn-keyword: #c9555a;
+  --openpkg-syn-string: #d4a553;
+  --openpkg-syn-function: #e0e0e0;
   --openpkg-syn-property: #c4a7e7;
-  --openpkg-syn-variable: #e4e4e7;
-  --openpkg-syn-punctuation: #6e6a86;
-  --openpkg-syn-number: #f6c177;
-  --openpkg-syn-boolean: #eb6f92;
-  --openpkg-syn-comment: #6e6a86;
+  --openpkg-syn-variable: #d4d4d4;
+  --openpkg-syn-punctuation: #6b6b6b;
+  --openpkg-syn-number: #d4a553;
+  --openpkg-syn-boolean: #c9555a;
+  --openpkg-syn-comment: #5c5c5c;
 }
 
 /* Dark mode — system preference */
@@ -160,15 +160,15 @@
     --openpkg-border-medium: #333333;
     --openpkg-border-chip: #333333;
     --openpkg-border-chip-active: #666666;
-    --openpkg-syn-keyword: #c4a7e7;
-    --openpkg-syn-string: #9ccfd8;
-    --openpkg-syn-function: #ebbcba;
+    --openpkg-syn-keyword: #c9555a;
+    --openpkg-syn-string: #d4a553;
+    --openpkg-syn-function: #e0e0e0;
     --openpkg-syn-property: #c4a7e7;
-    --openpkg-syn-variable: #e4e4e7;
-    --openpkg-syn-punctuation: #6e6a86;
-    --openpkg-syn-number: #f6c177;
-    --openpkg-syn-boolean: #eb6f92;
-    --openpkg-syn-comment: #6e6a86;
+    --openpkg-syn-variable: #d4d4d4;
+    --openpkg-syn-punctuation: #6b6b6b;
+    --openpkg-syn-number: #d4a553;
+    --openpkg-syn-boolean: #c9555a;
+    --openpkg-syn-comment: #5c5c5c;
   }
 }
 

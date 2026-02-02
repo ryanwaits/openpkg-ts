@@ -1,5 +1,13 @@
 # @openpkg-ts/adapters
 
+## 0.3.9
+
+### Patch Changes
+
+- Replace GitHub Light/Dark CodeHike themes with custom syntax theme
+- Updated dependencies
+  - @openpkg-ts/ui@0.3.1
+
 ## 0.3.8
 
 ### Patch Changes
