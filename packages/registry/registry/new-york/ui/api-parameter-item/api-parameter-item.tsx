@@ -136,7 +136,7 @@ export function APIParameterItem({
               'text-[10px] font-medium',
               'px-2 py-0.5 rounded',
               'text-[var(--openpkg-accent-purple)]',
-              'bg-[rgba(196,167,231,0.12)]',
+              'bg-[color-mix(in_srgb,var(--openpkg-accent-purple)_12%,transparent)]',
             )}
           >
             Expandable

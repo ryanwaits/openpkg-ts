@@ -127,6 +127,13 @@ Components are **light by default** and respond to dark mode via:
 - `[data-theme="dark"]` attribute
 - `prefers-color-scheme: dark` system preference
 
+> **Important:** If the user's OS prefers dark mode, `prefers-color-scheme: dark` will activate dark tokens automatically. To force light mode in that scenario, add `.light` to `<html>` (or `[data-theme="light"]`). Your theme toggle should set both:
+>
+> ```ts
+> document.documentElement.classList.toggle('dark', isDark);
+> document.documentElement.classList.toggle('light', !isDark);
+> ```
+
 All colors use `--openpkg-*` CSS custom properties. Override any variable to match your theme:
 
 ```css
@@ -257,3 +264,4 @@ bun run dev
 | `dk-*` classes have no effect | Tailwind v4 doesn't scan `node_modules` | Add `@source "../node_modules/@openpkg-ts/ui/dist/docskit"` (step 7) |
 | Selection highlight missing in code blocks | Tailwind can't auto-generate `selection:` variant for custom colors | Included in `docskit.css` import (step 7) |
 | Components render light but app is dark (or vice versa) | Components follow `--openpkg-*` tokens which respond to `.dark` class / `prefers-color-scheme` | Add `class="dark"` to `<html>` or use system preference (step 8) |
+| Components stuck in dark mode, won't go light | OS prefers dark + no `.light` class on `<html>` | Add `.light` class when toggling to light mode (step 8) |
