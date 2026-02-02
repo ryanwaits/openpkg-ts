@@ -38,6 +38,7 @@
 }
 
 /* CodeHike custom theme (light) */
+.light,
 [data-theme="light"] {
   --ch-0: light;
   --ch-1: #999999;

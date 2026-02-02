@@ -1,5 +1,11 @@
 # @openpkg-ts/ui
 
+## 0.3.2
+
+### Patch Changes
+
+- Replace GitHub Light/Dark CodeHike themes with custom syntax theme; fix light mode not activating due to missing `.light` class selector
+
 ## 0.3.1
 
 ### Patch Changes

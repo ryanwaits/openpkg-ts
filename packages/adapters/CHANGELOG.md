@@ -1,5 +1,13 @@
 # @openpkg-ts/adapters
 
+## 0.3.10
+
+### Patch Changes
+
+- Replace GitHub Light/Dark CodeHike themes with custom syntax theme; fix light mode not activating due to missing `.light` class selector
+- Updated dependencies
+  - @openpkg-ts/ui@0.3.2
+
 ## 0.3.9
 
 ### Patch Changes
