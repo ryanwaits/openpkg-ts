@@ -8,8 +8,8 @@ export const diff: AnnotationHandler = {
     return (
       <div
         style={{
-          ['--dk-line-bg' as string]: `rgb(from ${color} r g b / 0.13)`,
-          ['--dk-line-border' as string]: color,
+          ['--openpkg-line-bg' as string]: `rgb(from ${color} r g b / 0.13)`,
+          ['--openpkg-line-border' as string]: color,
         }}
       >
         {children}

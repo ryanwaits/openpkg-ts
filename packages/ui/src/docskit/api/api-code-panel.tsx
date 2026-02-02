@@ -5,7 +5,6 @@ import { Check, Copy, ExternalLink } from 'lucide-react';
 import type * as React from 'react';
 import { useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
-import { useCopyToClipboard } from '@/hooks/use-copy-to-clipboard';
 import { theme } from '../code.config';
 import { getHandlers } from '../code.handlers';
 import { CodeBlockSkeleton } from '../code.skeleton';
@@ -45,7 +44,7 @@ export function APICodePanel({
   className,
 }: APICodePanelProps): React.ReactNode {
   const [selectedLang, setSelectedLang] = useState(examples[0]?.languageId ?? languages[0]?.id);
-  const [copied, copy] = useCopyToClipboard();
+  const [copied, setCopied] = useState(false);
   const [highlighted, setHighlighted] = useState<HighlightedCode | null>(null);
 
   const currentExample = examples.find((e) => e.languageId === selectedLang);
@@ -75,7 +74,9 @@ export function APICodePanel({
   }, [code, lang]);
 
   const handleCopy = () => {
-    copy(code);
+    navigator.clipboard.writeText(code);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1200);
   };
 
   const handlers = getHandlers({ copyButton: false });
@@ -83,14 +84,14 @@ export function APICodePanel({
   return (
     <div
       className={cn(
-        'rounded-lg overflow-hidden border border-dk-border',
-        'bg-dk-background text-gray-100',
+        'rounded-lg overflow-hidden border border-openpkg-code-border',
+        'bg-openpkg-code-bg text-gray-100',
         'sticky top-20',
         className,
       )}
     >
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-dk-border bg-dk-tabs-background">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-openpkg-code-border bg-openpkg-code-header">
         <div className="flex items-center gap-3">
           {languages.length > 1 && (
             <LanguageSelector
@@ -100,13 +101,13 @@ export function APICodePanel({
               className="[&_button]:bg-white/5 [&_button]:hover:bg-white/10 [&_button]:text-gray-200"
             />
           )}
-          {title && <span className="text-sm text-dk-tab-inactive-foreground">{title}</span>}
+          {title && <span className="text-sm text-openpkg-code-text-inactive">{title}</span>}
         </div>
         <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={handleCopy}
-            className="p-1.5 rounded text-dk-tab-inactive-foreground hover:text-gray-200 transition-colors cursor-pointer"
+            className="p-1.5 rounded text-openpkg-code-text-inactive hover:text-gray-200 transition-colors cursor-pointer"
             aria-label="Copy code"
           >
             {copied ? <Check size={16} /> : <Copy size={16} />}
@@ -116,7 +117,7 @@ export function APICodePanel({
               href={externalLink}
               target="_blank"
               rel="noopener noreferrer"
-              className="p-1.5 rounded text-dk-tab-inactive-foreground hover:text-gray-200 transition-colors"
+              className="p-1.5 rounded text-openpkg-code-text-inactive hover:text-gray-200 transition-colors"
               aria-label="Open in playground"
             >
               <ExternalLink size={16} />
@@ -130,7 +131,7 @@ export function APICodePanel({
         {highlighted ? (
           <Pre
             code={highlighted}
-            className="overflow-auto px-4 py-3 m-0 rounded-none !bg-dk-background selection:bg-dk-selection selection:text-current text-sm"
+            className="overflow-auto px-4 py-3 m-0 rounded-none !bg-openpkg-code-bg selection:bg-openpkg-code-selection selection:text-current text-sm"
             style={highlighted.style}
             handlers={handlers}
           />

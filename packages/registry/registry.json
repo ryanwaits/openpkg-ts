@@ -334,7 +334,7 @@
       "title": "Stripe API Reference",
       "description": "Two-column synced API reference with code examples",
       "dependencies": ["@openpkg-ts/spec", "@openpkg-ts/ui"],
-      "registryDependencies": ["@openpkg-ts/api-reference-layout", "@openpkg-ts/method-section-from-spec", "@openpkg-ts/example-section", "@openpkg-ts/use-sync-scroll", "@openpkg-ts/use-method-from-spec"],
+      "registryDependencies": ["@openpkg-ts/use-method-from-spec"],
       "files": [
         {
           "path": "registry/new-york/blocks/stripe-api-reference/stripe-api-reference.tsx",

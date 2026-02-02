@@ -1,5 +1,11 @@
 # @openpkg-ts/ui
 
+## 0.4.0
+
+### Minor Changes
+
+- Unify styling under --openpkg-\* CSS custom properties, fix cva type errors, remove legacy code tabs
+
 ## 0.3.2
 
 ### Patch Changes

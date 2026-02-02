@@ -9,10 +9,7 @@ export const tooltip: AnnotationHandler = {
   },
 };
 
-export function TooltipLink(props: {
-  href?: string;
-  children?: React.ReactNode;
-}): React.JSX.Element {
+export function TooltipLink(props: { href?: string; children?: React.ReactNode }): React.ReactNode {
   const name = props.href?.slice('tooltip:'.length) ?? '';
   return <NoteTooltip name={name}>{props.children}</NoteTooltip>;
 }

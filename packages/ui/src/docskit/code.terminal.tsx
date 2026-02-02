@@ -19,10 +19,7 @@ import { getHandlers } from './code.handlers';
  * />
  * ```
  */
-export async function Terminal(props: {
-  codeblock: RawCode;
-  handlers?: AnnotationHandler[];
-}): Promise<React.JSX.Element> {
+export async function Terminal(props: { codeblock: RawCode; handlers?: AnnotationHandler[] }): Promise<React.ReactNode> {
   const { codeblock, handlers: extraHandlers } = props;
   const { flags } = extractFlags(codeblock);
   const options = flagsToOptions(flags);
@@ -39,20 +36,20 @@ export async function Terminal(props: {
   const isMultiLine = highlighted.code.includes('\n');
 
   return (
-    <div className="group rounded overflow-hidden relative border-dk-border flex flex-col border my-4 not-prose">
+    <div className="group rounded overflow-hidden relative border-openpkg-code-border flex flex-col border my-4 not-prose">
       {/* Terminal header with macOS dots */}
       <div
         className={cn(
-          'border-b border-dk-border bg-dk-tabs-background',
+          'border-b border-openpkg-code-border bg-openpkg-code-header',
           'w-full h-9 flex items-center justify-center shrink-0',
           'relative',
         )}
       >
         {/* macOS window controls (3 dots) */}
         <div className="absolute left-3 flex items-center gap-2">
-          <div className="size-3 rounded-full bg-dk-tab-inactive-foreground/30" />
-          <div className="size-3 rounded-full bg-dk-tab-inactive-foreground/30" />
-          <div className="size-3 rounded-full bg-dk-tab-inactive-foreground/30" />
+          <div className="size-3 rounded-full bg-openpkg-code-text-inactive/30" />
+          <div className="size-3 rounded-full bg-openpkg-code-text-inactive/30" />
+          <div className="size-3 rounded-full bg-openpkg-code-text-inactive/30" />
         </div>
         <span className="sr-only">Terminal window</span>
       </div>
@@ -61,7 +58,7 @@ export async function Terminal(props: {
       <div className="relative flex items-start">
         <Pre
           code={highlighted}
-          className="overflow-auto px-0 py-3 m-0 rounded-none !bg-dk-background selection:bg-dk-selection selection:text-current max-h-full flex-1"
+          className="overflow-auto px-0 py-3 m-0 rounded-none !bg-openpkg-code-bg selection:bg-openpkg-code-selection selection:text-current max-h-full flex-1"
           style={highlightedStyle}
           handlers={handlers}
         />
@@ -70,7 +67,7 @@ export async function Terminal(props: {
             text={highlighted.code}
             variant="floating"
             className={cn(
-              'absolute right-3 z-10 text-dk-tab-inactive-foreground',
+              'absolute right-3 z-10 text-openpkg-code-text-inactive',
               isMultiLine ? 'top-3' : 'top-1/2 -translate-y-1/2',
             )}
           />

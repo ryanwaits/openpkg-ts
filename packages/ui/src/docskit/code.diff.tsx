@@ -9,8 +9,8 @@ import {
 } from 'codehike/code';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/collapsible';
 import { cn } from '@/lib/utils';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/collapsible';
 import { flagsToOptions, theme } from './code.config';
 import { CopyButton } from './code.copy';
 import { getHandlers } from './code.handlers';
@@ -23,13 +23,13 @@ function StackedChevrons({ isOpen, className }: { isOpen?: boolean; className?: 
       <ChevronUp
         className={cn(
           'size-3 transition-colors',
-          isOpen ? 'text-dk-tab-active-foreground' : 'text-dk-tab-inactive-foreground',
+          isOpen ? 'text-openpkg-code-text-active' : 'text-openpkg-code-text-inactive',
         )}
       />
       <ChevronDown
         className={cn(
           'size-3 transition-colors',
-          isOpen ? 'text-dk-tab-active-foreground' : 'text-dk-tab-inactive-foreground',
+          isOpen ? 'text-openpkg-code-text-active' : 'text-openpkg-code-text-inactive',
         )}
       />
     </div>
@@ -61,7 +61,7 @@ interface ClientDiffCodeProps {
  * DocKit code block variant with file change row header.
  * Displays path/filename with diff stats, collapsible with syntax-highlighted code.
  */
-export function ClientDiffCode(props: ClientDiffCodeProps): React.JSX.Element {
+export function ClientDiffCode(props: ClientDiffCodeProps): React.ReactNode {
   const {
     codeblock,
     path = '',
@@ -113,7 +113,7 @@ export function ClientDiffCode(props: ClientDiffCodeProps): React.JSX.Element {
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
       <div
         className={cn(
-          'group rounded overflow-hidden relative border-dk-border flex flex-col border my-4 not-prose',
+          'group rounded overflow-hidden relative border-openpkg-code-border flex flex-col border my-4 not-prose',
           wrapperClassName,
         )}
       >
@@ -122,16 +122,16 @@ export function ClientDiffCode(props: ClientDiffCodeProps): React.JSX.Element {
           <button
             type="button"
             className={cn(
-              'border-b border-dk-border bg-dk-tabs-background px-3 py-0',
+              'border-b border-openpkg-code-border bg-openpkg-code-header px-3 py-0',
               'w-full h-9 flex items-center shrink-0 cursor-pointer',
-              'text-dk-tab-inactive-foreground text-sm font-mono',
-              'hover:bg-dk-background/50 transition-colors',
+              'text-openpkg-code-text-inactive text-sm font-mono',
+              'hover:bg-openpkg-code-bg/50 transition-colors',
             )}
           >
             <div className="flex items-center h-5 gap-2 flex-1 min-w-0">
               <div className="size-4 shrink-0">{icon}</div>
-              {path && <span className="text-dk-tab-inactive-foreground truncate">{path}</span>}
-              <span className="text-dk-tab-active-foreground font-medium truncate">{filename}</span>
+              {path && <span className="text-openpkg-code-text-inactive truncate">{path}</span>}
+              <span className="text-openpkg-code-text-active font-medium truncate">{filename}</span>
             </div>
 
             {/* Diff stats */}
@@ -151,7 +151,7 @@ export function ClientDiffCode(props: ClientDiffCodeProps): React.JSX.Element {
           <div className="relative flex items-start">
             <Pre
               code={highlighted}
-              className="overflow-auto px-0 py-3 m-0 rounded-none !bg-dk-background selection:bg-dk-selection selection:text-current max-h-full flex-1"
+              className="overflow-auto px-0 py-3 m-0 rounded-none !bg-openpkg-code-bg selection:bg-openpkg-code-selection selection:text-current max-h-full flex-1"
               style={highlightedStyle}
               handlers={handlers}
             />
@@ -159,7 +159,7 @@ export function ClientDiffCode(props: ClientDiffCodeProps): React.JSX.Element {
               <CopyButton
                 text={highlighted.code}
                 variant="floating"
-                className="absolute right-3 top-3 z-10 text-dk-tab-inactive-foreground"
+                className="absolute right-3 top-3 z-10 text-openpkg-code-text-inactive"
               />
             )}
           </div>

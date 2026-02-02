@@ -29,14 +29,14 @@ export const callout: AnnotationHandler = {
             marginLeft: `${indentation}ch`,
             border: '1px solid var(--ch-23)',
           }}
-          className="w-fit bg-dk-tabs-background rounded px-0 relative my-1 whitespace-break-spaces select-none"
+          className="w-fit bg-openpkg-code-header rounded px-0 relative my-1 whitespace-break-spaces select-none"
         >
           <div
             style={{
               left: `${column - indentation - 1}ch`,
               borderColor: 'var(--ch-23)',
             }}
-            className="absolute border-l border-t  w-2 h-2 rotate-45 -translate-y-1/2 -top-[1px] bg-dk-tabs-background"
+            className="absolute border-l border-t  w-2 h-2 rotate-45 -translate-y-1/2 -top-[1px] bg-openpkg-code-header"
           />
           <CalloutClient name={annotation.query} />
         </div>

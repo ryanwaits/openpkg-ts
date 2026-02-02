@@ -87,24 +87,24 @@ export function PackageInstall({
   global: isGlobal = false,
   managers = ['npm', 'bun', 'pnpm', 'yarn'],
   copyButton = true,
-}: PackageInstallProps): React.JSX.Element {
+}: PackageInstallProps): React.ReactNode {
   const [activeManager, setActiveManager] = useState<PackageManager>(managers[0]);
   const command = getInstallCommand(activeManager, pkg, { dev, global: isGlobal });
 
   return (
-    <div className="group rounded overflow-hidden border border-dk-border flex flex-col my-4 not-prose">
+    <div className="group rounded overflow-hidden border border-openpkg-code-border flex flex-col my-4 not-prose">
       {/* Header with macOS dots and package manager tabs */}
       <div
         className={cn(
-          'border-b border-dk-border bg-dk-tabs-background',
+          'border-b border-openpkg-code-border bg-openpkg-code-header',
           'w-full h-9 flex items-center px-3 gap-2 shrink-0',
         )}
       >
         {/* macOS window controls (3 dots) */}
         <div className="flex items-center gap-2">
-          <div className="size-3 rounded-full bg-dk-tab-inactive-foreground/30" />
-          <div className="size-3 rounded-full bg-dk-tab-inactive-foreground/30" />
-          <div className="size-3 rounded-full bg-dk-tab-inactive-foreground/30" />
+          <div className="size-3 rounded-full bg-openpkg-code-text-inactive/30" />
+          <div className="size-3 rounded-full bg-openpkg-code-text-inactive/30" />
+          <div className="size-3 rounded-full bg-openpkg-code-text-inactive/30" />
         </div>
 
         {/* Package manager tabs as pill buttons */}
@@ -118,8 +118,8 @@ export function PackageInstall({
                 'px-2 py-0.5 text-sm font-medium rounded-md transition-colors duration-200',
                 'border h-6',
                 activeManager === manager
-                  ? 'bg-dk-background border-dk-border text-dk-tab-active-foreground'
-                  : 'border-transparent text-dk-tab-inactive-foreground hover:text-dk-tab-active-foreground',
+                  ? 'bg-openpkg-code-bg border-openpkg-code-border text-openpkg-code-text-active'
+                  : 'border-transparent text-openpkg-code-text-inactive hover:text-openpkg-code-text-active',
               )}
             >
               {managerLabels[manager]}
@@ -131,7 +131,7 @@ export function PackageInstall({
       </div>
 
       {/* Command content */}
-      <div className="relative flex items-start bg-dk-background">
+      <div className="relative flex items-start bg-openpkg-code-bg">
         <pre className="overflow-auto px-3 py-3 m-0 font-mono text-sm flex-1">
           <code>
             <span className="text-ch-5">{command.split(' ')[0]}</span>
@@ -142,7 +142,7 @@ export function PackageInstall({
           <CopyButton
             text={command}
             variant="floating"
-            className="absolute right-3 top-1/2 -translate-y-1/2 z-10 text-dk-tab-inactive-foreground"
+            className="absolute right-3 top-1/2 -translate-y-1/2 z-10 text-openpkg-code-text-inactive"
           />
         )}
       </div>

@@ -6,13 +6,7 @@ import type { CodeInfo } from './code.config';
 import { CopyButton } from './code.copy';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './tabs';
 
-export function MultiCode({
-  group,
-  className,
-}: {
-  group: CodeInfo;
-  className?: string;
-}): React.JSX.Element {
+export function MultiCode({ group, className }: { group: CodeInfo; className?: string }): React.ReactNode {
   const [storedTitle, setCurrentTitle] = useStateOrLocalStorage(group.storage, group.tabs[0].title);
   const current = group.tabs.find((tab) => tab.title === storedTitle) || group.tabs[0];
 
@@ -24,13 +18,13 @@ export function MultiCode({
       value={currentTitle}
       onValueChange={setCurrentTitle}
       className={cn(
-        'group border rounded selection:bg-dk-selection selection:text-current border-dk-border overflow-hidden relative flex flex-col max-h-full min-h-0 my-4 gap-0 not-prose',
+        'group border rounded selection:bg-openpkg-code-selection selection:text-current border-openpkg-code-border overflow-hidden relative flex flex-col max-h-full min-h-0 my-4 gap-0 not-prose',
         className,
       )}
     >
       <TabsList
         className={cn(
-          'border-b border-dk-border bg-dk-tabs-background w-full h-9 min-h-9 shrink-0',
+          'border-b border-openpkg-code-border bg-openpkg-code-header w-full h-9 min-h-9 shrink-0',
           'rounded-none p-0 m-0 justify-start items-stretch',
         )}
       >
@@ -40,9 +34,9 @@ export function MultiCode({
             value={title}
             className={cn(
               'rounded-none transition-colors duration-200 gap-1.5 px-3 font-mono justify-start grow-0',
-              'border-r border-dk-border', // right border dividers
-              'text-dk-tab-inactive-foreground data-[state=active]:text-dk-tab-active-foreground hover:text-dk-tab-active-foreground', // text
-              'data-[state=active]:bg-dk-background/50', // subtle darker background for active
+              'border-r border-openpkg-code-border', // right border dividers
+              'text-openpkg-code-text-inactive data-[state=active]:text-openpkg-code-text-active hover:text-openpkg-code-text-active', // text
+              'data-[state=active]:bg-openpkg-code-bg/50', // subtle darker background for active
             )}
           >
             <div>{icon}</div>
@@ -56,7 +50,7 @@ export function MultiCode({
           <CopyButton
             text={code}
             variant="floating"
-            className="absolute right-3 top-3 z-10 text-dk-tab-inactive-foreground"
+            className="absolute right-3 top-3 z-10 text-openpkg-code-text-inactive"
           />
         )}
       </TabsContent>

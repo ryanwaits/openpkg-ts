@@ -19,8 +19,7 @@ export type TypeColor =
  * Type coloring for syntax display.
  * Follows Stripe-style: consistent colors for primitives vs complex types.
  */
-const typeBadgeVariants: (props?: { typeColor?: TypeColor | null; className?: string }) => string =
-  cva('font-mono text-sm', {
+const typeBadgeVariants = cva('font-mono text-sm', {
     variants: {
       typeColor: {
         // Primitives

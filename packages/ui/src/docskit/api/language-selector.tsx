@@ -54,7 +54,7 @@ export function LanguageSelector({
         onClick={() => setOpen(!open)}
         className={cn(
           'flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-sm font-medium',
-          'bg-[var(--openpkg-bg-secondary)] hover:bg-[var(--openpkg-bg-tertiary)] text-[var(--openpkg-text-primary)] transition-colors cursor-pointer',
+          'bg-muted/50 hover:bg-muted text-foreground transition-colors cursor-pointer',
         )}
       >
         {selectedLanguage?.label ?? value}
@@ -65,7 +65,7 @@ export function LanguageSelector({
         <div
           className={cn(
             'absolute top-full left-0 mt-1 z-50 min-w-[120px]',
-            'bg-[var(--openpkg-bg-card)] border border-[var(--openpkg-border-subtle)] rounded-md shadow-lg overflow-hidden',
+            'bg-popover border border-border rounded-md shadow-lg overflow-hidden',
           )}
         >
           {languages.map((lang) => (
@@ -78,9 +78,7 @@ export function LanguageSelector({
               }}
               className={cn(
                 'w-full px-3 py-2 text-sm text-left transition-colors cursor-pointer',
-                lang.id === value
-                  ? 'bg-[color-mix(in_srgb,var(--openpkg-accent-primary)_10%,transparent)] text-[var(--openpkg-accent-primary)]'
-                  : 'text-[var(--openpkg-text-primary)] hover:bg-[var(--openpkg-bg-secondary)]',
+                lang.id === value ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-muted',
               )}
             >
               {lang.label}

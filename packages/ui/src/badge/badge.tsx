@@ -18,11 +18,7 @@ export type KindBadgeKind =
 export type KindBadgeSize = 'sm' | 'md';
 
 // Kind badges - for TypeScript syntax (fn, cls, type, etc.)
-const kindBadgeVariants: (props?: {
-  kind?: KindBadgeKind | null;
-  size?: KindBadgeSize | null;
-  className?: string;
-}) => string = cva(
+const kindBadgeVariants = cva(
   'inline-flex items-center justify-center font-mono font-medium rounded shrink-0',
   {
     variants: {
@@ -86,11 +82,7 @@ export type StatusBadgeStatus = 'success' | 'warning' | 'error' | 'neutral';
 export type StatusBadgeSize = 'sm' | 'md';
 
 // Status badges - for coverage/pass/fail states
-const statusBadgeVariants: (props?: {
-  status?: StatusBadgeStatus | null;
-  size?: StatusBadgeSize | null;
-  className?: string;
-}) => string = cva('inline-flex items-center justify-center gap-1 font-medium rounded-full', {
+const statusBadgeVariants = cva('inline-flex items-center justify-center gap-1 font-medium rounded-full', {
   variants: {
     status: {
       success: 'bg-success-light text-success',

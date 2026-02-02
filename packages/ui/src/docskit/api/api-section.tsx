@@ -42,14 +42,14 @@ export function APISection({
   className,
 }: APISectionProps): React.ReactNode {
   return (
-    <section id={id} className={cn('py-8 border-b border-[var(--openpkg-border-subtle)] last:border-b-0', className)}>
+    <section id={id} className={cn('py-8 border-b border-border last:border-b-0', className)}>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
         {/* Left column: Documentation */}
         <div className="space-y-6">
           <div>
-            <h2 className="text-2xl font-semibold text-[var(--openpkg-text-primary)]">{title}</h2>
+            <h2 className="text-2xl font-semibold text-foreground">{title}</h2>
             {description && (
-              <div className="mt-3 text-[var(--openpkg-text-muted)] prose prose-sm dark:prose-invert">
+              <div className="mt-3 text-muted-foreground prose prose-sm dark:prose-invert">
                 {description}
               </div>
             )}

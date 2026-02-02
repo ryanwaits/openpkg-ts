@@ -1,12 +1,16 @@
 'use client';
 
 import type { OpenPkg, SpecExample, SpecExport } from '@openpkg-ts/spec';
+import {
+  APIParameterItem,
+  APIReferencePage,
+  APISection,
+  ParameterList,
+  type CodeExample,
+  type Language,
+} from '@openpkg-ts/ui/docskit';
 import { cn } from '@openpkg-ts/ui/lib/utils';
 import type { ReactNode } from 'react';
-import { APIReferenceLayout } from '@/registry/new-york/components/api-reference-layout/api-reference-layout';
-import { type CodeExample, ExampleSection } from '@/registry/new-york/components/example-section/example-section';
-import { MethodSectionFromSpec } from '@/registry/new-york/components/method-section-from-spec/method-section-from-spec';
-import { SyncScrollProvider } from '@/registry/new-york/hooks/use-sync-scroll/use-sync-scroll';
 import { extractMethodData } from '@/registry/new-york/hooks/use-method-from-spec/use-method-from-spec';
 
 export interface StripeAPIReferencePageProps {
@@ -18,7 +22,7 @@ export interface StripeAPIReferencePageProps {
 
 /**
  * Full Stripe/Supabase-style API reference page.
- * Two-column layout with synchronized scrolling.
+ * Two-column layout with sticky code panel per section.
  */
 export function StripeAPIReferencePage({
   spec,
@@ -32,70 +36,69 @@ export function StripeAPIReferencePage({
   const sortedExports = [...exports].sort((a, b) => a.name.localeCompare(b.name));
 
   return (
-    <SyncScrollProvider>
-      <div
-        className={cn(
-          'openpkg-stripe-api-page',
-          'bg-[var(--openpkg-bg-root)]',
-          'text-[var(--openpkg-text-primary)]',
-          'font-[var(--openpkg-font-sans)]',
-          'min-h-screen',
-          className,
-        )}
-      >
-        <APIReferenceLayout examples={<ExamplesColumn exports={sortedExports} spec={spec} />}>
-          <DocsColumn exports={sortedExports} spec={spec} />
-        </APIReferenceLayout>
-      </div>
-    </SyncScrollProvider>
+    <div
+      className={cn(
+        'openpkg-stripe-api-page',
+        'bg-[var(--openpkg-bg-root)]',
+        'text-[var(--openpkg-text-primary)]',
+        'font-[var(--openpkg-font-sans)]',
+        'min-h-screen',
+        className,
+      )}
+    >
+      <APIReferencePage title={spec.meta.name}>
+        {sortedExports.map((exp) => {
+          const method = extractMethodData(exp);
+          const examples = getExamplesForExport(exp, spec);
+          const languages = getLanguagesFromExamples(examples);
+
+          return (
+            <APISection
+              key={exp.id || exp.name}
+              id={exp.id || exp.name}
+              title={method.title}
+              description={method.description}
+              languages={languages}
+              examples={examples}
+            >
+              {method.parameters.length > 0 && (
+                <ParameterList title="Parameters" collapseAfter={8}>
+                  {method.parameters.map((param) => (
+                    <APIParameterItem
+                      key={param.name}
+                      name={param.name}
+                      type={param.schema?.typeString ?? param.schema?.type ?? 'unknown'}
+                      required={!param.optional}
+                      description={param.description}
+                    />
+                  ))}
+                </ParameterList>
+              )}
+              {method.returnTypeString && (
+                <ParameterList title="Returns">
+                  <APIParameterItem
+                    name="return"
+                    type={method.returnTypeString}
+                    description={method.returnDescription}
+                  />
+                </ParameterList>
+              )}
+            </APISection>
+          );
+        })}
+      </APIReferencePage>
+    </div>
   );
 }
 
-interface ColumnProps {
-  exports: SpecExport[];
-  spec: OpenPkg;
-}
-
-function DocsColumn({ exports, spec }: ColumnProps): ReactNode {
-  return (
-    <>
-      {exports.map((exp) => (
-        <MethodSectionFromSpec key={exp.id || exp.name} spec={spec} export={exp} />
-      ))}
-    </>
-  );
-}
-
-function ExamplesColumn({ exports, spec }: ColumnProps): ReactNode {
-  return (
-    <>
-      {exports.map((exp) => {
-        const method = extractMethodData(exp);
-        const examples = getExamplesForExport(exp, spec);
-
-        return (
-          <ExampleSection
-            key={exp.id || exp.name}
-            id={exp.id || exp.name}
-            examples={examples}
-            response={generateMockResponse(exp)}
-            notes={method.returnDescription}
-          />
-        );
-      })}
-    </>
-  );
-}
-
-function specExampleToCodeExample(example: SpecExample | string, index: number): CodeExample {
+function specExampleToCodeExample(example: SpecExample | string, _index: number): CodeExample {
   if (typeof example === 'string') {
-    return { id: `example-${index}`, label: `Example ${index + 1}`, code: example, language: 'typescript' };
+    return { languageId: 'typescript', code: example };
   }
   return {
-    id: example.title?.toLowerCase().replace(/\s+/g, '-') ?? `example-${index}`,
-    label: example.title ?? `Example ${index + 1}`,
+    languageId: mapLanguage(example.language),
     code: example.code,
-    language: mapLanguage(example.language),
+    highlightLang: mapLanguage(example.language),
   };
 }
 
@@ -107,7 +110,7 @@ function generateDefaultExample(packageName: string, exportName: string, paramNa
   const importLine = `import { ${exportName} } from '${packageName}';`;
   const callArgs = paramNames.join(', ');
   const callLine = `const result = await ${exportName}(${callArgs});`;
-  return { id: 'default', label: 'Basic', code: `${importLine}\n\n${callLine}`, language: 'typescript' };
+  return { languageId: 'typescript', code: `${importLine}\n\n${callLine}` };
 }
 
 function mapLanguage(lang: string | undefined): string {
@@ -126,40 +129,14 @@ function getExamplesForExport(exp: SpecExport, spec: OpenPkg): CodeExample[] {
   return [generateDefaultExample(spec.meta.name, exp.name, paramNames)];
 }
 
-function generateMockResponse(exp: SpecExport): string | undefined {
-  const sig = exp.signatures?.[0];
-  if (!sig?.returns?.schema) return undefined;
-
-  const schema = sig.returns.schema;
-  if (typeof schema !== 'object') return undefined;
-
-  const s = schema as Record<string, unknown>;
-  if (s.type === 'void' || s.type === 'undefined') return undefined;
-
-  if (s.type === 'object' && s.properties) {
-    const props = s.properties as Record<string, unknown>;
-    const mock: Record<string, unknown> = {};
-    for (const [key, propSchema] of Object.entries(props)) {
-      mock[key] = getMockValue(propSchema as Record<string, unknown>);
+function getLanguagesFromExamples(examples: CodeExample[]): Language[] {
+  const seen = new Set<string>();
+  const languages: Language[] = [];
+  for (const ex of examples) {
+    if (!seen.has(ex.languageId)) {
+      seen.add(ex.languageId);
+      languages.push({ id: ex.languageId, label: ex.languageId });
     }
-    return JSON.stringify(mock, null, 2);
   }
-
-  if (s.type === 'array') {
-    return JSON.stringify([getMockValue(s.items as Record<string, unknown>)], null, 2);
-  }
-
-  return undefined;
-}
-
-function getMockValue(schema: Record<string, unknown> | undefined): unknown {
-  if (!schema) return null;
-  switch (schema.type) {
-    case 'string': return 'example';
-    case 'number': case 'integer': return 42;
-    case 'boolean': return true;
-    case 'array': return [];
-    case 'object': return {};
-    default: return null;
-  }
+  return languages;
 }

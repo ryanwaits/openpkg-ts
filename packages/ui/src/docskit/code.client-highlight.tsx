@@ -31,7 +31,7 @@ export function ClientDocsKitCode(props: {
   codeblock: RawCode;
   handlers?: AnnotationHandler[];
   className?: string;
-}): React.JSX.Element {
+}): React.ReactNode {
   const { codeblock, handlers: extraHandlers, className: wrapperClassName } = props;
   const [highlighted, setHighlighted] = useState<HighlightedCode | null>(null);
 
@@ -49,7 +49,7 @@ export function ClientDocsKitCode(props: {
       cancelled = true;
     };
     // Only depend on primitive values to avoid infinite re-renders
-  }, [codeblock.value, codeblock.lang, codeblock.meta, codeblock]);
+  }, [codeblock.value, codeblock.lang, codeblock.meta]);
 
   if (!highlighted) {
     return <CodeBlockSkeleton hasTitle={!!title} />;
@@ -67,16 +67,16 @@ export function ClientDocsKitCode(props: {
   return (
     <div
       className={cn(
-        'group rounded overflow-hidden relative border-dk-border flex flex-col border my-4 not-prose',
+        'group rounded overflow-hidden relative border-openpkg-code-border flex flex-col border my-4 not-prose',
         wrapperClassName,
       )}
     >
       {title ? (
         <div
           className={cn(
-            'border-b-[1px] border-dk-border bg-dk-tabs-background px-3 py-0',
+            'border-b-[1px] border-openpkg-code-border bg-openpkg-code-header px-3 py-0',
             'w-full h-9 flex items-center shrink-0',
-            'text-dk-tab-inactive-foreground text-sm font-mono',
+            'text-openpkg-code-text-inactive text-sm font-mono',
           )}
         >
           <div className="flex items-center h-5 gap-2">
@@ -88,7 +88,7 @@ export function ClientDocsKitCode(props: {
       <div className="relative flex items-start">
         <Pre
           code={highlighted}
-          className="overflow-auto px-0 py-3 m-0 rounded-none !bg-dk-background selection:bg-dk-selection selection:text-current max-h-full flex-1"
+          className="overflow-auto px-0 py-3 m-0 rounded-none !bg-openpkg-code-bg selection:bg-openpkg-code-selection selection:text-current max-h-full flex-1"
           style={highlightedStyle}
           handlers={handlers}
         />
@@ -97,7 +97,7 @@ export function ClientDocsKitCode(props: {
             text={highlighted.code}
             variant="floating"
             className={cn(
-              'absolute right-3 z-10 text-dk-tab-inactive-foreground',
+              'absolute right-3 z-10 text-openpkg-code-text-inactive',
               title ? 'top-3' : 'top-1/2 -translate-y-1/2',
             )}
           />
@@ -110,10 +110,7 @@ export function ClientDocsKitCode(props: {
 /**
  * Client-side terminal-style code block.
  */
-export function ClientTerminal(props: {
-  codeblock: RawCode;
-  handlers?: AnnotationHandler[];
-}): React.JSX.Element {
+export function ClientTerminal(props: { codeblock: RawCode; handlers?: AnnotationHandler[] }): React.ReactNode {
   const { codeblock, handlers: extraHandlers } = props;
   const [highlighted, setHighlighted] = useState<HighlightedCode | null>(null);
 
@@ -131,7 +128,7 @@ export function ClientTerminal(props: {
       cancelled = true;
     };
     // Only depend on primitive values to avoid infinite re-renders
-  }, [codeblock.value, codeblock.lang, codeblock.meta, codeblock]);
+  }, [codeblock.value, codeblock.lang, codeblock.meta]);
 
   if (!highlighted) {
     return <TerminalSkeleton />;
@@ -147,20 +144,20 @@ export function ClientTerminal(props: {
   const isMultiLine = highlighted.code.includes('\n');
 
   return (
-    <div className="group rounded overflow-hidden relative border-dk-border flex flex-col border my-4 not-prose">
+    <div className="group rounded overflow-hidden relative border-openpkg-code-border flex flex-col border my-4 not-prose">
       {/* Terminal header with macOS dots */}
       <div
         className={cn(
-          'border-b border-dk-border bg-dk-tabs-background',
+          'border-b border-openpkg-code-border bg-openpkg-code-header',
           'w-full h-9 flex items-center justify-center shrink-0',
           'relative',
         )}
       >
         {/* macOS window controls (3 dots) */}
         <div className="absolute left-3 flex items-center gap-2">
-          <div className="size-3 rounded-full bg-dk-tab-inactive-foreground/30" />
-          <div className="size-3 rounded-full bg-dk-tab-inactive-foreground/30" />
-          <div className="size-3 rounded-full bg-dk-tab-inactive-foreground/30" />
+          <div className="size-3 rounded-full bg-openpkg-code-text-inactive/30" />
+          <div className="size-3 rounded-full bg-openpkg-code-text-inactive/30" />
+          <div className="size-3 rounded-full bg-openpkg-code-text-inactive/30" />
         </div>
         <span className="sr-only">Terminal window</span>
       </div>
@@ -169,7 +166,7 @@ export function ClientTerminal(props: {
       <div className="relative flex items-start">
         <Pre
           code={highlighted}
-          className="overflow-auto px-0 py-3 m-0 rounded-none !bg-dk-background selection:bg-dk-selection selection:text-current max-h-full flex-1"
+          className="overflow-auto px-0 py-3 m-0 rounded-none !bg-openpkg-code-bg selection:bg-openpkg-code-selection selection:text-current max-h-full flex-1"
           style={highlightedStyle}
           handlers={handlers}
         />
@@ -178,7 +175,7 @@ export function ClientTerminal(props: {
             text={highlighted.code}
             variant="floating"
             className={cn(
-              'absolute right-3 z-10 text-dk-tab-inactive-foreground',
+              'absolute right-3 z-10 text-openpkg-code-text-inactive',
               isMultiLine ? 'top-3' : 'top-1/2 -translate-y-1/2',
             )}
           />
@@ -191,7 +188,7 @@ export function ClientTerminal(props: {
 /**
  * Client-side inline code with syntax highlighting.
  */
-export function ClientInlineCode({ codeblock }: { codeblock: RawCode }): React.JSX.Element {
+export function ClientInlineCode({ codeblock }: { codeblock: RawCode }): React.ReactNode {
   const [highlighted, setHighlighted] = useState<HighlightedCode | null>(null);
 
   useEffect(() => {
@@ -205,7 +202,7 @@ export function ClientInlineCode({ codeblock }: { codeblock: RawCode }): React.J
       cancelled = true;
     };
     // Only depend on primitive values to avoid infinite re-renders
-  }, [codeblock.value, codeblock.lang, codeblock.meta, codeblock]);
+  }, [codeblock.value, codeblock.lang, codeblock.meta]);
 
   if (!highlighted) {
     return <InlineCodeSkeleton />;
@@ -214,7 +211,7 @@ export function ClientInlineCode({ codeblock }: { codeblock: RawCode }): React.J
   return (
     <Inline
       code={highlighted}
-      className="selection:bg-dk-selection selection:text-current rounded border border-dk-border px-1 py-0.5 whitespace-nowrap !bg-dk-background"
+      className="selection:bg-openpkg-code-selection selection:text-current rounded border border-openpkg-code-border px-1 py-0.5 whitespace-nowrap !bg-openpkg-code-bg"
       style={highlighted.style}
     />
   );
@@ -248,11 +245,7 @@ function extractFlagsSimple(codeblock: RawCode) {
 /**
  * Client-side code tabs with multiple files.
  */
-export function ClientCode(props: {
-  codeblocks: RawCode[];
-  flags?: string;
-  storage?: string;
-}): React.JSX.Element {
+export function ClientCode(props: { codeblocks: RawCode[]; flags?: string; storage?: string }): React.ReactNode {
   const { codeblocks, flags: groupFlags, storage } = props;
   const [highlighted, setHighlighted] = useState<Map<
     number,
@@ -299,7 +292,8 @@ export function ClientCode(props: {
     return () => {
       cancelled = true;
     };
-  }, [codeblocks.map, groupOptions]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [_codeBlocksKey]);
 
   if (!highlighted) {
     return <CodeTabsSkeleton tabs={codeblocks.length} />;
@@ -307,19 +301,18 @@ export function ClientCode(props: {
 
   // Single tab - render without tabs
   if (codeblocks.length === 1) {
-    const tab = highlighted.get(0);
-    if (!tab) return null;
+    const tab = highlighted.get(0)!;
     const handlers = getHandlers(tab.options);
     const { background: _background, ...highlightedStyle } = tab.highlighted.style;
 
     return (
-      <div className="group rounded overflow-hidden relative border-dk-border flex flex-col border my-4 not-prose">
+      <div className="group rounded overflow-hidden relative border-openpkg-code-border flex flex-col border my-4 not-prose">
         {tab.title ? (
           <div
             className={cn(
-              'border-b-[1px] border-dk-border bg-dk-tabs-background px-3 py-0',
+              'border-b-[1px] border-openpkg-code-border bg-openpkg-code-header px-3 py-0',
               'w-full h-9 flex items-center shrink-0',
-              'text-dk-tab-inactive-foreground text-sm font-mono',
+              'text-openpkg-code-text-inactive text-sm font-mono',
             )}
           >
             <div className="flex items-center h-5 gap-2">
@@ -331,7 +324,7 @@ export function ClientCode(props: {
         <div className="relative flex items-start">
           <Pre
             code={tab.highlighted}
-            className="overflow-auto px-0 py-3 m-0 rounded-none !bg-dk-background selection:bg-dk-selection selection:text-current max-h-full flex-1"
+            className="overflow-auto px-0 py-3 m-0 rounded-none !bg-openpkg-code-bg selection:bg-openpkg-code-selection selection:text-current max-h-full flex-1"
             style={highlightedStyle}
             handlers={handlers}
           />
@@ -339,7 +332,7 @@ export function ClientCode(props: {
             <CopyButton
               text={tab.highlighted.code}
               variant="floating"
-              className="absolute right-3 top-3 z-10 text-dk-tab-inactive-foreground"
+              className="absolute right-3 top-3 z-10 text-openpkg-code-text-inactive"
             />
           )}
         </div>
@@ -381,12 +374,12 @@ function ClientMultiCode({
       value={current.title}
       onValueChange={setCurrentTitle}
       className={cn(
-        'group border rounded selection:bg-dk-selection selection:text-current border-dk-border overflow-hidden relative flex flex-col max-h-full min-h-0 my-4 gap-0 not-prose',
+        'group border rounded selection:bg-openpkg-code-selection selection:text-current border-openpkg-code-border overflow-hidden relative flex flex-col max-h-full min-h-0 my-4 gap-0 not-prose',
       )}
     >
       <TabsList
         className={cn(
-          'border-b border-dk-border bg-dk-tabs-background w-full h-9 min-h-9 shrink-0',
+          'border-b border-openpkg-code-border bg-openpkg-code-header w-full h-9 min-h-9 shrink-0',
           'rounded-none p-0 m-0 justify-start items-stretch',
         )}
       >
@@ -396,9 +389,9 @@ function ClientMultiCode({
             value={title}
             className={cn(
               'rounded-none transition-colors duration-200 gap-1.5 px-3 font-mono justify-start grow-0',
-              'border-r border-dk-border', // right border dividers
-              'text-dk-tab-inactive-foreground data-[state=active]:text-dk-tab-active-foreground hover:text-dk-tab-active-foreground', // text
-              'data-[state=active]:bg-dk-background/50', // subtle darker background for active
+              'border-r border-openpkg-code-border', // right border dividers
+              'text-openpkg-code-text-inactive data-[state=active]:text-openpkg-code-text-active hover:text-openpkg-code-text-active', // text
+              'data-[state=active]:bg-openpkg-code-bg/50', // subtle darker background for active
             )}
           >
             <div>{icon}</div>
@@ -409,7 +402,7 @@ function ClientMultiCode({
       <TabsContent value={current.title} className="relative min-h-0 mt-0 flex flex-col">
         <Pre
           code={current.highlighted}
-          className="overflow-auto px-0 py-3 m-0 rounded-none !bg-dk-background selection:bg-dk-selection selection:text-current max-h-full flex-1"
+          className="overflow-auto px-0 py-3 m-0 rounded-none !bg-openpkg-code-bg selection:bg-openpkg-code-selection selection:text-current max-h-full flex-1"
           style={highlightedStyle}
           handlers={handlers}
         />
@@ -417,7 +410,7 @@ function ClientMultiCode({
           <CopyButton
             text={current.highlighted.code}
             variant="floating"
-            className="absolute right-3 top-3 z-10 text-dk-tab-inactive-foreground"
+            className="absolute right-3 top-3 z-10 text-openpkg-code-text-inactive"
           />
         )}
       </TabsContent>

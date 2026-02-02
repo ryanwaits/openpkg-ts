@@ -4,7 +4,7 @@ const COPY_FEEDBACK_MS = 1200;
 
 export function useCopyToClipboard(timeout = COPY_FEEDBACK_MS) {
   const [copied, setCopied] = useState(false);
-  const timerRef = useRef<ReturnType<typeof setTimeout>>();
+  const timerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   const copy = useCallback(
     (text: string) => {

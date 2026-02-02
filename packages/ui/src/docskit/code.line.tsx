@@ -7,8 +7,8 @@ export const line: AnnotationHandler = {
     return (
       <div
         style={{
-          borderLeftColor: 'var(--dk-line-border, transparent)',
-          backgroundColor: 'var(--dk-line-bg, transparent)',
+          borderLeftColor: 'var(--openpkg-line-border, transparent)',
+          backgroundColor: 'var(--openpkg-line-bg, transparent)',
         }}
         className="flex border-l-2 border-l-transparent background-color 0.3s ease"
       >

@@ -36,18 +36,18 @@ export function ParameterList({
   return (
     <div className={cn('', className)}>
       {title && (
-        <h3 className="text-sm font-medium text-[var(--openpkg-text-primary)] mb-3 uppercase tracking-wide">
+        <h3 className="text-sm font-medium text-foreground mb-3 uppercase tracking-wide">
           {title}
         </h3>
       )}
-      <div className="divide-y divide-[var(--openpkg-border-subtle)] border-t border-b border-[var(--openpkg-border-subtle)]">
+      <div className="divide-y divide-border border-t border-b border-border">
         {visibleChildren}
       </div>
       {shouldCollapse && !expanded && (
         <button
           type="button"
           onClick={() => setExpanded(true)}
-          className="flex items-center gap-1 mt-3 text-sm text-[var(--openpkg-accent-link)] hover:underline cursor-pointer"
+          className="flex items-center gap-1 mt-3 text-sm text-primary hover:underline cursor-pointer"
         >
           <ChevronDown size={14} />
           Show {hiddenCount} more {hiddenCount === 1 ? 'parameter' : 'parameters'}

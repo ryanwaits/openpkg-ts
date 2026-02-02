@@ -69,22 +69,22 @@
   --ch-26: #f5f5f5e6;
 }
 
-/* dk-* Tailwind v4 color theme (maps to --ch-* vars) */
+/* openpkg-code-* Tailwind v4 color theme (maps to --ch-* vars) */
 @theme {
-  --color-dk-background: var(--ch-16);
-  --color-dk-border: var(--ch-23);
-  --color-dk-tabs-background: var(--ch-22);
-  --color-dk-tab-inactive-foreground: var(--ch-15);
-  --color-dk-tab-active-foreground: var(--ch-4);
-  --color-dk-selection: var(--ch-20);
-  --color-dk-line-number: var(--ch-24);
-  --color-dk-active-border: var(--ch-3);
+  --color-openpkg-code-bg: var(--ch-16);
+  --color-openpkg-code-border: var(--ch-23);
+  --color-openpkg-code-header: var(--ch-22);
+  --color-openpkg-code-text-inactive: var(--ch-15);
+  --color-openpkg-code-text-active: var(--ch-4);
+  --color-openpkg-code-selection: var(--ch-20);
+  --color-openpkg-code-line-number: var(--ch-24);
+  --color-openpkg-code-accent: var(--ch-3);
 }
 
 /* Selection utility — Tailwind can't auto-generate this */
 @layer utilities {
-  .selection\:bg-dk-selection::selection,
-  .selection\:bg-dk-selection *::selection {
+  .selection\:bg-openpkg-code-selection::selection,
+  .selection\:bg-openpkg-code-selection *::selection {
     background-color: var(--ch-20);
   }
 }

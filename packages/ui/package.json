@@ -1,6 +1,6 @@
 {
   "name": "@openpkg-ts/ui",
-  "version": "0.3.2",
+  "version": "0.4.0",
   "description": "UI primitives and components for OpenPkg documentation",
   "homepage": "https://github.com/ryanwaits/openpkg-ts#readme",
   "repository": {

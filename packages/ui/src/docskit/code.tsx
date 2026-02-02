@@ -10,16 +10,13 @@ export async function DocsKitCode(props: {
   codeblock: RawCode;
   handlers?: AnnotationHandler[];
   className?: string;
-}): Promise<React.JSX.Element> {
+}): Promise<React.ReactNode> {
   const { codeblock, className, ...rest } = props;
   const group = await toCodeGroup({ codeblocks: [codeblock], ...rest });
   return <SingleCode group={group} className={className} />;
 }
 
-export async function SingleCode(props: {
-  group: CodeInfo;
-  className?: string;
-}): Promise<React.JSX.Element> {
+export async function SingleCode(props: { group: CodeInfo; className?: string }): Promise<React.ReactNode> {
   const { pre, title, code, icon, options } = props.group.tabs[0];
 
   const showCopy = options?.copyButton;
@@ -27,16 +24,16 @@ export async function SingleCode(props: {
   return (
     <div
       className={cn(
-        'group rounded overflow-hidden relative border-dk-border flex flex-col border my-4 not-prose',
+        'group rounded overflow-hidden relative border-openpkg-code-border flex flex-col border my-4 not-prose',
         props.className,
       )}
     >
       {title ? (
         <div
           className={cn(
-            'border-b-[1px] border-dk-border bg-dk-tabs-background px-3 py-0',
+            'border-b-[1px] border-openpkg-code-border bg-openpkg-code-header px-3 py-0',
             'w-full h-9 flex items-center shrink-0',
-            'text-dk-tab-inactive-foreground text-sm font-mono',
+            'text-openpkg-code-text-inactive text-sm font-mono',
           )}
         >
           <div className="flex items-center h-5 gap-2">
@@ -52,7 +49,7 @@ export async function SingleCode(props: {
             text={code}
             variant="floating"
             className={cn(
-              'absolute right-3 z-10 text-dk-tab-inactive-foreground',
+              'absolute right-3 z-10 text-openpkg-code-text-inactive',
               title ? 'top-3' : 'top-1/2 -translate-y-1/2',
             )}
           />
@@ -93,7 +90,7 @@ export async function toCodeGroup(props: {
         pre: (
           <Pre
             code={highlighted}
-            className="overflow-auto px-0 py-3 m-0 rounded-none !bg-dk-background selection:bg-dk-selection selection:text-current max-h-full flex-1"
+            className="overflow-auto px-0 py-3 m-0 rounded-none !bg-openpkg-code-bg selection:bg-openpkg-code-selection selection:text-current max-h-full flex-1"
             style={highlightedStyle}
             handlers={handlers}
           />

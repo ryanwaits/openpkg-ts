@@ -9,7 +9,7 @@ export function CodeIcon({
   title: string;
   lang: string;
   className?: string;
-}): React.JSX.Element {
+}): React.ReactNode {
   if (
     title?.toLowerCase() === 'terminal output' ||
     title?.toLowerCase() === 'terminal' ||
@@ -30,6 +30,7 @@ export function CodeIcon({
   );
   return (
     <span className={className}>
+      {/* biome-ignore lint/security/noDangerouslySetInnerHtml: SVG icons are from trusted seti-ui theme */}
       <span dangerouslySetInnerHTML={{ __html }} style={{ display: 'contents' }} />
     </span>
   );
