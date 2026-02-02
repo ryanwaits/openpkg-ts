@@ -24,20 +24,20 @@ const typeBadgeVariants: (props?: { typeColor?: TypeColor | null; className?: st
     variants: {
       typeColor: {
         // Primitives
-        string: 'text-emerald-600 dark:text-emerald-400',
-        number: 'text-blue-600 dark:text-blue-400',
-        boolean: 'text-amber-600 dark:text-amber-400',
-        null: 'text-gray-500 dark:text-gray-400',
-        undefined: 'text-gray-500 dark:text-gray-400',
+        string: 'text-[var(--openpkg-accent-green)]',
+        number: 'text-[var(--openpkg-accent-blue)]',
+        boolean: 'text-[var(--openpkg-accent-amber)]',
+        null: 'text-[var(--openpkg-text-muted)]',
+        undefined: 'text-[var(--openpkg-text-muted)]',
         // Complex types
-        object: 'text-purple-600 dark:text-purple-400',
-        array: 'text-cyan-600 dark:text-cyan-400',
-        function: 'text-fuchsia-600 dark:text-fuchsia-400',
+        object: 'text-[var(--openpkg-accent-purple)]',
+        array: 'text-[var(--openpkg-accent-cyan)]',
+        function: 'text-[var(--openpkg-accent-fuchsia)]',
         // Special
-        union: 'text-orange-600 dark:text-orange-400',
-        generic: 'text-rose-600 dark:text-rose-400',
+        union: 'text-[var(--openpkg-accent-orange)]',
+        generic: 'text-[var(--openpkg-accent-rose)]',
         // Default
-        default: 'text-muted-foreground',
+        default: 'text-[var(--openpkg-text-muted)]',
       },
     },
     defaultVariants: {

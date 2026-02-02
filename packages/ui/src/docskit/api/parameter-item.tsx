@@ -54,7 +54,7 @@ function NestedProperty({
   const _nestedCount = hasNested && schema.properties ? Object.keys(schema.properties).length : 0;
 
   return (
-    <div className={cn('border-t border-border first:border-t-0', depth > 0 && 'ml-4')}>
+    <div className={cn('border-t border-[var(--openpkg-border-subtle)] first:border-t-0', depth > 0 && 'ml-4')}>
       <div className="group py-4">
         <div className="flex items-start gap-2">
           {/* Expand button */}
@@ -62,7 +62,7 @@ function NestedProperty({
             <button
               type="button"
               onClick={() => setExpanded(!expanded)}
-              className="mt-0.5 p-0.5 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+              className="mt-0.5 p-0.5 text-[var(--openpkg-text-muted)] hover:text-[var(--openpkg-text-primary)] transition-colors cursor-pointer"
               aria-label={expanded ? 'Collapse' : 'Expand'}
             >
               <ChevronRight
@@ -77,16 +77,16 @@ function NestedProperty({
           <div className="flex-1 min-w-0">
             {/* Name + type */}
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="font-mono text-sm font-medium text-foreground">
+              <span className="font-mono text-sm font-medium text-[var(--openpkg-text-primary)]">
                 {name}
-                {!required && <span className="text-muted-foreground">?</span>}
+                {!required && <span className="text-[var(--openpkg-text-muted)]">?</span>}
               </span>
-              <span className="font-mono text-xs text-muted-foreground">{type}</span>
+              <span className="font-mono text-xs text-[var(--openpkg-text-muted)]">{type}</span>
               {hasNested && (
                 <button
                   type="button"
                   onClick={() => setExpanded(!expanded)}
-                  className="text-xs text-primary hover:underline cursor-pointer"
+                  className="text-xs text-[var(--openpkg-accent-link)] hover:underline cursor-pointer"
                 >
                   Show child parameters
                 </button>
@@ -95,7 +95,7 @@ function NestedProperty({
               <button
                 type="button"
                 onClick={() => copy(name)}
-                className="p-1 rounded text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                className="p-1 rounded text-[var(--openpkg-text-muted)] hover:text-[var(--openpkg-text-primary)] opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
                 aria-label="Copy name"
               >
                 {copied ? <Check size={12} /> : <Copy size={12} />}
@@ -104,7 +104,7 @@ function NestedProperty({
 
             {/* Description */}
             {schema.description && (
-              <p className="text-sm text-muted-foreground mt-1">{schema.description}</p>
+              <p className="text-sm text-[var(--openpkg-text-muted)] mt-1">{schema.description}</p>
             )}
           </div>
         </div>
@@ -112,7 +112,7 @@ function NestedProperty({
 
       {/* Nested properties */}
       {hasNested && expanded && schema.properties && (
-        <div className="border-l border-border ml-2 mb-3">
+        <div className="border-l border-[var(--openpkg-border-subtle)] ml-2 mb-3">
           {Object.entries(schema.properties).map(([propName, propSchema]) => (
             <NestedProperty
               key={propName}
@@ -148,7 +148,7 @@ export function APIParameterItem({
     hasNested && children?.properties ? Object.keys(children.properties).length : 0;
 
   return (
-    <div className={cn('border-b border-border last:border-b-0', className)}>
+    <div className={cn('border-b border-[var(--openpkg-border-subtle)] last:border-b-0', className)}>
       <div className="group py-4">
         <div className="flex items-start gap-2">
           {/* Expand button */}
@@ -156,7 +156,7 @@ export function APIParameterItem({
             <button
               type="button"
               onClick={() => setExpanded(!expanded)}
-              className="mt-0.5 p-0.5 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+              className="mt-0.5 p-0.5 text-[var(--openpkg-text-muted)] hover:text-[var(--openpkg-text-primary)] transition-colors cursor-pointer"
               aria-label={expanded ? 'Collapse' : 'Expand'}
             >
               <ChevronRight
@@ -171,18 +171,18 @@ export function APIParameterItem({
           <div className="flex-1 min-w-0">
             {/* Name + badges + type */}
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="font-mono text-sm font-medium text-foreground">{name}</span>
+              <span className="font-mono text-sm font-medium text-[var(--openpkg-text-primary)]">{name}</span>
               {required && (
-                <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded border border-border bg-muted text-muted-foreground uppercase tracking-wide">
+                <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded border border-[var(--openpkg-border-subtle)] bg-[var(--openpkg-bg-badge)] text-[var(--openpkg-text-muted)] uppercase tracking-wide">
                   Required
                 </span>
               )}
-              <span className="font-mono text-xs text-muted-foreground">{type}</span>
+              <span className="font-mono text-xs text-[var(--openpkg-text-muted)]">{type}</span>
               {hasNested && (
                 <button
                   type="button"
                   onClick={() => setExpanded(!expanded)}
-                  className="text-xs text-primary hover:underline cursor-pointer"
+                  className="text-xs text-[var(--openpkg-accent-link)] hover:underline cursor-pointer"
                 >
                   Show child parameters
                 </button>
@@ -191,7 +191,7 @@ export function APIParameterItem({
               <button
                 type="button"
                 onClick={() => copy(name)}
-                className="p-1 rounded text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                className="p-1 rounded text-[var(--openpkg-text-muted)] hover:text-[var(--openpkg-text-primary)] opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
                 aria-label="Copy name"
               >
                 {copied ? <Check size={12} /> : <Copy size={12} />}
@@ -199,14 +199,14 @@ export function APIParameterItem({
             </div>
 
             {/* Description */}
-            {description && <p className="text-sm text-muted-foreground mt-1">{description}</p>}
+            {description && <p className="text-sm text-[var(--openpkg-text-muted)] mt-1">{description}</p>}
           </div>
         </div>
       </div>
 
       {/* Nested properties */}
       {hasNested && expanded && children?.properties && (
-        <div className="border-l border-border ml-2 mb-3">
+        <div className="border-l border-[var(--openpkg-border-subtle)] ml-2 mb-3">
           {Object.entries(children.properties).map(([propName, propSchema]) => (
             <NestedProperty
               key={propName}

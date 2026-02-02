@@ -76,15 +76,15 @@ export function InterfaceSection({ export: exp, spec }: InterfaceSectionProps): 
       description={
         <div className="space-y-3">
           {exp.extends && (
-            <p className="font-mono text-sm text-muted-foreground">extends {exp.extends}</p>
+            <p className="font-mono text-sm text-[var(--openpkg-text-muted)]">extends {exp.extends}</p>
           )}
           {exp.description && <p>{exp.description}</p>}
           {exp.deprecated && (
-            <div className="rounded-md bg-yellow-500/10 border border-yellow-500/20 px-3 py-2 text-sm text-yellow-600 dark:text-yellow-400">
+            <div className="rounded-md bg-[color-mix(in_srgb,var(--openpkg-accent-yellow)_10%,transparent)] border border-[color-mix(in_srgb,var(--openpkg-accent-yellow)_20%,transparent)] px-3 py-2 text-sm text-[var(--openpkg-accent-yellow)]">
               <strong>Deprecated:</strong> This export is deprecated.
             </div>
           )}
-          <code className="text-sm font-mono bg-muted px-2 py-1 rounded inline-block">
+          <code className="text-sm font-mono bg-[var(--openpkg-bg-badge)] px-2 py-1 rounded inline-block">
             {importStatement}
           </code>
         </div>

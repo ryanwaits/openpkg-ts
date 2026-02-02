@@ -145,7 +145,7 @@ export function FullAPIReferencePage({
     <div>
       {spec.meta.description && <p>{spec.meta.description}</p>}
       {spec.meta.version && (
-        <p className="text-sm text-muted-foreground mt-2">Version {spec.meta.version}</p>
+        <p className="text-sm text-[var(--openpkg-text-muted)] mt-2">Version {spec.meta.version}</p>
       )}
     </div>
   );
@@ -163,14 +163,14 @@ export function FullAPIReferencePage({
       {showTOC && (
         <aside className="hidden lg:block">
           <nav className="sticky top-20 max-h-[calc(100vh-6rem)] overflow-y-auto pr-4">
-            <h4 className="text-sm font-semibold text-foreground mb-3">On this page</h4>
+            <h4 className="text-sm font-semibold text-[var(--openpkg-text-primary)] mb-3">On this page</h4>
             <div className="space-y-4">
               {KIND_ORDER.map((kind) => {
                 const exports = groupedExports.get(kind);
                 if (!exports?.length) return null;
                 return (
                   <div key={kind}>
-                    <h5 className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">
+                    <h5 className="text-xs font-medium text-[var(--openpkg-text-muted)] uppercase tracking-wide mb-2">
                       {KIND_LABELS[kind]}
                     </h5>
                     <ul className="space-y-1">
@@ -185,8 +185,8 @@ export function FullAPIReferencePage({
                               className={cn(
                                 'block w-full text-left text-sm py-1 px-2 rounded-md transition-colors cursor-pointer truncate',
                                 isActive
-                                  ? 'bg-primary/10 text-primary font-medium'
-                                  : 'text-muted-foreground hover:text-foreground hover:bg-muted/50',
+                                  ? 'bg-[color-mix(in_srgb,var(--openpkg-accent-primary)_10%,transparent)] text-[var(--openpkg-accent-primary)] font-medium'
+                                  : 'text-[var(--openpkg-text-muted)] hover:text-[var(--openpkg-text-primary)] hover:bg-[var(--openpkg-bg-secondary)]',
                               )}
                               title={getExportTitle(exp)}
                             >
@@ -217,8 +217,8 @@ export function FullAPIReferencePage({
                 className={cn(
                   'px-3 py-1.5 text-sm rounded-md transition-all cursor-pointer',
                   activeFilter === 'all'
-                    ? 'bg-primary text-primary-foreground font-medium'
-                    : 'bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground',
+                    ? 'bg-[var(--openpkg-accent-primary)] text-[var(--openpkg-text-on-primary)] font-medium'
+                    : 'bg-[var(--openpkg-bg-secondary)] text-[var(--openpkg-text-muted)] hover:text-[var(--openpkg-text-primary)]',
                 )}
               >
                 All
@@ -231,8 +231,8 @@ export function FullAPIReferencePage({
                   className={cn(
                     'px-3 py-1.5 text-sm rounded-md transition-all cursor-pointer',
                     activeFilter === kind
-                      ? 'bg-primary text-primary-foreground font-medium'
-                      : 'bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground',
+                      ? 'bg-[var(--openpkg-accent-primary)] text-[var(--openpkg-text-on-primary)] font-medium'
+                      : 'bg-[var(--openpkg-bg-secondary)] text-[var(--openpkg-text-muted)] hover:text-[var(--openpkg-text-primary)]',
                   )}
                 >
                   {KIND_LABELS[kind]}
@@ -246,8 +246,8 @@ export function FullAPIReferencePage({
           ))}
 
           {filteredExports.length === 0 && (
-            <div className="rounded-lg border border-border bg-card/50 p-8 text-center">
-              <p className="text-muted-foreground">
+            <div className="rounded-lg border border-[var(--openpkg-border-subtle)] bg-[var(--openpkg-bg-card)] p-8 text-center">
+              <p className="text-[var(--openpkg-text-muted)]">
                 {activeFilter !== 'all'
                   ? `No ${KIND_LABELS[activeFilter].toLowerCase()} found.`
                   : 'No exports found in this package.'}
@@ -256,7 +256,7 @@ export function FullAPIReferencePage({
                 <button
                   type="button"
                   onClick={() => setActiveFilter('all')}
-                  className="mt-3 text-sm text-primary hover:underline cursor-pointer"
+                  className="mt-3 text-sm text-[var(--openpkg-accent-link)] hover:underline cursor-pointer"
                 >
                   Show all exports
                 </button>

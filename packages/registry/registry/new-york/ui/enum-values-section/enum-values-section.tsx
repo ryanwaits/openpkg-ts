@@ -51,7 +51,7 @@ export function EnumValuesSection({
             className={cn(
               'openpkg-enum-value',
               'py-2.5 px-3',
-              'bg-[rgba(255,255,255,0.015)]',
+              'bg-[var(--openpkg-bg-secondary)]',
               'rounded',
             )}
           >
@@ -60,7 +60,7 @@ export function EnumValuesSection({
                 'openpkg-enum-value-name',
                 'font-mono text-xs font-medium',
                 'text-[var(--openpkg-syn-string)]',
-                'bg-[rgba(156,207,216,0.1)]',
+                'bg-[var(--openpkg-bg-badge)]',
                 'px-1.5 py-0.5 rounded',
                 'inline-block mb-1',
               )}

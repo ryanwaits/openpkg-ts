@@ -19,21 +19,21 @@ export interface ExportCardProps {
 }
 
 const KIND_COLORS: Record<ExportCardProps['kind'] & string, string> = {
-  function: 'group-hover:text-blue-600 dark:group-hover:text-blue-400',
-  class: 'group-hover:text-purple-600 dark:group-hover:text-purple-400',
-  interface: 'group-hover:text-green-600 dark:group-hover:text-green-400',
-  type: 'group-hover:text-amber-600 dark:group-hover:text-amber-400',
-  enum: 'group-hover:text-rose-600 dark:group-hover:text-rose-400',
-  variable: 'group-hover:text-cyan-600 dark:group-hover:text-cyan-400',
+  function: 'group-hover:text-[var(--openpkg-accent-blue)]',
+  class: 'group-hover:text-[var(--openpkg-accent-purple)]',
+  interface: 'group-hover:text-[var(--openpkg-accent-green)]',
+  type: 'group-hover:text-[var(--openpkg-accent-amber)]',
+  enum: 'group-hover:text-[var(--openpkg-accent-rose)]',
+  variable: 'group-hover:text-[var(--openpkg-accent-cyan)]',
 };
 
 const KIND_BADGE_COLORS: Record<ExportCardProps['kind'] & string, string> = {
-  function: 'bg-blue-500/10 text-blue-600 dark:text-blue-400',
-  class: 'bg-purple-500/10 text-purple-600 dark:text-purple-400',
-  interface: 'bg-green-500/10 text-green-600 dark:text-green-400',
-  type: 'bg-amber-500/10 text-amber-600 dark:text-amber-400',
-  enum: 'bg-rose-500/10 text-rose-600 dark:text-rose-400',
-  variable: 'bg-cyan-500/10 text-cyan-600 dark:text-cyan-400',
+  function: 'bg-[color-mix(in_srgb,var(--openpkg-accent-blue)_10%,transparent)] text-[var(--openpkg-accent-blue)]',
+  class: 'bg-[color-mix(in_srgb,var(--openpkg-accent-purple)_10%,transparent)] text-[var(--openpkg-accent-purple)]',
+  interface: 'bg-[color-mix(in_srgb,var(--openpkg-accent-green)_10%,transparent)] text-[var(--openpkg-accent-green)]',
+  type: 'bg-[color-mix(in_srgb,var(--openpkg-accent-amber)_10%,transparent)] text-[var(--openpkg-accent-amber)]',
+  enum: 'bg-[color-mix(in_srgb,var(--openpkg-accent-rose)_10%,transparent)] text-[var(--openpkg-accent-rose)]',
+  variable: 'bg-[color-mix(in_srgb,var(--openpkg-accent-cyan)_10%,transparent)] text-[var(--openpkg-accent-cyan)]',
 };
 
 /**
@@ -56,30 +56,30 @@ export function ExportCard({
     <LinkComp
       href={href}
       className={cn(
-        'group block rounded-lg border border-border bg-card/50 p-4',
+        'group block rounded-lg border border-[var(--openpkg-border-subtle)] bg-[var(--openpkg-bg-card)] p-4',
         'transition-all duration-200 ease-out',
-        'hover:border-primary/30 hover:bg-card hover:shadow-lg hover:shadow-primary/5',
+        'hover:border-[var(--openpkg-accent-primary)] hover:bg-[var(--openpkg-bg-card-hover)] hover:shadow-lg',
         'hover:-translate-y-1',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--openpkg-accent-primary)]',
         className,
       )}
     >
       <div className="flex items-center gap-2 mb-2">
         <span
           className={cn(
-            'font-mono text-base font-medium text-foreground transition-colors duration-200',
+            'font-mono text-base font-medium text-[var(--openpkg-text-primary)] transition-colors duration-200',
             hoverColor,
           )}
         >
           {name}
         </span>
-        {isFunction && <span className="font-mono text-base text-muted-foreground">()</span>}
+        {isFunction && <span className="font-mono text-base text-[var(--openpkg-text-muted)]">()</span>}
         <span className={cn('ml-auto text-xs px-2 py-0.5 rounded-full font-medium', badgeColor)}>
           {kind}
         </span>
       </div>
       {description && (
-        <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed group-hover:text-muted-foreground/80 transition-colors">
+        <p className="text-sm text-[var(--openpkg-text-muted)] line-clamp-2 leading-relaxed transition-colors">
           {description}
         </p>
       )}

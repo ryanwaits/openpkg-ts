@@ -97,9 +97,9 @@ export function ClassSection({ export: exp, spec }: ClassSectionProps): ReactNod
       title={`class ${exp.name}`}
       description={
         <div className="space-y-3">
-          {inheritance && <p className="font-mono text-sm text-muted-foreground">{inheritance}</p>}
+          {inheritance && <p className="font-mono text-sm text-[var(--openpkg-text-muted)]">{inheritance}</p>}
           {exp.description && <p>{exp.description}</p>}
-          <code className="text-sm font-mono bg-muted px-2 py-1 rounded inline-block">
+          <code className="text-sm font-mono bg-[var(--openpkg-bg-badge)] px-2 py-1 rounded inline-block">
             {importStatement}
           </code>
         </div>

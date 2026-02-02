@@ -120,7 +120,31 @@ That's it. The two CSS imports provide:
 
 The `@source` directive is still required because Tailwind v4 doesn't scan `node_modules` by default, so it won't see the `dk-*` classes used inside the bundled docskit JS.
 
-## 8. Usage
+## 8. Theming
+
+Components are **light by default** and respond to dark mode via:
+- `.dark` class on `<html>` (shadcn convention)
+- `[data-theme="dark"]` attribute
+- `prefers-color-scheme: dark` system preference
+
+All colors use `--openpkg-*` CSS custom properties. Override any variable to match your theme:
+
+```css
+/* Example: custom brand colors */
+:root {
+  --openpkg-bg-root: #fefefe;
+  --openpkg-accent-link: #0066cc;
+}
+
+.dark {
+  --openpkg-bg-root: #111111;
+  --openpkg-accent-link: #66b3ff;
+}
+```
+
+Available token categories: `--openpkg-bg-*`, `--openpkg-text-*`, `--openpkg-border-*`, `--openpkg-accent-*`, `--openpkg-syn-*`, `--openpkg-font-*`, `--openpkg-radius-*`. See `tokens.css` for the full list.
+
+## 9. Usage
 
 **src/App.tsx:**
 
@@ -232,3 +256,4 @@ bun run dev
 | Components not found during `shadcn add` | Missing registry config | Add `registries` with `@openpkg-ts` key to `components.json` (step 5) |
 | `dk-*` classes have no effect | Tailwind v4 doesn't scan `node_modules` | Add `@source "../node_modules/@openpkg-ts/ui/dist/docskit"` (step 7) |
 | Selection highlight missing in code blocks | Tailwind can't auto-generate `selection:` variant for custom colors | Included in `docskit.css` import (step 7) |
+| Components render light but app is dark (or vice versa) | Components follow `--openpkg-*` tokens which respond to `.dark` class / `prefers-color-scheme` | Add `class="dark"` to `<html>` or use system preference (step 8) |

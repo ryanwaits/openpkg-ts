@@ -27,10 +27,10 @@ export function APIReferencePage({
   return (
     <div className={cn('max-w-7xl mx-auto px-4 sm:px-6 lg:px-8', className)}>
       {/* Page header */}
-      <header className="py-8 border-b border-border">
-        <h1 className="text-3xl font-bold text-foreground">{title}</h1>
+      <header className="py-8 border-b border-[var(--openpkg-border-subtle)]">
+        <h1 className="text-3xl font-bold text-[var(--openpkg-text-primary)]">{title}</h1>
         {description && (
-          <div className="mt-4 text-lg text-muted-foreground prose prose-lg dark:prose-invert max-w-none">
+          <div className="mt-4 text-lg text-[var(--openpkg-text-muted)] prose prose-lg dark:prose-invert max-w-none">
             {description}
           </div>
         )}

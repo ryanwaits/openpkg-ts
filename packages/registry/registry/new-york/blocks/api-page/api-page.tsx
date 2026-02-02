@@ -20,9 +20,9 @@ export interface APIPageProps {
 
 function NotFound({ id }: { id: string }) {
   return (
-    <div className="rounded-lg border border-border bg-card p-6 text-center">
-      <p className="text-muted-foreground">
-        Export <code className="font-mono text-primary">{id}</code> not found in spec.
+    <div className="rounded-lg border border-[var(--openpkg-border-subtle)] bg-[var(--openpkg-bg-card)] p-6 text-center">
+      <p className="text-[var(--openpkg-text-muted)]">
+        Export <code className="font-mono text-[var(--openpkg-accent-link)]">{id}</code> not found in spec.
       </p>
     </div>
   );
@@ -30,8 +30,8 @@ function NotFound({ id }: { id: string }) {
 
 function NoSpec() {
   return (
-    <div className="rounded-lg border border-red-500/20 bg-red-500/10 p-6 text-center">
-      <p className="text-red-600 dark:text-red-400">
+    <div className="rounded-lg border border-[color-mix(in_srgb,var(--openpkg-accent-red)_20%,transparent)] bg-[color-mix(in_srgb,var(--openpkg-accent-red)_10%,transparent)] p-6 text-center">
+      <p className="text-[var(--openpkg-accent-red)]">
         No spec provided. Pass either <code>spec</code> or <code>instance</code> prop.
       </p>
     </div>

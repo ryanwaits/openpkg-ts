@@ -39,7 +39,21 @@
   --openpkg-accent-green: #16a34a;
   --openpkg-accent-blue: #2563eb;
   --openpkg-accent-purple: #7c3aed;
+  --openpkg-accent-red: #dc2626;
+  --openpkg-accent-yellow: #ca8a04;
+  --openpkg-accent-amber: #d97706;
+  --openpkg-accent-cyan: #0891b2;
+  --openpkg-accent-rose: #e11d48;
+  --openpkg-accent-fuchsia: #c026d3;
+  --openpkg-accent-orange: #ea580c;
   --openpkg-accent-link: #2563eb;
+  --openpkg-accent-primary: #2563eb;
+  --openpkg-text-on-primary: #ffffff;
+
+  /* Card / surface colors */
+  --openpkg-bg-card: #ffffff;
+  --openpkg-bg-card-hover: #fafafa;
+  --openpkg-bg-input: #ffffff;
 
   /* Border colors */
   --openpkg-border-subtle: #e5e5e5;
@@ -82,7 +96,19 @@
   --openpkg-accent-green: #3ecf8e;
   --openpkg-accent-blue: #6cb6ff;
   --openpkg-accent-purple: #c4a7e7;
+  --openpkg-accent-red: #f87171;
+  --openpkg-accent-yellow: #facc15;
+  --openpkg-accent-amber: #fbbf24;
+  --openpkg-accent-cyan: #22d3ee;
+  --openpkg-accent-rose: #fb7185;
+  --openpkg-accent-fuchsia: #e879f9;
+  --openpkg-accent-orange: #fb923c;
   --openpkg-accent-link: #6cb6ff;
+  --openpkg-accent-primary: #6cb6ff;
+  --openpkg-text-on-primary: #ffffff;
+  --openpkg-bg-card: #141414;
+  --openpkg-bg-card-hover: #1a1a1a;
+  --openpkg-bg-input: #171717;
   --openpkg-border-subtle: #262626;
   --openpkg-border-medium: #333333;
   --openpkg-border-chip: #333333;
@@ -117,7 +143,19 @@
     --openpkg-accent-green: #3ecf8e;
     --openpkg-accent-blue: #6cb6ff;
     --openpkg-accent-purple: #c4a7e7;
+    --openpkg-accent-red: #f87171;
+    --openpkg-accent-yellow: #facc15;
+    --openpkg-accent-amber: #fbbf24;
+    --openpkg-accent-cyan: #22d3ee;
+    --openpkg-accent-rose: #fb7185;
+    --openpkg-accent-fuchsia: #e879f9;
+    --openpkg-accent-orange: #fb923c;
     --openpkg-accent-link: #6cb6ff;
+    --openpkg-accent-primary: #6cb6ff;
+    --openpkg-text-on-primary: #ffffff;
+    --openpkg-bg-card: #141414;
+    --openpkg-bg-card-hover: #1a1a1a;
+    --openpkg-bg-input: #171717;
     --openpkg-border-subtle: #262626;
     --openpkg-border-medium: #333333;
     --openpkg-border-chip: #333333;

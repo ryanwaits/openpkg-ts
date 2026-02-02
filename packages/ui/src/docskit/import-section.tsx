@@ -26,17 +26,17 @@ export function ImportSection({ importStatement, className }: ImportSectionProps
     <div
       className={cn(
         'group flex items-center justify-between gap-3',
-        'rounded-lg border border-border bg-muted/30 px-4 py-3',
+        'rounded-lg border border-[var(--openpkg-border-subtle)] bg-[var(--openpkg-bg-secondary)] px-4 py-3',
         className,
       )}
     >
-      <code className="font-mono text-sm text-foreground overflow-x-auto">{importStatement}</code>
+      <code className="font-mono text-sm text-[var(--openpkg-text-primary)] overflow-x-auto">{importStatement}</code>
       <button
         type="button"
         onClick={handleCopy}
         className={cn(
           'shrink-0 p-1.5 rounded',
-          'text-muted-foreground hover:text-foreground',
+          'text-[var(--openpkg-text-muted)] hover:text-[var(--openpkg-text-primary)]',
           'opacity-0 group-hover:opacity-100 transition-opacity duration-200',
           'cursor-pointer',
         )}

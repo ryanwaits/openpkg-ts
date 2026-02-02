@@ -92,11 +92,11 @@ export function ExportIndexPage({
   return (
     <div className={cn('doccov-index-page space-y-8 not-prose', className)}>
       <div>
-        <h1 className="text-3xl font-bold text-foreground mb-3">
+        <h1 className="text-3xl font-bold text-[var(--openpkg-text-primary)] mb-3">
           {spec.meta.name || 'API Reference'}
         </h1>
         {(description || spec.meta.description) && (
-          <p className="text-muted-foreground text-lg leading-relaxed max-w-3xl">
+          <p className="text-[var(--openpkg-text-muted)] text-lg leading-relaxed max-w-3xl">
             {description || spec.meta.description}
           </p>
         )}
@@ -108,7 +108,7 @@ export function ExportIndexPage({
             <div className="relative max-w-md">
               <Search
                 size={18}
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--openpkg-text-muted)]"
               />
               <input
                 type="text"
@@ -117,9 +117,9 @@ export function ExportIndexPage({
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className={cn(
                   'w-full pl-10 pr-4 py-2 rounded-lg',
-                  'border border-border bg-background',
-                  'text-sm text-foreground placeholder:text-muted-foreground',
-                  'focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent',
+                  'border border-[var(--openpkg-border-subtle)] bg-[var(--openpkg-bg-input)]',
+                  'text-sm text-[var(--openpkg-text-primary)] placeholder:text-[var(--openpkg-text-muted)]',
+                  'focus:outline-none focus:ring-2 focus:ring-[var(--openpkg-accent-primary)] focus:border-transparent',
                   'transition-shadow',
                 )}
               />
@@ -134,8 +134,8 @@ export function ExportIndexPage({
                 className={cn(
                   'px-3 py-1.5 text-sm rounded-md transition-all cursor-pointer',
                   activeFilter === 'all'
-                    ? 'bg-primary text-primary-foreground font-medium'
-                    : 'bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground',
+                    ? 'bg-[var(--openpkg-accent-primary)] text-[var(--openpkg-text-on-primary)] font-medium'
+                    : 'bg-[var(--openpkg-bg-secondary)] text-[var(--openpkg-text-muted)] hover:text-[var(--openpkg-text-primary)]',
                 )}
               >
                 All
@@ -148,8 +148,8 @@ export function ExportIndexPage({
                   className={cn(
                     'px-3 py-1.5 text-sm rounded-md transition-all cursor-pointer',
                     activeFilter === kind
-                      ? 'bg-primary text-primary-foreground font-medium'
-                      : 'bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground',
+                      ? 'bg-[var(--openpkg-accent-primary)] text-[var(--openpkg-text-on-primary)] font-medium'
+                      : 'bg-[var(--openpkg-bg-secondary)] text-[var(--openpkg-text-muted)] hover:text-[var(--openpkg-text-primary)]',
                   )}
                 >
                   {KIND_LABELS[kind]}
@@ -161,7 +161,7 @@ export function ExportIndexPage({
       )}
 
       {(searchQuery || activeFilter !== 'all') && (
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-[var(--openpkg-text-muted)]">
           {totalExports} {totalExports === 1 ? 'result' : 'results'}
           {searchQuery && ` for "${searchQuery}"`}
         </p>
@@ -169,7 +169,7 @@ export function ExportIndexPage({
 
       {filteredGroups.map((group) => (
         <section key={group.kind}>
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground mb-4">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-[var(--openpkg-text-muted)] mb-4">
             {group.label}
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -187,8 +187,8 @@ export function ExportIndexPage({
       ))}
 
       {filteredGroups.length === 0 && (
-        <div className="rounded-lg border border-border bg-card/50 p-8 text-center">
-          <p className="text-muted-foreground">
+        <div className="rounded-lg border border-[var(--openpkg-border-subtle)] bg-[var(--openpkg-bg-card)] p-8 text-center">
+          <p className="text-[var(--openpkg-text-muted)]">
             {searchQuery || activeFilter !== 'all'
               ? 'No exports match your search.'
               : 'No exports found in this package.'}
@@ -200,7 +200,7 @@ export function ExportIndexPage({
                 setSearchQuery('');
                 setActiveFilter('all');
               }}
-              className="mt-3 text-sm text-primary hover:underline cursor-pointer"
+              className="mt-3 text-sm text-[var(--openpkg-accent-link)] hover:underline cursor-pointer"
             >
               Clear filters
             </button>

@@ -1,5 +1,11 @@
 # @openpkg-ts/ui
 
+## 0.3.0
+
+### Minor Changes
+
+- Unify all docskit and registry components under --openpkg-\* CSS vars. Adds 13 new design tokens (accent colors, card surfaces, primary). Replaces shadcn classes and hardcoded Tailwind colors. Fixes enum-values-section rgba() bug.
+
 ## 0.2.0
 
 ### Minor Changes

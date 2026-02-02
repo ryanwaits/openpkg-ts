@@ -45,7 +45,7 @@ export function FunctionSection({ export: exp, spec }: FunctionSectionProps): Re
       description={
         <div className="space-y-3">
           {exp.description && <p>{exp.description}</p>}
-          <code className="text-sm font-mono bg-muted px-2 py-1 rounded inline-block">
+          <code className="text-sm font-mono bg-[var(--openpkg-bg-badge)] px-2 py-1 rounded inline-block">
             {importStatement}
           </code>
         </div>
@@ -80,7 +80,7 @@ export function FunctionSection({ export: exp, spec }: FunctionSectionProps): Re
                 {formatSchema(sig.returns.schema)}
               </span>
               {sig.returns.description && (
-                <span className="ml-2 text-muted-foreground">{sig.returns.description}</span>
+                <span className="ml-2 text-[var(--openpkg-text-muted)]">{sig.returns.description}</span>
               )}
             </span>
           }
@@ -89,16 +89,16 @@ export function FunctionSection({ export: exp, spec }: FunctionSectionProps): Re
       )}
 
       {sig?.throws && sig.throws.length > 0 && (
-        <div className="mt-6 rounded-md bg-destructive/10 border border-destructive/20 p-4">
-          <h4 className="text-xs font-semibold uppercase tracking-wide text-destructive mb-2">
+        <div className="mt-6 rounded-md bg-[color-mix(in_srgb,var(--openpkg-accent-red)_10%,transparent)] border border-[color-mix(in_srgb,var(--openpkg-accent-red)_20%,transparent)] p-4">
+          <h4 className="text-xs font-semibold uppercase tracking-wide text-[var(--openpkg-accent-red)] mb-2">
             Throws
           </h4>
           <div className="space-y-1">
             {sig.throws.map((t, i) => (
               <div key={i} className="text-sm">
-                {t.type && <code className="font-mono text-destructive">{t.type}</code>}
+                {t.type && <code className="font-mono text-[var(--openpkg-accent-red)]">{t.type}</code>}
                 {t.type && t.description && <span className="mx-1">—</span>}
-                {t.description && <span className="text-muted-foreground">{t.description}</span>}
+                {t.description && <span className="text-[var(--openpkg-text-muted)]">{t.description}</span>}
               </div>
             ))}
           </div>
