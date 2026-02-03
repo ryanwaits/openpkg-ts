@@ -13,8 +13,9 @@ export interface NestedParameterContainerProps {
 }
 
 /**
- * Bordered container for nested child parameters (Stripe-style).
- * Connects to NestedParameterToggle above (no top border).
+ * Bordered container for nested child parameters (Scalar/Clerk-style).
+ * Connects to NestedParameterToggle above — shares the same border,
+ * so this has no top border and only bottom-rounded corners.
  */
 export function NestedParameterContainer({
   children,
@@ -25,17 +26,16 @@ export function NestedParameterContainer({
     <div
       className={cn(
         'openpkg-nested-container',
-        'border border-t-0',
-        level === 0
-          ? 'border-[var(--openpkg-border-medium)]'
-          : 'border-[var(--openpkg-border-subtle)]',
+        'border border-t-0 border-[var(--openpkg-border-medium)]',
         'rounded-b-lg',
         'px-5',
-        'mb-2',
-        '[&>.openpkg-param]:py-5',
-        '[&>.openpkg-param]:border-b',
-        '[&>.openpkg-param]:border-[var(--openpkg-border-subtle)]',
-        '[&>.openpkg-param:last-child]:border-b-0',
+        '[&>.openpkg-expandable-param]:py-4',
+        '[&>.openpkg-expandable-param]:border-b',
+        '[&>.openpkg-expandable-param]:border-[var(--openpkg-border-subtle)]',
+        '[&>.openpkg-expandable-param:last-child]:border-b-0',
+        '[&>.openpkg-expandable-param:last-child]:pb-4',
+        '[&>.openpkg-expandable-param_.openpkg-param]:py-0',
+        '[&>.openpkg-expandable-param_.openpkg-param]:border-b-0',
         className,
       )}
       data-level={level}

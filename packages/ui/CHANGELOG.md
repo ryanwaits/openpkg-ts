@@ -1,5 +1,11 @@
 # @openpkg-ts/ui
 
+## 0.5.1
+
+### Patch Changes
+
+- Restyle parameter components to match Scalar/Clerk design: unified toggle+container border box, +/× text prefixes, orange "required" text, remove "Expandable" badge and Link icon
+
 ## 0.5.0
 
 ### Minor Changes

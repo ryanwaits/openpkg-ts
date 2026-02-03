@@ -63,19 +63,16 @@ export function ExpandableParameter({
         parentPath={parentPath}
         type={hasChildren ? 'object' : type}
         required={isRequired}
-        expandable={hasChildren}
         description={parameter.description}
         anchorId={parentPath ? `${parentPath}${parameter.name}` : parameter.name}
-        showAnchor={level > 0}
       >
         {enumValues.length > 0 && !nestedParams.length && <EnumValuesSection values={enumValues} />}
 
         {nestedParams.length > 0 && (
-          <>
+          <div className="mt-3 mb-1">
             <NestedParameterToggle
               expanded={expanded}
               onToggle={handleToggle}
-              count={nestedParams.length}
             />
             {expanded && (
               <NestedParameterContainer level={level}>
@@ -89,7 +86,7 @@ export function ExpandableParameter({
                 ))}
               </NestedParameterContainer>
             )}
-          </>
+          </div>
         )}
       </APIParameterItem>
     </div>

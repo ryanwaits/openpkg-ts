@@ -1,7 +1,6 @@
 'use client';
 
 import { cn } from '@/lib/utils';
-import { Link } from 'lucide-react';
 import type { ReactNode } from 'react';
 
 export interface APIParameterSchema {
@@ -43,8 +42,8 @@ export interface APIParameterItemProps {
 }
 
 /**
- * Single parameter row in Stripe-style documentation.
- * Displays name, type, badges, description, and optional nested content.
+ * Single parameter row (Scalar/Clerk-style).
+ * Displays name, type, required badge (orange text), description, and optional nested content.
  */
 export function APIParameterItem({
   name,
@@ -52,20 +51,11 @@ export function APIParameterItem({
   type,
   required,
   optional,
-  expandable,
   description,
   children,
   anchorId,
-  showAnchor = false,
   className,
 }: APIParameterItemProps): ReactNode {
-  const handleAnchorClick = () => {
-    if (anchorId && typeof window !== 'undefined') {
-      window.location.hash = anchorId;
-      navigator.clipboard?.writeText(window.location.href);
-    }
-  };
-
   return (
     <div
       id={anchorId}
@@ -76,27 +66,8 @@ export function APIParameterItem({
         className,
       )}
     >
-      {/* Header: anchor + name + badges + type */}
-      <div className="openpkg-param-header flex items-center gap-2.5 mb-2 flex-wrap">
-        {/* Anchor link (hover visible) */}
-        {showAnchor && (
-          <button
-            type="button"
-            onClick={handleAnchorClick}
-            className={cn(
-              'openpkg-anchor-link',
-              'flex items-center justify-center w-4 h-4',
-              'opacity-0 group-hover:opacity-100 hover:opacity-100',
-              'text-[var(--openpkg-text-muted)]',
-              'hover:text-[var(--openpkg-accent-blue)]',
-              'cursor-pointer transition-opacity',
-            )}
-            aria-label="Copy link"
-          >
-            <Link size={14} />
-          </button>
-        )}
-
+      {/* Header: name + type + required */}
+      <div className="openpkg-param-header flex items-baseline gap-2 mb-1 flex-wrap">
         {/* Name with parent path */}
         <span className="openpkg-param-name font-mono text-sm font-semibold">
           {parentPath && (
@@ -105,51 +76,22 @@ export function APIParameterItem({
           <span className="text-[var(--openpkg-text-primary)]">{name}</span>
         </span>
 
-        {/* Badges */}
-        {required && (
-          <span
-            className={cn(
-              'openpkg-param-badge',
-              'text-[11px] font-medium uppercase tracking-wide',
-              'px-2 py-0.5 rounded',
-              'bg-[var(--openpkg-bg-badge)]',
-              'text-[var(--openpkg-text-muted)]',
-            )}
-          >
-            Required
-          </span>
-        )}
-        {optional && (
-          <span
-            className={cn(
-              'openpkg-param-badge',
-              'text-[11px] font-medium uppercase tracking-wide',
-              'px-2 py-0.5 rounded',
-              'bg-[var(--openpkg-bg-badge)]',
-              'text-[var(--openpkg-text-muted)]',
-            )}
-          >
-            Optional
-          </span>
-        )}
-        {expandable && (
-          <span
-            className={cn(
-              'openpkg-badge-expandable',
-              'text-[10px] font-medium',
-              'px-2 py-0.5 rounded',
-              'text-[var(--openpkg-accent-purple)]',
-              'bg-[color-mix(in_srgb,var(--openpkg-accent-purple)_12%,transparent)]',
-            )}
-          >
-            Expandable
-          </span>
-        )}
-
         {/* Type */}
         <span className="openpkg-param-type text-[13px] text-[var(--openpkg-text-muted)]">
           {type}
         </span>
+
+        {/* Required badge — orange text like Clerk/Scalar */}
+        {required && (
+          <span className="openpkg-param-badge text-[13px] font-medium text-[var(--openpkg-accent-orange,#d4a553)]">
+            required
+          </span>
+        )}
+        {optional && (
+          <span className="openpkg-param-badge text-[13px] text-[var(--openpkg-text-muted)]">
+            optional
+          </span>
+        )}
       </div>
 
       {/* Description */}

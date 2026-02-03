@@ -1,7 +1,6 @@
 'use client';
 
 import { cn } from '@/lib/utils';
-import { Plus } from 'lucide-react';
 import type { ReactNode } from 'react';
 
 export interface NestedParameterToggleProps {
@@ -9,20 +8,18 @@ export interface NestedParameterToggleProps {
   expanded: boolean;
   /** Toggle callback */
   onToggle: () => void;
-  /** Optional child count to display */
-  count?: number;
   /** Custom className */
   className?: string;
 }
 
 /**
- * "Show/Hide child parameters" toggle button (Stripe-style).
- * Plus icon rotates 45deg when expanded.
+ * "Show/Hide Child Attributes" toggle button (Scalar/Clerk-style).
+ * When collapsed: standalone rounded pill.
+ * When expanded: top of a unified bordered container (rounded-t, no bottom border).
  */
 export function NestedParameterToggle({
   expanded,
   onToggle,
-  count,
   className,
 }: NestedParameterToggleProps): ReactNode {
   return (
@@ -31,30 +28,25 @@ export function NestedParameterToggle({
       onClick={onToggle}
       className={cn(
         'openpkg-nested-toggle',
-        'inline-flex items-center gap-2',
+        'flex items-center gap-2 w-full',
         'font-sans text-[13px] font-medium',
         'text-[var(--openpkg-text-secondary)]',
         'bg-transparent',
         'border border-[var(--openpkg-border-medium)]',
-        'rounded-lg',
-        'px-4 py-2.5',
-        'mt-3',
+        'px-4 py-3',
         'cursor-pointer',
         'transition-all duration-150',
-        'hover:border-[var(--openpkg-text-muted)]',
         'hover:text-[var(--openpkg-text-primary)]',
-        expanded && 'rounded-b-none border-b-transparent mb-0',
+        expanded
+          ? 'rounded-t-lg rounded-b-none border-b-[var(--openpkg-border-subtle)]'
+          : 'rounded-lg',
         className,
       )}
       aria-expanded={expanded}
     >
-      <Plus
-        size={12}
-        className={cn('transition-transform duration-200', expanded && 'rotate-45')}
-      />
+      <span className="text-[13px]">{expanded ? '×' : '+'}</span>
       <span>
-        {expanded ? 'Hide' : 'Show'} child parameters
-        {count !== undefined && ` (${count})`}
+        {expanded ? 'Hide' : 'Show'} Child Attributes
       </span>
     </button>
   );
