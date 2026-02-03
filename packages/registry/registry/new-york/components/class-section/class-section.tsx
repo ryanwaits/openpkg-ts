@@ -119,7 +119,6 @@ export function ClassSection({ export: exp, spec }: ClassSectionProps): ReactNod
                 type={apiParam.type}
                 required={apiParam.required}
                 description={apiParam.description}
-                children={apiParam.children}
               />
             );
           })}

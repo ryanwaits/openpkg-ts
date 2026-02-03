@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
-import { CopyButton } from './code.copy';
+import { ClientDocsKitCode } from './code.client-highlight';
 
 type PackageManager = 'npm' | 'bun' | 'pnpm' | 'yarn';
 
@@ -130,22 +130,15 @@ export function PackageInstall({
         <span className="sr-only">Terminal window</span>
       </div>
 
-      {/* Command content */}
-      <div className="relative flex items-start bg-openpkg-code-bg">
-        <pre className="overflow-auto px-3 py-3 m-0 font-mono text-sm flex-1">
-          <code>
-            <span className="text-ch-5">{command.split(' ')[0]}</span>
-            <span className="text-ch-0"> {command.split(' ').slice(1).join(' ')}</span>
-          </code>
-        </pre>
-        {copyButton && (
-          <CopyButton
-            text={command}
-            variant="floating"
-            className="absolute right-3 top-1/2 -translate-y-1/2 z-10 text-openpkg-code-text-inactive"
-          />
-        )}
-      </div>
+      {/* Command content — CodeHike-highlighted bash */}
+      <ClientDocsKitCode
+        codeblock={{
+          value: command,
+          lang: 'bash',
+          meta: copyButton ? '-c' : '',
+        }}
+        className="!my-0 !border-0 !rounded-none"
+      />
     </div>
   );
 }

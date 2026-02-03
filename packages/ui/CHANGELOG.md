@@ -1,5 +1,11 @@
 # @openpkg-ts/ui
 
+## 0.5.0
+
+### Minor Changes
+
+- Add API reference components to docskit: NestedParameterToggle, NestedParameterContainer, EnumValuesSection, CollapsiblePanel, ExampleChips, CodeBlock, ExpandableParameter, MethodSection, ExampleSection, APIReferenceLayout, and SyncScrollProvider hook. Replace APIParameterItem with enhanced Stripe-style version supporting parentPath, anchors, and ReactNode children.
+
 ## 0.4.0
 
 ### Minor Changes

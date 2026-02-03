@@ -19,7 +19,7 @@
     },
     "packages/adapters": {
       "name": "@openpkg-ts/adapters",
-      "version": "0.3.5",
+      "version": "0.3.12",
       "dependencies": {
         "@openpkg-ts/sdk": "^0.34.0",
         "@openpkg-ts/spec": "^0.33.0",
@@ -98,7 +98,7 @@
     },
     "packages/ui": {
       "name": "@openpkg-ts/ui",
-      "version": "0.1.6",
+      "version": "0.5.0",
       "dependencies": {
         "@radix-ui/react-collapsible": "^1.1.12",
         "@radix-ui/react-slot": "^1.1.0",
@@ -119,9 +119,15 @@
         "typescript": "^5.0.0",
       },
       "peerDependencies": {
+        "@openpkg-ts/sdk": "^0.35.0",
+        "@openpkg-ts/spec": "^0.34.1",
         "react": "^18 || ^19",
         "react-dom": "^18 || ^19",
       },
+      "optionalPeers": [
+        "@openpkg-ts/sdk",
+        "@openpkg-ts/spec",
+      ],
     },
   },
   "packages": {

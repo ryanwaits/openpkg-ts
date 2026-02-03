@@ -98,7 +98,7 @@ export function ClientDocsKitCode(props: {
             variant="floating"
             className={cn(
               'absolute right-3 z-10 text-openpkg-code-text-inactive',
-              title ? 'top-3' : 'top-1/2 -translate-y-1/2',
+              'top-3',
             )}
           />
         )}

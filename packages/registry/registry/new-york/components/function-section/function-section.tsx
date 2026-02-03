@@ -65,7 +65,6 @@ export function FunctionSection({ export: exp, spec }: FunctionSectionProps): Re
                 type={apiParam.type}
                 required={apiParam.required}
                 description={apiParam.description}
-                children={apiParam.children}
               />
             );
           })}

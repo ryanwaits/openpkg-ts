@@ -8,7 +8,6 @@ import {
   buildImportStatement,
   getLanguagesFromExamples,
   specExamplesToCodeExamples,
-  specSchemaToAPISchema,
 } from './spec-to-docskit';
 
 export interface InterfaceSectionProps {
@@ -97,9 +96,6 @@ export function InterfaceSection({ export: exp, spec }: InterfaceSectionProps): 
         <ParameterList title="Properties">
           {properties.map((prop, index) => {
             const type = formatSchema(prop.schema);
-            const children = specSchemaToAPISchema(prop.schema);
-            const hasNestedProperties =
-              children?.properties && Object.keys(children.properties).length > 0;
 
             return (
               <APIParameterItem
@@ -107,7 +103,6 @@ export function InterfaceSection({ export: exp, spec }: InterfaceSectionProps): 
                 name={prop.name}
                 type={type}
                 description={buildMemberDescription(prop)}
-                children={hasNestedProperties ? children : undefined}
               />
             );
           })}

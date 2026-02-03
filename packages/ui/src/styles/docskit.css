@@ -11,7 +11,7 @@
   --ch-0: dark;
   --ch-1: #5c5c5c;
   --ch-2: #c9555a;
-  --ch-3: #d4a553;
+  --ch-3: #d4d4d4;
   --ch-4: #d4d4d4;
   --ch-5: #c4a7e7;
   --ch-6: #d4a553;
@@ -43,7 +43,7 @@
   --ch-0: light;
   --ch-1: #999999;
   --ch-2: #c9555a;
-  --ch-3: #b8860b;
+  --ch-3: #3a3a3a;
   --ch-4: #3a3a3a;
   --ch-5: #7c3aed;
   --ch-6: #b8860b;
@@ -78,7 +78,15 @@
   --color-openpkg-code-text-active: var(--ch-4);
   --color-openpkg-code-selection: var(--ch-20);
   --color-openpkg-code-line-number: var(--ch-24);
-  --color-openpkg-code-accent: var(--ch-3);
+  --color-openpkg-code-accent: var(--ch-6);
+}
+
+/* Italic syntax tokens — comments and keywords */
+pre[data-ch] span[style*="--ch-1"] {
+  font-style: italic;
+}
+pre[data-ch] span[style*="--ch-7"] {
+  font-style: italic;
 }
 
 /* Selection utility — Tailwind can't auto-generate this */
@@ -87,4 +95,21 @@
   .selection\:bg-openpkg-code-selection *::selection {
     background-color: var(--ch-20);
   }
+}
+
+/* API reference layout grid */
+@media (min-width: 1024px) {
+  .openpkg-api-layout {
+    grid-template-columns: var(--openpkg-left-width) var(--openpkg-right-width);
+    align-items: start;
+  }
+}
+
+/* Fade-in animation for layout columns */
+@keyframes openpkg-fade-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.openpkg-animate-fade-in {
+  animation: openpkg-fade-in 0.3s ease-out both;
 }

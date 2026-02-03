@@ -11,6 +11,9 @@ const sharedConfig = {
     'tailwind-merge',
     'class-variance-authority',
     'lucide-react',
+    '@openpkg-ts/sdk',
+    '@openpkg-ts/sdk/browser',
+    '@openpkg-ts/spec',
   ],
   define: {
     'process.env.NODE_ENV': '"production"',

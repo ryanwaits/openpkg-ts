@@ -1,9 +1,8 @@
 'use client';
 
-import { Check, ChevronRight, Copy } from 'lucide-react';
-import type * as React from 'react';
-import { useState } from 'react';
 import { cn } from '@/lib/utils';
+import { Link } from 'lucide-react';
+import type { ReactNode } from 'react';
 
 export interface APIParameterSchema {
   /** Type name */
@@ -21,213 +20,154 @@ export interface APIParameterSchema {
 export interface APIParameterItemProps {
   /** Parameter name */
   name: string;
-  /** Type string (e.g., "string", "object") */
+  /** Parent path prefix (e.g., "options." for nested) */
+  parentPath?: string;
+  /** Parameter type */
   type: string;
-  /** Is required */
+  /** Required parameter */
   required?: boolean;
+  /** Optional parameter (explicit) */
+  optional?: boolean;
+  /** Has expandable children */
+  expandable?: boolean;
   /** Description */
-  description?: string;
-  /** Nested children (for expandable objects) */
-  children?: APIParameterSchema;
-  /** Nesting depth */
-  depth?: number;
+  description?: ReactNode;
+  /** Nested content (params or enum) */
+  children?: ReactNode;
+  /** Anchor ID for deep linking */
+  anchorId?: string;
+  /** Show anchor link on hover */
+  showAnchor?: boolean;
   /** Custom className */
   className?: string;
 }
 
-function NestedProperty({
-  name,
-  schema,
-  required = false,
-  depth = 0,
-}: {
-  name: string;
-  schema: APIParameterSchema;
-  required?: boolean;
-  depth?: number;
-}): React.ReactNode {
-  const [expanded, setExpanded] = useState(false);
-  const [copied, setCopied] = useState(false);
-  const type = schema.typeString ?? schema.type ?? 'unknown';
-  const hasNested = schema.properties && Object.keys(schema.properties).length > 0;
-  const _nestedCount = hasNested ? Object.keys(schema.properties!).length : 0;
-
-  const handleCopy = () => {
-    navigator.clipboard.writeText(name);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1200);
-  };
-
-  return (
-    <div className={cn('border-t border-border first:border-t-0', depth > 0 && 'ml-4')}>
-      <div className="group py-4">
-        <div className="flex items-start gap-2">
-          {/* Expand button */}
-          {hasNested ? (
-            <button
-              type="button"
-              onClick={() => setExpanded(!expanded)}
-              className="mt-0.5 p-0.5 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-              aria-label={expanded ? 'Collapse' : 'Expand'}
-            >
-              <ChevronRight
-                size={14}
-                className={cn('transition-transform duration-200', expanded && 'rotate-90')}
-              />
-            </button>
-          ) : (
-            <div className="w-5" />
-          )}
-
-          <div className="flex-1 min-w-0">
-            {/* Name + type */}
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="font-mono text-sm font-medium text-foreground">
-                {name}
-                {!required && <span className="text-muted-foreground">?</span>}
-              </span>
-              <span className="font-mono text-xs text-muted-foreground">{type}</span>
-              {hasNested && (
-                <button
-                  type="button"
-                  onClick={() => setExpanded(!expanded)}
-                  className="text-xs text-primary hover:underline cursor-pointer"
-                >
-                  Show child parameters
-                </button>
-              )}
-              {/* Copy button on hover */}
-              <button
-                type="button"
-                onClick={handleCopy}
-                className="p-1 rounded text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
-                aria-label="Copy name"
-              >
-                {copied ? <Check size={12} /> : <Copy size={12} />}
-              </button>
-            </div>
-
-            {/* Description */}
-            {schema.description && (
-              <p className="text-sm text-muted-foreground mt-1">{schema.description}</p>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Nested properties */}
-      {hasNested && expanded && schema.properties && (
-        <div className="border-l border-border ml-2 mb-3">
-          {Object.entries(schema.properties).map(([propName, propSchema]) => (
-            <NestedProperty
-              key={propName}
-              name={propName}
-              schema={propSchema}
-              required={schema.required?.includes(propName)}
-              depth={depth + 1}
-            />
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
 /**
- * Single parameter row with name, type, required badge, description, and expandable children.
- * Stripe-style API reference parameter display.
+ * Single parameter row in Stripe-style documentation.
+ * Displays name, type, badges, description, and optional nested content.
  */
 export function APIParameterItem({
   name,
+  parentPath,
   type,
-  required = false,
+  required,
+  optional,
+  expandable,
   description,
   children,
-  depth = 0,
+  anchorId,
+  showAnchor = false,
   className,
-}: APIParameterItemProps): React.ReactNode {
-  const [expanded, setExpanded] = useState(false);
-  const [copied, setCopied] = useState(false);
-  const hasNested = children?.properties && Object.keys(children.properties).length > 0;
-  const _nestedCount = hasNested ? Object.keys(children!.properties!).length : 0;
-
-  const handleCopy = () => {
-    navigator.clipboard.writeText(name);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1200);
+}: APIParameterItemProps): ReactNode {
+  const handleAnchorClick = () => {
+    if (anchorId && typeof window !== 'undefined') {
+      window.location.hash = anchorId;
+      navigator.clipboard?.writeText(window.location.href);
+    }
   };
 
   return (
-    <div className={cn('border-b border-border last:border-b-0', className)}>
-      <div className="group py-4">
-        <div className="flex items-start gap-2">
-          {/* Expand button */}
-          {hasNested ? (
-            <button
-              type="button"
-              onClick={() => setExpanded(!expanded)}
-              className="mt-0.5 p-0.5 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-              aria-label={expanded ? 'Collapse' : 'Expand'}
-            >
-              <ChevronRight
-                size={14}
-                className={cn('transition-transform duration-200', expanded && 'rotate-90')}
-              />
-            </button>
-          ) : (
-            <div className="w-5" />
+    <div
+      id={anchorId}
+      className={cn(
+        'openpkg-param',
+        'py-5 border-b border-[var(--openpkg-border-subtle)]',
+        'last:border-b-0',
+        className,
+      )}
+    >
+      {/* Header: anchor + name + badges + type */}
+      <div className="openpkg-param-header flex items-center gap-2.5 mb-2 flex-wrap">
+        {/* Anchor link (hover visible) */}
+        {showAnchor && (
+          <button
+            type="button"
+            onClick={handleAnchorClick}
+            className={cn(
+              'openpkg-anchor-link',
+              'flex items-center justify-center w-4 h-4',
+              'opacity-0 group-hover:opacity-100 hover:opacity-100',
+              'text-[var(--openpkg-text-muted)]',
+              'hover:text-[var(--openpkg-accent-blue)]',
+              'cursor-pointer transition-opacity',
+            )}
+            aria-label="Copy link"
+          >
+            <Link size={14} />
+          </button>
+        )}
+
+        {/* Name with parent path */}
+        <span className="openpkg-param-name font-mono text-sm font-semibold">
+          {parentPath && (
+            <span className="text-[var(--openpkg-text-muted)]">{parentPath}</span>
           )}
+          <span className="text-[var(--openpkg-text-primary)]">{name}</span>
+        </span>
 
-          <div className="flex-1 min-w-0">
-            {/* Name + badges + type */}
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="font-mono text-sm font-medium text-foreground">{name}</span>
-              {required && (
-                <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded border border-border bg-muted text-muted-foreground uppercase tracking-wide">
-                  Required
-                </span>
-              )}
-              <span className="font-mono text-xs text-muted-foreground">{type}</span>
-              {hasNested && (
-                <button
-                  type="button"
-                  onClick={() => setExpanded(!expanded)}
-                  className="text-xs text-primary hover:underline cursor-pointer"
-                >
-                  Show child parameters
-                </button>
-              )}
-              {/* Copy button on hover */}
-              <button
-                type="button"
-                onClick={handleCopy}
-                className="p-1 rounded text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
-                aria-label="Copy name"
-              >
-                {copied ? <Check size={12} /> : <Copy size={12} />}
-              </button>
-            </div>
+        {/* Badges */}
+        {required && (
+          <span
+            className={cn(
+              'openpkg-param-badge',
+              'text-[11px] font-medium uppercase tracking-wide',
+              'px-2 py-0.5 rounded',
+              'bg-[var(--openpkg-bg-badge)]',
+              'text-[var(--openpkg-text-muted)]',
+            )}
+          >
+            Required
+          </span>
+        )}
+        {optional && (
+          <span
+            className={cn(
+              'openpkg-param-badge',
+              'text-[11px] font-medium uppercase tracking-wide',
+              'px-2 py-0.5 rounded',
+              'bg-[var(--openpkg-bg-badge)]',
+              'text-[var(--openpkg-text-muted)]',
+            )}
+          >
+            Optional
+          </span>
+        )}
+        {expandable && (
+          <span
+            className={cn(
+              'openpkg-badge-expandable',
+              'text-[10px] font-medium',
+              'px-2 py-0.5 rounded',
+              'text-[var(--openpkg-accent-purple)]',
+              'bg-[color-mix(in_srgb,var(--openpkg-accent-purple)_12%,transparent)]',
+            )}
+          >
+            Expandable
+          </span>
+        )}
 
-            {/* Description */}
-            {description && <p className="text-sm text-muted-foreground mt-1">{description}</p>}
-          </div>
-        </div>
+        {/* Type */}
+        <span className="openpkg-param-type text-[13px] text-[var(--openpkg-text-muted)]">
+          {type}
+        </span>
       </div>
 
-      {/* Nested properties */}
-      {hasNested && expanded && children?.properties && (
-        <div className="border-l border-border ml-2 mb-3">
-          {Object.entries(children.properties).map(([propName, propSchema]) => (
-            <NestedProperty
-              key={propName}
-              name={propName}
-              schema={propSchema}
-              required={children.required?.includes(propName)}
-              depth={depth + 1}
-            />
-          ))}
-        </div>
+      {/* Description */}
+      {description && (
+        <p
+          className={cn(
+            'openpkg-param-description',
+            'text-sm text-[var(--openpkg-text-secondary)]',
+            'leading-relaxed',
+            '[&_code]:font-mono [&_code]:text-[13px] [&_code]:bg-[var(--openpkg-bg-badge)] [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:rounded',
+          )}
+        >
+          {description}
+        </p>
       )}
+
+      {/* Nested content */}
+      {children}
     </div>
   );
 }
