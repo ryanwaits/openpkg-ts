@@ -1,7 +1,6 @@
 'use client';
 
 import { cn } from '@openpkg-ts/ui/lib/utils';
-import { Plus } from 'lucide-react';
 import type { ReactNode } from 'react';
 
 export interface NestedParameterToggleProps {
@@ -9,20 +8,16 @@ export interface NestedParameterToggleProps {
   expanded: boolean;
   /** Toggle callback */
   onToggle: () => void;
-  /** Optional child count to display */
-  count?: number;
   /** Custom className */
   className?: string;
 }
 
 /**
- * "Show/Hide child parameters" toggle button (Stripe-style).
- * Plus icon rotates 45deg when expanded.
+ * "Show/Hide Child Attributes" toggle button.
  */
 export function NestedParameterToggle({
   expanded,
   onToggle,
-  count,
   className,
 }: NestedParameterToggleProps): ReactNode {
   return (
@@ -41,21 +36,14 @@ export function NestedParameterToggle({
         'mt-3',
         'cursor-pointer',
         'transition-all duration-150',
-        'hover:border-[var(--openpkg-text-muted)]',
         'hover:text-[var(--openpkg-text-primary)]',
         expanded && 'rounded-b-none border-b-transparent mb-0',
         className,
       )}
       aria-expanded={expanded}
     >
-      <Plus
-        size={12}
-        className={cn('transition-transform duration-200', expanded && 'rotate-45')}
-      />
-      <span>
-        {expanded ? 'Hide' : 'Show'} child parameters
-        {count !== undefined && ` (${count})`}
-      </span>
+      <span className="text-[14px] leading-none">{expanded ? '×' : '+'}</span>
+      <span>{expanded ? 'Hide' : 'Show'} Child Attributes</span>
     </button>
   );
 }

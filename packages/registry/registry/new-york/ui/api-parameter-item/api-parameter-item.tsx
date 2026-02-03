@@ -15,8 +15,6 @@ export interface APIParameterItemProps {
   required?: boolean;
   /** Optional parameter (explicit) */
   optional?: boolean;
-  /** Has expandable children */
-  expandable?: boolean;
   /** Description */
   description?: ReactNode;
   /** Nested content (params or enum) */
@@ -49,7 +47,6 @@ export function APIParameterItem({
   type,
   required,
   optional,
-  expandable,
   description,
   children,
   anchorId,
@@ -129,20 +126,6 @@ export function APIParameterItem({
             Optional
           </span>
         )}
-        {expandable && (
-          <span
-            className={cn(
-              'openpkg-badge-expandable',
-              'text-[10px] font-medium',
-              'px-2 py-0.5 rounded',
-              'text-[var(--openpkg-accent-purple)]',
-              'bg-[color-mix(in_srgb,var(--openpkg-accent-purple)_12%,transparent)]',
-            )}
-          >
-            Expandable
-          </span>
-        )}
-
         {/* Type */}
         <span className="openpkg-param-type text-[13px] text-[var(--openpkg-text-muted)]">
           {type}
