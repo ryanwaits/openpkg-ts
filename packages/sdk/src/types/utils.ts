@@ -1,9 +1,9 @@
-import type ts from 'typescript';
+import ts from 'typescript';
 
 export function isExported(node: ts.Node): boolean {
   const modifiers = (node as ts.HasModifiers).modifiers;
   if (!modifiers) return false;
-  return modifiers.some((m) => m.kind === 95 /* ExportKeyword */);
+  return modifiers.some((m) => m.kind === ts.SyntaxKind.ExportKeyword);
 }
 
 export function getNodeName(node: ts.Node): string | undefined {

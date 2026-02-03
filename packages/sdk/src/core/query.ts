@@ -1,12 +1,13 @@
-import type {
-  OpenPkg,
-  SpecExport,
-  SpecExportKind,
-  SpecMember,
-  SpecSchema,
-  SpecSignature,
-  SpecType,
-  SpecTypeParameter,
+import {
+  DISPLAY_KIND_ORDER,
+  type OpenPkg,
+  type SpecExport,
+  type SpecExportKind,
+  type SpecMember,
+  type SpecSchema,
+  type SpecSignature,
+  type SpecType,
+  type SpecTypeParameter,
 } from '@openpkg-ts/spec';
 
 /**
@@ -394,12 +395,7 @@ export function sortByName<T extends { name: string }>(items: T[]): T[] {
 
 /** Canonical kind ordering for rendering grouped exports. */
 export const KIND_ORDER: SpecExportKind[] = [
-  'function',
-  'class',
-  'interface',
-  'type',
-  'enum',
-  'variable',
+  ...DISPLAY_KIND_ORDER,
   'namespace',
   'module',
   'reference',

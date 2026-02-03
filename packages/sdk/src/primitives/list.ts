@@ -131,7 +131,7 @@ function extractExportItem(
   const description = getDescriptionPreview(targetSymbol, checker);
 
   // Check deprecated
-  const deprecated = isSymbolDeprecated(targetSymbol);
+  const { deprecated } = isSymbolDeprecated(targetSymbol);
 
   // Check if from different file (re-export)
   const reexport = isReexport || sourceFile !== entrySourceFile;
