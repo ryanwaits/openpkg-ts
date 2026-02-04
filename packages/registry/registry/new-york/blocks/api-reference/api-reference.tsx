@@ -15,23 +15,25 @@ import { cn } from '@openpkg-ts/ui/lib/utils';
 import { type ReactNode, useCallback } from 'react';
 import { extractMethodData } from '@/registry/new-york/hooks/use-method-from-spec/use-method-from-spec';
 
-export interface StripeAPIReferencePageProps {
+export interface ApiReferenceProps {
   spec: OpenPkg;
   filter?: (exp: SpecExport) => boolean;
   showAllKinds?: boolean;
   className?: string;
+  theme?: 'default';
 }
 
 /**
  * Full Stripe/Supabase-style API reference page.
  * Two-column layout with sticky code panel per section.
  */
-export function StripeAPIReferencePage({
+export function ApiReferencePage({
   spec,
   filter,
   showAllKinds = false,
   className,
-}: StripeAPIReferencePageProps): ReactNode {
+  theme = 'default',
+}: ApiReferenceProps): ReactNode {
   const defaultFilter = (exp: SpecExport) => (showAllKinds ? true : exp.kind === 'function');
   const activeFilter = filter ?? defaultFilter;
   const exports = spec.exports.filter(activeFilter);
@@ -48,8 +50,9 @@ export function StripeAPIReferencePage({
 
   return (
     <div
+      data-openpkg-theme={theme}
       className={cn(
-        'openpkg-stripe-api-page',
+        'openpkg-api-reference',
         'bg-[var(--openpkg-bg-root)]',
         'text-[var(--openpkg-text-primary)]',
         'font-[var(--openpkg-font-sans)]',

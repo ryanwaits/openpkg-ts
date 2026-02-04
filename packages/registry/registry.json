@@ -329,15 +329,15 @@
       ]
     },
     {
-      "name": "stripe-api-reference",
+      "name": "api-reference",
       "type": "registry:block",
-      "title": "Stripe API Reference",
-      "description": "Two-column synced API reference with code examples",
+      "title": "API Reference",
+      "description": "Two-column synced API reference with code examples and theme support",
       "dependencies": ["@openpkg-ts/sdk", "@openpkg-ts/spec", "@openpkg-ts/ui"],
       "registryDependencies": ["@openpkg-ts/use-method-from-spec"],
       "files": [
         {
-          "path": "registry/new-york/blocks/stripe-api-reference/stripe-api-reference.tsx",
+          "path": "registry/new-york/blocks/api-reference/api-reference.tsx",
           "type": "registry:block"
         }
       ]

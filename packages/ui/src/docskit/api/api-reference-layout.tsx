@@ -33,7 +33,7 @@ export function APIReferenceLayout({
         'openpkg-api-layout',
         'max-w-[1600px] mx-auto',
         'flex flex-col',
-        'lg:grid',
+        'lg:grid lg:items-start',
         className,
       )}
       style={

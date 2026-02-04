@@ -13,9 +13,9 @@ export interface NestedParameterToggleProps {
 }
 
 /**
- * "Show/Hide Child Attributes" toggle button (Scalar/Clerk-style).
- * When collapsed: standalone rounded pill.
- * When expanded: top of a unified bordered container (rounded-t, no bottom border).
+ * "Show/Hide Child Attributes" toggle button (Stripe-style).
+ * When collapsed: inline-block rounded pill button.
+ * When expanded: full-width top of unified bordered container.
  */
 export function NestedParameterToggle({
   expanded,
@@ -28,18 +28,18 @@ export function NestedParameterToggle({
       onClick={onToggle}
       className={cn(
         'openpkg-nested-toggle',
-        'flex items-center gap-2 w-full',
+        'flex items-center gap-2',
         'font-sans text-[13px] font-medium',
         'text-[var(--openpkg-text-secondary)]',
         'bg-transparent',
         'border border-[var(--openpkg-border-medium)]',
-        'px-4 py-3',
+        'px-2 py-1.5',
         'cursor-pointer',
-        'transition-all duration-150',
+        'transition-[width,border-radius,border-color,color] duration-200 ease-out',
         'hover:text-[var(--openpkg-text-primary)]',
         expanded
-          ? 'rounded-t-lg rounded-b-none border-b-[var(--openpkg-border-subtle)]'
-          : 'rounded-lg',
+          ? 'w-full rounded-t-md rounded-b-none border-b-[var(--openpkg-border-subtle)]'
+          : 'w-fit rounded-md',
         className,
       )}
       aria-expanded={expanded}

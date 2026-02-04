@@ -1,5 +1,16 @@
 # @openpkg-ts/ui
 
+## 0.6.1
+
+### Patch Changes
+
+- fix(ui): improve nested parameter toggle styling and layout alignment
+
+  - Update nested parameter toggle to Stripe-style with dynamic width
+  - Add smooth transition for width and border-radius changes
+  - Update toggle sizing: px-2 py-1.5 for compact appearance
+  - Add lg:items-start to API reference layout for better alignment
+
 ## 0.6.0
 
 ### Minor Changes
