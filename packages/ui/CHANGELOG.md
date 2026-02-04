@@ -1,5 +1,18 @@
 # @openpkg-ts/ui
 
+## 0.6.0
+
+### Minor Changes
+
+- feat(ui): add resolveRef prop to ExpandableParameter for deep nested $ref resolution
+
+  - Add optional `resolveRef` callback prop to ExpandableParameter
+  - Recursively pass resolveRef to nested children
+  - Update extractSchemaInfo to resolve $ref schemas before extracting properties
+  - Update stripe-api-reference registry component to pass resolveRef callback
+
+  Nested object types referenced via `$ref` (e.g., `profile: { "$ref": "#/types/UserProfile" }`) now properly expand to show their child properties.
+
 ## 0.5.2
 
 ### Patch Changes

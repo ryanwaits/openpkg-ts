@@ -12,7 +12,7 @@ import {
 } from '@openpkg-ts/ui/docskit';
 import { resolveTypeRef } from '@openpkg-ts/sdk/browser';
 import { cn } from '@openpkg-ts/ui/lib/utils';
-import type { ReactNode } from 'react';
+import { type ReactNode, useCallback } from 'react';
 import { extractMethodData } from '@/registry/new-york/hooks/use-method-from-spec/use-method-from-spec';
 
 export interface StripeAPIReferencePageProps {
@@ -36,6 +36,15 @@ export function StripeAPIReferencePage({
   const activeFilter = filter ?? defaultFilter;
   const exports = spec.exports.filter(activeFilter);
   const sortedExports = [...exports].sort((a, b) => a.name.localeCompare(b.name));
+
+  // Callback to resolve $refs for nested expandable params
+  const resolveRef = useCallback(
+    (ref: string): SpecSchema | undefined => {
+      const resolved = resolveTypeRef(ref, spec);
+      return resolved?.schema as SpecSchema | undefined;
+    },
+    [spec],
+  );
 
   return (
     <div
@@ -74,6 +83,7 @@ export function StripeAPIReferencePage({
                         required: !param.optional,
                         description: param.description,
                       }}
+                      resolveRef={resolveRef}
                     />
                   ))}
                 </ParameterList>

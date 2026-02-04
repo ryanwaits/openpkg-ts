@@ -24,6 +24,8 @@ export interface ExpandableParameterProps {
   level?: number;
   /** Custom className */
   className?: string;
+  /** Callback to resolve $ref schemas */
+  resolveRef?: (ref: string) => SpecSchema | undefined;
 }
 
 /**
@@ -38,6 +40,7 @@ export function ExpandableParameter({
   onExpandedChange,
   level = 0,
   className,
+  resolveRef,
 }: ExpandableParameterProps): ReactNode {
   const [internalExpanded, setInternalExpanded] = useState(defaultExpanded);
   const isControlled = controlledExpanded !== undefined;
@@ -52,7 +55,7 @@ export function ExpandableParameter({
     }
   };
 
-  const { nestedParams, enumValues, hasChildren } = extractSchemaInfo(parameter.schema);
+  const { nestedParams, enumValues, hasChildren } = extractSchemaInfo(parameter.schema, resolveRef);
   const type = formatSchema(parameter.schema);
   const isRequired = parameter.required !== false;
 
@@ -82,6 +85,7 @@ export function ExpandableParameter({
                     parameter={nested}
                     parentPath={`${parameter.name}.`}
                     level={level + 1}
+                    resolveRef={resolveRef}
                   />
                 ))}
               </NestedParameterContainer>
@@ -99,7 +103,10 @@ interface SchemaInfo {
   hasChildren: boolean;
 }
 
-function extractSchemaInfo(schema: SpecSchema | undefined): SchemaInfo {
+function extractSchemaInfo(
+  schema: SpecSchema | undefined,
+  resolveRef?: (ref: string) => SpecSchema | undefined,
+): SchemaInfo {
   const result: SchemaInfo = {
     nestedParams: [],
     enumValues: [],
@@ -108,7 +115,15 @@ function extractSchemaInfo(schema: SpecSchema | undefined): SchemaInfo {
 
   if (!schema || typeof schema !== 'object') return result;
 
-  const s = schema as Record<string, unknown>;
+  let s = schema as Record<string, unknown>;
+
+  // Resolve $ref if present
+  if (s.$ref && typeof s.$ref === 'string' && resolveRef) {
+    const resolved = resolveRef(s.$ref);
+    if (resolved && typeof resolved === 'object') {
+      s = resolved as Record<string, unknown>;
+    }
+  }
 
   if (s.type === 'object' && s.properties && typeof s.properties === 'object') {
     const props = s.properties as Record<string, SpecSchema>;
