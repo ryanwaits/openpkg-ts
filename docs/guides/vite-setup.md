@@ -112,13 +112,27 @@ Add to `src/index.css` after `@import "tailwindcss"`:
 
 /* Tell Tailwind to scan docskit bundle for dk-* utility classes */
 @source "../node_modules/@openpkg-ts/ui/dist/docskit";
+
+/* Map shadcn-style colors to openpkg tokens */
+@theme {
+  --color-background: var(--openpkg-bg-root);
+  --color-foreground: var(--openpkg-text-primary);
+  --color-muted: var(--openpkg-bg-secondary);
+  --color-muted-foreground: var(--openpkg-text-muted);
+  --color-border: var(--openpkg-border-subtle);
+  --color-primary: var(--openpkg-accent-primary);
+  --color-primary-foreground: var(--openpkg-text-on-primary);
+  --color-popover: var(--openpkg-bg-card);
+  --color-popover-foreground: var(--openpkg-text-primary);
+  --color-ring: var(--openpkg-accent-primary);
+}
 ```
 
-That's it. The two CSS imports provide:
+That's it. Here's what each part does:
 - **docskit.css** — CodeHike `--ch-*` theme variables (dark + light), `dk-*` Tailwind color mappings, selection utility
 - **tokens.css** — OpenPKG design tokens (`--openpkg-*` vars for backgrounds, text, borders, fonts, radii)
-
-The `@source` directive is still required because Tailwind v4 doesn't scan `node_modules` by default, so it won't see the `dk-*` classes used inside the bundled docskit JS.
+- **@source** — Required because Tailwind v4 doesn't scan `node_modules` by default
+- **@theme** — Maps shadcn-style color utilities (`text-foreground`, `border-border`, `bg-muted`) to openpkg tokens
 
 ## 8. Theming
 
@@ -262,6 +276,7 @@ bun run dev
 | `shadcn init` fails on alias validation | Missing `baseUrl`/`paths` in tsconfig | Add path aliases to both `tsconfig.json` and `tsconfig.app.json` (step 3) |
 | Components not found during `shadcn add` | Missing registry config | Add `registries` with `@openpkg-ts` key to `components.json` (step 5) |
 | `dk-*` classes have no effect | Tailwind v4 doesn't scan `node_modules` | Add `@source "../node_modules/@openpkg-ts/ui/dist/docskit"` (step 7) |
+| No borders, muted text invisible, layout broken | Missing shadcn color mappings | Add `@theme` block with `--color-foreground`, `--color-border`, etc. (step 7) |
 | Selection highlight missing in code blocks | Tailwind can't auto-generate `selection:` variant for custom colors | Included in `docskit.css` import (step 7) |
 | Components render light but app is dark (or vice versa) | Components follow `--openpkg-*` tokens which respond to `.dark` class / `prefers-color-scheme` | Add `class="dark"` to `<html>` or use system preference (step 8) |
 | Components stuck in dark mode, won't go light | OS prefers dark + no `.light` class on `<html>` | Add `.light` class when toggling to light mode (step 8) |

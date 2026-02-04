@@ -37,7 +37,7 @@ function setSchemaExtension(schema: SpecSchema, key: string, value: unknown): vo
 }
 
 // Primitive type names
-export const PRIMITIVES = new Set([
+export const PRIMITIVES: Set<string> = new Set([
   'string',
   'number',
   'boolean',

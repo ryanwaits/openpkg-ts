@@ -333,7 +333,7 @@
       "type": "registry:block",
       "title": "Stripe API Reference",
       "description": "Two-column synced API reference with code examples",
-      "dependencies": ["@openpkg-ts/spec", "@openpkg-ts/ui"],
+      "dependencies": ["@openpkg-ts/sdk", "@openpkg-ts/spec", "@openpkg-ts/ui"],
       "registryDependencies": ["@openpkg-ts/use-method-from-spec"],
       "files": [
         {

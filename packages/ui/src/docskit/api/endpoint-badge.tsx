@@ -5,7 +5,12 @@ import { cn } from '@/lib/utils';
 export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
 export type EndpointBadgeSize = 'sm' | 'md';
 
-const endpointBadgeVariants = cva(
+const endpointBadgeVariants: (props?: {
+  method?: HttpMethod | null;
+  size?: EndpointBadgeSize | null;
+  class?: string;
+  className?: string;
+}) => string = cva(
   'inline-flex items-center justify-center font-mono font-bold uppercase tracking-wide rounded shrink-0',
   {
     variants: {

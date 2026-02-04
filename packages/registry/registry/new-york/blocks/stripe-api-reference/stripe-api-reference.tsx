@@ -1,14 +1,16 @@
 'use client';
 
-import type { OpenPkg, SpecExample, SpecExport } from '@openpkg-ts/spec';
+import type { OpenPkg, SpecExample, SpecExport, SpecSchema } from '@openpkg-ts/spec';
 import {
   APIParameterItem,
   APIReferencePage,
   APISection,
+  ExpandableParameter,
   ParameterList,
   type CodeExample,
   type Language,
 } from '@openpkg-ts/ui/docskit';
+import { resolveTypeRef } from '@openpkg-ts/sdk/browser';
 import { cn } from '@openpkg-ts/ui/lib/utils';
 import type { ReactNode } from 'react';
 import { extractMethodData } from '@/registry/new-york/hooks/use-method-from-spec/use-method-from-spec';
@@ -64,12 +66,14 @@ export function StripeAPIReferencePage({
               {method.parameters.length > 0 && (
                 <ParameterList title="Parameters" collapseAfter={8}>
                   {method.parameters.map((param) => (
-                    <APIParameterItem
+                    <ExpandableParameter
                       key={param.name}
-                      name={param.name}
-                      type={param.schema?.typeString ?? param.schema?.type ?? 'unknown'}
-                      required={!param.optional}
-                      description={param.description}
+                      parameter={{
+                        name: param.name,
+                        schema: resolveParamSchema(param.schema, spec),
+                        required: !param.optional,
+                        description: param.description,
+                      }}
                     />
                   ))}
                 </ParameterList>
@@ -139,4 +143,22 @@ function getLanguagesFromExamples(examples: CodeExample[]): Language[] {
     }
   }
   return languages;
+}
+
+/**
+ * Resolve $ref in schema to get inline properties for expandable params.
+ */
+function resolveParamSchema(schema: SpecSchema | undefined, spec: OpenPkg): SpecSchema | undefined {
+  if (!schema || typeof schema !== 'object') return schema;
+  const s = schema as Record<string, unknown>;
+
+  // If it's a $ref, resolve it and return the type's schema
+  if (s.$ref && typeof s.$ref === 'string') {
+    const resolved = resolveTypeRef(s.$ref, spec);
+    if (resolved?.schema) {
+      return resolved.schema as SpecSchema;
+    }
+  }
+
+  return schema;
 }

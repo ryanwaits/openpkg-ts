@@ -1,5 +1,11 @@
 # @openpkg-ts/ui
 
+## 0.5.2
+
+### Patch Changes
+
+- Add explicit type annotations for cva variants (isolatedDeclarations)
+
 ## 0.5.1
 
 ### Patch Changes
