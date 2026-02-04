@@ -82,8 +82,8 @@ export function ApiReferencePage({
                       key={param.name}
                       parameter={{
                         name: param.name,
-                        schema: resolveParamSchema(param.schema, spec),
-                        required: !param.optional,
+                        schema: resolveParamSchema(param.schema, spec) || param.schema,
+                        required: param.required ?? false,
                         description: param.description,
                       }}
                       resolveRef={resolveRef}
