@@ -4,11 +4,11 @@ import { formatSchema } from '@openpkg-ts/sdk/browser';
 import type { OpenPkg, SpecExport, SpecMember } from '@openpkg-ts/spec';
 import { APIParameterItem, APISection, ParameterList } from '@openpkg-ts/ui/docskit';
 import type { ReactNode } from 'react';
+import { ExpandableParameter } from '@/registry/new-york/components/expandable-parameter/expandable-parameter';
 import {
   buildImportStatement,
   getLanguagesFromExamples,
   specExamplesToCodeExamples,
-  specParamToAPIParam,
 } from './spec-to-docskit';
 
 export interface ClassSectionProps {
@@ -110,18 +110,9 @@ export function ClassSection({ export: exp, spec }: ClassSectionProps): ReactNod
     >
       {constructorParams.length > 0 && (
         <ParameterList title="Constructor">
-          {constructorParams.map((param, index) => {
-            const apiParam = specParamToAPIParam(param);
-            return (
-              <APIParameterItem
-                key={param.name ?? index}
-                name={apiParam.name}
-                type={apiParam.type}
-                required={apiParam.required}
-                description={apiParam.description}
-              />
-            );
-          })}
+          {constructorParams.map((param, index) => (
+            <ExpandableParameter key={param.name ?? index} parameter={param} />
+          ))}
         </ParameterList>
       )}
 

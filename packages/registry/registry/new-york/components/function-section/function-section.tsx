@@ -4,11 +4,11 @@ import { formatSchema } from '@openpkg-ts/sdk/browser';
 import type { OpenPkg, SpecExport } from '@openpkg-ts/spec';
 import { APIParameterItem, APISection, ParameterList, ResponseBlock } from '@openpkg-ts/ui/docskit';
 import type { ReactNode } from 'react';
+import { ExpandableParameter } from '@/registry/new-york/components/expandable-parameter/expandable-parameter';
 import {
   buildImportStatement,
   getLanguagesFromExamples,
   specExamplesToCodeExamples,
-  specParamToAPIParam,
 } from './spec-to-docskit';
 
 export interface FunctionSectionProps {
@@ -56,18 +56,9 @@ export function FunctionSection({ export: exp, spec }: FunctionSectionProps): Re
     >
       {hasParams && (
         <ParameterList title="Parameters">
-          {sig.parameters?.map((param, index) => {
-            const apiParam = specParamToAPIParam(param);
-            return (
-              <APIParameterItem
-                key={param.name ?? index}
-                name={apiParam.name}
-                type={apiParam.type}
-                required={apiParam.required}
-                description={apiParam.description}
-              />
-            );
-          })}
+          {sig.parameters?.map((param, index) => (
+            <ExpandableParameter key={param.name ?? index} parameter={param} />
+          ))}
         </ParameterList>
       )}
 

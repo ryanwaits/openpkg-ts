@@ -98,3 +98,4 @@ export {
   type TypeColor,
   typeBadgeVariants,
 } from './type-badge';
+export { RunnableSnippet, type RunnableSnippetProps } from './runnable-snippet';

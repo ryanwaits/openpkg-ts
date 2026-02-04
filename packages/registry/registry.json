@@ -108,6 +108,19 @@
       ]
     },
     {
+      "name": "runnable-snippet",
+      "type": "registry:ui",
+      "title": "Runnable Snippet",
+      "description": "Interactive code block with run button and output display",
+      "dependencies": ["@openpkg-ts/ui", "lucide-react"],
+      "files": [
+        {
+          "path": "registry/new-york/ui/runnable-snippet/runnable-snippet.tsx",
+          "type": "registry:ui"
+        }
+      ]
+    },
+    {
       "name": "use-method-from-spec",
       "type": "registry:hook",
       "title": "useMethodFromSpec",

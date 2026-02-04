@@ -1,5 +1,24 @@
 # @openpkg-ts/ui
 
+## 0.6.2
+
+### Patch Changes
+
+- ## Bug Fixes
+
+  - **Fix diff/mark annotations not rendering**: Fixed handler order in `code.handlers.tsx` - `diff` and `mark` handlers must come before `line` handler to set CSS variables correctly
+  - **Fix malformed className in code.line.tsx**: Moved CSS transition from className string to style object
+
+  ## New Features
+
+  - **Add RunnableSnippet component**: Interactive code block with run button and output display (Phase 1 - mock execution, sandbox deferred)
+
+  ## Registry Improvements
+
+  - **Auto-expandable parameters**: Updated `function-section` and `class-section` to use `ExpandableParameter` for all function/constructor parameters
+  - Parameters with nested object properties now automatically show expand/collapse toggles
+  - No manual wiring required - works out of the box when installed via `shadcn add`
+
 ## 0.6.1
 
 ### Patch Changes

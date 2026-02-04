@@ -16,10 +16,12 @@ import { wordWrap } from './word-wrap';
 
 export function getHandlers(options: CodeOptions) {
   return [
-    line,
-    options.lineNumbers && lineNumbers,
+    // Handlers that set CSS variables must come before 'line'
     mark,
     diff,
+    // Line handler consumes --openpkg-line-bg and --openpkg-line-border
+    line,
+    options.lineNumbers && lineNumbers,
     link,
     callout,
     ...collapse,
