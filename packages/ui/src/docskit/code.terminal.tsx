@@ -1,7 +1,7 @@
 import { type AnnotationHandler, highlight, Pre, type RawCode } from 'codehike/code';
 
 import { cn } from '@/lib/utils';
-import { flagsToOptions, theme } from './code.config';
+import { extractFlagsOnly, flagsToOptions, PRE_CLASSNAME, theme } from './code.config';
 import { CopyButton } from './code.copy';
 import { getHandlers } from './code.handlers';
 
@@ -24,7 +24,7 @@ export async function Terminal(props: {
   handlers?: AnnotationHandler[];
 }): Promise<React.ReactNode> {
   const { codeblock, handlers: extraHandlers } = props;
-  const { flags } = extractFlags(codeblock);
+  const flags = extractFlagsOnly(codeblock);
   const options = flagsToOptions(flags);
 
   const highlighted = await highlight({ ...codeblock, lang: codeblock.lang || 'bash' }, theme);
@@ -61,7 +61,7 @@ export async function Terminal(props: {
       <div className="relative flex items-start">
         <Pre
           code={highlighted}
-          className="overflow-auto px-0 py-3 m-0 rounded-none !bg-openpkg-code-bg selection:bg-openpkg-code-selection selection:text-current max-h-full flex-1"
+          className={PRE_CLASSNAME}
           style={highlightedStyle}
           handlers={handlers}
         />
@@ -80,9 +80,3 @@ export async function Terminal(props: {
   );
 }
 
-function extractFlags(codeblock: RawCode) {
-  const meta = codeblock.meta || '';
-  const flagMatch = meta.split(' ').find((flag) => flag.startsWith('-'));
-  const flags = flagMatch ? flagMatch.slice(1) : '';
-  return { flags };
-}

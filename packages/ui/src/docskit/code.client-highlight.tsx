@@ -11,7 +11,8 @@ import {
 import { useEffect, useState } from 'react';
 import { useStateOrLocalStorage } from '@/hooks/use-local-storage';
 import { cn } from '@/lib/utils';
-import { type CodeOptions, flagsToOptions, theme } from './code.config';
+import { type CodeOptions, extractFlags, extractFlagsOnly, flagsToOptions, PRE_CLASSNAME, theme } from './code.config';
+import { CodeHeader } from './code-header';
 import { CopyButton } from './code.copy';
 import { getHandlers } from './code.handlers';
 import { CodeIcon } from './code.icon';
@@ -71,24 +72,11 @@ export function ClientDocsKitCode(props: {
         wrapperClassName,
       )}
     >
-      {title ? (
-        <div
-          className={cn(
-            'border-b-[1px] border-openpkg-code-border bg-openpkg-code-header px-3 py-0',
-            'w-full h-9 flex items-center shrink-0',
-            'text-openpkg-code-text-inactive text-sm font-mono',
-          )}
-        >
-          <div className="flex items-center h-5 gap-2">
-            <div className="size-4">{icon}</div>
-            <span className="leading-none">{title}</span>
-          </div>
-        </div>
-      ) : null}
+      <CodeHeader title={title} icon={icon} />
       <div className="relative flex items-start">
         <Pre
           code={highlighted}
-          className="overflow-auto px-0 py-3 m-0 rounded-none !bg-openpkg-code-bg selection:bg-openpkg-code-selection selection:text-current max-h-full flex-1"
+          className={PRE_CLASSNAME}
           style={highlightedStyle}
           handlers={handlers}
         />
@@ -114,7 +102,7 @@ export function ClientTerminal(props: {
   const { codeblock, handlers: extraHandlers } = props;
   const [highlighted, setHighlighted] = useState<HighlightedCode | null>(null);
 
-  const { flags } = extractFlagsSimple(codeblock);
+  const flags = extractFlagsOnly(codeblock);
   const options = flagsToOptions(flags);
 
   useEffect(() => {
@@ -166,7 +154,7 @@ export function ClientTerminal(props: {
       <div className="relative flex items-start">
         <Pre
           code={highlighted}
-          className="overflow-auto px-0 py-3 m-0 rounded-none !bg-openpkg-code-bg selection:bg-openpkg-code-selection selection:text-current max-h-full flex-1"
+          className={PRE_CLASSNAME}
           style={highlightedStyle}
           handlers={handlers}
         />
@@ -217,30 +205,6 @@ export function ClientInlineCode({ codeblock }: { codeblock: RawCode }): React.R
   );
 }
 
-/**
- * Extracts flags and title from the metadata of a code block.
- */
-function extractFlags(codeblock: RawCode) {
-  const meta = codeblock.meta || '';
-  const flags = meta.split(' ').filter((flag) => flag.startsWith('-'))[0] ?? '';
-  const metaWithoutFlags = !flags
-    ? meta
-    : meta === flags
-      ? ''
-      : meta.replace(` ${flags}`, '').trim();
-  const title = metaWithoutFlags.trim();
-  return { title, flags: flags.slice(1) };
-}
-
-/**
- * Simple flag extraction (no title).
- */
-function extractFlagsSimple(codeblock: RawCode) {
-  const meta = codeblock.meta || '';
-  const flagMatch = meta.split(' ').find((flag) => flag.startsWith('-'));
-  const flags = flagMatch ? flagMatch.slice(1) : '';
-  return { flags };
-}
 
 /**
  * Client-side code tabs with multiple files.
@@ -312,24 +276,11 @@ export function ClientCode(props: {
 
     return (
       <div className="group rounded overflow-hidden relative border-openpkg-code-border flex flex-col border my-4 not-prose">
-        {tab.title ? (
-          <div
-            className={cn(
-              'border-b-[1px] border-openpkg-code-border bg-openpkg-code-header px-3 py-0',
-              'w-full h-9 flex items-center shrink-0',
-              'text-openpkg-code-text-inactive text-sm font-mono',
-            )}
-          >
-            <div className="flex items-center h-5 gap-2">
-              <div className="size-4">{tab.icon}</div>
-              <span className="leading-none">{tab.title}</span>
-            </div>
-          </div>
-        ) : null}
+        <CodeHeader title={tab.title} icon={tab.icon} />
         <div className="relative flex items-start">
           <Pre
             code={tab.highlighted}
-            className="overflow-auto px-0 py-3 m-0 rounded-none !bg-openpkg-code-bg selection:bg-openpkg-code-selection selection:text-current max-h-full flex-1"
+            className={PRE_CLASSNAME}
             style={highlightedStyle}
             handlers={handlers}
           />
@@ -407,7 +358,7 @@ function ClientMultiCode({
       <TabsContent value={current.title} className="relative min-h-0 mt-0 flex flex-col">
         <Pre
           code={current.highlighted}
-          className="overflow-auto px-0 py-3 m-0 rounded-none !bg-openpkg-code-bg selection:bg-openpkg-code-selection selection:text-current max-h-full flex-1"
+          className={PRE_CLASSNAME}
           style={highlightedStyle}
           handlers={handlers}
         />

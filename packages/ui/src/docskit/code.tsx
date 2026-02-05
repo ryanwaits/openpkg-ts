@@ -1,7 +1,8 @@
 import { type AnnotationHandler, highlight, Pre, type RawCode } from 'codehike/code';
 
 import { cn } from '@/lib/utils';
-import { type CodeInfo, flagsToOptions, theme } from './code.config';
+import { type CodeInfo, extractFlags, flagsToOptions, PRE_CLASSNAME, theme } from './code.config';
+import { CodeHeader } from './code-header';
 import { CopyButton } from './code.copy';
 import { getHandlers } from './code.handlers';
 import { CodeIcon } from './code.icon';
@@ -31,20 +32,7 @@ export async function SingleCode(props: {
         props.className,
       )}
     >
-      {title ? (
-        <div
-          className={cn(
-            'border-b-[1px] border-openpkg-code-border bg-openpkg-code-header px-3 py-0',
-            'w-full h-9 flex items-center shrink-0',
-            'text-openpkg-code-text-inactive text-sm font-mono',
-          )}
-        >
-          <div className="flex items-center h-5 gap-2">
-            <div className="size-4">{icon}</div>
-            <span className="leading-none">{title}</span>
-          </div>
-        </div>
-      ) : null}
+      <CodeHeader title={title} icon={icon} />
       <div className="relative flex items-start">
         {pre}
         {showCopy && (
@@ -90,7 +78,7 @@ export async function toCodeGroup(props: {
         pre: (
           <Pre
             code={highlighted}
-            className="overflow-auto px-0 py-3 m-0 rounded-none !bg-openpkg-code-bg selection:bg-openpkg-code-selection selection:text-current max-h-full flex-1"
+            className={PRE_CLASSNAME}
             style={highlightedStyle}
             handlers={handlers}
           />
@@ -106,24 +94,3 @@ export async function toCodeGroup(props: {
   };
 }
 
-/**
- * Extracts flags and title from the metadata of a code block.
- *
- * @example
- * ```typescript
- * const codeblock = { meta: "foo.js -abc" };
- * const { title, flags } = extractFlags(codeblock);
- * console.log(title); // "foo.js"
- * console.log(flags); // "abc"
- * ```
- */
-function extractFlags(codeblock: RawCode) {
-  const flags = codeblock.meta.split(' ').filter((flag) => flag.startsWith('-'))[0] ?? '';
-  const metaWithoutFlags = !flags
-    ? codeblock.meta
-    : codeblock.meta === flags
-      ? ''
-      : codeblock.meta.replace(` ${flags}`, '').trim();
-  const title = metaWithoutFlags.trim();
-  return { title, flags: flags.slice(1) };
-}

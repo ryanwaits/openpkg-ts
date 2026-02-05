@@ -2,7 +2,7 @@
 
 import { Check, Copy } from 'lucide-react';
 import type * as React from 'react';
-import { useState } from 'react';
+import { useCopyToClipboard } from '@/hooks/use-copy-to-clipboard';
 import { cn } from '@/lib/utils';
 import { ClientDocsKitCode } from '../code.client-highlight';
 
@@ -20,14 +20,8 @@ export interface ResponseBlockProps {
  * Displays formatted JSON with copy functionality.
  */
 export function ResponseBlock({ data, title, className }: ResponseBlockProps): React.ReactNode {
-  const [copied, setCopied] = useState(false);
+  const [copied, copy] = useCopyToClipboard();
   const jsonString = JSON.stringify(data, null, 2);
-
-  const handleCopy = () => {
-    navigator.clipboard.writeText(jsonString);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1200);
-  };
 
   return (
     <div
@@ -40,7 +34,7 @@ export function ResponseBlock({ data, title, className }: ResponseBlockProps): R
           </span>
           <button
             type="button"
-            onClick={handleCopy}
+            onClick={() => copy(jsonString)}
             className="p-1 rounded text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
             aria-label="Copy response"
           >

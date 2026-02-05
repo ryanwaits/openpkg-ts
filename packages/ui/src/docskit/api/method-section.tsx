@@ -2,7 +2,7 @@
 
 import { type ReactNode, useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils';
-import { useSyncScroll } from '../hooks/use-sync-scroll';
+import { useSyncScrollSafe } from '../hooks/use-sync-scroll';
 
 export interface MethodSectionProps {
   /** Section ID for scroll sync */
@@ -115,12 +115,4 @@ export function MethodSection({
       )}
     </section>
   );
-}
-
-function useSyncScrollSafe() {
-  try {
-    return useSyncScroll();
-  } catch {
-    return null;
-  }
 }

@@ -1,7 +1,7 @@
 'use client';
 
 import { Check, Copy } from 'lucide-react';
-import { useState } from 'react';
+import { useCopyToClipboard } from '@/hooks/use-copy-to-clipboard';
 import { cn } from '@/lib/utils';
 
 export function CopyButton({
@@ -13,7 +13,7 @@ export function CopyButton({
   className?: string;
   variant?: 'floating' | 'inline';
 }): React.ReactNode {
-  const [copied, setCopied] = useState(false);
+  const [copied, copy] = useCopyToClipboard();
 
   return (
     <button
@@ -28,11 +28,7 @@ export function CopyButton({
         variant === 'inline' && 'rounded',
         className,
       )}
-      onClick={() => {
-        navigator.clipboard.writeText(text);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 1200);
-      }}
+      onClick={() => copy(text)}
       aria-label="Copy to clipboard"
     >
       {copied ? <Check size={16} className="block" /> : <Copy size={16} className="block" />}

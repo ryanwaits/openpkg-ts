@@ -2,7 +2,7 @@
 
 import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { cn } from '@/lib/utils';
-import { useSyncScroll } from '../hooks/use-sync-scroll';
+import { useSyncScrollSafe } from '../hooks/use-sync-scroll';
 import { CodeBlock } from './code-block';
 import { CollapsiblePanel } from './collapsible-panel';
 import { ExampleChips } from './example-chips';
@@ -119,12 +119,4 @@ export function ExampleSection({
       )}
     </div>
   );
-}
-
-function useSyncScrollSafe() {
-  try {
-    return useSyncScroll();
-  } catch {
-    return null;
-  }
 }

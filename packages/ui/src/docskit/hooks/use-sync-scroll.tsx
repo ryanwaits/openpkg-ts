@@ -126,6 +126,7 @@ export function SyncScrollProvider({
 
 /**
  * Hook to access sync scroll context.
+ * @throws Error if used outside SyncScrollProvider
  */
 export function useSyncScroll(): SyncScrollContextValue {
   const context = useContext(SyncScrollContext);
@@ -133,6 +134,13 @@ export function useSyncScroll(): SyncScrollContextValue {
     throw new Error('useSyncScroll must be used within SyncScrollProvider');
   }
   return context;
+}
+
+/**
+ * Safe variant that returns null if used outside provider.
+ */
+export function useSyncScrollSafe(): SyncScrollContextValue | null {
+  return useContext(SyncScrollContext);
 }
 
 /**

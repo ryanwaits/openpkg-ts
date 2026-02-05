@@ -11,7 +11,7 @@ import { ChevronDown, ChevronUp } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/collapsible';
 import { cn } from '@/lib/utils';
-import { flagsToOptions, theme } from './code.config';
+import { extractFlags, flagsToOptions, PRE_CLASSNAME, theme } from './code.config';
 import { CopyButton } from './code.copy';
 import { getHandlers } from './code.handlers';
 import { CodeIcon } from './code.icon';
@@ -151,7 +151,7 @@ export function ClientDiffCode(props: ClientDiffCodeProps): React.ReactNode {
           <div className="relative flex items-start">
             <Pre
               code={highlighted}
-              className="overflow-auto px-0 py-3 m-0 rounded-none !bg-openpkg-code-bg selection:bg-openpkg-code-selection selection:text-current max-h-full flex-1"
+              className={PRE_CLASSNAME}
               style={highlightedStyle}
               handlers={handlers}
             />
@@ -167,21 +167,6 @@ export function ClientDiffCode(props: ClientDiffCodeProps): React.ReactNode {
       </div>
     </Collapsible>
   );
-}
-
-/**
- * Extracts flags and title from the metadata of a code block.
- */
-function extractFlags(codeblock: RawCode) {
-  const meta = codeblock.meta || '';
-  const flags = meta.split(' ').filter((flag) => flag.startsWith('-'))[0] ?? '';
-  const metaWithoutFlags = !flags
-    ? meta
-    : meta === flags
-      ? ''
-      : meta.replace(` ${flags}`, '').trim();
-  const title = metaWithoutFlags.trim();
-  return { title, flags: flags.slice(1) };
 }
 
 export type { ClientDiffCodeProps, DiffStats };
