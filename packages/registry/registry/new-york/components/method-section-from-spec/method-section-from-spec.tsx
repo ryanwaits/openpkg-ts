@@ -3,9 +3,9 @@
 import type { OpenPkg, SpecExport } from '@openpkg-ts/spec';
 import { cn } from '@openpkg-ts/ui/lib/utils';
 import type { ReactNode } from 'react';
-import { extractMethodData } from '@/registry/new-york/hooks/use-method-from-spec/use-method-from-spec';
 import { ExpandableParameter } from '@/registry/new-york/components/expandable-parameter/expandable-parameter';
 import { MethodSection } from '@/registry/new-york/components/method-section/method-section';
+import { extractMethodData } from '@/registry/new-york/hooks/use-method-from-spec/use-method-from-spec';
 
 export interface MethodSectionFromSpecProps {
   /** OpenPkg spec */

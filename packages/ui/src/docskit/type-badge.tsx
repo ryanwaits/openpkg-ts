@@ -24,29 +24,29 @@ const typeBadgeVariants: (props?: {
   class?: string;
   className?: string;
 }) => string = cva('font-mono text-sm', {
-    variants: {
-      typeColor: {
-        // Primitives
-        string: 'text-[var(--openpkg-accent-green)]',
-        number: 'text-[var(--openpkg-accent-blue)]',
-        boolean: 'text-[var(--openpkg-accent-amber)]',
-        null: 'text-[var(--openpkg-text-muted)]',
-        undefined: 'text-[var(--openpkg-text-muted)]',
-        // Complex types
-        object: 'text-[var(--openpkg-accent-purple)]',
-        array: 'text-[var(--openpkg-accent-cyan)]',
-        function: 'text-[var(--openpkg-accent-fuchsia)]',
-        // Special
-        union: 'text-[var(--openpkg-accent-orange)]',
-        generic: 'text-[var(--openpkg-accent-rose)]',
-        // Default
-        default: 'text-[var(--openpkg-text-muted)]',
-      },
+  variants: {
+    typeColor: {
+      // Primitives
+      string: 'text-[var(--openpkg-accent-green)]',
+      number: 'text-[var(--openpkg-accent-blue)]',
+      boolean: 'text-[var(--openpkg-accent-amber)]',
+      null: 'text-[var(--openpkg-text-muted)]',
+      undefined: 'text-[var(--openpkg-text-muted)]',
+      // Complex types
+      object: 'text-[var(--openpkg-accent-purple)]',
+      array: 'text-[var(--openpkg-accent-cyan)]',
+      function: 'text-[var(--openpkg-accent-fuchsia)]',
+      // Special
+      union: 'text-[var(--openpkg-accent-orange)]',
+      generic: 'text-[var(--openpkg-accent-rose)]',
+      // Default
+      default: 'text-[var(--openpkg-text-muted)]',
     },
-    defaultVariants: {
-      typeColor: 'default',
-    },
-  });
+  },
+  defaultVariants: {
+    typeColor: 'default',
+  },
+});
 
 export interface TypeBadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
   /** Type string to display */

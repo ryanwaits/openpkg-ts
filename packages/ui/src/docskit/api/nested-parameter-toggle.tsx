@@ -1,7 +1,7 @@
 'use client';
 
-import { cn } from '@/lib/utils';
 import type { ReactNode } from 'react';
+import { cn } from '@/lib/utils';
 
 export interface NestedParameterToggleProps {
   /** Toggle state */
@@ -45,9 +45,7 @@ export function NestedParameterToggle({
       aria-expanded={expanded}
     >
       <span className="text-[13px]">{expanded ? '×' : '+'}</span>
-      <span>
-        {expanded ? 'Hide' : 'Show'} Child Attributes
-      </span>
+      <span>{expanded ? 'Hide' : 'Show'} Child Attributes</span>
     </button>
   );
 }

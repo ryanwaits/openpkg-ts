@@ -62,13 +62,7 @@ export function MethodSection({
       </h2>
 
       {signature && (
-        <code
-          className={cn(
-            'block font-mono text-sm',
-            'text-[var(--openpkg-text-muted)]',
-            'mb-6',
-          )}
-        >
+        <code className={cn('block font-mono text-sm', 'text-[var(--openpkg-text-muted)]', 'mb-6')}>
           {signature}
         </code>
       )}

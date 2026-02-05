@@ -1,7 +1,7 @@
 import type { SpecExport } from '@openpkg-ts/spec';
 import type ts from 'typescript';
-import { extractExportMetadata } from './shared';
 import { extractSchemaType } from '../schema/registry';
+import { extractExportMetadata } from './shared';
 // Import adapters to ensure they're registered (side effect)
 import '../schema/adapters';
 import { registerReferencedTypes } from '../types/parameters';

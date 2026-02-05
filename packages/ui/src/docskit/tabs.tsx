@@ -5,7 +5,10 @@ import type * as React from 'react';
 
 import { cn } from '@/lib/utils';
 
-function Tabs({ className, ...props }: React.ComponentProps<typeof TabsPrimitive.Root>): React.ReactNode {
+function Tabs({
+  className,
+  ...props
+}: React.ComponentProps<typeof TabsPrimitive.Root>): React.ReactNode {
   return (
     <TabsPrimitive.Root
       data-slot="tabs"
@@ -15,7 +18,10 @@ function Tabs({ className, ...props }: React.ComponentProps<typeof TabsPrimitive
   );
 }
 
-function TabsList({ className, ...props }: React.ComponentProps<typeof TabsPrimitive.List>): React.ReactNode {
+function TabsList({
+  className,
+  ...props
+}: React.ComponentProps<typeof TabsPrimitive.List>): React.ReactNode {
   return (
     <TabsPrimitive.List
       data-slot="tabs-list"
@@ -28,7 +34,10 @@ function TabsList({ className, ...props }: React.ComponentProps<typeof TabsPrimi
   );
 }
 
-function TabsTrigger({ className, ...props }: React.ComponentProps<typeof TabsPrimitive.Trigger>): React.ReactNode {
+function TabsTrigger({
+  className,
+  ...props
+}: React.ComponentProps<typeof TabsPrimitive.Trigger>): React.ReactNode {
   return (
     <TabsPrimitive.Trigger
       data-slot="tabs-trigger"
@@ -41,7 +50,10 @@ function TabsTrigger({ className, ...props }: React.ComponentProps<typeof TabsPr
   );
 }
 
-function TabsContent({ className, ...props }: React.ComponentProps<typeof TabsPrimitive.Content>): React.ReactNode {
+function TabsContent({
+  className,
+  ...props
+}: React.ComponentProps<typeof TabsPrimitive.Content>): React.ReactNode {
   return (
     <TabsPrimitive.Content
       data-slot="tabs-content"

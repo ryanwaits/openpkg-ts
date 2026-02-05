@@ -1,6 +1,12 @@
 import type { SpecSignature, SpecSource } from '@openpkg-ts/spec';
 import type ts from 'typescript';
-import { extractTypeParametersFromSignature, getJSDocComment, getJSDocForSignature, getSourceLocation, isSymbolDeprecated } from '../ast/utils';
+import {
+  extractTypeParametersFromSignature,
+  getJSDocComment,
+  getJSDocForSignature,
+  getSourceLocation,
+  isSymbolDeprecated,
+} from '../ast/utils';
 import { extractParameters, registerReferencedTypes } from '../types/parameters';
 import { buildSchema } from '../types/schema-builder';
 import type { SerializerContext } from './context';

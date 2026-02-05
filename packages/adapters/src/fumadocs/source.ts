@@ -1,11 +1,11 @@
 import { createDocs, type DocsInstance } from '@openpkg-ts/sdk';
 import {
-  type OpenPkg,
-  type SpecExport,
-  type SpecExportKind,
   DISPLAY_KIND_ORDER,
   KIND_LABELS,
   KIND_SLUGS,
+  type OpenPkg,
+  type SpecExport,
+  type SpecExportKind,
 } from '@openpkg-ts/spec';
 import type { Source, VirtualFile } from 'fumadocs-core/source';
 

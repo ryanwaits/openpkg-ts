@@ -1,7 +1,7 @@
 'use client';
 
-import { cn } from '@/lib/utils';
 import type { ReactNode } from 'react';
+import { cn } from '@/lib/utils';
 import { ClientDocsKitCode } from '../code.client-highlight';
 
 export interface CodeBlockProps {
@@ -34,10 +34,7 @@ export function CodeBlock({
         lang: language,
         meta: flags,
       }}
-      className={cn(
-        'my-0 border-[var(--openpkg-border-subtle)]',
-        className,
-      )}
+      className={cn('my-0 border-[var(--openpkg-border-subtle)]', className)}
     />
   );
 }

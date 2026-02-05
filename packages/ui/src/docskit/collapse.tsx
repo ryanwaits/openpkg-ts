@@ -57,4 +57,8 @@ const collapseContent: AnnotationHandler = {
   Block: CollapsibleContent,
 };
 
-export const collapse: readonly AnnotationHandler[] = [collapseRoot, collapseTrigger, collapseContent];
+export const collapse: readonly AnnotationHandler[] = [
+  collapseRoot,
+  collapseTrigger,
+  collapseContent,
+];

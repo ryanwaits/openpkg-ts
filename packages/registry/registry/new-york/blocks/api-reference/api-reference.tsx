@@ -1,16 +1,17 @@
 'use client';
 
+import { resolveTypeRef } from '@openpkg-ts/sdk/browser';
 import type { OpenPkg, SpecExample, SpecExport, SpecSchema } from '@openpkg-ts/spec';
 import {
   APIParameterItem,
   APIReferencePage,
   APISection,
-  ExpandableParameter,
-  ParameterList,
+  APISectionSingle,
   type CodeExample,
+  ExpandableParameter,
   type Language,
+  ParameterList,
 } from '@openpkg-ts/ui/docskit';
-import { resolveTypeRef } from '@openpkg-ts/sdk/browser';
 import { cn } from '@openpkg-ts/ui/lib/utils';
 import { type ReactNode, useCallback } from 'react';
 import { extractMethodData } from '@/registry/new-york/hooks/use-method-from-spec/use-method-from-spec';
@@ -20,7 +21,7 @@ export interface ApiReferenceProps {
   filter?: (exp: SpecExport) => boolean;
   showAllKinds?: boolean;
   className?: string;
-  theme?: 'default';
+  theme?: 'default' | 'single';
 }
 
 /**
@@ -60,10 +61,46 @@ export function ApiReferencePage({
         className,
       )}
     >
-      <APIReferencePage title={spec.meta.name}>
+      <APIReferencePage title={spec.meta.name} theme={theme}>
         {sortedExports.map((exp) => {
           const method = extractMethodData(exp);
           const examples = getExamplesForExport(exp, spec);
+
+          if (theme === 'single') {
+            return (
+              <APISectionSingle
+                key={exp.id || exp.name}
+                id={exp.id || exp.name}
+                title={method.title}
+                description={method.description}
+                example={{ code: examples[0]?.code || '', lang: examples[0]?.languageId }}
+                packageName={spec.meta.name}
+                resolveRef={resolveRef}
+                parameters={
+                  method.parameters.length > 0
+                    ? method.parameters.map((param) => (
+                        <ExpandableParameter
+                          key={param.name}
+                          parameter={{
+                            name: param.name,
+                            schema: resolveParamSchema(param.schema, spec) || param.schema,
+                            required: param.required ?? false,
+                            description: param.description,
+                          }}
+                          resolveRef={resolveRef}
+                        />
+                      ))
+                    : undefined
+                }
+                returns={
+                  method.returnTypeString
+                    ? { type: method.returnTypeString, description: method.returnDescription }
+                    : undefined
+                }
+              />
+            );
+          }
+
           const languages = getLanguagesFromExamples(examples);
 
           return (
@@ -123,7 +160,11 @@ function specExamplesToCodeExamples(examples: (SpecExample | string)[]): CodeExa
   return examples.map(specExampleToCodeExample);
 }
 
-function generateDefaultExample(packageName: string, exportName: string, paramNames: string[]): CodeExample {
+function generateDefaultExample(
+  packageName: string,
+  exportName: string,
+  paramNames: string[],
+): CodeExample {
   const importLine = `import { ${exportName} } from '${packageName}';`;
   const callArgs = paramNames.join(', ');
   const callLine = `const result = await ${exportName}(${callArgs});`;
@@ -132,10 +173,16 @@ function generateDefaultExample(packageName: string, exportName: string, paramNa
 
 function mapLanguage(lang: string | undefined): string {
   switch (lang) {
-    case 'ts': case 'tsx': return 'typescript';
-    case 'js': case 'jsx': return 'javascript';
-    case 'shell': return 'bash';
-    default: return lang || 'typescript';
+    case 'ts':
+    case 'tsx':
+      return 'typescript';
+    case 'js':
+    case 'jsx':
+      return 'javascript';
+    case 'shell':
+      return 'bash';
+    default:
+      return lang || 'typescript';
   }
 }
 

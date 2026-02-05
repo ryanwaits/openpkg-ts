@@ -8,6 +8,8 @@ export interface APIReferencePageProps {
   title: string;
   /** Optional page description */
   description?: React.ReactNode;
+  /** Theme variant */
+  theme?: 'default' | 'single';
   /** API sections as children */
   children: React.ReactNode;
   /** Custom className */
@@ -21,11 +23,14 @@ export interface APIReferencePageProps {
 export function APIReferencePage({
   title,
   description,
+  theme = 'default',
   children,
   className,
 }: APIReferencePageProps): React.ReactNode {
+  const containerClass = theme === 'single' ? 'max-w-[780px]' : 'max-w-7xl';
+
   return (
-    <div className={cn('max-w-7xl mx-auto px-4 sm:px-6 lg:px-8', className)}>
+    <div className={cn(containerClass, 'mx-auto px-4 sm:px-6 lg:px-8', className)}>
       {/* Page header */}
       <header className="py-8 border-b border-border">
         <h1 className="text-3xl font-bold text-foreground">{title}</h1>

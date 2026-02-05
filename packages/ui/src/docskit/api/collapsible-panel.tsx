@@ -1,8 +1,8 @@
 'use client';
 
-import { cn } from '@/lib/utils';
 import { ChevronRight } from 'lucide-react';
 import { type ReactNode, useId, useState } from 'react';
+import { cn } from '@/lib/utils';
 
 export interface CollapsiblePanelProps {
   /** Panel title (e.g., "Response", "Data source") */

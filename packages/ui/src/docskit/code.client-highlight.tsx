@@ -49,7 +49,7 @@ export function ClientDocsKitCode(props: {
       cancelled = true;
     };
     // Only depend on primitive values to avoid infinite re-renders
-  }, [codeblock.value, codeblock.lang, codeblock.meta]);
+  }, [codeblock.value, codeblock.lang, codeblock.meta, codeblock]);
 
   if (!highlighted) {
     return <CodeBlockSkeleton hasTitle={!!title} />;
@@ -96,10 +96,7 @@ export function ClientDocsKitCode(props: {
           <CopyButton
             text={highlighted.code}
             variant="floating"
-            className={cn(
-              'absolute right-3 z-10 text-openpkg-code-text-inactive',
-              'top-3',
-            )}
+            className={cn('absolute right-3 z-10 text-openpkg-code-text-inactive', 'top-3')}
           />
         )}
       </div>
@@ -110,7 +107,10 @@ export function ClientDocsKitCode(props: {
 /**
  * Client-side terminal-style code block.
  */
-export function ClientTerminal(props: { codeblock: RawCode; handlers?: AnnotationHandler[] }): React.ReactNode {
+export function ClientTerminal(props: {
+  codeblock: RawCode;
+  handlers?: AnnotationHandler[];
+}): React.ReactNode {
   const { codeblock, handlers: extraHandlers } = props;
   const [highlighted, setHighlighted] = useState<HighlightedCode | null>(null);
 
@@ -128,7 +128,7 @@ export function ClientTerminal(props: { codeblock: RawCode; handlers?: Annotatio
       cancelled = true;
     };
     // Only depend on primitive values to avoid infinite re-renders
-  }, [codeblock.value, codeblock.lang, codeblock.meta]);
+  }, [codeblock.value, codeblock.lang, codeblock.meta, codeblock]);
 
   if (!highlighted) {
     return <TerminalSkeleton />;
@@ -202,7 +202,7 @@ export function ClientInlineCode({ codeblock }: { codeblock: RawCode }): React.R
       cancelled = true;
     };
     // Only depend on primitive values to avoid infinite re-renders
-  }, [codeblock.value, codeblock.lang, codeblock.meta]);
+  }, [codeblock.value, codeblock.lang, codeblock.meta, codeblock]);
 
   if (!highlighted) {
     return <InlineCodeSkeleton />;
@@ -245,7 +245,11 @@ function extractFlagsSimple(codeblock: RawCode) {
 /**
  * Client-side code tabs with multiple files.
  */
-export function ClientCode(props: { codeblocks: RawCode[]; flags?: string; storage?: string }): React.ReactNode {
+export function ClientCode(props: {
+  codeblocks: RawCode[];
+  flags?: string;
+  storage?: string;
+}): React.ReactNode {
   const { codeblocks, flags: groupFlags, storage } = props;
   const [highlighted, setHighlighted] = useState<Map<
     number,
@@ -293,7 +297,7 @@ export function ClientCode(props: { codeblocks: RawCode[]; flags?: string; stora
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [_codeBlocksKey]);
+  }, [codeblocks.map, groupOptions]);
 
   if (!highlighted) {
     return <CodeTabsSkeleton tabs={codeblocks.length} />;
@@ -301,7 +305,8 @@ export function ClientCode(props: { codeblocks: RawCode[]; flags?: string; stora
 
   // Single tab - render without tabs
   if (codeblocks.length === 1) {
-    const tab = highlighted.get(0)!;
+    const tab = highlighted.get(0);
+    if (!tab) return <CodeTabsSkeleton tabs={1} />;
     const handlers = getHandlers(tab.options);
     const { background: _background, ...highlightedStyle } = tab.highlighted.style;
 

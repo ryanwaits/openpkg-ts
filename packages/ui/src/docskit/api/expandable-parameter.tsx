@@ -2,12 +2,12 @@
 
 import { formatSchema } from '@openpkg-ts/sdk/browser';
 import type { SpecSchema, SpecSignatureParameter } from '@openpkg-ts/spec';
-import { cn } from '@/lib/utils';
 import { type ReactNode, useState } from 'react';
-import { APIParameterItem } from './parameter-item';
+import { cn } from '@/lib/utils';
 import { EnumValuesSection } from './enum-values-section';
 import { NestedParameterContainer } from './nested-parameter-container';
 import { NestedParameterToggle } from './nested-parameter-toggle';
+import { APIParameterItem } from './parameter-item';
 
 export interface ExpandableParameterProps {
   /** Parameter from spec */
@@ -73,10 +73,7 @@ export function ExpandableParameter({
 
         {nestedParams.length > 0 && (
           <div className="mt-3 mb-1">
-            <NestedParameterToggle
-              expanded={expanded}
-              onToggle={handleToggle}
-            />
+            <NestedParameterToggle expanded={expanded} onToggle={handleToggle} />
             {expanded && (
               <NestedParameterContainer level={level}>
                 {nestedParams.map((nested) => (

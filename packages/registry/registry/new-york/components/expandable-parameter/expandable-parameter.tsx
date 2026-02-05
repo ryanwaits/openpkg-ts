@@ -71,10 +71,7 @@ export function ExpandableParameter({
 
         {nestedParams.length > 0 && (
           <>
-            <NestedParameterToggle
-              expanded={expanded}
-              onToggle={handleToggle}
-            />
+            <NestedParameterToggle expanded={expanded} onToggle={handleToggle} />
             {expanded && (
               <NestedParameterContainer level={level}>
                 {nestedParams.map((nested) => (

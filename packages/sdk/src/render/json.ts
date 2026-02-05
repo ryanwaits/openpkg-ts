@@ -6,7 +6,13 @@ import type {
   SpecMember,
   SpecSignature,
 } from '@openpkg-ts/spec';
-import { buildSignatureString, filterExports, findExport, formatSchema, groupByKind } from '../core/query';
+import {
+  buildSignatureString,
+  filterExports,
+  findExport,
+  formatSchema,
+  groupByKind,
+} from '../core/query';
 
 export interface JSONOptions {
   /** Include raw spec data alongside simplified data */

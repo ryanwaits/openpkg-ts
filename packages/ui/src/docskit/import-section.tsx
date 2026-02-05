@@ -1,8 +1,8 @@
 'use client';
 
 import { Check, Copy } from 'lucide-react';
-import { cn } from '@/lib/utils';
 import { useCopyToClipboard } from '@/hooks/use-copy-to-clipboard';
+import { cn } from '@/lib/utils';
 
 export interface ImportSectionProps {
   /** Import statement text */
@@ -30,7 +30,9 @@ export function ImportSection({ importStatement, className }: ImportSectionProps
         className,
       )}
     >
-      <code className="font-mono text-sm text-[var(--openpkg-text-primary)] overflow-x-auto">{importStatement}</code>
+      <code className="font-mono text-sm text-[var(--openpkg-text-primary)] overflow-x-auto">
+        {importStatement}
+      </code>
       <button
         type="button"
         onClick={handleCopy}

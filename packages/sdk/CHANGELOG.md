@@ -1,5 +1,25 @@
 # @openpkg-ts/extract
 
+## 0.35.1
+
+### Patch Changes
+
+- Add single-column theme for API reference
+
+  **@openpkg-ts/ui:**
+
+  - Add `SectionAccordion` component - collapsible section with header toggle
+  - Add `APISectionSingle` component - single-column 780px centered layout
+  - Add `theme` prop to `APIReferencePage` (`'default' | 'single'`)
+  - Export new components from docskit barrel
+
+  **@openpkg-ts/sdk, @openpkg-ts/cli, @openpkg-ts/adapters, @openpkg-ts/spec:**
+
+  - Lint fixes (biome)
+
+- Updated dependencies
+  - @openpkg-ts/spec@0.35.1
+
 ## 0.35.0
 
 ### Minor Changes

@@ -70,7 +70,9 @@ export function FunctionSection({ export: exp, spec }: FunctionSectionProps): Re
                 {formatSchema(sig.returns.schema)}
               </span>
               {sig.returns.description && (
-                <span className="ml-2 text-[var(--openpkg-text-muted)]">{sig.returns.description}</span>
+                <span className="ml-2 text-[var(--openpkg-text-muted)]">
+                  {sig.returns.description}
+                </span>
               )}
             </span>
           }
@@ -86,9 +88,13 @@ export function FunctionSection({ export: exp, spec }: FunctionSectionProps): Re
           <div className="space-y-1">
             {sig.throws.map((t, i) => (
               <div key={i} className="text-sm">
-                {t.type && <code className="font-mono text-[var(--openpkg-accent-red)]">{t.type}</code>}
+                {t.type && (
+                  <code className="font-mono text-[var(--openpkg-accent-red)]">{t.type}</code>
+                )}
                 {t.type && t.description && <span className="mx-1">—</span>}
-                {t.description && <span className="text-[var(--openpkg-text-muted)]">{t.description}</span>}
+                {t.description && (
+                  <span className="text-[var(--openpkg-text-muted)]">{t.description}</span>
+                )}
               </div>
             ))}
           </div>

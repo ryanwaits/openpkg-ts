@@ -2,7 +2,7 @@ import type { SpecExportKind } from '@openpkg-ts/spec';
 import type { Item } from 'fumadocs-core/page-tree';
 import type { LoaderPlugin } from 'fumadocs-core/source';
 import { createElement } from 'react';
-import { SUPPORTED_KINDS, SidebarKindBadge } from './components/sidebar-badge';
+import { SidebarKindBadge, SUPPORTED_KINDS } from './components/sidebar-badge';
 import type { OpenPkgPageData } from './source';
 
 // Re-export for backward compatibility

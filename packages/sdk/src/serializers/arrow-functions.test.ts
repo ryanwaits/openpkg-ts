@@ -13,8 +13,8 @@ describe('arrow function exports', () => {
     const fn = result.spec.exports.find((e) => e.name === 'add');
     expect(fn).toBeDefined();
     expect(fn?.kind).toBe('function');
-    expect(fn!.signatures).toBeDefined();
-    expect(fn!.signatures).toHaveLength(1);
+    expect(fn?.signatures).toBeDefined();
+    expect(fn?.signatures).toHaveLength(1);
   });
 
   test('arrow function optional params marked correctly', async () => {
@@ -29,7 +29,7 @@ describe('arrow function exports', () => {
     expect(fn).toBeDefined();
     expect(fn?.kind).toBe('function');
 
-    const signatures = fn!.signatures;
+    const signatures = fn?.signatures;
     const params = signatures[0].parameters;
 
     expect(params[0].name).toBe('name');
@@ -50,7 +50,7 @@ describe('arrow function exports', () => {
     const fn = result.spec.exports.find((e) => e.name === 'multiply');
     expect(fn?.kind).toBe('function');
 
-    const signatures = fn!.signatures;
+    const signatures = fn?.signatures;
     const params = signatures[0].parameters;
 
     expect(params[0].required).toBe(true);
@@ -94,7 +94,7 @@ describe('arrow function exports', () => {
     const fn = result.spec.exports.find((e) => e.name === 'double');
     expect(fn?.kind).toBe('function');
 
-    const signatures = fn!.signatures;
+    const signatures = fn?.signatures;
     const returnSchema = signatures[0].returns.schema;
     expect(returnSchema.type).toBe('number');
   });

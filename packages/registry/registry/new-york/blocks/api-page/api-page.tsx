@@ -22,7 +22,8 @@ function NotFound({ id }: { id: string }) {
   return (
     <div className="rounded-lg border border-[var(--openpkg-border-subtle)] bg-[var(--openpkg-bg-card)] p-6 text-center">
       <p className="text-[var(--openpkg-text-muted)]">
-        Export <code className="font-mono text-[var(--openpkg-accent-link)]">{id}</code> not found in spec.
+        Export <code className="font-mono text-[var(--openpkg-accent-link)]">{id}</code> not found
+        in spec.
       </p>
     </div>
   );

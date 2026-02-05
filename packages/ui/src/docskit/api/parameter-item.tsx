@@ -1,7 +1,7 @@
 'use client';
 
-import { cn } from '@/lib/utils';
 import type { ReactNode } from 'react';
+import { cn } from '@/lib/utils';
 
 export interface APIParameterSchema {
   /** Type name */
@@ -70,9 +70,7 @@ export function APIParameterItem({
       <div className="openpkg-param-header flex items-baseline gap-2 mb-1 flex-wrap">
         {/* Name with parent path */}
         <span className="openpkg-param-name font-mono text-sm font-semibold">
-          {parentPath && (
-            <span className="text-[var(--openpkg-text-muted)]">{parentPath}</span>
-          )}
+          {parentPath && <span className="text-[var(--openpkg-text-muted)]">{parentPath}</span>}
           <span className="text-[var(--openpkg-text-primary)]">{name}</span>
         </span>
 

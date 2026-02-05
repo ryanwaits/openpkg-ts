@@ -100,7 +100,13 @@ export function InlineCodeSkeleton(): React.ReactNode {
 /**
  * Loading skeleton for code tabs.
  */
-export function CodeTabsSkeleton({ tabs = 2, lines = 6 }: { tabs?: number; lines?: number }): React.ReactNode {
+export function CodeTabsSkeleton({
+  tabs = 2,
+  lines = 6,
+}: {
+  tabs?: number;
+  lines?: number;
+}): React.ReactNode {
   const id = useId();
   const lineWidths = Array.from({ length: lines }, (_, i) => {
     const widths = ['40%', '65%', '55%', '80%', '45%', '70%'];

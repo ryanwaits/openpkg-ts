@@ -200,10 +200,7 @@ function buildContent(exp: SpecExport, options: SearchOptions = {}): string {
 /**
  * Create a search record for an export.
  */
-function createSearchRecord(
-  exp: SpecExport,
-  options: SearchOptions = {},
-): SearchRecord {
+function createSearchRecord(exp: SpecExport, options: SearchOptions = {}): SearchRecord {
   const { baseUrl = '/api', slugify = defaultSlugify } = options;
 
   return {

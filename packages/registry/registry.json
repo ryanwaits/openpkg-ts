@@ -121,6 +121,19 @@
       ]
     },
     {
+      "name": "section-accordion",
+      "type": "registry:ui",
+      "title": "Section Accordion",
+      "description": "Collapsible section with header toggle",
+      "dependencies": ["@openpkg-ts/ui", "lucide-react"],
+      "files": [
+        {
+          "path": "registry/new-york/ui/section-accordion/section-accordion.tsx",
+          "type": "registry:ui"
+        }
+      ]
+    },
+    {
       "name": "use-method-from-spec",
       "type": "registry:hook",
       "title": "useMethodFromSpec",
@@ -151,7 +164,12 @@
       "title": "Expandable Parameter",
       "description": "Compound parameter with nested object properties and enum values",
       "dependencies": ["@openpkg-ts/sdk", "@openpkg-ts/spec", "@openpkg-ts/ui"],
-      "registryDependencies": ["@openpkg-ts/api-parameter-item", "@openpkg-ts/enum-values-section", "@openpkg-ts/nested-parameter-container", "@openpkg-ts/nested-parameter-toggle"],
+      "registryDependencies": [
+        "@openpkg-ts/api-parameter-item",
+        "@openpkg-ts/enum-values-section",
+        "@openpkg-ts/nested-parameter-container",
+        "@openpkg-ts/nested-parameter-toggle"
+      ],
       "files": [
         {
           "path": "registry/new-york/components/expandable-parameter/expandable-parameter.tsx",
@@ -179,7 +197,11 @@
       "title": "Method Section From Spec",
       "description": "Auto-generate method documentation from OpenPkg spec",
       "dependencies": ["@openpkg-ts/spec", "@openpkg-ts/ui"],
-      "registryDependencies": ["@openpkg-ts/expandable-parameter", "@openpkg-ts/method-section", "@openpkg-ts/use-method-from-spec"],
+      "registryDependencies": [
+        "@openpkg-ts/expandable-parameter",
+        "@openpkg-ts/method-section",
+        "@openpkg-ts/use-method-from-spec"
+      ],
       "files": [
         {
           "path": "registry/new-york/components/method-section-from-spec/method-section-from-spec.tsx",
@@ -193,7 +215,12 @@
       "title": "Example Section",
       "description": "Complete right-column section with chips, code, and panels",
       "dependencies": ["@openpkg-ts/ui"],
-      "registryDependencies": ["@openpkg-ts/code-block", "@openpkg-ts/collapsible-panel", "@openpkg-ts/example-chips", "@openpkg-ts/use-sync-scroll"],
+      "registryDependencies": [
+        "@openpkg-ts/code-block",
+        "@openpkg-ts/collapsible-panel",
+        "@openpkg-ts/example-chips",
+        "@openpkg-ts/use-sync-scroll"
+      ],
       "files": [
         {
           "path": "registry/new-york/components/example-section/example-section.tsx",
@@ -305,10 +332,30 @@
       "title": "Export Section",
       "description": "Router component rendering appropriate section by export kind",
       "dependencies": ["@openpkg-ts/spec"],
-      "registryDependencies": ["@openpkg-ts/function-section", "@openpkg-ts/class-section", "@openpkg-ts/interface-section", "@openpkg-ts/enum-section", "@openpkg-ts/variable-section"],
+      "registryDependencies": [
+        "@openpkg-ts/function-section",
+        "@openpkg-ts/class-section",
+        "@openpkg-ts/interface-section",
+        "@openpkg-ts/enum-section",
+        "@openpkg-ts/variable-section"
+      ],
       "files": [
         {
           "path": "registry/new-york/components/export-section/export-section.tsx",
+          "type": "registry:component"
+        }
+      ]
+    },
+    {
+      "name": "api-section-single",
+      "type": "registry:component",
+      "title": "API Section Single",
+      "description": "Single-column API section for MoneyKit-style docs",
+      "dependencies": ["@openpkg-ts/ui"],
+      "registryDependencies": ["@openpkg-ts/section-accordion", "@openpkg-ts/expandable-parameter"],
+      "files": [
+        {
+          "path": "registry/new-york/components/api-section-single/api-section-single.tsx",
           "type": "registry:component"
         }
       ]

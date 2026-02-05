@@ -2,10 +2,10 @@
 
 import { cn } from '@openpkg-ts/ui/lib/utils';
 import { type ReactNode, useEffect, useRef, useState } from 'react';
+import { useSyncScroll } from '@/registry/new-york/hooks/use-sync-scroll/use-sync-scroll';
 import { CodeBlock } from '@/registry/new-york/ui/code-block/code-block';
 import { CollapsiblePanel } from '@/registry/new-york/ui/collapsible-panel/collapsible-panel';
 import { ExampleChips } from '@/registry/new-york/ui/example-chips/example-chips';
-import { useSyncScroll } from '@/registry/new-york/hooks/use-sync-scroll/use-sync-scroll';
 
 export interface CodeExample {
   /** Unique identifier */

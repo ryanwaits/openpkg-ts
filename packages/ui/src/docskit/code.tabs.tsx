@@ -24,7 +24,11 @@ export async function CodeGroup(props: unknown): Promise<React.ReactNode> {
   return <Code codeblocks={code} {...rest} />;
 }
 
-export async function Code(props: { codeblocks: RawCode[]; flags?: string; storage?: string }): Promise<React.ReactNode> {
+export async function Code(props: {
+  codeblocks: RawCode[];
+  flags?: string;
+  storage?: string;
+}): Promise<React.ReactNode> {
   const group = await toCodeGroup(props);
   return group.tabs.length === 1 ? (
     <SingleCode group={group} />

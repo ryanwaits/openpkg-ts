@@ -16,7 +16,10 @@ export async function DocsKitCode(props: {
   return <SingleCode group={group} className={className} />;
 }
 
-export async function SingleCode(props: { group: CodeInfo; className?: string }): Promise<React.ReactNode> {
+export async function SingleCode(props: {
+  group: CodeInfo;
+  className?: string;
+}): Promise<React.ReactNode> {
   const { pre, title, code, icon, options } = props.group.tabs[0];
 
   const showCopy = options?.copyButton;
@@ -48,10 +51,7 @@ export async function SingleCode(props: { group: CodeInfo; className?: string })
           <CopyButton
             text={code}
             variant="floating"
-            className={cn(
-              'absolute right-3 z-10 text-openpkg-code-text-inactive',
-              'top-3',
-            )}
+            className={cn('absolute right-3 z-10 text-openpkg-code-text-inactive', 'top-3')}
           />
         )}
       </div>

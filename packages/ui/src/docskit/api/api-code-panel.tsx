@@ -35,7 +35,7 @@ export interface APICodePanelProps {
 export function APICodePanel({
   languages,
   examples,
-  externalLink,
+  externalLink: _externalLink,
   title,
   className,
 }: APICodePanelProps): React.ReactNode {
@@ -52,11 +52,7 @@ export function APICodePanel({
     <div className={cn('sticky top-20', className)}>
       {languages.length > 1 && (
         <div className="flex items-center gap-2 mb-2">
-          <LanguageSelector
-            languages={languages}
-            value={selectedLang}
-            onChange={setSelectedLang}
-          />
+          <LanguageSelector languages={languages} value={selectedLang} onChange={setSelectedLang} />
         </div>
       )}
       <ClientDocsKitCode

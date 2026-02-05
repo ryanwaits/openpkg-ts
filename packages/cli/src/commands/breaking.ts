@@ -1,8 +1,4 @@
-import {
-  type CategorizedBreaking,
-  categorizeBreakingChanges,
-  diffSpec,
-} from '@openpkg-ts/spec';
+import { type CategorizedBreaking, categorizeBreakingChanges, diffSpec } from '@openpkg-ts/spec';
 import { Command } from 'commander';
 import { handleCommandError, loadSpec } from './utils';
 

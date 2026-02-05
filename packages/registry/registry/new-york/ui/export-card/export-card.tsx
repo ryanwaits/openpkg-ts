@@ -1,7 +1,7 @@
 'use client';
 
 import { cn } from '@openpkg-ts/ui/lib/utils';
-import type { ComponentType } from 'react';
+import type { ElementType } from 'react';
 
 export interface ExportCardProps {
   /** Function/export name */
@@ -15,7 +15,7 @@ export interface ExportCardProps {
   /** Custom className */
   className?: string;
   /** Custom link component (e.g. Next.js Link). Defaults to <a>. */
-  linkComponent?: ComponentType<{ href: string; className?: string; children: React.ReactNode }>;
+  linkComponent?: ElementType<{ href: string; className?: string; children: React.ReactNode }>;
 }
 
 const KIND_COLORS: Record<ExportCardProps['kind'] & string, string> = {
@@ -28,12 +28,16 @@ const KIND_COLORS: Record<ExportCardProps['kind'] & string, string> = {
 };
 
 const KIND_BADGE_COLORS: Record<ExportCardProps['kind'] & string, string> = {
-  function: 'bg-[color-mix(in_srgb,var(--openpkg-accent-blue)_10%,transparent)] text-[var(--openpkg-accent-blue)]',
-  class: 'bg-[color-mix(in_srgb,var(--openpkg-accent-purple)_10%,transparent)] text-[var(--openpkg-accent-purple)]',
-  interface: 'bg-[color-mix(in_srgb,var(--openpkg-accent-green)_10%,transparent)] text-[var(--openpkg-accent-green)]',
+  function:
+    'bg-[color-mix(in_srgb,var(--openpkg-accent-blue)_10%,transparent)] text-[var(--openpkg-accent-blue)]',
+  class:
+    'bg-[color-mix(in_srgb,var(--openpkg-accent-purple)_10%,transparent)] text-[var(--openpkg-accent-purple)]',
+  interface:
+    'bg-[color-mix(in_srgb,var(--openpkg-accent-green)_10%,transparent)] text-[var(--openpkg-accent-green)]',
   type: 'bg-[color-mix(in_srgb,var(--openpkg-accent-amber)_10%,transparent)] text-[var(--openpkg-accent-amber)]',
   enum: 'bg-[color-mix(in_srgb,var(--openpkg-accent-rose)_10%,transparent)] text-[var(--openpkg-accent-rose)]',
-  variable: 'bg-[color-mix(in_srgb,var(--openpkg-accent-cyan)_10%,transparent)] text-[var(--openpkg-accent-cyan)]',
+  variable:
+    'bg-[color-mix(in_srgb,var(--openpkg-accent-cyan)_10%,transparent)] text-[var(--openpkg-accent-cyan)]',
 };
 
 /**
@@ -46,7 +50,7 @@ export function ExportCard({
   href,
   kind = 'function',
   className,
-  linkComponent: LinkComp = 'a' as any,
+  linkComponent: LinkComp = 'a',
 }: ExportCardProps): React.ReactNode {
   const isFunction = kind === 'function';
   const hoverColor = KIND_COLORS[kind];
@@ -73,7 +77,9 @@ export function ExportCard({
         >
           {name}
         </span>
-        {isFunction && <span className="font-mono text-base text-[var(--openpkg-text-muted)]">()</span>}
+        {isFunction && (
+          <span className="font-mono text-base text-[var(--openpkg-text-muted)]">()</span>
+        )}
         <span className={cn('ml-auto text-xs px-2 py-0.5 rounded-full font-medium', badgeColor)}>
           {kind}
         </span>

@@ -1,7 +1,7 @@
 'use client';
 
-import { cn } from '@/lib/utils';
 import { type ReactNode, useEffect, useRef } from 'react';
+import { cn } from '@/lib/utils';
 import { useSyncScroll } from '../hooks/use-sync-scroll';
 
 export interface MethodSectionProps {
@@ -62,13 +62,7 @@ export function MethodSection({
       </h2>
 
       {signature && (
-        <code
-          className={cn(
-            'block font-mono text-sm',
-            'text-[var(--openpkg-text-muted)]',
-            'mb-6',
-          )}
-        >
+        <code className={cn('block font-mono text-sm', 'text-[var(--openpkg-text-muted)]', 'mb-6')}>
           {signature}
         </code>
       )}

@@ -56,10 +56,7 @@ function normalizeGeneration(gen: OpenPkg['generation']): OpenPkg['generation'] 
   return gen;
 }
 
-function normalizeEntry<T extends SpecExport | SpecType>(
-  item: T,
-  arrayFields: Array<keyof T>,
-): T {
+function normalizeEntry<T extends SpecExport | SpecType>(item: T, arrayFields: Array<keyof T>): T {
   const clone: T = structuredClone(item);
 
   for (const field of arrayFields) {

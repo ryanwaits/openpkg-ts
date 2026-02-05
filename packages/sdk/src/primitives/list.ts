@@ -147,7 +147,6 @@ function extractExportItem(
   };
 }
 
-
 function getDescriptionPreview(symbol: ts.Symbol, checker: ts.TypeChecker): string | undefined {
   const docs = symbol.getDocumentationComment(checker);
   if (docs.length === 0) return undefined;

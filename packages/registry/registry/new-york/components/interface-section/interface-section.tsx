@@ -75,7 +75,9 @@ export function InterfaceSection({ export: exp, spec }: InterfaceSectionProps): 
       description={
         <div className="space-y-3">
           {exp.extends && (
-            <p className="font-mono text-sm text-[var(--openpkg-text-muted)]">extends {exp.extends}</p>
+            <p className="font-mono text-sm text-[var(--openpkg-text-muted)]">
+              extends {exp.extends}
+            </p>
           )}
           {exp.description && <p>{exp.description}</p>}
           {exp.deprecated && (

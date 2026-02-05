@@ -169,7 +169,9 @@ export function extractExternalExport(
   }
 
   const decl = (resolvedSymbol.declarations ?? [])[0];
-  const kind = decl ? getExportKind(decl, checker.getTypeAtLocation(decl)) : 'variable' as SpecExportKind;
+  const kind = decl
+    ? getExportKind(decl, checker.getTypeAtLocation(decl))
+    : ('variable' as SpecExportKind);
 
   // Get JSDoc info
   const docComment = resolvedSymbol.getDocumentationComment(checker);
@@ -194,7 +196,11 @@ export function extractExternalExport(
     const callSignatures = type.getCallSignatures();
 
     if (callSignatures.length > 0) {
-      (specExport as Record<string, unknown>).signatures = buildSignatures(callSignatures, checker, ctx);
+      (specExport as Record<string, unknown>).signatures = buildSignatures(
+        callSignatures,
+        checker,
+        ctx,
+      );
     }
   } else if (kind === 'interface' || kind === 'type' || kind === 'class') {
     // For types/interfaces/classes, build the schema

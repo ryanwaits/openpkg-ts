@@ -7,10 +7,7 @@ export default defineConfig([
     dts: true,
     clean: true,
     format: ['esm'],
-    external: [
-      '@openpkg-ts/sdk',
-      '@openpkg-ts/spec',
-    ],
+    external: ['@openpkg-ts/sdk', '@openpkg-ts/spec'],
   },
   {
     entry: ['src/fumadocs/index.ts', 'src/fumadocs/components/index.ts'],

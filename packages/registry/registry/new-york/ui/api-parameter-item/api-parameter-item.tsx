@@ -93,9 +93,7 @@ export function APIParameterItem({
 
         {/* Name with parent path */}
         <span className="openpkg-param-name font-mono text-sm font-semibold">
-          {parentPath && (
-            <span className="text-[var(--openpkg-text-muted)]">{parentPath}</span>
-          )}
+          {parentPath && <span className="text-[var(--openpkg-text-muted)]">{parentPath}</span>}
           <span className="text-[var(--openpkg-text-primary)]">{name}</span>
         </span>
 

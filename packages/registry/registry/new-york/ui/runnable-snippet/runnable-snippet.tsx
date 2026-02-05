@@ -1,11 +1,10 @@
 'use client';
 
-import { type RawCode } from 'codehike/code';
-import { CheckCircle2, Loader2, Play, XCircle } from 'lucide-react';
+import { ClientDocsKitCode, CollapsiblePanel } from '@openpkg-ts/ui/docskit';
+import type { RawCode } from 'codehike/code';
+import { Loader2, Play } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
-import { ClientDocsKitCode } from '@openpkg-ts/ui/docskit';
-import { CollapsiblePanel } from '@openpkg-ts/ui/docskit';
 
 export interface RunnableSnippetProps {
   /** Code to display */
@@ -54,7 +53,8 @@ export function RunnableSnippet({
       } else {
         setState('success');
         setOutput(
-          mockOutput ?? JSON.stringify({ result: 'success', timestamp: new Date().toISOString() }, null, 2),
+          mockOutput ??
+            JSON.stringify({ result: 'success', timestamp: new Date().toISOString() }, null, 2),
         );
       }
     }, 1200);

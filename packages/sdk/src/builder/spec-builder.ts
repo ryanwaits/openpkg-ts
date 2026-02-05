@@ -9,10 +9,10 @@ import { createProgram } from '../compiler/program';
 import { extractStandardSchemasFromProject } from '../schema/standard-schema';
 import { serializeClass } from '../serializers/classes';
 import { createContext, type SerializerContext } from '../serializers/context';
-import { buildSignatures } from '../serializers/shared';
 import { serializeEnum } from '../serializers/enums';
 import { serializeFunctionExport } from '../serializers/functions';
 import { serializeInterface } from '../serializers/interfaces';
+import { buildSignatures } from '../serializers/shared';
 import { serializeTypeAlias } from '../serializers/type-aliases';
 import { serializeVariable } from '../serializers/variables';
 import type { Diagnostic, ExportTracker, ExtractOptions, ExtractResult } from '../types';
@@ -311,13 +311,7 @@ export async function extract(options: ExtractOptions): Promise<ExtractResult> {
           continue;
         }
 
-        const exp = serializeDeclaration(
-          declaration,
-          symbol,
-          exportName,
-          ctx,
-          isTypeOnly,
-        );
+        const exp = serializeDeclaration(declaration, symbol, exportName, ctx, isTypeOnly);
         if (exp) {
           exports.push(exp);
           tracker.status = 'success';

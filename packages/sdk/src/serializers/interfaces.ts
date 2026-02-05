@@ -1,9 +1,6 @@
 import type { SpecExport, SpecMember } from '@openpkg-ts/spec';
 import ts from 'typescript';
-import {
-  extractTypeParameters,
-  getJSDocComment,
-} from '../ast/utils';
+import { extractTypeParameters, getJSDocComment } from '../ast/utils';
 import { extractParameters, registerReferencedTypes } from '../types/parameters';
 import { buildSchema } from '../types/schema-builder';
 import type { SerializerContext } from './context';

@@ -1,6 +1,5 @@
 import type { OpenPkg, SpecExample, SpecExport, SpecMember, SpecSignature } from '@openpkg-ts/spec';
 import {
-  KIND_ORDER,
   buildSignatureString,
   filterExports,
   findExport,
@@ -10,6 +9,7 @@ import {
   getMethods,
   getProperties,
   groupByKind,
+  KIND_ORDER,
 } from '../core/query';
 
 export interface HTMLOptions {
@@ -425,8 +425,7 @@ export function toHTML(spec: OpenPkg, options: HTMLOptions = {}): string {
   const nav = `<nav><ul>${navItems}</ul></nav>`;
 
   // Render sections
-  const sections = KIND_ORDER
-    .filter((kind) => byKind[kind]?.length)
+  const sections = KIND_ORDER.filter((kind) => byKind[kind]?.length)
     .map((kind) => {
       const exports = byKind[kind].map(renderExport).join('');
       return `

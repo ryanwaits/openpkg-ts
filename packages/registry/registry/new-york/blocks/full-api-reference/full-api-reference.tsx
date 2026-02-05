@@ -1,11 +1,7 @@
 'use client';
 
 import type { OpenPkg, SpecExport, SpecExportKind } from '@openpkg-ts/spec';
-import {
-  type DisplayKind,
-  DISPLAY_KIND_ORDER,
-  KIND_LABELS,
-} from '@openpkg-ts/spec';
+import { DISPLAY_KIND_ORDER, type DisplayKind, KIND_LABELS } from '@openpkg-ts/spec';
 import { APIReferencePage } from '@openpkg-ts/ui/docskit';
 import { cn } from '@openpkg-ts/ui/lib/utils';
 import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -95,7 +91,9 @@ export function FullAPIReferencePage({
           isScrollingRef.current = true;
           element.scrollIntoView({ behavior: 'smooth' });
           setActiveSection(hash);
-          setTimeout(() => { isScrollingRef.current = false; }, 1000);
+          setTimeout(() => {
+            isScrollingRef.current = false;
+          }, 1000);
         }
       }, 100);
       return () => clearTimeout(timer);
@@ -137,7 +135,9 @@ export function FullAPIReferencePage({
       element.scrollIntoView({ behavior: 'smooth' });
       setActiveSection(id);
       window.history.replaceState(null, '', `#${id}`);
-      setTimeout(() => { isScrollingRef.current = false; }, 1000);
+      setTimeout(() => {
+        isScrollingRef.current = false;
+      }, 1000);
     }
   }, []);
 
@@ -163,7 +163,9 @@ export function FullAPIReferencePage({
       {showTOC && (
         <aside className="hidden lg:block">
           <nav className="sticky top-20 max-h-[calc(100vh-6rem)] overflow-y-auto pr-4">
-            <h4 className="text-sm font-semibold text-[var(--openpkg-text-primary)] mb-3">On this page</h4>
+            <h4 className="text-sm font-semibold text-[var(--openpkg-text-primary)] mb-3">
+              On this page
+            </h4>
             <div className="space-y-4">
               {KIND_ORDER.map((kind) => {
                 const exports = groupedExports.get(kind);

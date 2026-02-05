@@ -11,6 +11,8 @@ export {
   type APIReferencePageProps,
   APISection,
   type APISectionProps,
+  APISectionSingle,
+  type APISectionSingleProps,
   CodeBlock,
   type CodeBlockProps,
   type CodeExample,
@@ -20,18 +22,18 @@ export {
   type EndpointBadgeProps,
   EndpointHeader,
   type EndpointHeaderProps,
-  endpointBadgeVariants,
-  EnumValuesSection,
   type EnumValue,
+  EnumValuesSection,
   type EnumValuesSectionProps,
-  ExampleChips,
   type ExampleChip,
+  ExampleChips,
   type ExampleChipsProps,
   ExampleSection,
-  type ExampleSectionProps,
   type ExampleSectionCodeExample,
+  type ExampleSectionProps,
   ExpandableParameter,
   type ExpandableParameterProps,
+  endpointBadgeVariants,
   type HttpMethod,
   type Language,
   LanguageSelector,
@@ -46,15 +48,9 @@ export {
   type ParameterListProps,
   ResponseBlock,
   type ResponseBlockProps,
+  SectionAccordion,
+  type SectionAccordionProps,
 } from './api';
-export {
-  SyncScrollProvider,
-  type SyncScrollProviderProps,
-  type SyncScrollContextValue,
-  useSyncScroll,
-  useSyncSection,
-} from './hooks/use-sync-scroll';
-
 export { callout } from './callout';
 export { DocsKitCode, SingleCode, toCodeGroup } from './code';
 export { MultiCode } from './code.client';
@@ -83,19 +79,26 @@ export { collapse } from './collapse';
 export { diff } from './diff';
 export { addDocsKit } from './docskit';
 export { expandable } from './expandable';
+export {
+  type SyncScrollContextValue,
+  SyncScrollProvider,
+  type SyncScrollProviderProps,
+  useSyncScroll,
+  useSyncSection,
+} from './hooks/use-sync-scroll';
 export { HoverLink, hover, WithHover } from './hover';
+export { ImportSection, type ImportSectionProps } from './import-section';
 export { lineNumbers } from './line-numbers';
 export { link } from './link';
 export { mark } from './mark';
 export { WithNotes } from './notes';
+export { RunnableSnippet, type RunnableSnippetProps } from './runnable-snippet';
 export { Tabs, TabsContent, TabsList, TabsTrigger } from './tabs';
 export { TooltipLink, tooltip } from './tooltip';
-export { wordWrap } from './word-wrap';
-export { ImportSection, type ImportSectionProps } from './import-section';
 export {
   TypeBadge,
   type TypeBadgeProps,
   type TypeColor,
   typeBadgeVariants,
 } from './type-badge';
-export { RunnableSnippet, type RunnableSnippetProps } from './runnable-snippet';
+export { wordWrap } from './word-wrap';

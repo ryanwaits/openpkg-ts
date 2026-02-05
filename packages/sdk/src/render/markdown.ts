@@ -1,16 +1,16 @@
 import type { OpenPkg, SpecExample, SpecExport, SpecMember, SpecSignature } from '@openpkg-ts/spec';
 import {
-  KIND_ORDER,
   buildSignatureString,
+  type FormatSchemaOptions,
   filterExports,
   findExport,
-  type FormatSchemaOptions,
   formatParameters,
   formatReturnType,
   formatSchema,
   getMethods,
   getProperties,
   groupByKind,
+  KIND_ORDER,
 } from '../core/query';
 
 export interface MarkdownOptions {
