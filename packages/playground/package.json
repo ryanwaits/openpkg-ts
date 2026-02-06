@@ -1,0 +1,33 @@
+{
+  "name": "@openpkg-ts/playground",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "next dev --turbopack -p 3333",
+    "build": "next build",
+    "start": "next start -p 3333"
+  },
+  "dependencies": {
+    "@ai-sdk/anthropic": "^1.2.12",
+    "@json-render/core": "^0.4.0",
+    "@json-render/react": "^0.4.0",
+    "@openpkg-ts/json-render": "workspace:*",
+    "@openpkg-ts/sdk": "workspace:*",
+    "@openpkg-ts/spec": "workspace:*",
+    "@openpkg-ts/registry": "workspace:*",
+    "ai": "^4.3.16",
+    "fflate": "0.8.2",
+    "next": "^15.3.3",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "tailwindcss": "^4",
+    "@tailwindcss/postcss": "^4",
+    "typescript": "^5.9.3",
+    "postcss": "^8"
+  }
+}

@@ -1,5 +1,13 @@
 # @openpkg-ts/cli
 
+## 0.6.4
+
+### Patch Changes
+
+- Updated dependencies
+  - @openpkg-ts/sdk@0.36.0
+  - @openpkg-ts/adapters@0.3.15
+
 ## 0.6.3
 
 ### Patch Changes

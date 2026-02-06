@@ -1,0 +1,7464 @@
+{
+  "openpkg": "0.4.0",
+  "meta": {
+    "name": "@stacks/transactions",
+    "version": "7.3.1",
+    "description": "Javascript library for constructing transactions on the Stacks blockchain."
+  },
+  "exports": [
+    {
+      "id": "makeSTXTokenTransfer",
+      "name": "makeSTXTokenTransfer",
+      "kind": "function",
+      "description": "Generates a signed Stacks token transfer transaction\n\nReturns a signed Stacks token transfer transaction.",
+      "tags": [
+        {
+          "name": "param",
+          "text": "txOptions - an options object for the token transfer",
+          "param": {
+            "name": "txOptions",
+            "type": "SignedTokenTransferOptions | SignedMultiSigTokenTransferOptions",
+            "description": "an options object for the token transfer"
+          }
+        },
+        {
+          "name": "return",
+          "text": ""
+        },
+        {
+          "name": "example",
+          "text": "```ts\n// Basic STX transfer\nimport { makeSTXTokenTransfer, broadcastTransaction } from '@stacks/transactions';\n\nconst transaction = await makeSTXTokenTransfer({\n  recipient: 'SP2J6ZY48GV1EZ5V2V5RB9MP66SW86PYKKQHX0A73',\n  amount: 1000000n,\n  senderKey: 'b244296d5907de9864c0b0d51f98a13c52890b0498ba04f738be28738bc5821401',\n  network: 'testnet',\n});\n\nconst result = await broadcastTransaction({ transaction, network: 'testnet' });\nconsole.log('Transaction ID:', result.txid);\n```"
+        },
+        {
+          "name": "example",
+          "text": "```ts\n// Multi-sig STX transfer (2-of-3)\nimport { makeSTXTokenTransfer } from '@stacks/transactions';\n\nconst pubKey1 = '03a...',\n      pubKey2 = '02b...',\n      pubKey3 = '03c...';\n\nconst transaction = await makeSTXTokenTransfer({\n  recipient: 'SP2J6ZY48GV1EZ5V2V5RB9MP66SW86PYKKQHX0A73',\n  amount: 500000n,\n  numSignatures: 2,\n  publicKeys: [pubKey1, pubKey2, pubKey3],\n  signerKeys: [privateKey1, privateKey2],\n  network: 'mainnet',\n});\n```"
+        }
+      ],
+      "source": {
+        "file": "/tmp/stacks.js/packages/transactions/src/builders.ts",
+        "line": 241
+      },
+      "signatures": [
+        {
+          "parameters": [
+            {
+              "name": "txOptions",
+              "schema": {
+                "anyOf": [
+                  {
+                    "$ref": "#/types/SignedTokenTransferOptions"
+                  },
+                  {
+                    "$ref": "#/types/SignedMultiSigTokenTransferOptions"
+                  }
+                ]
+              },
+              "required": true,
+              "description": "an options object for the token transfer"
+            }
+          ],
+          "returns": {
+            "schema": {
+              "$ref": "#/types/Promise",
+              "x-ts-type-arguments": [
+                {
+                  "$ref": "#/types/StacksTransactionWire"
+                }
+              ]
+            }
+          },
+          "description": "Generates a signed Stacks token transfer transaction\n\nReturns a signed Stacks token transfer transaction.",
+          "tags": [
+            {
+              "name": "param",
+              "text": "txOptions - an options object for the token transfer",
+              "param": {
+                "name": "txOptions",
+                "type": "SignedTokenTransferOptions | SignedMultiSigTokenTransferOptions",
+                "description": "an options object for the token transfer"
+              }
+            },
+            {
+              "name": "return",
+              "text": ""
+            },
+            {
+              "name": "example",
+              "text": "```ts\n// Basic STX transfer\nimport { makeSTXTokenTransfer, broadcastTransaction } from '@stacks/transactions';\n\nconst transaction = await makeSTXTokenTransfer({\n  recipient: 'SP2J6ZY48GV1EZ5V2V5RB9MP66SW86PYKKQHX0A73',\n  amount: 1000000n,\n  senderKey: 'b244296d5907de9864c0b0d51f98a13c52890b0498ba04f738be28738bc5821401',\n  network: 'testnet',\n});\n\nconst result = await broadcastTransaction({ transaction, network: 'testnet' });\nconsole.log('Transaction ID:', result.txid);\n```"
+            },
+            {
+              "name": "example",
+              "text": "```ts\n// Multi-sig STX transfer (2-of-3)\nimport { makeSTXTokenTransfer } from '@stacks/transactions';\n\nconst pubKey1 = '03a...',\n      pubKey2 = '02b...',\n      pubKey3 = '03c...';\n\nconst transaction = await makeSTXTokenTransfer({\n  recipient: 'SP2J6ZY48GV1EZ5V2V5RB9MP66SW86PYKKQHX0A73',\n  amount: 500000n,\n  numSignatures: 2,\n  publicKeys: [pubKey1, pubKey2, pubKey3],\n  signerKeys: [privateKey1, privateKey2],\n  network: 'mainnet',\n});\n```"
+            }
+          ],
+          "examples": [
+            {
+              "code": "// Basic STX transfer\nimport { makeSTXTokenTransfer, broadcastTransaction } from '@stacks/transactions';\n\nconst transaction = await makeSTXTokenTransfer({\n  recipient: 'SP2J6ZY48GV1EZ5V2V5RB9MP66SW86PYKKQHX0A73',\n  amount: 1000000n,\n  senderKey: 'b244296d5907de9864c0b0d51f98a13c52890b0498ba04f738be28738bc5821401',\n  network: 'testnet',\n});\n\nconst result = await broadcastTransaction({ transaction, network: 'testnet' });\nconsole.log('Transaction ID:', result.txid);",
+              "language": "ts"
+            },
+            {
+              "code": "// Multi-sig STX transfer (2-of-3)\nimport { makeSTXTokenTransfer } from '@stacks/transactions';\n\nconst pubKey1 = '03a...',\n      pubKey2 = '02b...',\n      pubKey3 = '03c...';\n\nconst transaction = await makeSTXTokenTransfer({\n  recipient: 'SP2J6ZY48GV1EZ5V2V5RB9MP66SW86PYKKQHX0A73',\n  amount: 500000n,\n  numSignatures: 2,\n  publicKeys: [pubKey1, pubKey2, pubKey3],\n  signerKeys: [privateKey1, privateKey2],\n  network: 'mainnet',\n});",
+              "language": "ts"
+            }
+          ]
+        }
+      ],
+      "examples": [
+        {
+          "code": "// Basic STX transfer\nimport { makeSTXTokenTransfer, broadcastTransaction } from '@stacks/transactions';\n\nconst transaction = await makeSTXTokenTransfer({\n  recipient: 'SP2J6ZY48GV1EZ5V2V5RB9MP66SW86PYKKQHX0A73',\n  amount: 1000000n,\n  senderKey: 'b244296d5907de9864c0b0d51f98a13c52890b0498ba04f738be28738bc5821401',\n  network: 'testnet',\n});\n\nconst result = await broadcastTransaction({ transaction, network: 'testnet' });\nconsole.log('Transaction ID:', result.txid);",
+          "language": "ts"
+        },
+        {
+          "code": "// Multi-sig STX transfer (2-of-3)\nimport { makeSTXTokenTransfer } from '@stacks/transactions';\n\nconst pubKey1 = '03a...',\n      pubKey2 = '02b...',\n      pubKey3 = '03c...';\n\nconst transaction = await makeSTXTokenTransfer({\n  recipient: 'SP2J6ZY48GV1EZ5V2V5RB9MP66SW86PYKKQHX0A73',\n  amount: 500000n,\n  numSignatures: 2,\n  publicKeys: [pubKey1, pubKey2, pubKey3],\n  signerKeys: [privateKey1, privateKey2],\n  network: 'mainnet',\n});",
+          "language": "ts"
+        }
+      ]
+    },
+    {
+      "id": "makeContractDeploy",
+      "name": "makeContractDeploy",
+      "kind": "function",
+      "description": "Generates a Clarity smart contract deploy transaction",
+      "tags": [
+        {
+          "name": "param",
+          "text": "txOptions - an options object for the contract deploy",
+          "param": {
+            "name": "txOptions",
+            "type": "SignedContractDeployOptions | SignedMultiSigContractDeployOptions",
+            "description": "an options object for the contract deploy"
+          }
+        },
+        {
+          "name": "return",
+          "text": ""
+        }
+      ],
+      "source": {
+        "file": "/tmp/stacks.js/packages/transactions/src/builders.ts",
+        "line": 318
+      },
+      "signatures": [
+        {
+          "parameters": [
+            {
+              "name": "txOptions",
+              "schema": {
+                "anyOf": [
+                  {
+                    "$ref": "#/types/SignedContractDeployOptions"
+                  },
+                  {
+                    "$ref": "#/types/SignedMultiSigContractDeployOptions"
+                  }
+                ]
+              },
+              "required": true,
+              "description": "an options object for the contract deploy"
+            }
+          ],
+          "returns": {
+            "schema": {
+              "$ref": "#/types/Promise",
+              "x-ts-type-arguments": [
+                {
+                  "$ref": "#/types/StacksTransactionWire"
+                }
+              ]
+            }
+          },
+          "description": "Generates a Clarity smart contract deploy transaction",
+          "tags": [
+            {
+              "name": "param",
+              "text": "txOptions - an options object for the contract deploy",
+              "param": {
+                "name": "txOptions",
+                "type": "SignedContractDeployOptions | SignedMultiSigContractDeployOptions",
+                "description": "an options object for the contract deploy"
+              }
+            },
+            {
+              "name": "return",
+              "text": ""
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "makeContractCall",
+      "name": "makeContractCall",
+      "kind": "function",
+      "description": "Generates a Clarity smart contract function call transaction",
+      "tags": [
+        {
+          "name": "param",
+          "text": "txOptions - an options object for the contract function call",
+          "param": {
+            "name": "txOptions",
+            "type": "SignedContractCallOptions | SignedMultiSigContractCallOptions",
+            "description": "an options object for the contract function call"
+          }
+        },
+        {
+          "name": "return",
+          "text": ""
+        }
+      ],
+      "source": {
+        "file": "/tmp/stacks.js/packages/transactions/src/builders.ts",
+        "line": 600
+      },
+      "signatures": [
+        {
+          "parameters": [
+            {
+              "name": "txOptions",
+              "schema": {
+                "anyOf": [
+                  {
+                    "$ref": "#/types/SignedContractCallOptions"
+                  },
+                  {
+                    "$ref": "#/types/SignedMultiSigContractCallOptions"
+                  }
+                ]
+              },
+              "required": true,
+              "description": "an options object for the contract function call"
+            }
+          ],
+          "returns": {
+            "schema": {
+              "$ref": "#/types/Promise",
+              "x-ts-type-arguments": [
+                {
+                  "$ref": "#/types/StacksTransactionWire"
+                }
+              ]
+            }
+          },
+          "description": "Generates a Clarity smart contract function call transaction",
+          "tags": [
+            {
+              "name": "param",
+              "text": "txOptions - an options object for the contract function call",
+              "param": {
+                "name": "txOptions",
+                "type": "SignedContractCallOptions | SignedMultiSigContractCallOptions",
+                "description": "an options object for the contract function call"
+              }
+            },
+            {
+              "name": "return",
+              "text": ""
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sponsorTransaction",
+      "name": "sponsorTransaction",
+      "kind": "function",
+      "description": "Constructs and signs a sponsored transaction as the sponsor",
+      "tags": [
+        {
+          "name": "param",
+          "text": "sponsorOptions - the sponsor options object",
+          "param": {
+            "name": "sponsorOptions",
+            "type": "SponsorOptionsOpts",
+            "description": "the sponsor options object"
+          }
+        },
+        {
+          "name": "return",
+          "text": ""
+        }
+      ],
+      "source": {
+        "file": "/tmp/stacks.js/packages/transactions/src/builders.ts",
+        "line": 655
+      },
+      "signatures": [
+        {
+          "parameters": [
+            {
+              "name": "sponsorOptions",
+              "schema": {
+                "$ref": "#/types/SponsorOptionsOpts"
+              },
+              "required": true,
+              "description": "the sponsor options object"
+            }
+          ],
+          "returns": {
+            "schema": {
+              "$ref": "#/types/Promise",
+              "x-ts-type-arguments": [
+                {
+                  "$ref": "#/types/StacksTransactionWire"
+                }
+              ]
+            }
+          },
+          "description": "Constructs and signs a sponsored transaction as the sponsor",
+          "tags": [
+            {
+              "name": "param",
+              "text": "sponsorOptions - the sponsor options object",
+              "param": {
+                "name": "sponsorOptions",
+                "type": "SponsorOptionsOpts",
+                "description": "the sponsor options object"
+              }
+            },
+            {
+              "name": "return",
+              "text": ""
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "broadcastTransaction",
+      "name": "broadcastTransaction",
+      "kind": "function",
+      "description": "Broadcast a serialized transaction to a Stacks node (which will validate and forward to the network).",
+      "tags": [
+        {
+          "name": "param",
+          "text": "opts.transaction - The transaction to broadcast",
+          "param": {
+            "name": "opts.transaction",
+            "description": "The transaction to broadcast"
+          }
+        },
+        {
+          "name": "param",
+          "text": "opts.attachment - Optional attachment encoded as a hex string",
+          "param": {
+            "name": "opts.attachment",
+            "description": "Optional attachment encoded as a hex string"
+          }
+        },
+        {
+          "name": "param",
+          "text": "opts.api - Optional API info (`.url` & `.fetch`) used for fetch call",
+          "param": {
+            "name": "opts.api",
+            "description": "Optional API info (`.url` & `.fetch`) used for fetch call"
+          }
+        },
+        {
+          "name": "returns",
+          "text": "A Promise that resolves to a {@link TxBroadcastResult} object"
+        },
+        {
+          "name": "example",
+          "text": "```ts\n// Basic broadcast\nimport { broadcastTransaction, makeSTXTokenTransfer } from '@stacks/transactions';\n\nconst transaction = await makeSTXTokenTransfer({\n  recipient: 'SP2J6ZY48GV1EZ5V2V5RB9MP66SW86PYKKQHX0A73',\n  amount: 1000000n,\n  senderKey: 'your-private-key-hex',\n  network: 'testnet',\n});\n\nconst result = await broadcastTransaction({ transaction, network: 'testnet' });\nconsole.log(result);\n```"
+        },
+        {
+          "name": "example",
+          "text": "```ts\n// Broadcast with a custom client\nimport { broadcastTransaction } from '@stacks/transactions';\n\nconst result = await broadcastTransaction({\n  transaction,\n  client: {\n    baseUrl: 'https://my-stacks-node.example.com',\n  },\n});\n\nif (result.error) {\n  console.error('Broadcast failed:', result.reason);\n} else {\n  console.log('Transaction ID:', result.txid);\n}\n```"
+        }
+      ],
+      "source": {
+        "file": "/tmp/stacks.js/packages/transactions/src/fetch.ts",
+        "line": 71
+      },
+      "signatures": [
+        {
+          "parameters": [
+            {
+              "name": "transaction",
+              "schema": {
+                "$ref": "#/types/StacksTransactionWire"
+              },
+              "required": true,
+              "description": "The transaction to broadcast"
+            },
+            {
+              "name": "attachment",
+              "schema": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "$ref": "#/types/Uint8Array"
+                  }
+                ]
+              },
+              "required": false,
+              "description": "Optional attachment encoded as a hex string"
+            },
+            {
+              "name": "network",
+              "schema": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "enum": [
+                      "mainnet"
+                    ]
+                  },
+                  {
+                    "type": "string",
+                    "enum": [
+                      "testnet"
+                    ]
+                  },
+                  {
+                    "type": "string",
+                    "enum": [
+                      "devnet"
+                    ]
+                  },
+                  {
+                    "type": "string",
+                    "enum": [
+                      "mocknet"
+                    ]
+                  },
+                  {
+                    "$ref": "#/types/StacksNetwork"
+                  }
+                ]
+              },
+              "required": false
+            },
+            {
+              "name": "client",
+              "schema": {
+                "$ref": "#/types/ClientOpts"
+              },
+              "required": false
+            }
+          ],
+          "returns": {
+            "schema": {
+              "$ref": "#/types/Promise",
+              "x-ts-type-arguments": [
+                {
+                  "$ref": "#/types/TxBroadcastResult"
+                }
+              ]
+            }
+          },
+          "description": "Broadcast a serialized transaction to a Stacks node (which will validate and forward to the network).",
+          "tags": [
+            {
+              "name": "param",
+              "text": "opts.transaction - The transaction to broadcast",
+              "param": {
+                "name": "opts.transaction",
+                "description": "The transaction to broadcast"
+              }
+            },
+            {
+              "name": "param",
+              "text": "opts.attachment - Optional attachment encoded as a hex string",
+              "param": {
+                "name": "opts.attachment",
+                "description": "Optional attachment encoded as a hex string"
+              }
+            },
+            {
+              "name": "param",
+              "text": "opts.api - Optional API info (`.url` & `.fetch`) used for fetch call",
+              "param": {
+                "name": "opts.api",
+                "description": "Optional API info (`.url` & `.fetch`) used for fetch call"
+              }
+            },
+            {
+              "name": "returns",
+              "text": "A Promise that resolves to a {@link TxBroadcastResult} object"
+            },
+            {
+              "name": "example",
+              "text": "```ts\n// Basic broadcast\nimport { broadcastTransaction, makeSTXTokenTransfer } from '@stacks/transactions';\n\nconst transaction = await makeSTXTokenTransfer({\n  recipient: 'SP2J6ZY48GV1EZ5V2V5RB9MP66SW86PYKKQHX0A73',\n  amount: 1000000n,\n  senderKey: 'your-private-key-hex',\n  network: 'testnet',\n});\n\nconst result = await broadcastTransaction({ transaction, network: 'testnet' });\nconsole.log(result);\n```"
+            },
+            {
+              "name": "example",
+              "text": "```ts\n// Broadcast with a custom client\nimport { broadcastTransaction } from '@stacks/transactions';\n\nconst result = await broadcastTransaction({\n  transaction,\n  client: {\n    baseUrl: 'https://my-stacks-node.example.com',\n  },\n});\n\nif (result.error) {\n  console.error('Broadcast failed:', result.reason);\n} else {\n  console.log('Transaction ID:', result.txid);\n}\n```"
+            }
+          ],
+          "examples": [
+            {
+              "code": "// Basic broadcast\nimport { broadcastTransaction, makeSTXTokenTransfer } from '@stacks/transactions';\n\nconst transaction = await makeSTXTokenTransfer({\n  recipient: 'SP2J6ZY48GV1EZ5V2V5RB9MP66SW86PYKKQHX0A73',\n  amount: 1000000n,\n  senderKey: 'your-private-key-hex',\n  network: 'testnet',\n});\n\nconst result = await broadcastTransaction({ transaction, network: 'testnet' });\nconsole.log(result);",
+              "language": "ts"
+            },
+            {
+              "code": "// Broadcast with a custom client\nimport { broadcastTransaction } from '@stacks/transactions';\n\nconst result = await broadcastTransaction({\n  transaction,\n  client: {\n    baseUrl: 'https://my-stacks-node.example.com',\n  },\n});\n\nif (result.error) {\n  console.error('Broadcast failed:', result.reason);\n} else {\n  console.log('Transaction ID:', result.txid);\n}",
+              "language": "ts"
+            }
+          ]
+        }
+      ],
+      "examples": [
+        {
+          "code": "// Basic broadcast\nimport { broadcastTransaction, makeSTXTokenTransfer } from '@stacks/transactions';\n\nconst transaction = await makeSTXTokenTransfer({\n  recipient: 'SP2J6ZY48GV1EZ5V2V5RB9MP66SW86PYKKQHX0A73',\n  amount: 1000000n,\n  senderKey: 'your-private-key-hex',\n  network: 'testnet',\n});\n\nconst result = await broadcastTransaction({ transaction, network: 'testnet' });\nconsole.log(result);",
+          "language": "ts"
+        },
+        {
+          "code": "// Broadcast with a custom client\nimport { broadcastTransaction } from '@stacks/transactions';\n\nconst result = await broadcastTransaction({\n  transaction,\n  client: {\n    baseUrl: 'https://my-stacks-node.example.com',\n  },\n});\n\nif (result.error) {\n  console.error('Broadcast failed:', result.reason);\n} else {\n  console.log('Transaction ID:', result.txid);\n}",
+          "language": "ts"
+        }
+      ]
+    },
+    {
+      "id": "fetchCallReadOnlyFunction",
+      "name": "fetchCallReadOnlyFunction",
+      "kind": "function",
+      "description": "Calls a function as read-only from a contract interface.\nIt is not necessary that the function is defined as read-only in the contract",
+      "tags": [
+        {
+          "name": "param",
+          "text": "opts.contractName - The contract name",
+          "param": {
+            "name": "opts.contractName",
+            "description": "The contract name"
+          }
+        },
+        {
+          "name": "param",
+          "text": "opts.contractAddress - The contract address",
+          "param": {
+            "name": "opts.contractAddress",
+            "description": "The contract address"
+          }
+        },
+        {
+          "name": "param",
+          "text": "opts.functionName - The contract function name",
+          "param": {
+            "name": "opts.functionName",
+            "description": "The contract function name"
+          }
+        },
+        {
+          "name": "param",
+          "text": "opts.functionArgs - The contract function arguments",
+          "param": {
+            "name": "opts.functionArgs",
+            "description": "The contract function arguments"
+          }
+        },
+        {
+          "name": "param",
+          "text": "opts.senderAddress - The address of the (simulated) sender",
+          "param": {
+            "name": "opts.senderAddress",
+            "description": "The address of the (simulated) sender"
+          }
+        },
+        {
+          "name": "param",
+          "text": "opts.api - Optional API info (`.url` & `.fetch`) used for fetch call",
+          "param": {
+            "name": "opts.api",
+            "description": "Optional API info (`.url` & `.fetch`) used for fetch call"
+          }
+        },
+        {
+          "name": "return",
+          "text": "Returns an object with a status bool (okay) and a result string that\nis a serialized clarity value in hex format."
+        },
+        {
+          "name": "example",
+          "text": "```ts\n// Read the balance of a fungible token\nimport { fetchCallReadOnlyFunction, uintCV, standardPrincipalCV } from '@stacks/transactions';\n\nconst result = await fetchCallReadOnlyFunction({\n  contractAddress: 'SP3FBR2AGK5H9QBDH3EEN6DF8EK8JY7RX8QJ5SVTE',\n  contractName: 'sip-010-ft',\n  functionName: 'get-balance',\n  functionArgs: [standardPrincipalCV('SP2J6ZY48GV1EZ5V2V5RB9MP66SW86PYKKQHX0A73')],\n  senderAddress: 'SP2J6ZY48GV1EZ5V2V5RB9MP66SW86PYKKQHX0A73',\n  network: 'mainnet',\n});\n\nconsole.log(result); // (ok u1000000)\n```"
+        }
+      ],
+      "source": {
+        "file": "/tmp/stacks.js/packages/transactions/src/fetch.ts",
+        "line": 348
+      },
+      "signatures": [
+        {
+          "parameters": [
+            {
+              "name": "contractName",
+              "schema": {
+                "type": "string"
+              },
+              "required": true,
+              "description": "The contract name"
+            },
+            {
+              "name": "contractAddress",
+              "schema": {
+                "type": "string"
+              },
+              "required": true,
+              "description": "The contract address"
+            },
+            {
+              "name": "functionName",
+              "schema": {
+                "type": "string"
+              },
+              "required": true,
+              "description": "The contract function name"
+            },
+            {
+              "name": "functionArgs",
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/types/ClarityValue"
+                }
+              },
+              "required": true,
+              "description": "The contract function arguments"
+            },
+            {
+              "name": "senderAddress",
+              "schema": {
+                "type": "string"
+              },
+              "required": true,
+              "description": "The address of the (simulated) sender"
+            },
+            {
+              "name": "network",
+              "schema": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "enum": [
+                      "mainnet"
+                    ]
+                  },
+                  {
+                    "type": "string",
+                    "enum": [
+                      "testnet"
+                    ]
+                  },
+                  {
+                    "type": "string",
+                    "enum": [
+                      "devnet"
+                    ]
+                  },
+                  {
+                    "type": "string",
+                    "enum": [
+                      "mocknet"
+                    ]
+                  },
+                  {
+                    "$ref": "#/types/StacksNetwork"
+                  }
+                ]
+              },
+              "required": false,
+              "default": "mainnet"
+            },
+            {
+              "name": "client",
+              "schema": {
+                "$ref": "#/types/ClientOpts"
+              },
+              "required": false
+            }
+          ],
+          "returns": {
+            "schema": {
+              "$ref": "#/types/Promise",
+              "x-ts-type-arguments": [
+                {
+                  "$ref": "#/types/ClarityValue"
+                }
+              ]
+            }
+          },
+          "description": "Calls a function as read-only from a contract interface.\nIt is not necessary that the function is defined as read-only in the contract",
+          "tags": [
+            {
+              "name": "param",
+              "text": "opts.contractName - The contract name",
+              "param": {
+                "name": "opts.contractName",
+                "description": "The contract name"
+              }
+            },
+            {
+              "name": "param",
+              "text": "opts.contractAddress - The contract address",
+              "param": {
+                "name": "opts.contractAddress",
+                "description": "The contract address"
+              }
+            },
+            {
+              "name": "param",
+              "text": "opts.functionName - The contract function name",
+              "param": {
+                "name": "opts.functionName",
+                "description": "The contract function name"
+              }
+            },
+            {
+              "name": "param",
+              "text": "opts.functionArgs - The contract function arguments",
+              "param": {
+                "name": "opts.functionArgs",
+                "description": "The contract function arguments"
+              }
+            },
+            {
+              "name": "param",
+              "text": "opts.senderAddress - The address of the (simulated) sender",
+              "param": {
+                "name": "opts.senderAddress",
+                "description": "The address of the (simulated) sender"
+              }
+            },
+            {
+              "name": "param",
+              "text": "opts.api - Optional API info (`.url` & `.fetch`) used for fetch call",
+              "param": {
+                "name": "opts.api",
+                "description": "Optional API info (`.url` & `.fetch`) used for fetch call"
+              }
+            },
+            {
+              "name": "return",
+              "text": "Returns an object with a status bool (okay) and a result string that\nis a serialized clarity value in hex format."
+            },
+            {
+              "name": "example",
+              "text": "```ts\n// Read the balance of a fungible token\nimport { fetchCallReadOnlyFunction, uintCV, standardPrincipalCV } from '@stacks/transactions';\n\nconst result = await fetchCallReadOnlyFunction({\n  contractAddress: 'SP3FBR2AGK5H9QBDH3EEN6DF8EK8JY7RX8QJ5SVTE',\n  contractName: 'sip-010-ft',\n  functionName: 'get-balance',\n  functionArgs: [standardPrincipalCV('SP2J6ZY48GV1EZ5V2V5RB9MP66SW86PYKKQHX0A73')],\n  senderAddress: 'SP2J6ZY48GV1EZ5V2V5RB9MP66SW86PYKKQHX0A73',\n  network: 'mainnet',\n});\n\nconsole.log(result); // (ok u1000000)\n```"
+            }
+          ],
+          "examples": [
+            {
+              "code": "// Read the balance of a fungible token\nimport { fetchCallReadOnlyFunction, uintCV, standardPrincipalCV } from '@stacks/transactions';\n\nconst result = await fetchCallReadOnlyFunction({\n  contractAddress: 'SP3FBR2AGK5H9QBDH3EEN6DF8EK8JY7RX8QJ5SVTE',\n  contractName: 'sip-010-ft',\n  functionName: 'get-balance',\n  functionArgs: [standardPrincipalCV('SP2J6ZY48GV1EZ5V2V5RB9MP66SW86PYKKQHX0A73')],\n  senderAddress: 'SP2J6ZY48GV1EZ5V2V5RB9MP66SW86PYKKQHX0A73',\n  network: 'mainnet',\n});\n\nconsole.log(result); // (ok u1000000)",
+              "language": "ts"
+            }
+          ]
+        }
+      ],
+      "examples": [
+        {
+          "code": "// Read the balance of a fungible token\nimport { fetchCallReadOnlyFunction, uintCV, standardPrincipalCV } from '@stacks/transactions';\n\nconst result = await fetchCallReadOnlyFunction({\n  contractAddress: 'SP3FBR2AGK5H9QBDH3EEN6DF8EK8JY7RX8QJ5SVTE',\n  contractName: 'sip-010-ft',\n  functionName: 'get-balance',\n  functionArgs: [standardPrincipalCV('SP2J6ZY48GV1EZ5V2V5RB9MP66SW86PYKKQHX0A73')],\n  senderAddress: 'SP2J6ZY48GV1EZ5V2V5RB9MP66SW86PYKKQHX0A73',\n  network: 'mainnet',\n});\n\nconsole.log(result); // (ok u1000000)",
+          "language": "ts"
+        }
+      ]
+    }
+  ],
+  "types": [
+    {
+      "id": "PrivateKey",
+      "name": "PrivateKey",
+      "kind": "type",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "valueOf": {
+            "anyOf": [
+              {
+                "x-ts-function": true,
+                "x-ts-signatures": [
+                  {
+                    "parameters": [],
+                    "returns": {
+                      "schema": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "x-ts-function": true,
+                "x-ts-signatures": [
+                  {
+                    "parameters": [],
+                    "returns": {
+                      "schema": {
+                        "$ref": "#/types/Uint8Array"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        "required": [
+          "valueOf"
+        ]
+      }
+    },
+    {
+      "id": "IntegerType",
+      "name": "IntegerType",
+      "kind": "type",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "valueOf": {
+            "anyOf": [
+              {
+                "x-ts-function": true,
+                "x-ts-signatures": [
+                  {
+                    "parameters": [],
+                    "returns": {
+                      "schema": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "x-ts-function": true,
+                "x-ts-signatures": [
+                  {
+                    "parameters": [],
+                    "returns": {
+                      "schema": {
+                        "type": "number"
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "x-ts-function": true,
+                "x-ts-signatures": [
+                  {
+                    "parameters": [],
+                    "returns": {
+                      "schema": {
+                        "type": "integer",
+                        "x-ts-type": "bigint"
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "x-ts-function": true,
+                "x-ts-signatures": [
+                  {
+                    "parameters": [],
+                    "returns": {
+                      "schema": {
+                        "$ref": "#/types/Uint8Array"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        "required": [
+          "valueOf"
+        ]
+      }
+    },
+    {
+      "id": "SignedTokenTransferOptions",
+      "name": "SignedTokenTransferOptions",
+      "kind": "interface",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "senderKey": {
+            "$ref": "#/types/PrivateKey"
+          },
+          "recipient": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/types/StandardPrincipalCV"
+              },
+              {
+                "$ref": "#/types/ContractPrincipalCV"
+              }
+            ]
+          },
+          "amount": {
+            "$ref": "#/types/IntegerType"
+          },
+          "fee": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "integer",
+                "x-ts-type": "bigint"
+              },
+              {
+                "$ref": "#/types/Uint8Array"
+              }
+            ]
+          },
+          "nonce": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "integer",
+                "x-ts-type": "bigint"
+              },
+              {
+                "$ref": "#/types/Uint8Array"
+              }
+            ]
+          },
+          "memo": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "sponsored": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "boolean",
+                "enum": [
+                  false
+                ]
+              },
+              {
+                "type": "boolean",
+                "enum": [
+                  true
+                ]
+              }
+            ]
+          },
+          "network": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string",
+                "enum": [
+                  "mainnet"
+                ]
+              },
+              {
+                "type": "string",
+                "enum": [
+                  "testnet"
+                ]
+              },
+              {
+                "type": "string",
+                "enum": [
+                  "devnet"
+                ]
+              },
+              {
+                "type": "string",
+                "enum": [
+                  "mocknet"
+                ]
+              },
+              {
+                "$ref": "#/types/StacksNetwork"
+              }
+            ]
+          },
+          "client": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/types/ClientOpts"
+              }
+            ]
+          }
+        },
+        "required": [
+          "senderKey",
+          "recipient",
+          "amount"
+        ]
+      }
+    },
+    {
+      "id": "StandardPrincipalCV",
+      "name": "StandardPrincipalCV",
+      "kind": "interface",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "address"
+            ]
+          },
+          "value": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "value"
+        ]
+      }
+    },
+    {
+      "id": "ContractPrincipalCV",
+      "name": "ContractPrincipalCV",
+      "kind": "interface",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "contract"
+            ]
+          },
+          "value": {
+            "x-ts-type": "`${string}.${string}`"
+          }
+        },
+        "required": [
+          "type",
+          "value"
+        ]
+      }
+    },
+    {
+      "id": "ClientOpts",
+      "name": "ClientOpts",
+      "kind": "interface",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "baseUrl": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "fetch": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/types/FetchFn"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "SignedMultiSigTokenTransferOptions",
+      "name": "SignedMultiSigTokenTransferOptions",
+      "kind": "type",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "recipient": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/types/StandardPrincipalCV"
+              },
+              {
+                "$ref": "#/types/ContractPrincipalCV"
+              }
+            ]
+          },
+          "amount": {
+            "$ref": "#/types/IntegerType"
+          },
+          "fee": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "integer",
+                "x-ts-type": "bigint"
+              },
+              {
+                "$ref": "#/types/Uint8Array"
+              }
+            ]
+          },
+          "nonce": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "integer",
+                "x-ts-type": "bigint"
+              },
+              {
+                "$ref": "#/types/Uint8Array"
+              }
+            ]
+          },
+          "memo": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "sponsored": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "boolean",
+                "enum": [
+                  false
+                ]
+              },
+              {
+                "type": "boolean",
+                "enum": [
+                  true
+                ]
+              }
+            ]
+          },
+          "network": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string",
+                "enum": [
+                  "mainnet"
+                ]
+              },
+              {
+                "type": "string",
+                "enum": [
+                  "testnet"
+                ]
+              },
+              {
+                "type": "string",
+                "enum": [
+                  "devnet"
+                ]
+              },
+              {
+                "type": "string",
+                "enum": [
+                  "mocknet"
+                ]
+              },
+              {
+                "$ref": "#/types/StacksNetwork"
+              }
+            ]
+          },
+          "client": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/types/ClientOpts"
+              }
+            ]
+          },
+          "numSignatures": {
+            "type": "number"
+          },
+          "publicKeys": {
+            "type": "array",
+            "items": {
+              "$ref": "#/types/PublicKey"
+            }
+          },
+          "address": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "useNonSequentialMultiSig": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "boolean",
+                "enum": [
+                  false
+                ]
+              },
+              {
+                "type": "boolean",
+                "enum": [
+                  true
+                ]
+              }
+            ]
+          },
+          "signerKeys": {
+            "type": "array",
+            "items": {
+              "$ref": "#/types/PrivateKey"
+            }
+          }
+        },
+        "required": [
+          "recipient",
+          "amount",
+          "numSignatures",
+          "publicKeys",
+          "signerKeys"
+        ]
+      }
+    },
+    {
+      "id": "NetworkParam",
+      "name": "NetworkParam",
+      "kind": "interface",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "network": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string",
+                "enum": [
+                  "mainnet"
+                ]
+              },
+              {
+                "type": "string",
+                "enum": [
+                  "testnet"
+                ]
+              },
+              {
+                "type": "string",
+                "enum": [
+                  "devnet"
+                ]
+              },
+              {
+                "type": "string",
+                "enum": [
+                  "mocknet"
+                ]
+              },
+              {
+                "$ref": "#/types/StacksNetwork"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "ClientParam",
+      "name": "ClientParam",
+      "kind": "interface",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "client": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/types/ClientOpts"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "UnsignedMultiSigOptions",
+      "name": "UnsignedMultiSigOptions",
+      "kind": "interface",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "numSignatures": {
+            "type": "number"
+          },
+          "publicKeys": {
+            "type": "array",
+            "items": {
+              "$ref": "#/types/PublicKey"
+            }
+          },
+          "address": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "useNonSequentialMultiSig": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "boolean",
+                "enum": [
+                  false
+                ]
+              },
+              {
+                "type": "boolean",
+                "enum": [
+                  true
+                ]
+              }
+            ]
+          }
+        },
+        "required": [
+          "numSignatures",
+          "publicKeys"
+        ]
+      }
+    },
+    {
+      "id": "PublicKey",
+      "name": "PublicKey",
+      "kind": "type",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "valueOf": {
+            "anyOf": [
+              {
+                "x-ts-function": true,
+                "x-ts-signatures": [
+                  {
+                    "parameters": [],
+                    "returns": {
+                      "schema": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "x-ts-function": true,
+                "x-ts-signatures": [
+                  {
+                    "parameters": [],
+                    "returns": {
+                      "schema": {
+                        "$ref": "#/types/Uint8Array"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        "required": [
+          "valueOf"
+        ]
+      }
+    },
+    {
+      "id": "TransactionVersion",
+      "name": "TransactionVersion",
+      "kind": "enum",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "toFixed": {
+            "x-ts-function": true,
+            "x-ts-signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "fractionDigits",
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "null"
+                        },
+                        {
+                          "type": "number"
+                        }
+                      ]
+                    },
+                    "required": false
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          },
+          "toExponential": {
+            "x-ts-function": true,
+            "x-ts-signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "fractionDigits",
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "null"
+                        },
+                        {
+                          "type": "number"
+                        }
+                      ]
+                    },
+                    "required": false
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          },
+          "toPrecision": {
+            "x-ts-function": true,
+            "x-ts-signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "precision",
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "null"
+                        },
+                        {
+                          "type": "number"
+                        }
+                      ]
+                    },
+                    "required": false
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          },
+          "valueOf": {
+            "x-ts-function": true,
+            "x-ts-signatures": [
+              {
+                "parameters": [],
+                "returns": {
+                  "schema": {
+                    "type": "number"
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "required": [
+          "toFixed",
+          "toExponential",
+          "toPrecision",
+          "valueOf"
+        ]
+      }
+    },
+    {
+      "id": "ChainId",
+      "name": "ChainId",
+      "kind": "enum",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "toFixed": {
+            "x-ts-function": true,
+            "x-ts-signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "fractionDigits",
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "null"
+                        },
+                        {
+                          "type": "number"
+                        }
+                      ]
+                    },
+                    "required": false
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          },
+          "toExponential": {
+            "x-ts-function": true,
+            "x-ts-signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "fractionDigits",
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "null"
+                        },
+                        {
+                          "type": "number"
+                        }
+                      ]
+                    },
+                    "required": false
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          },
+          "toPrecision": {
+            "x-ts-function": true,
+            "x-ts-signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "precision",
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "null"
+                        },
+                        {
+                          "type": "number"
+                        }
+                      ]
+                    },
+                    "required": false
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          },
+          "valueOf": {
+            "x-ts-function": true,
+            "x-ts-signatures": [
+              {
+                "parameters": [],
+                "returns": {
+                  "schema": {
+                    "type": "number"
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "required": [
+          "toFixed",
+          "toExponential",
+          "toPrecision",
+          "valueOf"
+        ]
+      }
+    },
+    {
+      "id": "SpendingCondition",
+      "name": "SpendingCondition",
+      "kind": "type",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "hashMode": {
+            "type": "number",
+            "enum": [
+              0,
+              1,
+              2,
+              3,
+              5,
+              7
+            ]
+          },
+          "signer": {
+            "type": "string"
+          },
+          "nonce": {
+            "type": "integer",
+            "x-ts-type": "bigint"
+          },
+          "fee": {
+            "type": "integer",
+            "x-ts-type": "bigint"
+          }
+        },
+        "required": [
+          "hashMode",
+          "signer",
+          "nonce",
+          "fee"
+        ]
+      }
+    },
+    {
+      "id": "Authorization",
+      "name": "Authorization",
+      "kind": "type",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "authType": {
+            "type": "number",
+            "enum": [
+              4,
+              5
+            ]
+          },
+          "spendingCondition": {
+            "$ref": "#/types/SpendingCondition"
+          }
+        },
+        "required": [
+          "authType",
+          "spendingCondition"
+        ]
+      }
+    },
+    {
+      "id": "PayloadWire",
+      "name": "PayloadWire",
+      "kind": "type",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "number",
+            "enum": [
+              8
+            ]
+          },
+          "payloadType": {
+            "type": "number",
+            "enum": [
+              0,
+              1,
+              6,
+              2,
+              3,
+              4,
+              5,
+              7,
+              8
+            ]
+          }
+        },
+        "required": [
+          "type",
+          "payloadType"
+        ]
+      }
+    },
+    {
+      "id": "PostConditionMode",
+      "name": "PostConditionMode",
+      "kind": "enum",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "toFixed": {
+            "x-ts-function": true,
+            "x-ts-signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "fractionDigits",
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "null"
+                        },
+                        {
+                          "type": "number"
+                        }
+                      ]
+                    },
+                    "required": false
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          },
+          "toExponential": {
+            "x-ts-function": true,
+            "x-ts-signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "fractionDigits",
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "null"
+                        },
+                        {
+                          "type": "number"
+                        }
+                      ]
+                    },
+                    "required": false
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          },
+          "toPrecision": {
+            "x-ts-function": true,
+            "x-ts-signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "precision",
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "null"
+                        },
+                        {
+                          "type": "number"
+                        }
+                      ]
+                    },
+                    "required": false
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          },
+          "valueOf": {
+            "x-ts-function": true,
+            "x-ts-signatures": [
+              {
+                "parameters": [],
+                "returns": {
+                  "schema": {
+                    "type": "number"
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "required": [
+          "toFixed",
+          "toExponential",
+          "toPrecision",
+          "valueOf"
+        ]
+      }
+    },
+    {
+      "id": "LengthPrefixedList",
+      "name": "LengthPrefixedList",
+      "kind": "interface",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "number",
+            "enum": [
+              7
+            ]
+          },
+          "lengthPrefixBytes": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "type",
+          "lengthPrefixBytes"
+        ]
+      }
+    },
+    {
+      "id": "AnchorMode",
+      "name": "AnchorMode",
+      "kind": "enum",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "toFixed": {
+            "x-ts-function": true,
+            "x-ts-signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "fractionDigits",
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "null"
+                        },
+                        {
+                          "type": "number"
+                        }
+                      ]
+                    },
+                    "required": false
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          },
+          "toExponential": {
+            "x-ts-function": true,
+            "x-ts-signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "fractionDigits",
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "null"
+                        },
+                        {
+                          "type": "number"
+                        }
+                      ]
+                    },
+                    "required": false
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          },
+          "toPrecision": {
+            "x-ts-function": true,
+            "x-ts-signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "precision",
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "null"
+                        },
+                        {
+                          "type": "number"
+                        }
+                      ]
+                    },
+                    "required": false
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          },
+          "valueOf": {
+            "x-ts-function": true,
+            "x-ts-signatures": [
+              {
+                "parameters": [],
+                "returns": {
+                  "schema": {
+                    "type": "number"
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "required": [
+          "toFixed",
+          "toExponential",
+          "toPrecision",
+          "valueOf"
+        ]
+      }
+    },
+    {
+      "id": "StacksTransactionWire",
+      "name": "StacksTransactionWire",
+      "kind": "class",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "transactionVersion": {
+            "$ref": "#/types/TransactionVersion"
+          },
+          "chainId": {
+            "$ref": "#/types/ChainId"
+          },
+          "auth": {
+            "$ref": "#/types/Authorization"
+          },
+          "payload": {
+            "$ref": "#/types/PayloadWire"
+          },
+          "postConditionMode": {
+            "$ref": "#/types/PostConditionMode"
+          },
+          "postConditions": {
+            "$ref": "#/types/LengthPrefixedList",
+            "x-ts-type-arguments": [
+              {
+                "$ref": "#/types/PostConditionWire"
+              }
+            ]
+          },
+          "anchorMode": {
+            "$ref": "#/types/AnchorMode"
+          },
+          "signBegin": {
+            "x-ts-function": true,
+            "x-ts-signatures": [
+              {
+                "parameters": [],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          },
+          "verifyBegin": {
+            "x-ts-function": true,
+            "x-ts-signatures": [
+              {
+                "parameters": [],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          },
+          "verifyOrigin": {
+            "x-ts-function": true,
+            "x-ts-signatures": [
+              {
+                "parameters": [],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          },
+          "signNextOrigin": {
+            "x-ts-function": true,
+            "x-ts-signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "sigHash",
+                    "schema": {
+                      "type": "string"
+                    },
+                    "required": true
+                  },
+                  {
+                    "name": "privateKey",
+                    "schema": {
+                      "$ref": "#/types/PrivateKey"
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          },
+          "signNextSponsor": {
+            "x-ts-function": true,
+            "x-ts-signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "sigHash",
+                    "schema": {
+                      "type": "string"
+                    },
+                    "required": true
+                  },
+                  {
+                    "name": "privateKey",
+                    "schema": {
+                      "$ref": "#/types/PrivateKey"
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          },
+          "appendPubkey": {
+            "x-ts-function": true,
+            "x-ts-signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "publicKey",
+                    "schema": {
+                      "$ref": "#/types/PublicKey"
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "null",
+                    "x-ts-type": "void"
+                  }
+                }
+              },
+              {
+                "parameters": [
+                  {
+                    "name": "publicKey",
+                    "schema": {
+                      "$ref": "#/types/PublicKeyWire"
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "null",
+                    "x-ts-type": "void"
+                  }
+                }
+              }
+            ]
+          },
+          "signAndAppend": {
+            "x-ts-function": true,
+            "x-ts-signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "condition",
+                    "schema": {
+                      "$ref": "#/types/SpendingConditionOpts"
+                    },
+                    "required": true
+                  },
+                  {
+                    "name": "curSigHash",
+                    "schema": {
+                      "type": "string"
+                    },
+                    "required": true
+                  },
+                  {
+                    "name": "authType",
+                    "schema": {
+                      "$ref": "#/types/AuthType"
+                    },
+                    "required": true
+                  },
+                  {
+                    "name": "privateKey",
+                    "schema": {
+                      "$ref": "#/types/PrivateKey"
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          },
+          "txid": {
+            "x-ts-function": true,
+            "x-ts-signatures": [
+              {
+                "parameters": [],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          },
+          "setSponsor": {
+            "x-ts-function": true,
+            "x-ts-signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "sponsorSpendingCondition",
+                    "schema": {
+                      "$ref": "#/types/SpendingConditionOpts"
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "null",
+                    "x-ts-type": "void"
+                  }
+                }
+              }
+            ]
+          },
+          "setFee": {
+            "x-ts-function": true,
+            "x-ts-signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "amount",
+                    "schema": {
+                      "$ref": "#/types/IntegerType"
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "null",
+                    "x-ts-type": "void"
+                  }
+                }
+              }
+            ]
+          },
+          "setNonce": {
+            "x-ts-function": true,
+            "x-ts-signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "nonce",
+                    "schema": {
+                      "$ref": "#/types/IntegerType"
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "null",
+                    "x-ts-type": "void"
+                  }
+                }
+              }
+            ]
+          },
+          "setSponsorNonce": {
+            "x-ts-function": true,
+            "x-ts-signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "nonce",
+                    "schema": {
+                      "$ref": "#/types/IntegerType"
+                    },
+                    "required": true
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "null",
+                    "x-ts-type": "void"
+                  }
+                }
+              }
+            ]
+          },
+          "serialize": {
+            "x-ts-function": true,
+            "x-ts-signatures": [
+              {
+                "parameters": [],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "required": [
+          "transactionVersion",
+          "chainId",
+          "auth",
+          "payload",
+          "postConditionMode",
+          "postConditions",
+          "anchorMode",
+          "signBegin",
+          "verifyBegin",
+          "verifyOrigin",
+          "signNextOrigin",
+          "signNextSponsor",
+          "appendPubkey",
+          "signAndAppend",
+          "txid",
+          "setSponsor",
+          "setFee",
+          "setNonce",
+          "setSponsorNonce",
+          "serialize"
+        ]
+      }
+    },
+    {
+      "id": "StandardAuthorization",
+      "name": "StandardAuthorization",
+      "kind": "interface",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "authType": {
+            "type": "number",
+            "enum": [
+              4
+            ]
+          },
+          "spendingCondition": {
+            "$ref": "#/types/SpendingCondition"
+          }
+        },
+        "required": [
+          "authType",
+          "spendingCondition"
+        ]
+      }
+    },
+    {
+      "id": "SponsoredAuthorization",
+      "name": "SponsoredAuthorization",
+      "kind": "interface",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "authType": {
+            "type": "number",
+            "enum": [
+              5
+            ]
+          },
+          "spendingCondition": {
+            "$ref": "#/types/SpendingCondition"
+          },
+          "sponsorSpendingCondition": {
+            "$ref": "#/types/SpendingCondition"
+          }
+        },
+        "required": [
+          "authType",
+          "spendingCondition",
+          "sponsorSpendingCondition"
+        ]
+      }
+    },
+    {
+      "id": "PrincipalCV",
+      "name": "PrincipalCV",
+      "kind": "type",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "address",
+              "contract"
+            ]
+          },
+          "value": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "value"
+        ]
+      }
+    },
+    {
+      "id": "MemoStringWire",
+      "name": "MemoStringWire",
+      "kind": "interface",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "number",
+            "enum": [
+              3
+            ]
+          },
+          "content": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "content"
+        ]
+      }
+    },
+    {
+      "id": "TokenTransferPayloadWire",
+      "name": "TokenTransferPayloadWire",
+      "kind": "interface",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "number",
+            "enum": [
+              8
+            ]
+          },
+          "payloadType": {
+            "type": "number",
+            "enum": [
+              0
+            ]
+          },
+          "recipient": {
+            "$ref": "#/types/PrincipalCV"
+          },
+          "amount": {
+            "type": "integer",
+            "x-ts-type": "bigint"
+          },
+          "memo": {
+            "$ref": "#/types/MemoStringWire"
+          }
+        },
+        "required": [
+          "type",
+          "payloadType",
+          "recipient",
+          "amount",
+          "memo"
+        ]
+      }
+    },
+    {
+      "id": "AddressVersion",
+      "name": "AddressVersion",
+      "kind": "enum",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "toFixed": {
+            "x-ts-function": true,
+            "x-ts-signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "fractionDigits",
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "null"
+                        },
+                        {
+                          "type": "number"
+                        }
+                      ]
+                    },
+                    "required": false
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          },
+          "toExponential": {
+            "x-ts-function": true,
+            "x-ts-signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "fractionDigits",
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "null"
+                        },
+                        {
+                          "type": "number"
+                        }
+                      ]
+                    },
+                    "required": false
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          },
+          "toPrecision": {
+            "x-ts-function": true,
+            "x-ts-signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "precision",
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "null"
+                        },
+                        {
+                          "type": "number"
+                        }
+                      ]
+                    },
+                    "required": false
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          },
+          "valueOf": {
+            "x-ts-function": true,
+            "x-ts-signatures": [
+              {
+                "parameters": [],
+                "returns": {
+                  "schema": {
+                    "type": "number"
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "required": [
+          "toFixed",
+          "toExponential",
+          "toPrecision",
+          "valueOf"
+        ]
+      }
+    },
+    {
+      "id": "AddressWire",
+      "name": "AddressWire",
+      "kind": "interface",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "number",
+            "enum": [
+              0
+            ]
+          },
+          "version": {
+            "$ref": "#/types/AddressVersion"
+          },
+          "hash160": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "version",
+          "hash160"
+        ]
+      }
+    },
+    {
+      "id": "LengthPrefixedStringWire",
+      "name": "LengthPrefixedStringWire",
+      "kind": "interface",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "number",
+            "enum": [
+              2
+            ]
+          },
+          "content": {
+            "type": "string"
+          },
+          "lengthPrefixBytes": {
+            "type": "number"
+          },
+          "maxLengthBytes": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "type",
+          "content",
+          "lengthPrefixBytes",
+          "maxLengthBytes"
+        ]
+      }
+    },
+    {
+      "id": "ContractCallPayload",
+      "name": "ContractCallPayload",
+      "kind": "interface",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "number",
+            "enum": [
+              8
+            ]
+          },
+          "payloadType": {
+            "type": "number",
+            "enum": [
+              2
+            ]
+          },
+          "contractAddress": {
+            "$ref": "#/types/AddressWire"
+          },
+          "contractName": {
+            "$ref": "#/types/LengthPrefixedStringWire"
+          },
+          "functionName": {
+            "$ref": "#/types/LengthPrefixedStringWire"
+          },
+          "functionArgs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/types/ClarityValue"
+            }
+          }
+        },
+        "required": [
+          "type",
+          "payloadType",
+          "contractAddress",
+          "contractName",
+          "functionName",
+          "functionArgs"
+        ]
+      }
+    },
+    {
+      "id": "SmartContractPayloadWire",
+      "name": "SmartContractPayloadWire",
+      "kind": "interface",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "number",
+            "enum": [
+              8
+            ]
+          },
+          "payloadType": {
+            "type": "number",
+            "enum": [
+              1
+            ]
+          },
+          "contractName": {
+            "$ref": "#/types/LengthPrefixedStringWire"
+          },
+          "codeBody": {
+            "$ref": "#/types/LengthPrefixedStringWire"
+          }
+        },
+        "required": [
+          "type",
+          "payloadType",
+          "contractName",
+          "codeBody"
+        ]
+      }
+    },
+    {
+      "id": "ClarityVersion",
+      "name": "ClarityVersion",
+      "kind": "enum",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "toFixed": {
+            "x-ts-function": true,
+            "x-ts-signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "fractionDigits",
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "null"
+                        },
+                        {
+                          "type": "number"
+                        }
+                      ]
+                    },
+                    "required": false
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          },
+          "toExponential": {
+            "x-ts-function": true,
+            "x-ts-signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "fractionDigits",
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "null"
+                        },
+                        {
+                          "type": "number"
+                        }
+                      ]
+                    },
+                    "required": false
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          },
+          "toPrecision": {
+            "x-ts-function": true,
+            "x-ts-signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "precision",
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "null"
+                        },
+                        {
+                          "type": "number"
+                        }
+                      ]
+                    },
+                    "required": false
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          },
+          "valueOf": {
+            "x-ts-function": true,
+            "x-ts-signatures": [
+              {
+                "parameters": [],
+                "returns": {
+                  "schema": {
+                    "type": "number"
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "required": [
+          "toFixed",
+          "toExponential",
+          "toPrecision",
+          "valueOf"
+        ]
+      }
+    },
+    {
+      "id": "VersionedSmartContractPayloadWire",
+      "name": "VersionedSmartContractPayloadWire",
+      "kind": "interface",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "number",
+            "enum": [
+              8
+            ]
+          },
+          "payloadType": {
+            "type": "number",
+            "enum": [
+              6
+            ]
+          },
+          "clarityVersion": {
+            "$ref": "#/types/ClarityVersion"
+          },
+          "contractName": {
+            "$ref": "#/types/LengthPrefixedStringWire"
+          },
+          "codeBody": {
+            "$ref": "#/types/LengthPrefixedStringWire"
+          }
+        },
+        "required": [
+          "type",
+          "payloadType",
+          "clarityVersion",
+          "contractName",
+          "codeBody"
+        ]
+      }
+    },
+    {
+      "id": "PoisonPayloadWire",
+      "name": "PoisonPayloadWire",
+      "kind": "interface",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "number",
+            "enum": [
+              8
+            ]
+          },
+          "payloadType": {
+            "type": "number",
+            "enum": [
+              3
+            ]
+          }
+        },
+        "required": [
+          "type",
+          "payloadType"
+        ]
+      }
+    },
+    {
+      "id": "CoinbasePayloadWire",
+      "name": "CoinbasePayloadWire",
+      "kind": "interface",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "number",
+            "enum": [
+              8
+            ]
+          },
+          "payloadType": {
+            "type": "number",
+            "enum": [
+              4
+            ]
+          },
+          "coinbaseBytes": {
+            "$ref": "#/types/Uint8Array"
+          }
+        },
+        "required": [
+          "type",
+          "payloadType",
+          "coinbaseBytes"
+        ]
+      }
+    },
+    {
+      "id": "CoinbasePayloadToAltRecipient",
+      "name": "CoinbasePayloadToAltRecipient",
+      "kind": "interface",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "number",
+            "enum": [
+              8
+            ]
+          },
+          "payloadType": {
+            "type": "number",
+            "enum": [
+              5
+            ]
+          },
+          "coinbaseBytes": {
+            "$ref": "#/types/Uint8Array"
+          },
+          "recipient": {
+            "$ref": "#/types/PrincipalCV"
+          }
+        },
+        "required": [
+          "type",
+          "payloadType",
+          "coinbaseBytes",
+          "recipient"
+        ]
+      }
+    },
+    {
+      "id": "NakamotoCoinbasePayloadWire",
+      "name": "NakamotoCoinbasePayloadWire",
+      "kind": "interface",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "number",
+            "enum": [
+              8
+            ]
+          },
+          "payloadType": {
+            "type": "number",
+            "enum": [
+              8
+            ]
+          },
+          "coinbaseBytes": {
+            "$ref": "#/types/Uint8Array"
+          },
+          "recipient": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/types/StandardPrincipalCV"
+              },
+              {
+                "$ref": "#/types/ContractPrincipalCV"
+              }
+            ]
+          },
+          "vrfProof": {
+            "$ref": "#/types/Uint8Array"
+          }
+        },
+        "required": [
+          "type",
+          "payloadType",
+          "coinbaseBytes",
+          "vrfProof"
+        ]
+      }
+    },
+    {
+      "id": "TenureChangeCause",
+      "name": "TenureChangeCause",
+      "kind": "enum",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "toFixed": {
+            "x-ts-function": true,
+            "x-ts-signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "fractionDigits",
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "null"
+                        },
+                        {
+                          "type": "number"
+                        }
+                      ]
+                    },
+                    "required": false
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          },
+          "toExponential": {
+            "x-ts-function": true,
+            "x-ts-signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "fractionDigits",
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "null"
+                        },
+                        {
+                          "type": "number"
+                        }
+                      ]
+                    },
+                    "required": false
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          },
+          "toPrecision": {
+            "x-ts-function": true,
+            "x-ts-signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "precision",
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "null"
+                        },
+                        {
+                          "type": "number"
+                        }
+                      ]
+                    },
+                    "required": false
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          },
+          "valueOf": {
+            "x-ts-function": true,
+            "x-ts-signatures": [
+              {
+                "parameters": [],
+                "returns": {
+                  "schema": {
+                    "type": "number"
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "required": [
+          "toFixed",
+          "toExponential",
+          "toPrecision",
+          "valueOf"
+        ]
+      }
+    },
+    {
+      "id": "TenureChangePayloadWire",
+      "name": "TenureChangePayloadWire",
+      "kind": "interface",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "number",
+            "enum": [
+              8
+            ]
+          },
+          "payloadType": {
+            "type": "number",
+            "enum": [
+              7
+            ]
+          },
+          "tenureHash": {
+            "type": "string"
+          },
+          "previousTenureHash": {
+            "type": "string"
+          },
+          "burnViewHash": {
+            "type": "string"
+          },
+          "previousTenureEnd": {
+            "type": "string"
+          },
+          "previousTenureBlocks": {
+            "type": "number"
+          },
+          "cause": {
+            "$ref": "#/types/TenureChangeCause"
+          },
+          "publicKeyHash": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "payloadType",
+          "tenureHash",
+          "previousTenureHash",
+          "burnViewHash",
+          "previousTenureEnd",
+          "previousTenureBlocks",
+          "cause",
+          "publicKeyHash"
+        ]
+      }
+    },
+    {
+      "id": "PostConditionPrincipalWire",
+      "name": "PostConditionPrincipalWire",
+      "kind": "type",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "number",
+            "enum": [
+              1
+            ]
+          },
+          "prefix": {
+            "type": "number",
+            "enum": [
+              1,
+              2,
+              3
+            ]
+          }
+        },
+        "required": [
+          "type",
+          "prefix"
+        ]
+      }
+    },
+    {
+      "id": "PostConditionWire",
+      "name": "PostConditionWire",
+      "kind": "type",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "number",
+            "enum": [
+              5
+            ]
+          },
+          "conditionType": {
+            "type": "number",
+            "enum": [
+              0,
+              1,
+              2
+            ]
+          },
+          "principal": {
+            "$ref": "#/types/PostConditionPrincipalWire"
+          },
+          "conditionCode": {
+            "type": "number",
+            "enum": [
+              1,
+              2,
+              3,
+              4,
+              5,
+              16,
+              17
+            ]
+          }
+        },
+        "required": [
+          "type",
+          "conditionType",
+          "principal",
+          "conditionCode"
+        ]
+      }
+    },
+    {
+      "id": "FungibleConditionCode",
+      "name": "FungibleConditionCode",
+      "kind": "enum",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "toFixed": {
+            "x-ts-function": true,
+            "x-ts-signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "fractionDigits",
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "null"
+                        },
+                        {
+                          "type": "number"
+                        }
+                      ]
+                    },
+                    "required": false
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          },
+          "toExponential": {
+            "x-ts-function": true,
+            "x-ts-signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "fractionDigits",
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "null"
+                        },
+                        {
+                          "type": "number"
+                        }
+                      ]
+                    },
+                    "required": false
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          },
+          "toPrecision": {
+            "x-ts-function": true,
+            "x-ts-signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "precision",
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "null"
+                        },
+                        {
+                          "type": "number"
+                        }
+                      ]
+                    },
+                    "required": false
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          },
+          "valueOf": {
+            "x-ts-function": true,
+            "x-ts-signatures": [
+              {
+                "parameters": [],
+                "returns": {
+                  "schema": {
+                    "type": "number"
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "required": [
+          "toFixed",
+          "toExponential",
+          "toPrecision",
+          "valueOf"
+        ]
+      }
+    },
+    {
+      "id": "STXPostConditionWire",
+      "name": "STXPostConditionWire",
+      "kind": "interface",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "number",
+            "enum": [
+              5
+            ]
+          },
+          "conditionType": {
+            "type": "number",
+            "enum": [
+              0
+            ]
+          },
+          "principal": {
+            "$ref": "#/types/PostConditionPrincipalWire"
+          },
+          "conditionCode": {
+            "$ref": "#/types/FungibleConditionCode"
+          },
+          "amount": {
+            "type": "integer",
+            "x-ts-type": "bigint"
+          }
+        },
+        "required": [
+          "type",
+          "conditionType",
+          "principal",
+          "conditionCode",
+          "amount"
+        ]
+      }
+    },
+    {
+      "id": "AssetWire",
+      "name": "AssetWire",
+      "kind": "interface",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "number",
+            "enum": [
+              4
+            ]
+          },
+          "address": {
+            "$ref": "#/types/AddressWire"
+          },
+          "contractName": {
+            "$ref": "#/types/LengthPrefixedStringWire"
+          },
+          "assetName": {
+            "$ref": "#/types/LengthPrefixedStringWire"
+          }
+        },
+        "required": [
+          "type",
+          "address",
+          "contractName",
+          "assetName"
+        ]
+      }
+    },
+    {
+      "id": "FungiblePostConditionWire",
+      "name": "FungiblePostConditionWire",
+      "kind": "interface",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "number",
+            "enum": [
+              5
+            ]
+          },
+          "conditionType": {
+            "type": "number",
+            "enum": [
+              1
+            ]
+          },
+          "principal": {
+            "$ref": "#/types/PostConditionPrincipalWire"
+          },
+          "conditionCode": {
+            "$ref": "#/types/FungibleConditionCode"
+          },
+          "amount": {
+            "type": "integer",
+            "x-ts-type": "bigint"
+          },
+          "asset": {
+            "$ref": "#/types/AssetWire"
+          }
+        },
+        "required": [
+          "type",
+          "conditionType",
+          "principal",
+          "conditionCode",
+          "amount",
+          "asset"
+        ]
+      }
+    },
+    {
+      "id": "NonFungibleConditionCode",
+      "name": "NonFungibleConditionCode",
+      "kind": "enum",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "toFixed": {
+            "x-ts-function": true,
+            "x-ts-signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "fractionDigits",
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "null"
+                        },
+                        {
+                          "type": "number"
+                        }
+                      ]
+                    },
+                    "required": false
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          },
+          "toExponential": {
+            "x-ts-function": true,
+            "x-ts-signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "fractionDigits",
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "null"
+                        },
+                        {
+                          "type": "number"
+                        }
+                      ]
+                    },
+                    "required": false
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          },
+          "toPrecision": {
+            "x-ts-function": true,
+            "x-ts-signatures": [
+              {
+                "parameters": [
+                  {
+                    "name": "precision",
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "null"
+                        },
+                        {
+                          "type": "number"
+                        }
+                      ]
+                    },
+                    "required": false
+                  }
+                ],
+                "returns": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          },
+          "valueOf": {
+            "x-ts-function": true,
+            "x-ts-signatures": [
+              {
+                "parameters": [],
+                "returns": {
+                  "schema": {
+                    "type": "number"
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "required": [
+          "toFixed",
+          "toExponential",
+          "toPrecision",
+          "valueOf"
+        ]
+      }
+    },
+    {
+      "id": "ClarityValue",
+      "name": "ClarityValue",
+      "kind": "type",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "int",
+              "uint",
+              "buffer",
+              "true",
+              "false",
+              "address",
+              "contract",
+              "ok",
+              "err",
+              "none",
+              "some",
+              "list",
+              "tuple",
+              "ascii",
+              "utf8"
+            ]
+          }
+        },
+        "required": [
+          "type"
+        ]
+      }
+    },
+    {
+      "id": "NonFungiblePostConditionWire",
+      "name": "NonFungiblePostConditionWire",
+      "kind": "interface",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "number",
+            "enum": [
+              5
+            ]
+          },
+          "conditionType": {
+            "type": "number",
+            "enum": [
+              2
+            ]
+          },
+          "principal": {
+            "$ref": "#/types/PostConditionPrincipalWire"
+          },
+          "conditionCode": {
+            "$ref": "#/types/NonFungibleConditionCode"
+          },
+          "asset": {
+            "$ref": "#/types/AssetWire"
+          },
+          "assetName": {
+            "$ref": "#/types/ClarityValue"
+          }
+        },
+        "required": [
+          "type",
+          "conditionType",
+          "principal",
+          "conditionCode",
+          "asset",
+          "assetName"
+        ]
+      }
+    },
+    {
+      "id": "SignedContractDeployOptions",
+      "name": "SignedContractDeployOptions",
+      "kind": "interface",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "senderKey": {
+            "$ref": "#/types/PrivateKey"
+          },
+          "clarityVersion": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "number",
+                "enum": [
+                  1
+                ]
+              },
+              {
+                "type": "number",
+                "enum": [
+                  2
+                ]
+              },
+              {
+                "type": "number",
+                "enum": [
+                  3
+                ]
+              },
+              {
+                "type": "number",
+                "enum": [
+                  4
+                ]
+              }
+            ]
+          },
+          "contractName": {
+            "type": "string"
+          },
+          "codeBody": {
+            "type": "string"
+          },
+          "fee": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "integer",
+                "x-ts-type": "bigint"
+              },
+              {
+                "$ref": "#/types/Uint8Array"
+              }
+            ]
+          },
+          "nonce": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "integer",
+                "x-ts-type": "bigint"
+              },
+              {
+                "$ref": "#/types/Uint8Array"
+              }
+            ]
+          },
+          "postConditionMode": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "number",
+                "enum": [
+                  1
+                ]
+              },
+              {
+                "type": "number",
+                "enum": [
+                  2
+                ]
+              },
+              {
+                "type": "string",
+                "enum": [
+                  "allow"
+                ]
+              },
+              {
+                "type": "string",
+                "enum": [
+                  "deny"
+                ]
+              }
+            ]
+          },
+          "postConditions": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "$ref": "#/types/STXPostConditionWire"
+                    },
+                    {
+                      "$ref": "#/types/FungiblePostConditionWire"
+                    },
+                    {
+                      "$ref": "#/types/NonFungiblePostConditionWire"
+                    },
+                    {
+                      "$ref": "#/types/StxPostCondition"
+                    },
+                    {
+                      "$ref": "#/types/FungiblePostCondition"
+                    },
+                    {
+                      "$ref": "#/types/NonFungiblePostCondition"
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          "sponsored": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "boolean",
+                "enum": [
+                  false
+                ]
+              },
+              {
+                "type": "boolean",
+                "enum": [
+                  true
+                ]
+              }
+            ]
+          },
+          "network": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string",
+                "enum": [
+                  "mainnet"
+                ]
+              },
+              {
+                "type": "string",
+                "enum": [
+                  "testnet"
+                ]
+              },
+              {
+                "type": "string",
+                "enum": [
+                  "devnet"
+                ]
+              },
+              {
+                "type": "string",
+                "enum": [
+                  "mocknet"
+                ]
+              },
+              {
+                "$ref": "#/types/StacksNetwork"
+              }
+            ]
+          },
+          "client": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/types/ClientOpts"
+              }
+            ]
+          }
+        },
+        "required": [
+          "senderKey",
+          "contractName",
+          "codeBody"
+        ]
+      }
+    },
+    {
+      "id": "SignedMultiSigContractDeployOptions",
+      "name": "SignedMultiSigContractDeployOptions",
+      "kind": "type",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "clarityVersion": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "number",
+                "enum": [
+                  1
+                ]
+              },
+              {
+                "type": "number",
+                "enum": [
+                  2
+                ]
+              },
+              {
+                "type": "number",
+                "enum": [
+                  3
+                ]
+              },
+              {
+                "type": "number",
+                "enum": [
+                  4
+                ]
+              }
+            ]
+          },
+          "contractName": {
+            "type": "string"
+          },
+          "codeBody": {
+            "type": "string"
+          },
+          "fee": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "integer",
+                "x-ts-type": "bigint"
+              },
+              {
+                "$ref": "#/types/Uint8Array"
+              }
+            ]
+          },
+          "nonce": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "integer",
+                "x-ts-type": "bigint"
+              },
+              {
+                "$ref": "#/types/Uint8Array"
+              }
+            ]
+          },
+          "postConditionMode": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "number",
+                "enum": [
+                  1
+                ]
+              },
+              {
+                "type": "number",
+                "enum": [
+                  2
+                ]
+              },
+              {
+                "type": "string",
+                "enum": [
+                  "allow"
+                ]
+              },
+              {
+                "type": "string",
+                "enum": [
+                  "deny"
+                ]
+              }
+            ]
+          },
+          "postConditions": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "$ref": "#/types/STXPostConditionWire"
+                    },
+                    {
+                      "$ref": "#/types/FungiblePostConditionWire"
+                    },
+                    {
+                      "$ref": "#/types/NonFungiblePostConditionWire"
+                    },
+                    {
+                      "$ref": "#/types/StxPostCondition"
+                    },
+                    {
+                      "$ref": "#/types/FungiblePostCondition"
+                    },
+                    {
+                      "$ref": "#/types/NonFungiblePostCondition"
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          "sponsored": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "boolean",
+                "enum": [
+                  false
+                ]
+              },
+              {
+                "type": "boolean",
+                "enum": [
+                  true
+                ]
+              }
+            ]
+          },
+          "network": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string",
+                "enum": [
+                  "mainnet"
+                ]
+              },
+              {
+                "type": "string",
+                "enum": [
+                  "testnet"
+                ]
+              },
+              {
+                "type": "string",
+                "enum": [
+                  "devnet"
+                ]
+              },
+              {
+                "type": "string",
+                "enum": [
+                  "mocknet"
+                ]
+              },
+              {
+                "$ref": "#/types/StacksNetwork"
+              }
+            ]
+          },
+          "client": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/types/ClientOpts"
+              }
+            ]
+          },
+          "numSignatures": {
+            "type": "number"
+          },
+          "publicKeys": {
+            "type": "array",
+            "items": {
+              "$ref": "#/types/PublicKey"
+            }
+          },
+          "address": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "useNonSequentialMultiSig": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "boolean",
+                "enum": [
+                  false
+                ]
+              },
+              {
+                "type": "boolean",
+                "enum": [
+                  true
+                ]
+              }
+            ]
+          },
+          "signerKeys": {
+            "type": "array",
+            "items": {
+              "$ref": "#/types/PrivateKey"
+            }
+          }
+        },
+        "required": [
+          "contractName",
+          "codeBody",
+          "numSignatures",
+          "publicKeys",
+          "signerKeys"
+        ]
+      }
+    },
+    {
+      "id": "SignedContractCallOptions",
+      "name": "SignedContractCallOptions",
+      "kind": "interface",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "senderKey": {
+            "$ref": "#/types/PublicKey"
+          },
+          "contractAddress": {
+            "type": "string"
+          },
+          "contractName": {
+            "type": "string"
+          },
+          "functionName": {
+            "type": "string"
+          },
+          "functionArgs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/types/ClarityValue"
+            }
+          },
+          "fee": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "integer",
+                "x-ts-type": "bigint"
+              },
+              {
+                "$ref": "#/types/Uint8Array"
+              }
+            ]
+          },
+          "nonce": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "integer",
+                "x-ts-type": "bigint"
+              },
+              {
+                "$ref": "#/types/Uint8Array"
+              }
+            ]
+          },
+          "postConditionMode": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "number",
+                "enum": [
+                  1
+                ]
+              },
+              {
+                "type": "number",
+                "enum": [
+                  2
+                ]
+              },
+              {
+                "type": "string",
+                "enum": [
+                  "allow"
+                ]
+              },
+              {
+                "type": "string",
+                "enum": [
+                  "deny"
+                ]
+              }
+            ]
+          },
+          "postConditions": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "$ref": "#/types/STXPostConditionWire"
+                    },
+                    {
+                      "$ref": "#/types/FungiblePostConditionWire"
+                    },
+                    {
+                      "$ref": "#/types/NonFungiblePostConditionWire"
+                    },
+                    {
+                      "$ref": "#/types/StxPostCondition"
+                    },
+                    {
+                      "$ref": "#/types/FungiblePostCondition"
+                    },
+                    {
+                      "$ref": "#/types/NonFungiblePostCondition"
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          "validateWithAbi": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "boolean",
+                "enum": [
+                  false
+                ]
+              },
+              {
+                "type": "boolean",
+                "enum": [
+                  true
+                ]
+              },
+              {
+                "$ref": "#/types/ClarityAbi"
+              }
+            ]
+          },
+          "sponsored": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "boolean",
+                "enum": [
+                  false
+                ]
+              },
+              {
+                "type": "boolean",
+                "enum": [
+                  true
+                ]
+              }
+            ]
+          },
+          "network": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string",
+                "enum": [
+                  "mainnet"
+                ]
+              },
+              {
+                "type": "string",
+                "enum": [
+                  "testnet"
+                ]
+              },
+              {
+                "type": "string",
+                "enum": [
+                  "devnet"
+                ]
+              },
+              {
+                "type": "string",
+                "enum": [
+                  "mocknet"
+                ]
+              },
+              {
+                "$ref": "#/types/StacksNetwork"
+              }
+            ]
+          },
+          "client": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/types/ClientOpts"
+              }
+            ]
+          }
+        },
+        "required": [
+          "senderKey",
+          "contractAddress",
+          "contractName",
+          "functionName",
+          "functionArgs"
+        ]
+      }
+    },
+    {
+      "id": "ClarityAbi",
+      "name": "ClarityAbi",
+      "kind": "interface",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "functions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/types/ClarityAbiFunction"
+            }
+          },
+          "variables": {
+            "type": "array",
+            "items": {
+              "$ref": "#/types/ClarityAbiVariable"
+            }
+          },
+          "maps": {
+            "type": "array",
+            "items": {
+              "$ref": "#/types/ClarityAbiMap"
+            }
+          },
+          "fungible_tokens": {
+            "type": "array",
+            "items": {
+              "$ref": "#/types/ClarityAbiTypeFungibleToken"
+            }
+          },
+          "non_fungible_tokens": {
+            "type": "array",
+            "items": {
+              "$ref": "#/types/ClarityAbiTypeNonFungibleToken"
+            }
+          }
+        },
+        "required": [
+          "functions",
+          "variables",
+          "maps",
+          "fungible_tokens",
+          "non_fungible_tokens"
+        ]
+      }
+    },
+    {
+      "id": "SignedMultiSigContractCallOptions",
+      "name": "SignedMultiSigContractCallOptions",
+      "kind": "type",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "contractAddress": {
+            "type": "string"
+          },
+          "contractName": {
+            "type": "string"
+          },
+          "functionName": {
+            "type": "string"
+          },
+          "functionArgs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/types/ClarityValue"
+            }
+          },
+          "fee": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "integer",
+                "x-ts-type": "bigint"
+              },
+              {
+                "$ref": "#/types/Uint8Array"
+              }
+            ]
+          },
+          "nonce": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "integer",
+                "x-ts-type": "bigint"
+              },
+              {
+                "$ref": "#/types/Uint8Array"
+              }
+            ]
+          },
+          "postConditionMode": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "number",
+                "enum": [
+                  1
+                ]
+              },
+              {
+                "type": "number",
+                "enum": [
+                  2
+                ]
+              },
+              {
+                "type": "string",
+                "enum": [
+                  "allow"
+                ]
+              },
+              {
+                "type": "string",
+                "enum": [
+                  "deny"
+                ]
+              }
+            ]
+          },
+          "postConditions": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "$ref": "#/types/STXPostConditionWire"
+                    },
+                    {
+                      "$ref": "#/types/FungiblePostConditionWire"
+                    },
+                    {
+                      "$ref": "#/types/NonFungiblePostConditionWire"
+                    },
+                    {
+                      "$ref": "#/types/StxPostCondition"
+                    },
+                    {
+                      "$ref": "#/types/FungiblePostCondition"
+                    },
+                    {
+                      "$ref": "#/types/NonFungiblePostCondition"
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          "validateWithAbi": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "boolean",
+                "enum": [
+                  false
+                ]
+              },
+              {
+                "type": "boolean",
+                "enum": [
+                  true
+                ]
+              },
+              {
+                "$ref": "#/types/ClarityAbi"
+              }
+            ]
+          },
+          "sponsored": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "boolean",
+                "enum": [
+                  false
+                ]
+              },
+              {
+                "type": "boolean",
+                "enum": [
+                  true
+                ]
+              }
+            ]
+          },
+          "network": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string",
+                "enum": [
+                  "mainnet"
+                ]
+              },
+              {
+                "type": "string",
+                "enum": [
+                  "testnet"
+                ]
+              },
+              {
+                "type": "string",
+                "enum": [
+                  "devnet"
+                ]
+              },
+              {
+                "type": "string",
+                "enum": [
+                  "mocknet"
+                ]
+              },
+              {
+                "$ref": "#/types/StacksNetwork"
+              }
+            ]
+          },
+          "client": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/types/ClientOpts"
+              }
+            ]
+          },
+          "numSignatures": {
+            "type": "number"
+          },
+          "publicKeys": {
+            "type": "array",
+            "items": {
+              "$ref": "#/types/PublicKey"
+            }
+          },
+          "address": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "useNonSequentialMultiSig": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "boolean",
+                "enum": [
+                  false
+                ]
+              },
+              {
+                "type": "boolean",
+                "enum": [
+                  true
+                ]
+              }
+            ]
+          },
+          "signerKeys": {
+            "type": "array",
+            "items": {
+              "$ref": "#/types/PrivateKey"
+            }
+          }
+        },
+        "required": [
+          "contractAddress",
+          "contractName",
+          "functionName",
+          "functionArgs",
+          "numSignatures",
+          "publicKeys",
+          "signerKeys"
+        ]
+      }
+    },
+    {
+      "id": "SponsorOptionsOpts",
+      "name": "SponsorOptionsOpts",
+      "kind": "type",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "transaction": {
+            "$ref": "#/types/StacksTransactionWire"
+          },
+          "sponsorPrivateKey": {
+            "$ref": "#/types/PrivateKey"
+          },
+          "fee": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "integer",
+                "x-ts-type": "bigint"
+              },
+              {
+                "$ref": "#/types/Uint8Array"
+              }
+            ]
+          },
+          "sponsorNonce": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "integer",
+                "x-ts-type": "bigint"
+              },
+              {
+                "$ref": "#/types/Uint8Array"
+              }
+            ]
+          },
+          "sponsorAddressHashmode": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "number",
+                "enum": [
+                  0
+                ]
+              },
+              {
+                "type": "number",
+                "enum": [
+                  1
+                ]
+              },
+              {
+                "type": "number",
+                "enum": [
+                  2
+                ]
+              },
+              {
+                "type": "number",
+                "enum": [
+                  3
+                ]
+              },
+              {
+                "type": "number",
+                "enum": [
+                  5
+                ]
+              },
+              {
+                "type": "number",
+                "enum": [
+                  7
+                ]
+              }
+            ]
+          },
+          "network": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string",
+                "enum": [
+                  "mainnet"
+                ]
+              },
+              {
+                "type": "string",
+                "enum": [
+                  "testnet"
+                ]
+              },
+              {
+                "type": "string",
+                "enum": [
+                  "devnet"
+                ]
+              },
+              {
+                "type": "string",
+                "enum": [
+                  "mocknet"
+                ]
+              },
+              {
+                "$ref": "#/types/StacksNetwork"
+              }
+            ]
+          },
+          "client": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/types/ClientOpts"
+              }
+            ]
+          }
+        },
+        "required": [
+          "transaction",
+          "sponsorPrivateKey"
+        ]
+      }
+    },
+    {
+      "id": "TxBroadcastResult",
+      "name": "TxBroadcastResult",
+      "kind": "type",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "txid": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "txid"
+        ]
+      }
+    },
+    {
+      "id": "SerializationRejection",
+      "name": "SerializationRejection",
+      "kind": "type",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "enum": [
+              "Serialization"
+            ]
+          },
+          "reason_data": {
+            "type": "object",
+            "properties": {
+              "message": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "message"
+            ]
+          },
+          "error": {
+            "type": "string"
+          },
+          "txid": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason",
+          "reason_data",
+          "error",
+          "txid"
+        ]
+      }
+    },
+    {
+      "id": "DeserializationRejection",
+      "name": "DeserializationRejection",
+      "kind": "type",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "enum": [
+              "Deserialization"
+            ]
+          },
+          "reason_data": {
+            "type": "object",
+            "properties": {
+              "message": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "message"
+            ]
+          },
+          "error": {
+            "type": "string"
+          },
+          "txid": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason",
+          "reason_data",
+          "error",
+          "txid"
+        ]
+      }
+    },
+    {
+      "id": "SignatureValidationRejection",
+      "name": "SignatureValidationRejection",
+      "kind": "type",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "enum": [
+              "SignatureValidation"
+            ]
+          },
+          "reason_data": {
+            "type": "object",
+            "properties": {
+              "message": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "message"
+            ]
+          },
+          "error": {
+            "type": "string"
+          },
+          "txid": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason",
+          "reason_data",
+          "error",
+          "txid"
+        ]
+      }
+    },
+    {
+      "id": "BadNonceRejection",
+      "name": "BadNonceRejection",
+      "kind": "type",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "enum": [
+              "BadNonce"
+            ]
+          },
+          "reason_data": {
+            "type": "object",
+            "properties": {
+              "expected": {
+                "type": "number"
+              },
+              "actual": {
+                "type": "number"
+              },
+              "is_origin": {
+                "type": "boolean"
+              },
+              "principal": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "expected",
+              "actual",
+              "is_origin",
+              "principal"
+            ]
+          },
+          "error": {
+            "type": "string"
+          },
+          "txid": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason",
+          "reason_data",
+          "error",
+          "txid"
+        ]
+      }
+    },
+    {
+      "id": "FeeTooLowRejection",
+      "name": "FeeTooLowRejection",
+      "kind": "type",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "enum": [
+              "FeeTooLow"
+            ]
+          },
+          "reason_data": {
+            "type": "object",
+            "properties": {
+              "expected": {
+                "type": "number"
+              },
+              "actual": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "expected",
+              "actual"
+            ]
+          },
+          "error": {
+            "type": "string"
+          },
+          "txid": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason",
+          "reason_data",
+          "error",
+          "txid"
+        ]
+      }
+    },
+    {
+      "id": "NotEnoughFundsRejection",
+      "name": "NotEnoughFundsRejection",
+      "kind": "type",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "enum": [
+              "NotEnoughFunds"
+            ]
+          },
+          "reason_data": {
+            "type": "object",
+            "properties": {
+              "expected": {
+                "type": "string"
+              },
+              "actual": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "expected",
+              "actual"
+            ]
+          },
+          "error": {
+            "type": "string"
+          },
+          "txid": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason",
+          "reason_data",
+          "error",
+          "txid"
+        ]
+      }
+    },
+    {
+      "id": "NoSuchContractRejection",
+      "name": "NoSuchContractRejection",
+      "kind": "type",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "enum": [
+              "NoSuchContract"
+            ]
+          },
+          "error": {
+            "type": "string"
+          },
+          "txid": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason",
+          "error",
+          "txid"
+        ]
+      }
+    },
+    {
+      "id": "NoSuchPublicFunctionRejection",
+      "name": "NoSuchPublicFunctionRejection",
+      "kind": "type",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "enum": [
+              "NoSuchPublicFunction"
+            ]
+          },
+          "error": {
+            "type": "string"
+          },
+          "txid": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason",
+          "error",
+          "txid"
+        ]
+      }
+    },
+    {
+      "id": "BadFunctionArgumentRejection",
+      "name": "BadFunctionArgumentRejection",
+      "kind": "type",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "enum": [
+              "BadFunctionArgument"
+            ]
+          },
+          "reason_data": {
+            "type": "object",
+            "properties": {
+              "message": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "message"
+            ]
+          },
+          "error": {
+            "type": "string"
+          },
+          "txid": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason",
+          "reason_data",
+          "error",
+          "txid"
+        ]
+      }
+    },
+    {
+      "id": "ContractAlreadyExistsRejection",
+      "name": "ContractAlreadyExistsRejection",
+      "kind": "type",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "enum": [
+              "ContractAlreadyExists"
+            ]
+          },
+          "reason_data": {
+            "type": "object",
+            "properties": {
+              "contract_identifier": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "contract_identifier"
+            ]
+          },
+          "error": {
+            "type": "string"
+          },
+          "txid": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason",
+          "reason_data",
+          "error",
+          "txid"
+        ]
+      }
+    },
+    {
+      "id": "PoisonMicroblocksDoNotConflictRejection",
+      "name": "PoisonMicroblocksDoNotConflictRejection",
+      "kind": "type",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "enum": [
+              "PoisonMicroblocksDoNotConflict"
+            ]
+          },
+          "error": {
+            "type": "string"
+          },
+          "txid": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason",
+          "error",
+          "txid"
+        ]
+      }
+    },
+    {
+      "id": "PoisonMicroblockHasUnknownPubKeyHashRejection",
+      "name": "PoisonMicroblockHasUnknownPubKeyHashRejection",
+      "kind": "type",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "enum": [
+              "PoisonMicroblockHasUnknownPubKeyHash"
+            ]
+          },
+          "error": {
+            "type": "string"
+          },
+          "txid": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason",
+          "error",
+          "txid"
+        ]
+      }
+    },
+    {
+      "id": "PoisonMicroblockIsInvalidRejection",
+      "name": "PoisonMicroblockIsInvalidRejection",
+      "kind": "type",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "enum": [
+              "PoisonMicroblockIsInvalid"
+            ]
+          },
+          "error": {
+            "type": "string"
+          },
+          "txid": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason",
+          "error",
+          "txid"
+        ]
+      }
+    },
+    {
+      "id": "BadAddressVersionByteRejection",
+      "name": "BadAddressVersionByteRejection",
+      "kind": "type",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "enum": [
+              "BadAddressVersionByte"
+            ]
+          },
+          "error": {
+            "type": "string"
+          },
+          "txid": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason",
+          "error",
+          "txid"
+        ]
+      }
+    },
+    {
+      "id": "NoCoinbaseViaMempoolRejection",
+      "name": "NoCoinbaseViaMempoolRejection",
+      "kind": "type",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "enum": [
+              "NoCoinbaseViaMempool"
+            ]
+          },
+          "error": {
+            "type": "string"
+          },
+          "txid": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason",
+          "error",
+          "txid"
+        ]
+      }
+    },
+    {
+      "id": "ServerFailureNoSuchChainTipRejection",
+      "name": "ServerFailureNoSuchChainTipRejection",
+      "kind": "type",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "enum": [
+              "ServerFailureNoSuchChainTip"
+            ]
+          },
+          "error": {
+            "type": "string"
+          },
+          "txid": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason",
+          "error",
+          "txid"
+        ]
+      }
+    },
+    {
+      "id": "ServerFailureDatabaseRejection",
+      "name": "ServerFailureDatabaseRejection",
+      "kind": "type",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "enum": [
+              "ServerFailureDatabase"
+            ]
+          },
+          "reason_data": {
+            "type": "object",
+            "properties": {
+              "message": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "message"
+            ]
+          },
+          "error": {
+            "type": "string"
+          },
+          "txid": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason",
+          "reason_data",
+          "error",
+          "txid"
+        ]
+      }
+    },
+    {
+      "id": "ServerFailureOtherRejection",
+      "name": "ServerFailureOtherRejection",
+      "kind": "type",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "enum": [
+              "ServerFailureOther"
+            ]
+          },
+          "reason_data": {
+            "type": "object",
+            "properties": {
+              "message": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "message"
+            ]
+          },
+          "error": {
+            "type": "string"
+          },
+          "txid": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason",
+          "reason_data",
+          "error",
+          "txid"
+        ]
+      }
+    },
+    {
+      "id": "TrueCV",
+      "name": "TrueCV",
+      "kind": "interface",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "true"
+            ]
+          }
+        },
+        "required": [
+          "type"
+        ]
+      }
+    },
+    {
+      "id": "FalseCV",
+      "name": "FalseCV",
+      "kind": "interface",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "false"
+            ]
+          }
+        },
+        "required": [
+          "type"
+        ]
+      }
+    },
+    {
+      "id": "BufferCV",
+      "name": "BufferCV",
+      "kind": "interface",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "buffer"
+            ]
+          },
+          "value": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "value"
+        ]
+      }
+    },
+    {
+      "id": "IntCV",
+      "name": "IntCV",
+      "kind": "interface",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "int"
+            ]
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "integer",
+                "x-ts-type": "bigint"
+              }
+            ]
+          }
+        },
+        "required": [
+          "type",
+          "value"
+        ]
+      }
+    },
+    {
+      "id": "UIntCV",
+      "name": "UIntCV",
+      "kind": "interface",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "uint"
+            ]
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "integer",
+                "x-ts-type": "bigint"
+              }
+            ]
+          }
+        },
+        "required": [
+          "type",
+          "value"
+        ]
+      }
+    },
+    {
+      "id": "ResponseErrorCV",
+      "name": "ResponseErrorCV",
+      "kind": "interface",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "err"
+            ]
+          },
+          "value": {
+            "$ref": "#/types/ClarityValue"
+          }
+        },
+        "required": [
+          "type",
+          "value"
+        ]
+      }
+    },
+    {
+      "id": "ResponseOkCV",
+      "name": "ResponseOkCV",
+      "kind": "interface",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "ok"
+            ]
+          },
+          "value": {
+            "$ref": "#/types/ClarityValue"
+          }
+        },
+        "required": [
+          "type",
+          "value"
+        ]
+      }
+    },
+    {
+      "id": "NoneCV",
+      "name": "NoneCV",
+      "kind": "interface",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "none"
+            ]
+          }
+        },
+        "required": [
+          "type"
+        ]
+      }
+    },
+    {
+      "id": "SomeCV",
+      "name": "SomeCV",
+      "kind": "interface",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "some"
+            ]
+          },
+          "value": {
+            "$ref": "#/types/ClarityValue"
+          }
+        },
+        "required": [
+          "type",
+          "value"
+        ]
+      }
+    },
+    {
+      "id": "ListCV",
+      "name": "ListCV",
+      "kind": "interface",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "list"
+            ]
+          },
+          "value": {
+            "type": "array",
+            "items": {
+              "$ref": "#/types/ClarityValue"
+            }
+          }
+        },
+        "required": [
+          "type",
+          "value"
+        ]
+      }
+    },
+    {
+      "id": "TupleCV",
+      "name": "TupleCV",
+      "kind": "interface",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "tuple"
+            ]
+          },
+          "value": {
+            "$ref": "#/types/TupleData",
+            "x-ts-type-arguments": [
+              {
+                "$ref": "#/types/ClarityValue"
+              }
+            ]
+          }
+        },
+        "required": [
+          "type",
+          "value"
+        ]
+      }
+    },
+    {
+      "id": "StringAsciiCV",
+      "name": "StringAsciiCV",
+      "kind": "interface",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "ascii"
+            ]
+          },
+          "value": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "value"
+        ]
+      }
+    },
+    {
+      "id": "StringUtf8CV",
+      "name": "StringUtf8CV",
+      "kind": "interface",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "utf8"
+            ]
+          },
+          "value": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "value"
+        ]
+      }
+    }
+  ],
+  "generation": {
+    "generator": "@openpkg-ts/sdk",
+    "timestamp": "2026-02-06T05:09:33.944Z",
+    "mode": "source",
+    "skipped": [
+      {
+        "name": "BytesReader",
+        "reason": "filtered"
+      },
+      {
+        "name": "Authorization",
+        "reason": "filtered"
+      },
+      {
+        "name": "SpendingCondition",
+        "reason": "filtered"
+      },
+      {
+        "name": "SponsoredAuthorization",
+        "reason": "filtered"
+      },
+      {
+        "name": "StandardAuthorization",
+        "reason": "filtered"
+      },
+      {
+        "name": "emptyMessageSignature",
+        "reason": "filtered"
+      },
+      {
+        "name": "isSingleSig",
+        "reason": "filtered"
+      },
+      {
+        "name": "Cl",
+        "reason": "filtered"
+      },
+      {
+        "name": "Pc",
+        "reason": "filtered"
+      },
+      {
+        "name": "createSpendingCondition",
+        "reason": "filtered"
+      },
+      {
+        "name": "createSingleSigSpendingCondition",
+        "reason": "filtered"
+      },
+      {
+        "name": "createMultiSigSpendingCondition",
+        "reason": "filtered"
+      },
+      {
+        "name": "isSequentialMultiSig",
+        "reason": "filtered"
+      },
+      {
+        "name": "isNonSequentialMultiSig",
+        "reason": "filtered"
+      },
+      {
+        "name": "serializeSingleSigSpendingCondition",
+        "reason": "filtered"
+      },
+      {
+        "name": "serializeSingleSigSpendingConditionBytes",
+        "reason": "filtered"
+      },
+      {
+        "name": "serializeMultiSigSpendingCondition",
+        "reason": "filtered"
+      },
+      {
+        "name": "serializeMultiSigSpendingConditionBytes",
+        "reason": "filtered"
+      },
+      {
+        "name": "deserializeSingleSigSpendingCondition",
+        "reason": "filtered"
+      },
+      {
+        "name": "deserializeMultiSigSpendingCondition",
+        "reason": "filtered"
+      },
+      {
+        "name": "serializeSpendingCondition",
+        "reason": "filtered"
+      },
+      {
+        "name": "serializeSpendingConditionBytes",
+        "reason": "filtered"
+      },
+      {
+        "name": "deserializeSpendingCondition",
+        "reason": "filtered"
+      },
+      {
+        "name": "sigHashPreSign",
+        "reason": "filtered"
+      },
+      {
+        "name": "nextSignature",
+        "reason": "filtered"
+      },
+      {
+        "name": "nextVerification",
+        "reason": "filtered"
+      },
+      {
+        "name": "createStandardAuth",
+        "reason": "filtered"
+      },
+      {
+        "name": "createSponsoredAuth",
+        "reason": "filtered"
+      },
+      {
+        "name": "intoInitialSighashAuth",
+        "reason": "filtered"
+      },
+      {
+        "name": "verifyOrigin",
+        "reason": "filtered"
+      },
+      {
+        "name": "setFee",
+        "reason": "filtered"
+      },
+      {
+        "name": "getFee",
+        "reason": "filtered"
+      },
+      {
+        "name": "setNonce",
+        "reason": "filtered"
+      },
+      {
+        "name": "setSponsorNonce",
+        "reason": "filtered"
+      },
+      {
+        "name": "setSponsor",
+        "reason": "filtered"
+      },
+      {
+        "name": "serializeAuthorization",
+        "reason": "filtered"
+      },
+      {
+        "name": "serializeAuthorizationBytes",
+        "reason": "filtered"
+      },
+      {
+        "name": "deserializeAuthorization",
+        "reason": "filtered"
+      },
+      {
+        "name": "SingleSigSpendingCondition",
+        "reason": "filtered"
+      },
+      {
+        "name": "SingleSigSpendingConditionOpts",
+        "reason": "filtered"
+      },
+      {
+        "name": "MultiSigSpendingCondition",
+        "reason": "filtered"
+      },
+      {
+        "name": "MultiSigSpendingConditionOpts",
+        "reason": "filtered"
+      },
+      {
+        "name": "SpendingConditionOpts",
+        "reason": "filtered"
+      },
+      {
+        "name": "makeUnsignedSTXTokenTransfer",
+        "reason": "filtered"
+      },
+      {
+        "name": "makeUnsignedContractDeploy",
+        "reason": "filtered"
+      },
+      {
+        "name": "makeUnsignedContractCall",
+        "reason": "filtered"
+      },
+      {
+        "name": "MultiSigOptions",
+        "reason": "filtered"
+      },
+      {
+        "name": "UnsignedMultiSigOptions",
+        "reason": "filtered"
+      },
+      {
+        "name": "SignedMultiSigOptions",
+        "reason": "filtered"
+      },
+      {
+        "name": "TokenTransferOptions",
+        "reason": "filtered"
+      },
+      {
+        "name": "UnsignedTokenTransferOptions",
+        "reason": "filtered"
+      },
+      {
+        "name": "SignedTokenTransferOptions",
+        "reason": "filtered"
+      },
+      {
+        "name": "UnsignedMultiSigTokenTransferOptions",
+        "reason": "filtered"
+      },
+      {
+        "name": "SignedMultiSigTokenTransferOptions",
+        "reason": "filtered"
+      },
+      {
+        "name": "BaseContractDeployOptions",
+        "reason": "filtered"
+      },
+      {
+        "name": "UnsignedContractDeployOptions",
+        "reason": "filtered"
+      },
+      {
+        "name": "SignedContractDeployOptions",
+        "reason": "filtered"
+      },
+      {
+        "name": "ContractDeployOptions",
+        "reason": "filtered"
+      },
+      {
+        "name": "UnsignedMultiSigContractDeployOptions",
+        "reason": "filtered"
+      },
+      {
+        "name": "SignedMultiSigContractDeployOptions",
+        "reason": "filtered"
+      },
+      {
+        "name": "ContractCallOptions",
+        "reason": "filtered"
+      },
+      {
+        "name": "UnsignedContractCallOptions",
+        "reason": "filtered"
+      },
+      {
+        "name": "SignedContractCallOptions",
+        "reason": "filtered"
+      },
+      {
+        "name": "UnsignedMultiSigContractCallOptions",
+        "reason": "filtered"
+      },
+      {
+        "name": "SignedMultiSigContractCallOptions",
+        "reason": "filtered"
+      },
+      {
+        "name": "SponsorOptionsOpts",
+        "reason": "filtered"
+      },
+      {
+        "name": "ClarityValue",
+        "reason": "filtered"
+      },
+      {
+        "name": "cvToJSON",
+        "reason": "filtered"
+      },
+      {
+        "name": "cvToString",
+        "reason": "filtered"
+      },
+      {
+        "name": "cvToValue",
+        "reason": "filtered"
+      },
+      {
+        "name": "getCVTypeString",
+        "reason": "filtered"
+      },
+      {
+        "name": "isClarityType",
+        "reason": "filtered"
+      },
+      {
+        "name": "internal_parseCommaSeparated",
+        "reason": "filtered"
+      },
+      {
+        "name": "clarityTypeToByte",
+        "reason": "filtered"
+      },
+      {
+        "name": "clarityByteToType",
+        "reason": "filtered"
+      },
+      {
+        "name": "ClarityType",
+        "reason": "filtered"
+      },
+      {
+        "name": "ClarityWireType",
+        "reason": "filtered"
+      },
+      {
+        "name": "trueCV",
+        "reason": "filtered"
+      },
+      {
+        "name": "falseCV",
+        "reason": "filtered"
+      },
+      {
+        "name": "boolCV",
+        "reason": "filtered"
+      },
+      {
+        "name": "bufferCV",
+        "reason": "filtered"
+      },
+      {
+        "name": "bufferCVFromString",
+        "reason": "filtered"
+      },
+      {
+        "name": "intCV",
+        "reason": "filtered"
+      },
+      {
+        "name": "uintCV",
+        "reason": "filtered"
+      },
+      {
+        "name": "listCV",
+        "reason": "filtered"
+      },
+      {
+        "name": "noneCV",
+        "reason": "filtered"
+      },
+      {
+        "name": "someCV",
+        "reason": "filtered"
+      },
+      {
+        "name": "optionalCVOf",
+        "reason": "filtered"
+      },
+      {
+        "name": "principalCV",
+        "reason": "filtered"
+      },
+      {
+        "name": "standardPrincipalCV",
+        "reason": "filtered"
+      },
+      {
+        "name": "standardPrincipalCVFromAddress",
+        "reason": "filtered"
+      },
+      {
+        "name": "contractPrincipalCV",
+        "reason": "filtered"
+      },
+      {
+        "name": "contractPrincipalCVFromAddress",
+        "reason": "filtered"
+      },
+      {
+        "name": "contractPrincipalCVFromStandard",
+        "reason": "filtered"
+      },
+      {
+        "name": "responseErrorCV",
+        "reason": "filtered"
+      },
+      {
+        "name": "responseOkCV",
+        "reason": "filtered"
+      },
+      {
+        "name": "stringAsciiCV",
+        "reason": "filtered"
+      },
+      {
+        "name": "stringUtf8CV",
+        "reason": "filtered"
+      },
+      {
+        "name": "stringCV",
+        "reason": "filtered"
+      },
+      {
+        "name": "tupleCV",
+        "reason": "filtered"
+      },
+      {
+        "name": "BooleanCV",
+        "reason": "filtered"
+      },
+      {
+        "name": "TrueCV",
+        "reason": "filtered"
+      },
+      {
+        "name": "FalseCV",
+        "reason": "filtered"
+      },
+      {
+        "name": "BufferCV",
+        "reason": "filtered"
+      },
+      {
+        "name": "IntCV",
+        "reason": "filtered"
+      },
+      {
+        "name": "UIntCV",
+        "reason": "filtered"
+      },
+      {
+        "name": "ListCV",
+        "reason": "filtered"
+      },
+      {
+        "name": "OptionalCV",
+        "reason": "filtered"
+      },
+      {
+        "name": "NoneCV",
+        "reason": "filtered"
+      },
+      {
+        "name": "SomeCV",
+        "reason": "filtered"
+      },
+      {
+        "name": "PrincipalCV",
+        "reason": "filtered"
+      },
+      {
+        "name": "StandardPrincipalCV",
+        "reason": "filtered"
+      },
+      {
+        "name": "ContractPrincipalCV",
+        "reason": "filtered"
+      },
+      {
+        "name": "ResponseCV",
+        "reason": "filtered"
+      },
+      {
+        "name": "ResponseErrorCV",
+        "reason": "filtered"
+      },
+      {
+        "name": "ResponseOkCV",
+        "reason": "filtered"
+      },
+      {
+        "name": "StringAsciiCV",
+        "reason": "filtered"
+      },
+      {
+        "name": "StringUtf8CV",
+        "reason": "filtered"
+      },
+      {
+        "name": "TupleData",
+        "reason": "filtered"
+      },
+      {
+        "name": "TupleCV",
+        "reason": "filtered"
+      },
+      {
+        "name": "deserializeCV",
+        "reason": "filtered"
+      },
+      {
+        "name": "serializeCV",
+        "reason": "filtered"
+      },
+      {
+        "name": "serializeCVBytes",
+        "reason": "filtered"
+      },
+      {
+        "name": "anchorModeFrom",
+        "reason": "filtered"
+      },
+      {
+        "name": "BLOCKSTACK_DEFAULT_GAIA_HUB_URL",
+        "reason": "filtered"
+      },
+      {
+        "name": "MAX_STRING_LENGTH_BYTES",
+        "reason": "filtered"
+      },
+      {
+        "name": "CLARITY_INT_SIZE",
+        "reason": "filtered"
+      },
+      {
+        "name": "CLARITY_INT_BYTE_SIZE",
+        "reason": "filtered"
+      },
+      {
+        "name": "COINBASE_BYTES_LENGTH",
+        "reason": "filtered"
+      },
+      {
+        "name": "VRF_PROOF_BYTES_LENGTH",
+        "reason": "filtered"
+      },
+      {
+        "name": "RECOVERABLE_ECDSA_SIG_LENGTH_BYTES",
+        "reason": "filtered"
+      },
+      {
+        "name": "COMPRESSED_PUBKEY_LENGTH_BYTES",
+        "reason": "filtered"
+      },
+      {
+        "name": "UNCOMPRESSED_PUBKEY_LENGTH_BYTES",
+        "reason": "filtered"
+      },
+      {
+        "name": "MEMO_MAX_LENGTH_BYTES",
+        "reason": "filtered"
+      },
+      {
+        "name": "STRING_MAX_LENGTH",
+        "reason": "filtered"
+      },
+      {
+        "name": "PayloadType",
+        "reason": "filtered"
+      },
+      {
+        "name": "ClarityVersion",
+        "reason": "filtered"
+      },
+      {
+        "name": "AnchorMode",
+        "reason": "filtered"
+      },
+      {
+        "name": "AnchorModeNames",
+        "reason": "filtered"
+      },
+      {
+        "name": "AnchorModeName",
+        "reason": "filtered"
+      },
+      {
+        "name": "PostConditionMode",
+        "reason": "filtered"
+      },
+      {
+        "name": "PostConditionType",
+        "reason": "filtered"
+      },
+      {
+        "name": "AuthType",
+        "reason": "filtered"
+      },
+      {
+        "name": "AddressHashMode",
+        "reason": "filtered"
+      },
+      {
+        "name": "SingleSigHashMode",
+        "reason": "filtered"
+      },
+      {
+        "name": "MultiSigHashMode",
+        "reason": "filtered"
+      },
+      {
+        "name": "AddressVersion",
+        "reason": "filtered"
+      },
+      {
+        "name": "PubKeyEncoding",
+        "reason": "filtered"
+      },
+      {
+        "name": "FungibleConditionCode",
+        "reason": "filtered"
+      },
+      {
+        "name": "NonFungibleConditionCode",
+        "reason": "filtered"
+      },
+      {
+        "name": "PostConditionPrincipalId",
+        "reason": "filtered"
+      },
+      {
+        "name": "AssetType",
+        "reason": "filtered"
+      },
+      {
+        "name": "TenureChangeCause",
+        "reason": "filtered"
+      },
+      {
+        "name": "AuthFieldType",
+        "reason": "filtered"
+      },
+      {
+        "name": "TxRejectedReason",
+        "reason": "filtered"
+      },
+      {
+        "name": "getTypeUnion",
+        "reason": "filtered"
+      },
+      {
+        "name": "encodeAbiClarityValue",
+        "reason": "filtered"
+      },
+      {
+        "name": "encodeClarityValue",
+        "reason": "filtered"
+      },
+      {
+        "name": "getTypeString",
+        "reason": "filtered"
+      },
+      {
+        "name": "abiFunctionToString",
+        "reason": "filtered"
+      },
+      {
+        "name": "validateContractCall",
+        "reason": "filtered"
+      },
+      {
+        "name": "parseToCV",
+        "reason": "filtered"
+      },
+      {
+        "name": "ClarityAbiTypeBuffer",
+        "reason": "filtered"
+      },
+      {
+        "name": "ClarityAbiTypeStringAscii",
+        "reason": "filtered"
+      },
+      {
+        "name": "ClarityAbiTypeStringUtf8",
+        "reason": "filtered"
+      },
+      {
+        "name": "ClarityAbiTypeResponse",
+        "reason": "filtered"
+      },
+      {
+        "name": "ClarityAbiTypeOptional",
+        "reason": "filtered"
+      },
+      {
+        "name": "ClarityAbiTypeTuple",
+        "reason": "filtered"
+      },
+      {
+        "name": "ClarityAbiTypeList",
+        "reason": "filtered"
+      },
+      {
+        "name": "ClarityAbiTypeUInt128",
+        "reason": "filtered"
+      },
+      {
+        "name": "ClarityAbiTypeInt128",
+        "reason": "filtered"
+      },
+      {
+        "name": "ClarityAbiTypeBool",
+        "reason": "filtered"
+      },
+      {
+        "name": "ClarityAbiTypePrincipal",
+        "reason": "filtered"
+      },
+      {
+        "name": "ClarityAbiTypeTraitReference",
+        "reason": "filtered"
+      },
+      {
+        "name": "ClarityAbiTypeNone",
+        "reason": "filtered"
+      },
+      {
+        "name": "ClarityAbiTypePrimitive",
+        "reason": "filtered"
+      },
+      {
+        "name": "ClarityAbiType",
+        "reason": "filtered"
+      },
+      {
+        "name": "ClarityAbiTypeId",
+        "reason": "filtered"
+      },
+      {
+        "name": "isClarityAbiPrimitive",
+        "reason": "filtered"
+      },
+      {
+        "name": "isClarityAbiBuffer",
+        "reason": "filtered"
+      },
+      {
+        "name": "isClarityAbiStringAscii",
+        "reason": "filtered"
+      },
+      {
+        "name": "isClarityAbiStringUtf8",
+        "reason": "filtered"
+      },
+      {
+        "name": "isClarityAbiResponse",
+        "reason": "filtered"
+      },
+      {
+        "name": "isClarityAbiOptional",
+        "reason": "filtered"
+      },
+      {
+        "name": "isClarityAbiTuple",
+        "reason": "filtered"
+      },
+      {
+        "name": "isClarityAbiList",
+        "reason": "filtered"
+      },
+      {
+        "name": "ClarityAbiTypeUnion",
+        "reason": "filtered"
+      },
+      {
+        "name": "ClarityAbiFunction",
+        "reason": "filtered"
+      },
+      {
+        "name": "ClarityAbiVariable",
+        "reason": "filtered"
+      },
+      {
+        "name": "ClarityAbiMap",
+        "reason": "filtered"
+      },
+      {
+        "name": "ClarityAbiTypeFungibleToken",
+        "reason": "filtered"
+      },
+      {
+        "name": "ClarityAbiTypeNonFungibleToken",
+        "reason": "filtered"
+      },
+      {
+        "name": "ClarityAbi",
+        "reason": "filtered"
+      },
+      {
+        "name": "fetchNonce",
+        "reason": "filtered"
+      },
+      {
+        "name": "fetchFeeEstimateTransfer",
+        "reason": "filtered"
+      },
+      {
+        "name": "fetchFeeEstimateTransaction",
+        "reason": "filtered"
+      },
+      {
+        "name": "fetchFeeEstimate",
+        "reason": "filtered"
+      },
+      {
+        "name": "fetchAbi",
+        "reason": "filtered"
+      },
+      {
+        "name": "fetchContractMapEntry",
+        "reason": "filtered"
+      },
+      {
+        "name": "BROADCAST_PATH",
+        "reason": "filtered"
+      },
+      {
+        "name": "TRANSFER_FEE_ESTIMATE_PATH",
+        "reason": "filtered"
+      },
+      {
+        "name": "TRANSACTION_FEE_ESTIMATE_PATH",
+        "reason": "filtered"
+      },
+      {
+        "name": "ACCOUNT_PATH",
+        "reason": "filtered"
+      },
+      {
+        "name": "CONTRACT_ABI_PATH",
+        "reason": "filtered"
+      },
+      {
+        "name": "READONLY_FUNCTION_CALL_PATH",
+        "reason": "filtered"
+      },
+      {
+        "name": "MAP_ENTRY_PATH",
+        "reason": "filtered"
+      },
+      {
+        "name": "getAddressFromPrivateKey",
+        "reason": "filtered"
+      },
+      {
+        "name": "getAddressFromPublicKey",
+        "reason": "filtered"
+      },
+      {
+        "name": "createStacksPublicKey",
+        "reason": "filtered"
+      },
+      {
+        "name": "publicKeyFromSignatureVrs",
+        "reason": "filtered"
+      },
+      {
+        "name": "publicKeyFromSignatureRsv",
+        "reason": "filtered"
+      },
+      {
+        "name": "privateKeyToHex",
+        "reason": "filtered"
+      },
+      {
+        "name": "privateKeyIsCompressed",
+        "reason": "filtered"
+      },
+      {
+        "name": "publicKeyIsCompressed",
+        "reason": "filtered"
+      },
+      {
+        "name": "privateKeyToPublic",
+        "reason": "filtered"
+      },
+      {
+        "name": "compressPublicKey",
+        "reason": "filtered"
+      },
+      {
+        "name": "uncompressPublicKey",
+        "reason": "filtered"
+      },
+      {
+        "name": "randomPrivateKey",
+        "reason": "filtered"
+      },
+      {
+        "name": "signWithKey",
+        "reason": "filtered"
+      },
+      {
+        "name": "signMessageHashRsv",
+        "reason": "filtered"
+      },
+      {
+        "name": "compressPrivateKey",
+        "reason": "filtered"
+      },
+      {
+        "name": "privateKeyToAddress",
+        "reason": "filtered"
+      },
+      {
+        "name": "publicKeyToAddress",
+        "reason": "filtered"
+      },
+      {
+        "name": "publicKeyToAddressSingleSig",
+        "reason": "filtered"
+      },
+      {
+        "name": "publicKeyToHex",
+        "reason": "filtered"
+      },
+      {
+        "name": "isPrivateKeyCompressed",
+        "reason": "filtered"
+      },
+      {
+        "name": "isPublicKeyCompressed",
+        "reason": "filtered"
+      },
+      {
+        "name": "makeRandomPrivKey",
+        "reason": "filtered"
+      },
+      {
+        "name": "postConditionToWire",
+        "reason": "filtered"
+      },
+      {
+        "name": "wireToPostCondition",
+        "reason": "filtered"
+      },
+      {
+        "name": "conditionTypeToByte",
+        "reason": "filtered"
+      },
+      {
+        "name": "conditionByteToType",
+        "reason": "filtered"
+      },
+      {
+        "name": "postConditionToHex",
+        "reason": "filtered"
+      },
+      {
+        "name": "postConditionModeFrom",
+        "reason": "filtered"
+      },
+      {
+        "name": "FungibleComparator",
+        "reason": "filtered"
+      },
+      {
+        "name": "StxPostCondition",
+        "reason": "filtered"
+      },
+      {
+        "name": "FungiblePostCondition",
+        "reason": "filtered"
+      },
+      {
+        "name": "NonFungibleComparator",
+        "reason": "filtered"
+      },
+      {
+        "name": "NonFungiblePostCondition",
+        "reason": "filtered"
+      },
+      {
+        "name": "PostCondition",
+        "reason": "filtered"
+      },
+      {
+        "name": "PostConditionModeName",
+        "reason": "filtered"
+      },
+      {
+        "name": "TransactionSigner",
+        "reason": "filtered"
+      },
+      {
+        "name": "hashStructuredData",
+        "reason": "filtered"
+      },
+      {
+        "name": "hashStructuredDataBytes",
+        "reason": "filtered"
+      },
+      {
+        "name": "encodeStructuredData",
+        "reason": "filtered"
+      },
+      {
+        "name": "encodeStructuredDataBytes",
+        "reason": "filtered"
+      },
+      {
+        "name": "decodeStructuredDataSignature",
+        "reason": "filtered"
+      },
+      {
+        "name": "decodeStructuredDataSignatureBytes",
+        "reason": "filtered"
+      },
+      {
+        "name": "signStructuredData",
+        "reason": "filtered"
+      },
+      {
+        "name": "STRUCTURED_DATA_PREFIX",
+        "reason": "filtered"
+      },
+      {
+        "name": "deserializeTransaction",
+        "reason": "filtered"
+      },
+      {
+        "name": "deriveNetworkFromTx",
+        "reason": "filtered"
+      },
+      {
+        "name": "estimateTransactionByteLength",
+        "reason": "filtered"
+      },
+      {
+        "name": "serializeTransaction",
+        "reason": "filtered"
+      },
+      {
+        "name": "serializeTransactionBytes",
+        "reason": "filtered"
+      },
+      {
+        "name": "transactionToHex",
+        "reason": "filtered"
+      },
+      {
+        "name": "StacksTransactionWire",
+        "reason": "filtered"
+      },
+      {
+        "name": "AddressString",
+        "reason": "filtered"
+      },
+      {
+        "name": "ContractIdString",
+        "reason": "filtered"
+      },
+      {
+        "name": "AssetString",
+        "reason": "filtered"
+      },
+      {
+        "name": "BaseRejection",
+        "reason": "filtered"
+      },
+      {
+        "name": "SerializationRejection",
+        "reason": "filtered"
+      },
+      {
+        "name": "DeserializationRejection",
+        "reason": "filtered"
+      },
+      {
+        "name": "SignatureValidationRejection",
+        "reason": "filtered"
+      },
+      {
+        "name": "BadNonceRejection",
+        "reason": "filtered"
+      },
+      {
+        "name": "FeeTooLowRejection",
+        "reason": "filtered"
+      },
+      {
+        "name": "NotEnoughFundsRejection",
+        "reason": "filtered"
+      },
+      {
+        "name": "NoSuchContractRejection",
+        "reason": "filtered"
+      },
+      {
+        "name": "NoSuchPublicFunctionRejection",
+        "reason": "filtered"
+      },
+      {
+        "name": "BadFunctionArgumentRejection",
+        "reason": "filtered"
+      },
+      {
+        "name": "ContractAlreadyExistsRejection",
+        "reason": "filtered"
+      },
+      {
+        "name": "PoisonMicroblocksDoNotConflictRejection",
+        "reason": "filtered"
+      },
+      {
+        "name": "PoisonMicroblockHasUnknownPubKeyHashRejection",
+        "reason": "filtered"
+      },
+      {
+        "name": "PoisonMicroblockIsInvalidRejection",
+        "reason": "filtered"
+      },
+      {
+        "name": "BadAddressVersionByteRejection",
+        "reason": "filtered"
+      },
+      {
+        "name": "NoCoinbaseViaMempoolRejection",
+        "reason": "filtered"
+      },
+      {
+        "name": "ServerFailureNoSuchChainTipRejection",
+        "reason": "filtered"
+      },
+      {
+        "name": "ServerFailureDatabaseRejection",
+        "reason": "filtered"
+      },
+      {
+        "name": "ServerFailureOtherRejection",
+        "reason": "filtered"
+      },
+      {
+        "name": "TxBroadcastResultOk",
+        "reason": "filtered"
+      },
+      {
+        "name": "TxBroadcastResultRejected",
+        "reason": "filtered"
+      },
+      {
+        "name": "TxBroadcastResult",
+        "reason": "filtered"
+      },
+      {
+        "name": "FeeEstimation",
+        "reason": "filtered"
+      },
+      {
+        "name": "FeeEstimateResponse",
+        "reason": "filtered"
+      },
+      {
+        "name": "ReadOnlyFunctionOptions",
+        "reason": "filtered"
+      },
+      {
+        "name": "cloneDeep",
+        "reason": "filtered"
+      },
+      {
+        "name": "omit",
+        "reason": "filtered"
+      },
+      {
+        "name": "isClarityName",
+        "reason": "filtered"
+      },
+      {
+        "name": "cvToHex",
+        "reason": "filtered"
+      },
+      {
+        "name": "hexToCV",
+        "reason": "filtered"
+      },
+      {
+        "name": "parseContractId",
+        "reason": "filtered"
+      },
+      {
+        "name": "verifySignature",
+        "reason": "filtered"
+      },
+      {
+        "name": "randomBytes",
+        "reason": "filtered"
+      },
+      {
+        "name": "leftPadHex",
+        "reason": "filtered"
+      },
+      {
+        "name": "leftPadHexToLength",
+        "reason": "filtered"
+      },
+      {
+        "name": "rightPadHexToLength",
+        "reason": "filtered"
+      },
+      {
+        "name": "exceedsMaxLengthBytes",
+        "reason": "filtered"
+      },
+      {
+        "name": "hash160",
+        "reason": "filtered"
+      },
+      {
+        "name": "txidFromData",
+        "reason": "filtered"
+      },
+      {
+        "name": "txidFromBytes",
+        "reason": "filtered"
+      },
+      {
+        "name": "hashP2PKH",
+        "reason": "filtered"
+      },
+      {
+        "name": "hashP2WPKH",
+        "reason": "filtered"
+      },
+      {
+        "name": "hashP2SH",
+        "reason": "filtered"
+      },
+      {
+        "name": "hashP2WSH",
+        "reason": "filtered"
+      },
+      {
+        "name": "ReadOnlyFunctionSuccessResponse",
+        "reason": "filtered"
+      },
+      {
+        "name": "ReadOnlyFunctionErrorResponse",
+        "reason": "filtered"
+      },
+      {
+        "name": "ReadOnlyFunctionResponse",
+        "reason": "filtered"
+      },
+      {
+        "name": "parseReadOnlyResponse",
+        "reason": "filtered"
+      },
+      {
+        "name": "validateStacksAddress",
+        "reason": "filtered"
+      },
+      {
+        "name": "addressHashModeToVersion",
+        "reason": "filtered"
+      },
+      {
+        "name": "createEmptyAddress",
+        "reason": "filtered"
+      },
+      {
+        "name": "createMemoString",
+        "reason": "filtered"
+      },
+      {
+        "name": "createLPList",
+        "reason": "filtered"
+      },
+      {
+        "name": "createMessageSignature",
+        "reason": "filtered"
+      },
+      {
+        "name": "createTokenTransferPayload",
+        "reason": "filtered"
+      },
+      {
+        "name": "createContractCallPayload",
+        "reason": "filtered"
+      },
+      {
+        "name": "codeBodyString",
+        "reason": "filtered"
+      },
+      {
+        "name": "createSmartContractPayload",
+        "reason": "filtered"
+      },
+      {
+        "name": "createPoisonPayload",
+        "reason": "filtered"
+      },
+      {
+        "name": "createCoinbasePayload",
+        "reason": "filtered"
+      },
+      {
+        "name": "createNakamotoCoinbasePayload",
+        "reason": "filtered"
+      },
+      {
+        "name": "createTenureChangePayload",
+        "reason": "filtered"
+      },
+      {
+        "name": "createLPString",
+        "reason": "filtered"
+      },
+      {
+        "name": "createAsset",
+        "reason": "filtered"
+      },
+      {
+        "name": "createAddress",
+        "reason": "filtered"
+      },
+      {
+        "name": "createContractPrincipal",
+        "reason": "filtered"
+      },
+      {
+        "name": "createStandardPrincipal",
+        "reason": "filtered"
+      },
+      {
+        "name": "createTransactionAuthField",
+        "reason": "filtered"
+      },
+      {
+        "name": "addressFromPublicKeys",
+        "reason": "filtered"
+      },
+      {
+        "name": "addressFromVersionHash",
+        "reason": "filtered"
+      },
+      {
+        "name": "addressToString",
+        "reason": "filtered"
+      },
+      {
+        "name": "isTokenTransferPayload",
+        "reason": "filtered"
+      },
+      {
+        "name": "isContractCallPayload",
+        "reason": "filtered"
+      },
+      {
+        "name": "isSmartContractPayload",
+        "reason": "filtered"
+      },
+      {
+        "name": "isPoisonPayload",
+        "reason": "filtered"
+      },
+      {
+        "name": "isCoinbasePayload",
+        "reason": "filtered"
+      },
+      {
+        "name": "parseAssetString",
+        "reason": "filtered"
+      },
+      {
+        "name": "parsePrincipalString",
+        "reason": "filtered"
+      },
+      {
+        "name": "serializeStacksWire",
+        "reason": "filtered"
+      },
+      {
+        "name": "serializeStacksWireBytes",
+        "reason": "filtered"
+      },
+      {
+        "name": "deserializeStacksWire",
+        "reason": "filtered"
+      },
+      {
+        "name": "serializeAddress",
+        "reason": "filtered"
+      },
+      {
+        "name": "serializeAddressBytes",
+        "reason": "filtered"
+      },
+      {
+        "name": "deserializeAddress",
+        "reason": "filtered"
+      },
+      {
+        "name": "serializePrincipal",
+        "reason": "filtered"
+      },
+      {
+        "name": "serializePrincipalBytes",
+        "reason": "filtered"
+      },
+      {
+        "name": "deserializePrincipal",
+        "reason": "filtered"
+      },
+      {
+        "name": "serializeLPString",
+        "reason": "filtered"
+      },
+      {
+        "name": "serializeLPStringBytes",
+        "reason": "filtered"
+      },
+      {
+        "name": "deserializeLPString",
+        "reason": "filtered"
+      },
+      {
+        "name": "serializeMemoString",
+        "reason": "filtered"
+      },
+      {
+        "name": "serializeMemoStringBytes",
+        "reason": "filtered"
+      },
+      {
+        "name": "deserializeMemoString",
+        "reason": "filtered"
+      },
+      {
+        "name": "serializeAsset",
+        "reason": "filtered"
+      },
+      {
+        "name": "serializeAssetBytes",
+        "reason": "filtered"
+      },
+      {
+        "name": "deserializeAsset",
+        "reason": "filtered"
+      },
+      {
+        "name": "serializeLPList",
+        "reason": "filtered"
+      },
+      {
+        "name": "serializeLPListBytes",
+        "reason": "filtered"
+      },
+      {
+        "name": "deserializeLPList",
+        "reason": "filtered"
+      },
+      {
+        "name": "serializePostConditionWire",
+        "reason": "filtered"
+      },
+      {
+        "name": "serializePostConditionWireBytes",
+        "reason": "filtered"
+      },
+      {
+        "name": "deserializePostConditionWire",
+        "reason": "filtered"
+      },
+      {
+        "name": "serializePayload",
+        "reason": "filtered"
+      },
+      {
+        "name": "serializePayloadBytes",
+        "reason": "filtered"
+      },
+      {
+        "name": "deserializePayload",
+        "reason": "filtered"
+      },
+      {
+        "name": "deserializeMessageSignature",
+        "reason": "filtered"
+      },
+      {
+        "name": "deserializeTransactionAuthField",
+        "reason": "filtered"
+      },
+      {
+        "name": "serializeMessageSignature",
+        "reason": "filtered"
+      },
+      {
+        "name": "serializeMessageSignatureBytes",
+        "reason": "filtered"
+      },
+      {
+        "name": "serializeTransactionAuthField",
+        "reason": "filtered"
+      },
+      {
+        "name": "serializeTransactionAuthFieldBytes",
+        "reason": "filtered"
+      },
+      {
+        "name": "serializePublicKey",
+        "reason": "filtered"
+      },
+      {
+        "name": "serializePublicKeyBytes",
+        "reason": "filtered"
+      },
+      {
+        "name": "deserializePublicKey",
+        "reason": "filtered"
+      },
+      {
+        "name": "whenWireType",
+        "reason": "filtered"
+      },
+      {
+        "name": "StacksWireType",
+        "reason": "filtered"
+      },
+      {
+        "name": "StacksWire",
+        "reason": "filtered"
+      },
+      {
+        "name": "MemoStringWire",
+        "reason": "filtered"
+      },
+      {
+        "name": "PublicKeyWire",
+        "reason": "filtered"
+      },
+      {
+        "name": "LengthPrefixedList",
+        "reason": "filtered"
+      },
+      {
+        "name": "AddressWire",
+        "reason": "filtered"
+      },
+      {
+        "name": "MessageSignatureWire",
+        "reason": "filtered"
+      },
+      {
+        "name": "PayloadWire",
+        "reason": "filtered"
+      },
+      {
+        "name": "TokenTransferPayloadWire",
+        "reason": "filtered"
+      },
+      {
+        "name": "PayloadInput",
+        "reason": "filtered"
+      },
+      {
+        "name": "ContractCallPayload",
+        "reason": "filtered"
+      },
+      {
+        "name": "SmartContractPayloadWire",
+        "reason": "filtered"
+      },
+      {
+        "name": "VersionedSmartContractPayloadWire",
+        "reason": "filtered"
+      },
+      {
+        "name": "PoisonPayloadWire",
+        "reason": "filtered"
+      },
+      {
+        "name": "CoinbasePayloadWire",
+        "reason": "filtered"
+      },
+      {
+        "name": "CoinbasePayloadToAltRecipient",
+        "reason": "filtered"
+      },
+      {
+        "name": "NakamotoCoinbasePayloadWire",
+        "reason": "filtered"
+      },
+      {
+        "name": "TenureChangePayloadWire",
+        "reason": "filtered"
+      },
+      {
+        "name": "OriginPrincipalWire",
+        "reason": "filtered"
+      },
+      {
+        "name": "StandardPrincipalWire",
+        "reason": "filtered"
+      },
+      {
+        "name": "ContractPrincipalWire",
+        "reason": "filtered"
+      },
+      {
+        "name": "LengthPrefixedStringWire",
+        "reason": "filtered"
+      },
+      {
+        "name": "AssetWire",
+        "reason": "filtered"
+      },
+      {
+        "name": "STXPostConditionWire",
+        "reason": "filtered"
+      },
+      {
+        "name": "FungiblePostConditionWire",
+        "reason": "filtered"
+      },
+      {
+        "name": "NonFungiblePostConditionWire",
+        "reason": "filtered"
+      },
+      {
+        "name": "PostConditionWire",
+        "reason": "filtered"
+      },
+      {
+        "name": "PostConditionPrincipalWire",
+        "reason": "filtered"
+      },
+      {
+        "name": "TransactionAuthFieldWire",
+        "reason": "filtered"
+      },
+      {
+        "name": "TransactionAuthFieldContentsWire",
+        "reason": "filtered"
+      },
+      {
+        "name": "StructuredDataSignatureWire",
+        "reason": "filtered"
+      },
+      {
+        "name": "Address",
+        "reason": "filtered"
+      }
+    ]
+  }
+}

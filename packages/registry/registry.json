@@ -8,7 +8,7 @@
       "type": "registry:ui",
       "title": "API Parameter Item",
       "description": "Single parameter row with name, type, badges, and description",
-      "dependencies": ["@openpkg-ts/ui", "lucide-react"],
+      "dependencies": ["lucide-react"],
       "files": [
         {
           "path": "registry/new-york/ui/api-parameter-item/api-parameter-item.tsx",
@@ -21,7 +21,7 @@
       "type": "registry:ui",
       "title": "Code Block",
       "description": "Syntax-highlighted code block powered by CodeHike",
-      "dependencies": ["@openpkg-ts/ui"],
+      "dependencies": ["codehike", "clsx", "tailwind-merge"],
       "files": [
         {
           "path": "registry/new-york/ui/code-block/code-block.tsx",
@@ -34,7 +34,7 @@
       "type": "registry:ui",
       "title": "Collapsible Panel",
       "description": "Accordion-style panel with CSS grid transition",
-      "dependencies": ["@openpkg-ts/ui", "lucide-react"],
+      "dependencies": ["lucide-react"],
       "files": [
         {
           "path": "registry/new-york/ui/collapsible-panel/collapsible-panel.tsx",
@@ -47,7 +47,7 @@
       "type": "registry:ui",
       "title": "Enum Values Section",
       "description": "Display enum values with optional descriptions",
-      "dependencies": ["@openpkg-ts/ui"],
+      "dependencies": ["codehike", "clsx", "tailwind-merge"],
       "files": [
         {
           "path": "registry/new-york/ui/enum-values-section/enum-values-section.tsx",
@@ -60,7 +60,7 @@
       "type": "registry:ui",
       "title": "Example Chips",
       "description": "Tab-like chips for switching between code examples",
-      "dependencies": ["@openpkg-ts/ui"],
+      "dependencies": ["codehike", "clsx", "tailwind-merge"],
       "files": [
         {
           "path": "registry/new-york/ui/example-chips/example-chips.tsx",
@@ -73,7 +73,7 @@
       "type": "registry:ui",
       "title": "Export Card",
       "description": "Summary card for an export with kind badge and hover effects",
-      "dependencies": ["@openpkg-ts/ui"],
+      "dependencies": ["codehike", "clsx", "tailwind-merge"],
       "files": [
         {
           "path": "registry/new-york/ui/export-card/export-card.tsx",
@@ -86,7 +86,7 @@
       "type": "registry:ui",
       "title": "Nested Parameter Container",
       "description": "Bordered container for nested child parameters",
-      "dependencies": ["@openpkg-ts/ui"],
+      "dependencies": ["codehike", "clsx", "tailwind-merge"],
       "files": [
         {
           "path": "registry/new-york/ui/nested-parameter-container/nested-parameter-container.tsx",
@@ -99,7 +99,7 @@
       "type": "registry:ui",
       "title": "Nested Parameter Toggle",
       "description": "Show/Hide child parameters button with animation",
-      "dependencies": ["@openpkg-ts/ui", "lucide-react"],
+      "dependencies": ["lucide-react"],
       "files": [
         {
           "path": "registry/new-york/ui/nested-parameter-toggle/nested-parameter-toggle.tsx",
@@ -112,7 +112,7 @@
       "type": "registry:ui",
       "title": "Runnable Snippet",
       "description": "Interactive code block with run button and output display",
-      "dependencies": ["@openpkg-ts/ui", "lucide-react"],
+      "dependencies": ["lucide-react"],
       "files": [
         {
           "path": "registry/new-york/ui/runnable-snippet/runnable-snippet.tsx",
@@ -125,7 +125,7 @@
       "type": "registry:ui",
       "title": "Section Accordion",
       "description": "Collapsible section with header toggle",
-      "dependencies": ["@openpkg-ts/ui", "lucide-react"],
+      "dependencies": ["lucide-react"],
       "files": [
         {
           "path": "registry/new-york/ui/section-accordion/section-accordion.tsx",
@@ -151,6 +151,7 @@
       "type": "registry:hook",
       "title": "useSyncScroll",
       "description": "Synchronized scrolling between left and right columns",
+      "dependencies": ["codehike", "clsx", "tailwind-merge"],
       "files": [
         {
           "path": "registry/new-york/hooks/use-sync-scroll/use-sync-scroll.tsx",
@@ -163,7 +164,7 @@
       "type": "registry:component",
       "title": "Expandable Parameter",
       "description": "Compound parameter with nested object properties and enum values",
-      "dependencies": ["@openpkg-ts/sdk", "@openpkg-ts/spec", "@openpkg-ts/ui"],
+      "dependencies": ["@openpkg-ts/sdk", "@openpkg-ts/spec", "codehike", "clsx", "tailwind-merge"],
       "registryDependencies": [
         "@openpkg-ts/api-parameter-item",
         "@openpkg-ts/enum-values-section",
@@ -182,7 +183,7 @@
       "type": "registry:component",
       "title": "Method Section",
       "description": "Container for a single API method with title, signature, and parameters",
-      "dependencies": ["@openpkg-ts/ui"],
+      "dependencies": ["codehike", "clsx", "tailwind-merge"],
       "registryDependencies": ["@openpkg-ts/use-sync-scroll"],
       "files": [
         {
@@ -196,7 +197,7 @@
       "type": "registry:component",
       "title": "Method Section From Spec",
       "description": "Auto-generate method documentation from OpenPkg spec",
-      "dependencies": ["@openpkg-ts/spec", "@openpkg-ts/ui"],
+      "dependencies": ["@openpkg-ts/spec", "codehike", "clsx", "tailwind-merge"],
       "registryDependencies": [
         "@openpkg-ts/expandable-parameter",
         "@openpkg-ts/method-section",
@@ -214,7 +215,7 @@
       "type": "registry:component",
       "title": "Example Section",
       "description": "Complete right-column section with chips, code, and panels",
-      "dependencies": ["@openpkg-ts/ui"],
+      "dependencies": ["codehike", "clsx", "tailwind-merge"],
       "registryDependencies": [
         "@openpkg-ts/code-block",
         "@openpkg-ts/collapsible-panel",
@@ -233,7 +234,7 @@
       "type": "registry:component",
       "title": "API Reference Layout",
       "description": "Two-column layout with sticky code examples panel",
-      "dependencies": ["@openpkg-ts/ui"],
+      "dependencies": ["codehike", "clsx", "tailwind-merge"],
       "files": [
         {
           "path": "registry/new-york/components/api-reference-layout/api-reference-layout.tsx",
@@ -246,15 +247,11 @@
       "type": "registry:component",
       "title": "Function Section",
       "description": "Complete function documentation section with parameters and returns",
-      "dependencies": ["@openpkg-ts/sdk", "@openpkg-ts/spec", "@openpkg-ts/ui"],
+      "dependencies": ["@openpkg-ts/sdk", "@openpkg-ts/spec", "codehike", "clsx", "tailwind-merge"],
       "files": [
         {
           "path": "registry/new-york/components/function-section/function-section.tsx",
           "type": "registry:component"
-        },
-        {
-          "path": "registry/new-york/components/function-section/spec-to-docskit.ts",
-          "type": "registry:lib"
         }
       ]
     },
@@ -263,15 +260,11 @@
       "type": "registry:component",
       "title": "Class Section",
       "description": "Complete class documentation section with constructor, methods, and properties",
-      "dependencies": ["@openpkg-ts/sdk", "@openpkg-ts/spec", "@openpkg-ts/ui"],
+      "dependencies": ["@openpkg-ts/sdk", "@openpkg-ts/spec", "codehike", "clsx", "tailwind-merge"],
       "files": [
         {
           "path": "registry/new-york/components/class-section/class-section.tsx",
           "type": "registry:component"
-        },
-        {
-          "path": "registry/new-york/components/class-section/spec-to-docskit.ts",
-          "type": "registry:lib"
         }
       ]
     },
@@ -280,15 +273,11 @@
       "type": "registry:component",
       "title": "Interface Section",
       "description": "Interface/type documentation section with properties and methods",
-      "dependencies": ["@openpkg-ts/sdk", "@openpkg-ts/spec", "@openpkg-ts/ui"],
+      "dependencies": ["@openpkg-ts/sdk", "@openpkg-ts/spec", "codehike", "clsx", "tailwind-merge"],
       "files": [
         {
           "path": "registry/new-york/components/interface-section/interface-section.tsx",
           "type": "registry:component"
-        },
-        {
-          "path": "registry/new-york/components/interface-section/spec-to-docskit.ts",
-          "type": "registry:lib"
         }
       ]
     },
@@ -297,15 +286,11 @@
       "type": "registry:component",
       "title": "Enum Section",
       "description": "Enum documentation section with members",
-      "dependencies": ["@openpkg-ts/spec", "@openpkg-ts/ui"],
+      "dependencies": ["@openpkg-ts/sdk", "@openpkg-ts/spec", "codehike", "clsx", "tailwind-merge"],
       "files": [
         {
           "path": "registry/new-york/components/enum-section/enum-section.tsx",
           "type": "registry:component"
-        },
-        {
-          "path": "registry/new-york/components/enum-section/spec-to-docskit.ts",
-          "type": "registry:lib"
         }
       ]
     },
@@ -314,15 +299,11 @@
       "type": "registry:component",
       "title": "Variable Section",
       "description": "Variable/constant documentation section",
-      "dependencies": ["@openpkg-ts/sdk", "@openpkg-ts/spec", "@openpkg-ts/ui"],
+      "dependencies": ["@openpkg-ts/sdk", "@openpkg-ts/spec", "codehike", "clsx", "tailwind-merge"],
       "files": [
         {
           "path": "registry/new-york/components/variable-section/variable-section.tsx",
           "type": "registry:component"
-        },
-        {
-          "path": "registry/new-york/components/variable-section/spec-to-docskit.ts",
-          "type": "registry:lib"
         }
       ]
     },
@@ -351,7 +332,7 @@
       "type": "registry:component",
       "title": "API Section Single",
       "description": "Single-column API section for MoneyKit-style docs",
-      "dependencies": ["@openpkg-ts/ui"],
+      "dependencies": ["codehike", "clsx", "tailwind-merge"],
       "registryDependencies": ["@openpkg-ts/section-accordion", "@openpkg-ts/expandable-parameter"],
       "files": [
         {
@@ -365,7 +346,7 @@
       "type": "registry:block",
       "title": "Export Index Page",
       "description": "Searchable grid of all exports grouped by category",
-      "dependencies": ["@openpkg-ts/spec", "@openpkg-ts/ui", "lucide-react"],
+      "dependencies": ["@openpkg-ts/spec", "lucide-react"],
       "registryDependencies": ["@openpkg-ts/export-card"],
       "files": [
         {
@@ -379,7 +360,7 @@
       "type": "registry:block",
       "title": "Full API Reference",
       "description": "Single-page API reference with all exports and optional TOC",
-      "dependencies": ["@openpkg-ts/spec", "@openpkg-ts/ui"],
+      "dependencies": ["@openpkg-ts/spec", "codehike", "clsx", "tailwind-merge"],
       "registryDependencies": ["@openpkg-ts/export-section"],
       "files": [
         {
@@ -393,7 +374,7 @@
       "type": "registry:block",
       "title": "API Reference",
       "description": "Two-column synced API reference with code examples and theme support",
-      "dependencies": ["@openpkg-ts/sdk", "@openpkg-ts/spec", "@openpkg-ts/ui"],
+      "dependencies": ["@openpkg-ts/sdk", "@openpkg-ts/spec", "codehike", "clsx", "tailwind-merge"],
       "registryDependencies": ["@openpkg-ts/use-method-from-spec"],
       "files": [
         {

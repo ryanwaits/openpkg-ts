@@ -1,0 +1,17 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "code-block",
+  "title": "Code Block",
+  "description": "Syntax-highlighted code block powered by CodeHike",
+  "dependencies": [
+    "@openpkg-ts/ui"
+  ],
+  "files": [
+    {
+      "path": "registry/new-york/ui/code-block/code-block.tsx",
+      "content": "'use client';\n\nimport { ClientDocsKitCode } from '@openpkg-ts/ui/docskit';\nimport { cn } from '@openpkg-ts/ui/lib/utils';\nimport type { ReactNode } from 'react';\n\nexport interface CodeBlockProps {\n  /** Code content */\n  code: string;\n  /** Language for syntax highlighting */\n  language?: string;\n  /** Show line numbers */\n  showLineNumbers?: boolean;\n  /** Custom className */\n  className?: string;\n}\n\n/**\n * Syntax-highlighted code block powered by CodeHike.\n * Thin wrapper around docskit's ClientDocsKitCode with a simple interface.\n */\nexport function CodeBlock({\n  code,\n  language = 'typescript',\n  showLineNumbers = false,\n  className,\n}: CodeBlockProps): ReactNode {\n  const flags = `-c${showLineNumbers ? 'n' : ''}`;\n\n  return (\n    <ClientDocsKitCode\n      codeblock={{\n        value: code,\n        lang: language,\n        meta: flags,\n      }}\n      className={cn('my-0 border-[var(--openpkg-border-subtle)]', className)}\n    />\n  );\n}\n",
+      "type": "registry:ui"
+    }
+  ],
+  "type": "registry:ui"
+}

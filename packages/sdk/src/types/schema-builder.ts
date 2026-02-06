@@ -287,6 +287,46 @@ export function buildSchema(
 }
 
 /**
+ * Build a leaf schema at max depth — no further recursion.
+ * Named types → $ref, primitives → inline, unions/intersections → decomposed.
+ */
+function buildMaxDepthSchema(type: ts.Type, checker: ts.TypeChecker): SpecSchema {
+  // Named types → $ref (zero recursion)
+  const symbol = type.getSymbol() || type.aliasSymbol;
+  if (symbol && !isAnonymous(type)) {
+    const name = symbol.getName();
+    if (!name.startsWith('__') && !isPrimitiveName(name)) {
+      return { $ref: `#/types/${name}` };
+    }
+  }
+
+  // Primitives
+  if (type.flags & ts.TypeFlags.String) return { type: 'string' };
+  if (type.flags & ts.TypeFlags.Number) return { type: 'number' };
+  if (type.flags & ts.TypeFlags.Boolean) return { type: 'boolean' };
+  if (type.flags & ts.TypeFlags.Undefined) return { type: 'undefined' };
+  if (type.flags & ts.TypeFlags.Null) return { type: 'null' };
+  if (type.flags & ts.TypeFlags.Void) return { type: 'void' };
+
+  // Unions → anyOf with leaf schemas per member
+  if (type.isUnion()) {
+    const schemas = type.types.map((t) => buildMaxDepthSchema(t, checker));
+    return { anyOf: schemas };
+  }
+
+  // Intersections → allOf with leaf schemas per member
+  if (type.isIntersection()) {
+    const schemas = (type as ts.IntersectionType).types.map((t) =>
+      buildMaxDepthSchema(t, checker),
+    );
+    return { allOf: schemas };
+  }
+
+  // Fallback
+  return { type: checker.typeToString(type) };
+}
+
+/**
  * Internal schema builder - may return empty schemas for unhandled cases.
  */
 function buildSchemaInternal(
@@ -295,11 +335,14 @@ function buildSchemaInternal(
   ctx?: SerializerContext,
 ): SpecSchema {
   // Check depth limit using context
+  // Named types can still emit $ref at max depth (zero recursion needed)
+  // Union/intersection types get decomposed into anyOf/allOf with leaf schemas
   if (isAtMaxDepth(ctx)) {
-    return { type: checker.typeToString(type) };
+    return buildMaxDepthSchema(type, checker);
   }
 
-  // Check for circular references - but not for function types or anonymous types
+  // Circular reference guard — visitedTypes is stack-scoped (add before recurse, delete after)
+  // Only fires during genuine circular recursion, not from registration pollution
   if (ctx?.visitedTypes.has(type)) {
     // Function types should be inlined, not ref'd
     const callSignatures = type.getCallSignatures();
@@ -307,328 +350,329 @@ function buildSchemaInternal(
       return buildFunctionSchema(callSignatures, checker, ctx);
     }
     const symbol = type.getSymbol() || type.aliasSymbol;
-    // Only create $ref for named types (not anonymous __type)
+    // Named types → $ref
     if (symbol && !isAnonymous(type)) {
-      const name = symbol.getName();
-      const schema: SpecSchemaRef = { $ref: `#/types/${name}` };
-
-      // For generic types, still include typeArguments even on revisit
-      const typeRef = type as ts.TypeReference;
-      if (typeRef.target) {
-        const typeArgs = checker.getTypeArguments(typeRef);
-        if (typeArgs && typeArgs.length > 0) {
-          // Temporarily remove this type from visited to allow typeArg resolution
-          ctx.visitedTypes.delete(type);
-          schema.typeArguments = typeArgs.map((t) => buildSchema(t, checker, ctx));
-          ctx.visitedTypes.add(type);
-        }
-      }
-
-      return schema;
+      return { $ref: `#/types/${symbol.getName()}` };
     }
-    // For anonymous types, inline as object if possible
-    if (type.flags & ts.TypeFlags.Object) {
-      const properties = type.getProperties();
-      if (properties.length > 0) {
-        return buildObjectSchema(properties, checker, ctx, type);
-      }
-    }
+    // Anonymous types → fallback
     return { type: checker.typeToString(type) };
   }
 
-  // Add current type to visited set BEFORE recursing to prevent infinite loops
-  // Only add object types (primitives can't cause circular refs)
-  if (ctx && type.flags & ts.TypeFlags.Object) {
+  // Add to visited BEFORE recursing, delete AFTER (stack-style)
+  const addedToVisited = !!(ctx && type.flags & ts.TypeFlags.Object);
+  if (addedToVisited) {
     ctx.visitedTypes.add(type);
   }
 
-  // Handle primitives via type flags
-  if (type.flags & ts.TypeFlags.String) return { type: 'string' };
-  if (type.flags & ts.TypeFlags.Number) return { type: 'number' };
-  if (type.flags & ts.TypeFlags.Boolean) return { type: 'boolean' };
-  if (type.flags & ts.TypeFlags.Undefined) return { type: 'undefined' };
-  if (type.flags & ts.TypeFlags.Null) return { type: 'null' };
-  if (type.flags & ts.TypeFlags.Void) return { type: 'void' };
-  if (type.flags & ts.TypeFlags.Any) return { type: 'any' };
-  if (type.flags & ts.TypeFlags.Unknown) return { type: 'unknown' };
-  if (type.flags & ts.TypeFlags.Never) return { type: 'never' };
-  if (type.flags & ts.TypeFlags.BigInt) return { type: 'bigint' };
-  if (type.flags & ts.TypeFlags.ESSymbol) return { type: 'symbol' };
+  try {
+    // Handle primitives via type flags
+    if (type.flags & ts.TypeFlags.String) return { type: 'string' };
+    if (type.flags & ts.TypeFlags.Number) return { type: 'number' };
+    if (type.flags & ts.TypeFlags.Boolean) return { type: 'boolean' };
+    if (type.flags & ts.TypeFlags.Undefined) return { type: 'undefined' };
+    if (type.flags & ts.TypeFlags.Null) return { type: 'null' };
+    if (type.flags & ts.TypeFlags.Void) return { type: 'void' };
+    if (type.flags & ts.TypeFlags.Any) return { type: 'any' };
+    if (type.flags & ts.TypeFlags.Unknown) return { type: 'unknown' };
+    if (type.flags & ts.TypeFlags.Never) return { type: 'never' };
+    if (type.flags & ts.TypeFlags.BigInt) return { type: 'bigint' };
+    if (type.flags & ts.TypeFlags.ESSymbol) return { type: 'symbol' };
 
-  // Handle 'this' type - mark with x-ts-type for fluent patterns
-  if (type.isThisType?.()) {
-    // Get the constraint (the class type) and create a $ref with this marker
-    const constraint = type.getConstraint?.();
-    const symbol = constraint?.getSymbol() ?? type.getSymbol();
-    if (symbol && !isAnonymous(type)) {
-      return {
-        $ref: `#/types/${symbol.getName()}`,
-        'x-ts-type': 'this',
-      } as SpecSchema;
-    }
-  }
-
-  // String literal
-  if (type.flags & ts.TypeFlags.StringLiteral) {
-    const literal = (type as ts.StringLiteralType).value;
-    return { type: 'string', enum: [literal] };
-  }
-
-  // Number literal
-  if (type.flags & ts.TypeFlags.NumberLiteral) {
-    const literal = (type as ts.NumberLiteralType).value;
-    return { type: 'number', enum: [literal] };
-  }
-
-  // Boolean literal (true/false)
-  if (type.flags & ts.TypeFlags.BooleanLiteral) {
-    const typeString = checker.typeToString(type);
-    return { type: 'boolean', enum: [typeString === 'true'] };
-  }
-
-  // Union types → anyOf
-  if (type.isUnion()) {
-    // Check if this is a simple string/number literal union → enum
-    const types = type.types;
-    const allStringLiterals = types.every((t) => t.flags & ts.TypeFlags.StringLiteral);
-    if (allStringLiterals) {
-      const enumValues = types.map((t) => (t as ts.StringLiteralType).value);
-      return { type: 'string', enum: enumValues };
+    // Handle 'this' type - mark with x-ts-type for fluent patterns
+    if (type.isThisType?.()) {
+      // Get the constraint (the class type) and create a $ref with this marker
+      const constraint = type.getConstraint?.();
+      const symbol = constraint?.getSymbol() ?? type.getSymbol();
+      if (symbol && !isAnonymous(type)) {
+        return {
+          $ref: `#/types/${symbol.getName()}`,
+          'x-ts-type': 'this',
+        } as SpecSchema;
+      }
     }
 
-    const allNumberLiterals = types.every((t) => t.flags & ts.TypeFlags.NumberLiteral);
-    if (allNumberLiterals) {
-      const enumValues = types.map((t) => (t as ts.NumberLiteralType).value);
-      return { type: 'number', enum: enumValues };
+    // String literal
+    if (type.flags & ts.TypeFlags.StringLiteral) {
+      const literal = (type as ts.StringLiteralType).value;
+      return { type: 'string', enum: [literal] };
     }
 
-    // General union → anyOf
-    if (ctx) {
-      return withDepth(ctx, () => ({
-        anyOf: types.map((t) => buildSchema(t, checker, ctx)),
-      }));
-    }
-    return { anyOf: types.map((t) => buildSchema(t, checker, ctx)) };
-  }
-
-  // Intersection types → allOf
-  // Use both isIntersection() and TypeFlags.Intersection to catch all cases
-  const isIntersectionType = type.isIntersection() || !!(type.flags & ts.TypeFlags.Intersection);
-  if (isIntersectionType && 'types' in type) {
-    const intersectionType = type as ts.IntersectionType;
-    // Filter out `never` types from intersection
-    const filteredTypes = intersectionType.types.filter((t) => !(t.flags & ts.TypeFlags.Never));
-
-    // Handle degenerate cases
-    if (filteredTypes.length === 0) {
-      return { type: 'never' };
-    }
-    if (filteredTypes.length === 1) {
-      // Single-type intersection: return the single schema
-      return buildSchema(filteredTypes[0], checker, ctx);
+    // Number literal
+    if (type.flags & ts.TypeFlags.NumberLiteral) {
+      const literal = (type as ts.NumberLiteralType).value;
+      return { type: 'number', enum: [literal] };
     }
 
-    if (ctx) {
-      return withDepth(ctx, () => ({
-        allOf: filteredTypes.map((t) => buildSchema(t, checker, ctx)),
-      }));
+    // Boolean literal (true/false)
+    if (type.flags & ts.TypeFlags.BooleanLiteral) {
+      const typeString = checker.typeToString(type);
+      return { type: 'boolean', enum: [typeString === 'true'] };
     }
-    return { allOf: filteredTypes.map((t) => buildSchema(t, checker, ctx)) };
-  }
 
-  // EARLY CHECK: Detect empty arrays and Array interface BEFORE array/tuple checks
-  // This prevents explosion where empty arrays fall through to object handling
-  // and pick up all 50+ Array prototype methods
-  const typeString = checker.typeToString(type);
-  if (typeString === 'never[]' || typeString === '[]') {
-    return { type: 'array', prefixedItems: [], minItems: 0, maxItems: 0 };
-  }
-
-  // Detect Array interface to prevent prototype expansion
-  const symbol = type.getSymbol() || type.aliasSymbol;
-  if (symbol?.getName() === 'Array' && isBuiltinSymbol(symbol)) {
-    // Get type arguments if available, otherwise use unknown
-    const typeRef = type as ts.TypeReference;
-    const typeArgs = typeRef.target ? checker.getTypeArguments(typeRef) : undefined;
-    const elementType = typeArgs?.[0];
-    if (elementType) {
-      return { type: 'array', items: buildSchema(elementType, checker, ctx) };
+    // Named type aliases that resolve to unions/intersections → $ref BEFORE decomposing.
+    // Without this, `type Foo = A & B` would be expanded as allOf instead of emitting $ref.
+    // Only applies to non-generic aliases (generic aliases are handled later via aliasTypeArguments).
+    if (type.aliasSymbol && !type.aliasTypeArguments?.length) {
+      const aliasName = type.aliasSymbol.getName();
+      if (!aliasName.startsWith('__') && !isPrimitiveName(aliasName)) {
+        const packageOrigin = getTypeOrigin(type, checker);
+        const schema: SpecSchema = { $ref: `#/types/${aliasName}` };
+        if (packageOrigin) {
+          setSchemaExtension(schema, 'x-ts-package', packageOrigin);
+        }
+        return schema;
+      }
     }
-    return { type: 'array', items: { 'x-ts-type': 'unknown' } };
-  }
 
-  // Array type (T[])
-  // Use checker.getTypeArguments() for consistent type argument resolution
-  if (checker.isArrayType(type)) {
-    const arrayTypeRef = type as ts.TypeReference;
-    const arrayTypeArgs = checker.getTypeArguments(arrayTypeRef);
-    const elementType = arrayTypeArgs?.[0];
-    if (elementType) {
+    // Union types → anyOf
+    if (type.isUnion()) {
+      // Check if this is a simple string/number literal union → enum
+      const types = type.types;
+      const allStringLiterals = types.every((t) => t.flags & ts.TypeFlags.StringLiteral);
+      if (allStringLiterals) {
+        const enumValues = types.map((t) => (t as ts.StringLiteralType).value);
+        return { type: 'string', enum: enumValues };
+      }
+
+      const allNumberLiterals = types.every((t) => t.flags & ts.TypeFlags.NumberLiteral);
+      if (allNumberLiterals) {
+        const enumValues = types.map((t) => (t as ts.NumberLiteralType).value);
+        return { type: 'number', enum: enumValues };
+      }
+
+      // General union → anyOf
       if (ctx) {
         return withDepth(ctx, () => ({
-          type: 'array',
-          items: buildSchema(elementType, checker, ctx),
+          anyOf: types.map((t) => buildSchema(t, checker, ctx)),
         }));
       }
-      return { type: 'array', items: buildSchema(elementType, checker, ctx) };
+      return { anyOf: types.map((t) => buildSchema(t, checker, ctx)) };
     }
-    return { type: 'array' };
-  }
 
-  // Tuple type - uses prefixedItems per JSON Schema 2020-12
-  // Use checker.getTypeArguments() for consistent type argument resolution
-  if (checker.isTupleType(type)) {
-    const tupleTypeRef = type as ts.TypeReference;
-    const elementTypes = checker.getTypeArguments(tupleTypeRef) ?? [];
-    if (ctx) {
-      return withDepth(ctx, () => {
-        // Set flag to indicate we're processing tuple elements
-        const prevInTupleElement = ctx.inTupleElement;
-        ctx.inTupleElement = true;
-        try {
-          return {
+    // Intersection types → allOf
+    // Use both isIntersection() and TypeFlags.Intersection to catch all cases
+    const isIntersectionType = type.isIntersection() || !!(type.flags & ts.TypeFlags.Intersection);
+    if (isIntersectionType && 'types' in type) {
+      const intersectionType = type as ts.IntersectionType;
+      // Filter out `never` types from intersection
+      const filteredTypes = intersectionType.types.filter((t) => !(t.flags & ts.TypeFlags.Never));
+
+      // Handle degenerate cases
+      if (filteredTypes.length === 0) {
+        return { type: 'never' };
+      }
+      if (filteredTypes.length === 1) {
+        // Single-type intersection: return the single schema
+        return buildSchema(filteredTypes[0], checker, ctx);
+      }
+
+      if (ctx) {
+        return withDepth(ctx, () => ({
+          allOf: filteredTypes.map((t) => buildSchema(t, checker, ctx)),
+        }));
+      }
+      return { allOf: filteredTypes.map((t) => buildSchema(t, checker, ctx)) };
+    }
+
+    // EARLY CHECK: Detect empty arrays and Array interface BEFORE array/tuple checks
+    // This prevents explosion where empty arrays fall through to object handling
+    // and pick up all 50+ Array prototype methods
+    const typeString = checker.typeToString(type);
+    if (typeString === 'never[]' || typeString === '[]') {
+      return { type: 'array', prefixedItems: [], minItems: 0, maxItems: 0 };
+    }
+
+    // Detect Array interface to prevent prototype expansion
+    const symbol = type.getSymbol() || type.aliasSymbol;
+    if (symbol?.getName() === 'Array' && isBuiltinSymbol(symbol)) {
+      // Get type arguments if available, otherwise use unknown
+      const typeRef = type as ts.TypeReference;
+      const typeArgs = typeRef.target ? checker.getTypeArguments(typeRef) : undefined;
+      const elementType = typeArgs?.[0];
+      if (elementType) {
+        return { type: 'array', items: buildSchema(elementType, checker, ctx) };
+      }
+      return { type: 'array', items: { 'x-ts-type': 'unknown' } };
+    }
+
+    // Array type (T[])
+    // Use checker.getTypeArguments() for consistent type argument resolution
+    if (checker.isArrayType(type)) {
+      const arrayTypeRef = type as ts.TypeReference;
+      const arrayTypeArgs = checker.getTypeArguments(arrayTypeRef);
+      const elementType = arrayTypeArgs?.[0];
+      if (elementType) {
+        if (ctx) {
+          return withDepth(ctx, () => ({
             type: 'array',
-            prefixedItems: elementTypes.map((t) => buildSchema(t, checker, ctx)),
-            minItems: elementTypes.length,
-            maxItems: elementTypes.length,
-          };
-        } finally {
-          ctx.inTupleElement = prevInTupleElement;
+            items: buildSchema(elementType, checker, ctx),
+          }));
         }
-      });
-    }
-    return {
-      type: 'array',
-      prefixedItems: elementTypes.map((t) => buildSchema(t, checker, ctx)),
-      minItems: elementTypes.length,
-      maxItems: elementTypes.length,
-    };
-  }
-
-  // Generic type reference (Promise<T>, Result<T,E>, etc.)
-  // Use checker.getTypeArguments() instead of typeRef.typeArguments as the latter
-  // may not be populated for resolved types (e.g., from getReturnTypeOfSignature)
-  const typeRef = type as ts.TypeReference;
-  const typeArgs = typeRef.target ? checker.getTypeArguments(typeRef) : undefined;
-  if (typeRef.target && typeArgs && typeArgs.length > 0) {
-    const symbol = typeRef.target.getSymbol();
-    const name = symbol?.getName();
-
-    // Skip typeArguments for built-in non-generic types (like Uint8Array has internal T)
-    if (name && BUILTIN_TYPES.has(name)) {
-      return { $ref: `#/types/${name}` };
+        return { type: 'array', items: buildSchema(elementType, checker, ctx) };
+      }
+      return { type: 'array' };
     }
 
-    if (name && (isBuiltinGeneric(name) || !isAnonymous(typeRef.target))) {
-      const packageOrigin = getTypeOrigin(typeRef.target, checker);
+    // Tuple type - uses prefixedItems per JSON Schema 2020-12
+    // Use checker.getTypeArguments() for consistent type argument resolution
+    if (checker.isTupleType(type)) {
+      const tupleTypeRef = type as ts.TypeReference;
+      const elementTypes = checker.getTypeArguments(tupleTypeRef) ?? [];
       if (ctx) {
         return withDepth(ctx, () => {
-          const schema: SpecSchema = {
-            $ref: `#/types/${name}`,
-            typeArguments: typeArgs.map((t) => buildSchema(t, checker, ctx)),
-          };
-          if (packageOrigin) {
-            setSchemaExtension(schema, 'x-ts-package', packageOrigin);
+          // Set flag to indicate we're processing tuple elements
+          const prevInTupleElement = ctx.inTupleElement;
+          ctx.inTupleElement = true;
+          try {
+            return {
+              type: 'array',
+              prefixedItems: elementTypes.map((t) => buildSchema(t, checker, ctx)),
+              minItems: elementTypes.length,
+              maxItems: elementTypes.length,
+            };
+          } finally {
+            ctx.inTupleElement = prevInTupleElement;
           }
-          return schema;
         });
       }
-      const schema: SpecSchema = {
-        $ref: `#/types/${name}`,
-        typeArguments: typeArgs.map((t) => buildSchema(t, checker, ctx)),
+      return {
+        type: 'array',
+        prefixedItems: elementTypes.map((t) => buildSchema(t, checker, ctx)),
+        minItems: elementTypes.length,
+        maxItems: elementTypes.length,
       };
-      if (packageOrigin) {
-        setSchemaExtension(schema, 'x-ts-package', packageOrigin);
+    }
+
+    // Generic type reference (Promise<T>, Result<T,E>, etc.)
+    // Use checker.getTypeArguments() instead of typeRef.typeArguments as the latter
+    // may not be populated for resolved types (e.g., from getReturnTypeOfSignature)
+    const typeRef = type as ts.TypeReference;
+    const typeArgs = typeRef.target ? checker.getTypeArguments(typeRef) : undefined;
+    if (typeRef.target && typeArgs && typeArgs.length > 0) {
+      const symbol = typeRef.target.getSymbol();
+      const name = symbol?.getName();
+
+      // Skip typeArguments for built-in non-generic types (like Uint8Array has internal T)
+      if (name && BUILTIN_TYPES.has(name)) {
+        return { $ref: `#/types/${name}` };
       }
-      return schema;
-    }
-  }
 
-  // Fallback: check aliasTypeArguments for types where typeRef.target is undefined
-  // This handles cases like return types from getReturnTypeOfSignature() where
-  // the type has generic arguments via aliasSymbol/aliasTypeArguments
-  const aliasTypeArgs = type.aliasTypeArguments;
-  const aliasSymbol = type.aliasSymbol;
-  if (aliasSymbol && aliasTypeArgs && aliasTypeArgs.length > 0) {
-    const name = aliasSymbol.getName();
-
-    // Skip built-in non-generic types
-    if (BUILTIN_TYPES.has(name)) {
-      return { $ref: `#/types/${name}` };
-    }
-
-    if (isBuiltinGeneric(name) || !name.startsWith('__')) {
-      const packageOrigin = getTypeOrigin(type, checker);
-      if (ctx) {
-        return withDepth(ctx, () => {
-          const schema: SpecSchema = {
-            $ref: `#/types/${name}`,
-            typeArguments: aliasTypeArgs.map((t) => buildSchema(t, checker, ctx)),
-          };
-          if (packageOrigin) {
-            setSchemaExtension(schema, 'x-ts-package', packageOrigin);
-          }
-          return schema;
-        });
+      if (name && (isBuiltinGeneric(name) || !isAnonymous(typeRef.target))) {
+        const packageOrigin = getTypeOrigin(typeRef.target, checker);
+        if (ctx) {
+          return withDepth(ctx, () => {
+            const schema: SpecSchema = {
+              $ref: `#/types/${name}`,
+              typeArguments: typeArgs.map((t) => buildSchema(t, checker, ctx)),
+            };
+            if (packageOrigin) {
+              setSchemaExtension(schema, 'x-ts-package', packageOrigin);
+            }
+            return schema;
+          });
+        }
+        const schema: SpecSchema = {
+          $ref: `#/types/${name}`,
+          typeArguments: typeArgs.map((t) => buildSchema(t, checker, ctx)),
+        };
+        if (packageOrigin) {
+          setSchemaExtension(schema, 'x-ts-package', packageOrigin);
+        }
+        return schema;
       }
-      const schema: SpecSchema = {
-        $ref: `#/types/${name}`,
-        typeArguments: aliasTypeArgs.map((t) => buildSchema(t, checker, ctx)),
-      };
-      if (packageOrigin) {
-        setSchemaExtension(schema, 'x-ts-package', packageOrigin);
+    }
+
+    // Fallback: check aliasTypeArguments for types where typeRef.target is undefined
+    // This handles cases like return types from getReturnTypeOfSignature() where
+    // the type has generic arguments via aliasSymbol/aliasTypeArguments
+    const aliasTypeArgs = type.aliasTypeArguments;
+    const aliasSymbol = type.aliasSymbol;
+    if (aliasSymbol && aliasTypeArgs && aliasTypeArgs.length > 0) {
+      const name = aliasSymbol.getName();
+
+      // Skip built-in non-generic types
+      if (BUILTIN_TYPES.has(name)) {
+        return { $ref: `#/types/${name}` };
       }
-      return schema;
-    }
-  }
 
-  // Function types - check BEFORE named types to avoid $ref to function names
-  if (type.flags & ts.TypeFlags.Object) {
-    const callSignatures = type.getCallSignatures();
-    if (callSignatures.length > 0) {
-      return buildFunctionSchema(callSignatures, checker, ctx);
-    }
-  }
-
-  // Named types (classes, interfaces, type aliases)
-  // (symbol already declared above for Array interface check)
-  if (symbol && !isAnonymous(type)) {
-    const name = symbol.getName();
-
-    // Skip primitives
-    if (isPrimitiveName(name)) {
-      return { type: name };
-    }
-
-    // Built-in types without generics
-    if (BUILTIN_TYPES.has(name)) {
-      return { $ref: `#/types/${name}` };
-    }
-
-    // Named type → $ref
-    if (!name.startsWith('__')) {
-      const packageOrigin = getTypeOrigin(type, checker);
-      const schema: SpecSchema = { $ref: `#/types/${name}` };
-      if (packageOrigin) {
-        setSchemaExtension(schema, 'x-ts-package', packageOrigin);
+      if (isBuiltinGeneric(name) || !name.startsWith('__')) {
+        const packageOrigin = getTypeOrigin(type, checker);
+        if (ctx) {
+          return withDepth(ctx, () => {
+            const schema: SpecSchema = {
+              $ref: `#/types/${name}`,
+              typeArguments: aliasTypeArgs.map((t) => buildSchema(t, checker, ctx)),
+            };
+            if (packageOrigin) {
+              setSchemaExtension(schema, 'x-ts-package', packageOrigin);
+            }
+            return schema;
+          });
+        }
+        const schema: SpecSchema = {
+          $ref: `#/types/${name}`,
+          typeArguments: aliasTypeArgs.map((t) => buildSchema(t, checker, ctx)),
+        };
+        if (packageOrigin) {
+          setSchemaExtension(schema, 'x-ts-package', packageOrigin);
+        }
+        return schema;
       }
-      return schema;
+    }
+
+    // Function types - check BEFORE named types to avoid $ref to function names
+    if (type.flags & ts.TypeFlags.Object) {
+      const callSignatures = type.getCallSignatures();
+      if (callSignatures.length > 0) {
+        return buildFunctionSchema(callSignatures, checker, ctx);
+      }
+    }
+
+    // Named types (classes, interfaces, type aliases)
+    // (symbol already declared above for Array interface check)
+    if (symbol && !isAnonymous(type)) {
+      const name = symbol.getName();
+
+      // Skip primitives
+      if (isPrimitiveName(name)) {
+        return { type: name };
+      }
+
+      // Built-in types without generics
+      if (BUILTIN_TYPES.has(name)) {
+        return { $ref: `#/types/${name}` };
+      }
+
+      // Named type → $ref
+      if (!name.startsWith('__')) {
+        const packageOrigin = getTypeOrigin(type, checker);
+        const schema: SpecSchema = { $ref: `#/types/${name}` };
+        if (packageOrigin) {
+          setSchemaExtension(schema, 'x-ts-package', packageOrigin);
+        }
+        return schema;
+      }
+    }
+
+    // Object type (inline object literal)
+    if (type.flags & ts.TypeFlags.Object) {
+      const objectType = type as ts.ObjectType;
+
+      // Object with properties
+      const properties = type.getProperties();
+      if (properties.length > 0 || objectType.objectFlags & ts.ObjectFlags.Anonymous) {
+        return buildObjectSchema(properties, checker, ctx, type);
+      }
+    }
+
+    // Fallback to type string
+    return { type: checker.typeToString(type) };
+  } finally {
+    // Stack-style cleanup: remove from visited after processing completes
+    if (addedToVisited) {
+      ctx!.visitedTypes.delete(type);
     }
   }
-
-  // Object type (inline object literal)
-  if (type.flags & ts.TypeFlags.Object) {
-    const objectType = type as ts.ObjectType;
-
-    // Object with properties
-    const properties = type.getProperties();
-    if (properties.length > 0 || objectType.objectFlags & ts.ObjectFlags.Anonymous) {
-      return buildObjectSchema(properties, checker, ctx, type);
-    }
-  }
-
-  // Fallback to type string
-  return { type: checker.typeToString(type) };
 }
 
 /**

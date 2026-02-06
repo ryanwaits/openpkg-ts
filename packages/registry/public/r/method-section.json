@@ -1,0 +1,20 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "method-section",
+  "title": "Method Section",
+  "description": "Container for a single API method with title, signature, and parameters",
+  "dependencies": [
+    "@openpkg-ts/ui"
+  ],
+  "registryDependencies": [
+    "@openpkg-ts/use-sync-scroll"
+  ],
+  "files": [
+    {
+      "path": "registry/new-york/components/method-section/method-section.tsx",
+      "content": "'use client';\n\nimport { cn } from '@openpkg-ts/ui/lib/utils';\nimport { type ReactNode, useEffect, useRef } from 'react';\nimport { useSyncScroll } from '@/registry/new-york/hooks/use-sync-scroll/use-sync-scroll';\n\nexport interface MethodSectionProps {\n  /** Section ID for scroll sync */\n  id: string;\n  /** Method title (e.g., \"Fetch data\") */\n  title: string;\n  /** Method signature (e.g., \"select(columns?, options?)\") */\n  signature?: string;\n  /** Method description */\n  description?: ReactNode;\n  /** Bullet list notes */\n  notes?: string[];\n  /** Parameter content */\n  children?: ReactNode;\n  /** Custom className */\n  className?: string;\n}\n\n/**\n * Container for a single API method in the documentation.\n * Renders title, signature, description, notes list, and parameters.\n */\nexport function MethodSection({\n  id,\n  title,\n  signature,\n  description,\n  notes,\n  children,\n  className,\n}: MethodSectionProps): ReactNode {\n  const ref = useRef<HTMLElement>(null);\n  const syncScroll = useSyncScrollSafe();\n\n  useEffect(() => {\n    if (syncScroll && ref.current) {\n      syncScroll.registerSection(id, ref);\n      return () => syncScroll.unregisterSection(id);\n    }\n  }, [id, syncScroll]);\n\n  return (\n    <section\n      ref={ref}\n      id={id}\n      data-section={id}\n      className={cn('openpkg-method-section', 'mb-20 last:mb-0', className)}\n    >\n      <h2\n        className={cn(\n          'text-2xl font-semibold tracking-tight',\n          'text-[var(--openpkg-text-primary)]',\n          'mb-4',\n        )}\n      >\n        {title}\n      </h2>\n\n      {signature && (\n        <code className={cn('block font-mono text-sm', 'text-[var(--openpkg-text-muted)]', 'mb-6')}>\n          {signature}\n        </code>\n      )}\n\n      {description && (\n        <div\n          className={cn(\n            'openpkg-method-description',\n            'text-[15px] leading-relaxed',\n            'text-[var(--openpkg-text-secondary)]',\n            'mb-6',\n            '[&_a]:text-[var(--openpkg-accent-link)] [&_a]:no-underline [&_a]:font-medium hover:[&_a]:underline',\n            '[&_code]:bg-[var(--openpkg-bg-badge)] [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:rounded [&_code]:font-mono [&_code]:text-[13px]',\n          )}\n        >\n          {typeof description === 'string' ? <p>{description}</p> : description}\n        </div>\n      )}\n\n      {notes && notes.length > 0 && (\n        <ul\n          className={cn(\n            'openpkg-method-notes',\n            'list-disc list-inside',\n            'text-[15px] leading-relaxed',\n            'text-[var(--openpkg-text-secondary)]',\n            'mb-8 space-y-2',\n          )}\n        >\n          {notes.map((note, i) => (\n            <li key={i}>{note}</li>\n          ))}\n        </ul>\n      )}\n\n      {children && (\n        <div className=\"openpkg-method-params\">\n          <h3\n            className={cn(\n              'text-xs font-semibold uppercase tracking-wider',\n              'text-[var(--openpkg-text-muted)]',\n              'mb-4 pb-2',\n              'border-b border-[var(--openpkg-border-subtle)]',\n            )}\n          >\n            Parameters\n          </h3>\n          {children}\n        </div>\n      )}\n    </section>\n  );\n}\n\nfunction useSyncScrollSafe() {\n  try {\n    return useSyncScroll();\n  } catch {\n    return null;\n  }\n}\n",
+      "type": "registry:component"
+    }
+  ],
+  "type": "registry:component"
+}

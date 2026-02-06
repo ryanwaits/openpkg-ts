@@ -1,5 +1,5 @@
 import { KIND_LABELS, type SpecExportKind } from '@openpkg-ts/spec';
-import { type KindBadgeKind, KindBadge as UIKindBadge } from '@openpkg-ts/ui/badge';
+import { type KindBadgeKind, KindBadge as UIKindBadge } from '@openpkg-ts/registry/badge';
 import { createElement, type ReactNode } from 'react';
 
 export const SUPPORTED_KINDS: Set<string> = new Set(Object.keys(KIND_LABELS));
@@ -11,7 +11,7 @@ export interface SidebarKindBadgeProps {
 
 /**
  * Sidebar badge component for fumadocs page tree.
- * Wraps @openpkg-ts/ui KindBadge with size="sm" for sidebar use.
+ * Wraps @openpkg-ts/registry KindBadge with size="sm" for sidebar use.
  *
  * Uses createElement instead of JSX for compatibility with
  * fumadocs transformPageTree server context.

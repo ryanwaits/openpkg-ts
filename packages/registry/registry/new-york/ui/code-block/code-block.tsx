@@ -1,7 +1,7 @@
 'use client';
 
-import { ClientDocsKitCode } from '@openpkg-ts/ui/docskit';
-import { cn } from '@openpkg-ts/ui/lib/utils';
+import { ClientDocsKitCode } from '@/registry/new-york/docskit';
+import { cn } from '@/lib/utils';
 import type { ReactNode } from 'react';
 
 export interface CodeBlockProps {

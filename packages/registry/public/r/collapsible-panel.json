@@ -1,0 +1,18 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "collapsible-panel",
+  "title": "Collapsible Panel",
+  "description": "Accordion-style panel with CSS grid transition",
+  "dependencies": [
+    "@openpkg-ts/ui",
+    "lucide-react"
+  ],
+  "files": [
+    {
+      "path": "registry/new-york/ui/collapsible-panel/collapsible-panel.tsx",
+      "content": "export { CollapsiblePanel, type CollapsiblePanelProps } from '@openpkg-ts/ui/docskit';\n",
+      "type": "registry:ui"
+    }
+  ],
+  "type": "registry:ui"
+}

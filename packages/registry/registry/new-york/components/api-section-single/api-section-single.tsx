@@ -1,8 +1,8 @@
 'use client';
 
 import type { SpecSchema } from '@openpkg-ts/spec';
-import { ClientDocsKitCode, PackageInstall } from '@openpkg-ts/ui/docskit';
-import { cn } from '@openpkg-ts/ui/lib/utils';
+import { ClientDocsKitCode, PackageInstall } from '@/registry/new-york/docskit';
+import { cn } from '@/lib/utils';
 import type * as React from 'react';
 import { SectionAccordion } from '@/registry/new-york/ui/section-accordion/section-accordion';
 

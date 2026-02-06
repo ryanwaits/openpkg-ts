@@ -1,5 +1,7 @@
 # Phase 2: Stripe Design Refinement Sprint Plan
 
+> **Note:** File paths below reference `packages/ui` and `packages/react` which no longer exist. All docskit components now live in `packages/registry/registry/new-york/docskit/`. Component names like `StripeAPIReferencePage` have been renamed to `APIReferencePage`. The design work described here still applies — just target the registry paths.
+
 Reference: https://docs.stripe.com/api/customers
 
 Approach: iterative visual design using `/frontend-design` skill. Each sprint produces a demoable improvement. We refine by comparing against Stripe side-by-side after each sprint.

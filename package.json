@@ -6,13 +6,13 @@
     "packages/*"
   ],
   "scripts": {
-    "build": "bun run build:spec && bun run build:ui && bun run build:sdk && bun run build:cli && bun run build:adapters && bun run build:registry",
-    "build:registry": "cd packages/registry && bun run registry:build",
+    "build": "bun run build:spec && bun run build:sdk && bun run build:registry && bun run build:cli && bun run build:adapters && bun run build:json-render",
     "build:spec": "cd packages/spec && bun run build",
     "build:sdk": "cd packages/sdk && bun run build",
-    "build:ui": "cd packages/ui && bun run build",
+    "build:registry": "cd packages/registry && bun run build",
     "build:cli": "cd packages/cli && bun run build",
     "build:adapters": "cd packages/adapters && bun run build",
+    "build:json-render": "cd packages/json-render && bun run build",
     "lint": "bunx biome check packages/",
     "lint:fix": "bunx biome check --write packages/",
     "format": "bunx biome format --write packages/",

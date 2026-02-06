@@ -1,0 +1,17 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "nested-parameter-container",
+  "title": "Nested Parameter Container",
+  "description": "Bordered container for nested child parameters",
+  "dependencies": [
+    "@openpkg-ts/ui"
+  ],
+  "files": [
+    {
+      "path": "registry/new-york/ui/nested-parameter-container/nested-parameter-container.tsx",
+      "content": "export {\n  NestedParameterContainer,\n  type NestedParameterContainerProps,\n} from '@openpkg-ts/ui/docskit';\n",
+      "type": "registry:ui"
+    }
+  ],
+  "type": "registry:ui"
+}

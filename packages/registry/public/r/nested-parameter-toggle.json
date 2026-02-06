@@ -1,0 +1,18 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "nested-parameter-toggle",
+  "title": "Nested Parameter Toggle",
+  "description": "Show/Hide child parameters button with animation",
+  "dependencies": [
+    "@openpkg-ts/ui",
+    "lucide-react"
+  ],
+  "files": [
+    {
+      "path": "registry/new-york/ui/nested-parameter-toggle/nested-parameter-toggle.tsx",
+      "content": "export { NestedParameterToggle, type NestedParameterToggleProps } from '@openpkg-ts/ui/docskit';\n",
+      "type": "registry:ui"
+    }
+  ],
+  "type": "registry:ui"
+}

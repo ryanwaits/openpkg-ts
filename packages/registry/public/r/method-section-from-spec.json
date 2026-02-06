@@ -1,0 +1,23 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "method-section-from-spec",
+  "title": "Method Section From Spec",
+  "description": "Auto-generate method documentation from OpenPkg spec",
+  "dependencies": [
+    "@openpkg-ts/spec",
+    "@openpkg-ts/ui"
+  ],
+  "registryDependencies": [
+    "@openpkg-ts/expandable-parameter",
+    "@openpkg-ts/method-section",
+    "@openpkg-ts/use-method-from-spec"
+  ],
+  "files": [
+    {
+      "path": "registry/new-york/components/method-section-from-spec/method-section-from-spec.tsx",
+      "content": "'use client';\n\nimport type { OpenPkg, SpecExport } from '@openpkg-ts/spec';\nimport { cn } from '@openpkg-ts/ui/lib/utils';\nimport type { ReactNode } from 'react';\nimport { ExpandableParameter } from '@/registry/new-york/components/expandable-parameter/expandable-parameter';\nimport { MethodSection } from '@/registry/new-york/components/method-section/method-section';\nimport { extractMethodData } from '@/registry/new-york/hooks/use-method-from-spec/use-method-from-spec';\n\nexport interface MethodSectionFromSpecProps {\n  /** OpenPkg spec */\n  spec: OpenPkg;\n  /** Export to render (by name or object) */\n  export: string | SpecExport;\n  /** Custom className */\n  className?: string;\n}\n\n/**\n * Auto-generates MethodSection from spec data.\n * Extracts parameters, description, and notes from the export.\n */\nexport function MethodSectionFromSpec({\n  spec,\n  export: exportProp,\n  className,\n}: MethodSectionFromSpecProps): ReactNode {\n  const exp =\n    typeof exportProp === 'string' ? spec.exports.find((e) => e.name === exportProp) : exportProp;\n\n  if (!exp) return null;\n\n  const method = extractMethodData(exp);\n  const notes = buildNotes(exp);\n\n  return (\n    <MethodSection\n      id={exp.id || exp.name}\n      title={method.title}\n      signature={method.signature}\n      description={method.description}\n      notes={notes}\n      className={cn('openpkg-method-from-spec', className)}\n    >\n      {method.parameters.map((param) => (\n        <ExpandableParameter key={param.name} parameter={param} />\n      ))}\n    </MethodSection>\n  );\n}\n\nfunction buildNotes(exp: SpecExport): string[] {\n  const notes: string[] = [];\n\n  if (exp.deprecated) {\n    notes.push(\n      exp.deprecationReason\n        ? `⚠️ Deprecated: ${exp.deprecationReason}`\n        : '⚠️ This function is deprecated.',\n    );\n  }\n\n  const sig = exp.signatures?.[0];\n  if (sig?.tags) {\n    for (const tag of sig.tags) {\n      if (tag.name === 'note' || tag.name === 'remarks') {\n        notes.push(tag.text);\n      }\n    }\n  }\n\n  const flags = exp.flags as Record<string, unknown> | undefined;\n  if (flags?.async) {\n    notes.push('This function is async and returns a Promise.');\n  }\n\n  return notes;\n}\n",
+      "type": "registry:component"
+    }
+  ],
+  "type": "registry:component"
+}

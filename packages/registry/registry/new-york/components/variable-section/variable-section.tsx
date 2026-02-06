@@ -1,14 +1,14 @@
 'use client';
 
-import { formatSchema } from '@openpkg-ts/sdk/browser';
-import type { OpenPkg, SpecExport } from '@openpkg-ts/spec';
-import { APIParameterItem, APISection, ParameterList } from '@openpkg-ts/ui/docskit';
-import type { ReactNode } from 'react';
 import {
   buildImportStatement,
-  getLanguagesFromExamples,
+  formatSchema,
+  getLangForHighlight,
   specExamplesToCodeExamples,
-} from './spec-to-docskit';
+} from '@openpkg-ts/sdk/browser';
+import type { OpenPkg, SpecExport } from '@openpkg-ts/spec';
+import { APIParameterItem, APISection, ParameterList } from '@/registry/new-york/docskit/api';
+import type { ReactNode } from 'react';
 
 export interface VariableSectionProps {
   export: SpecExport;
@@ -18,7 +18,6 @@ export interface VariableSectionProps {
 export function VariableSection({ export: exp, spec }: VariableSectionProps): ReactNode {
   const typeValue = typeof exp.type === 'string' ? exp.type : formatSchema(exp.schema);
 
-  const languages = getLanguagesFromExamples(exp.examples);
   const examples = specExamplesToCodeExamples(exp.examples);
   const importStatement = buildImportStatement(exp, spec);
 
@@ -32,14 +31,12 @@ export function VariableSection({ export: exp, spec }: VariableSectionProps): Re
       ? examples
       : [
           {
-            languageId: 'typescript',
+            id: 'default',
+            label: 'TypeScript',
             code: `${importStatement}\n\nconsole.log(${exp.name}); // ${constValue !== undefined ? JSON.stringify(constValue) : typeValue}`,
-            highlightLang: 'ts',
+            language: getLangForHighlight('typescript'),
           },
         ];
-
-  const displayLanguages =
-    languages.length > 0 ? languages : [{ id: 'typescript', label: 'TypeScript' }];
 
   return (
     <APISection
@@ -58,7 +55,6 @@ export function VariableSection({ export: exp, spec }: VariableSectionProps): Re
           </code>
         </div>
       }
-      languages={displayLanguages}
       examples={displayExamples}
       codePanelTitle={exp.name}
     >

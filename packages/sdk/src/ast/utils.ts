@@ -47,7 +47,10 @@ function parseExamplesFromTags(tags: SpecTag[]): SpecExample[] {
  */
 function stripParamSeparator(text: string | undefined): string | undefined {
   if (!text) return undefined;
-  const stripped = text.replace(/^-\s*/, '').trim();
+  let stripped = text.replace(/^-\s*/, '').trim();
+  // Stop at paragraph breaks — loose text after a blank line isn't part of the param
+  const parts = stripped.split(/\n\s*\n/);
+  stripped = parts[0].trim();
   return stripped || undefined;
 }
 

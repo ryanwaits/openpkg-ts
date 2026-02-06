@@ -28,9 +28,9 @@ describe('forgotten exports detection', () => {
     expect(forgottenExternalType).toBeUndefined();
   });
 
-  test('should still flag types that are referenced but not exported', async () => {
+  test('should auto-register referenced but non-exported types into spec.types', async () => {
     // InternalType is defined but NOT exported
-    // It's used in UsesInternal's type signature, so it should be flagged
+    // Post-process pass should register it into spec.types via $ref resolution
     const code = `
       interface InternalType {
         x: number;
@@ -46,11 +46,10 @@ describe('forgotten exports detection', () => {
       content: code,
     });
 
-    // InternalType SHOULD be in forgottenExports since it's not exported
-    const forgottenInternal = result.forgottenExports?.find((f) => f.name === 'InternalType');
-    expect(forgottenInternal).toBeDefined();
-    expect(forgottenInternal?.name).toBe('InternalType');
-    expect(forgottenInternal?.isExternal).toBe(false);
+    // InternalType should now be auto-registered in spec.types (not forgotten)
+    const registeredType = result.spec.types?.find((t) => t.id === 'InternalType');
+    expect(registeredType).toBeDefined();
+    expect(result.forgottenExports?.find((f) => f.name === 'InternalType')).toBeUndefined();
   });
 
   test('should not flag exported type aliases as forgotten', async () => {
@@ -73,8 +72,8 @@ describe('forgotten exports detection', () => {
     expect(forgottenCallback).toBeUndefined();
   });
 
-  test('should flag non-exported interfaces used in properties as forgotten', async () => {
-    // Interface that is NOT exported but used in a property should be flagged
+  test('should auto-register non-exported interfaces used in properties', async () => {
+    // Interface that is NOT exported but used in a property should be auto-registered
     const code = `
       interface CallbackOptions {
         retryCount: number;
@@ -91,14 +90,14 @@ describe('forgotten exports detection', () => {
       content: code,
     });
 
-    // CallbackOptions is NOT exported, should be forgotten
-    const forgottenOptions = result.forgottenExports?.find((f) => f.name === 'CallbackOptions');
-    expect(forgottenOptions).toBeDefined();
-    expect(forgottenOptions?.name).toBe('CallbackOptions');
+    // CallbackOptions should now be auto-registered in spec.types
+    const registeredType = result.spec.types?.find((t) => t.id === 'CallbackOptions');
+    expect(registeredType).toBeDefined();
+    expect(result.forgottenExports?.find((f) => f.name === 'CallbackOptions')).toBeUndefined();
   });
 
-  test('should handle multiple levels of type references correctly', async () => {
-    // Test nested type references - only truly forgotten ones should be flagged
+  test('should auto-register nested type references at all levels', async () => {
+    // Test nested type references - non-exported types should be auto-registered
     const code = `
       interface DeepInternal {
         deep: boolean;
@@ -121,18 +120,18 @@ describe('forgotten exports detection', () => {
     // MiddleType is exported - should NOT be forgotten
     expect(result.forgottenExports?.find((f) => f.name === 'MiddleType')).toBeUndefined();
 
-    // DeepInternal is NOT exported - should be forgotten
-    const forgottenDeep = result.forgottenExports?.find((f) => f.name === 'DeepInternal');
-    expect(forgottenDeep).toBeDefined();
+    // DeepInternal should be auto-registered in spec.types (not forgotten)
+    const registeredDeep = result.spec.types?.find((t) => t.id === 'DeepInternal');
+    expect(registeredDeep).toBeDefined();
+    expect(result.forgottenExports?.find((f) => f.name === 'DeepInternal')).toBeUndefined();
   });
 });
 
 describe('forgotten exports with linked packages (integration)', () => {
-  test('filters external types from forgottenExports result', async () => {
-    // Simulate a project that uses types from a linked package
-    // The linked package path is outside the project's baseDir
+  test('auto-registers internal types from linked packages', async () => {
+    // Type defined in the test file (inside /project)
+    // should be auto-registered into spec.types, not left as forgotten
     const code = `
-      // Type defined in the test file but simulating it came from external
       interface ExternalConfig {
         setting: string;
       }
@@ -148,16 +147,15 @@ describe('forgotten exports with linked packages (integration)', () => {
       content: code,
     });
 
-    // ExternalConfig is defined in the test file (inside /project)
-    // so it should be detected as internal forgotten export
-    const forgottenConfig = result.forgottenExports?.find((f) => f.name === 'ExternalConfig');
-    expect(forgottenConfig).toBeDefined();
-    expect(forgottenConfig?.isExternal).toBe(false);
+    // ExternalConfig should be auto-registered in spec.types
+    const registeredType = result.spec.types?.find((t) => t.id === 'ExternalConfig');
+    expect(registeredType).toBeDefined();
+    expect(result.forgottenExports?.find((f) => f.name === 'ExternalConfig')).toBeUndefined();
   });
 
-  test('marks types from node_modules as external in forgotten exports', async () => {
-    // Test that the forgotten exports detection correctly identifies
-    // types from node_modules as external
+  test('auto-registers types resolvable from source scope', async () => {
+    // Types defined in the same file should be auto-registered
+    // into spec.types via the post-process $ref resolution pass
     const code = `
       interface NodeModuleType {
         value: number;
@@ -174,12 +172,10 @@ describe('forgotten exports with linked packages (integration)', () => {
       content: code,
     });
 
-    // NodeModuleType is defined in test content (internal to project)
-    // This tests the basic flow - actual node_modules detection
-    // is tested via isExternalType unit tests
-    const forgotten = result.forgottenExports?.find((f) => f.name === 'NodeModuleType');
-    expect(forgotten).toBeDefined();
-    expect(forgotten?.isExternal).toBe(false);
+    // NodeModuleType should be auto-registered in spec.types
+    const registeredType = result.spec.types?.find((t) => t.id === 'NodeModuleType');
+    expect(registeredType).toBeDefined();
+    expect(result.forgottenExports?.find((f) => f.name === 'NodeModuleType')).toBeUndefined();
   });
 
   test('internal forgotten exports only includes non-external types', async () => {

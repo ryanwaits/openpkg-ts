@@ -1,0 +1,17 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "api-reference-layout",
+  "title": "API Reference Layout",
+  "description": "Two-column layout with sticky code examples panel",
+  "dependencies": [
+    "@openpkg-ts/ui"
+  ],
+  "files": [
+    {
+      "path": "registry/new-york/components/api-reference-layout/api-reference-layout.tsx",
+      "content": "'use client';\n\nimport { cn } from '@openpkg-ts/ui/lib/utils';\nimport type { ReactNode } from 'react';\n\nexport interface APIReferenceLayoutProps {\n  /** Left column content (documentation) */\n  children: ReactNode;\n  /** Right column content (code examples) */\n  examples: ReactNode;\n  /** Custom className */\n  className?: string;\n  /** Left column width on desktop (default: 58%) */\n  leftWidth?: string;\n  /** Right column width on desktop (default: 42%) */\n  rightWidth?: string;\n}\n\n/**\n * Two-column layout for API reference with sticky right panel.\n * Responsive: stacks vertically on mobile, two-column on desktop.\n */\nexport function APIReferenceLayout({\n  children,\n  examples,\n  className,\n  leftWidth = '58%',\n  rightWidth = '42%',\n}: APIReferenceLayoutProps): ReactNode {\n  return (\n    <div\n      className={cn(\n        'openpkg-api-layout',\n        'max-w-[1600px] mx-auto',\n        'flex flex-col',\n        'lg:grid',\n        className,\n      )}\n      style={\n        {\n          '--openpkg-left-width': leftWidth,\n          '--openpkg-right-width': rightWidth,\n        } as React.CSSProperties\n      }\n    >\n      <div\n        className={cn(\n          'openpkg-api-layout-left',\n          'py-8 px-4',\n          'sm:py-10 sm:px-6',\n          'lg:py-12 lg:px-12 lg:pl-16',\n          'lg:border-r lg:border-[var(--openpkg-border-subtle)]',\n          'bg-[var(--openpkg-bg-root)]',\n          'openpkg-animate-fade-in',\n        )}\n        style={{ gridColumn: '1' }}\n      >\n        {children}\n      </div>\n\n      <div\n        className={cn(\n          'openpkg-api-layout-right',\n          'border-t border-[var(--openpkg-border-subtle)] lg:border-t-0',\n          'py-8 px-4',\n          'sm:py-10 sm:px-6',\n          'lg:sticky lg:top-0 lg:h-screen lg:overflow-y-auto',\n          'lg:py-12 lg:px-12 lg:pl-8',\n          'bg-[var(--openpkg-bg-root)]',\n          'openpkg-animate-fade-in',\n        )}\n        style={{\n          gridColumn: '2',\n          animationDelay: '100ms',\n        }}\n      >\n        {examples}\n      </div>\n\n      <style\n        dangerouslySetInnerHTML={{\n          __html: `\n            @media (min-width: 1024px) {\n              .openpkg-api-layout {\n                grid-template-columns: var(--openpkg-left-width) var(--openpkg-right-width);\n                align-items: start;\n              }\n            }\n          `,\n        }}\n      />\n    </div>\n  );\n}\n",
+      "type": "registry:component"
+    }
+  ],
+  "type": "registry:component"
+}

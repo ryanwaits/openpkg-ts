@@ -1,9 +1,10 @@
 'use client';
 
-import type { OpenPkg, SpecExport } from '@openpkg-ts/spec';
-import { cn } from '@openpkg-ts/ui/lib/utils';
-import type { ReactNode } from 'react';
-import { ExpandableParameter } from '@/registry/new-york/components/expandable-parameter/expandable-parameter';
+import { resolveTypeRef } from '@openpkg-ts/sdk/browser';
+import type { OpenPkg, SpecExport, SpecSchema } from '@openpkg-ts/spec';
+import { cn } from '@/lib/utils';
+import { type ReactNode, useCallback } from 'react';
+import { ExpandableParameter } from '@/registry/new-york/docskit/api';
 import { MethodSection } from '@/registry/new-york/components/method-section/method-section';
 import { extractMethodData } from '@/registry/new-york/hooks/use-method-from-spec/use-method-from-spec';
 
@@ -28,6 +29,14 @@ export function MethodSectionFromSpec({
   const exp =
     typeof exportProp === 'string' ? spec.exports.find((e) => e.name === exportProp) : exportProp;
 
+  const resolveRef = useCallback(
+    (ref: string): SpecSchema | undefined => {
+      const resolved = resolveTypeRef(ref, spec);
+      return resolved?.schema as SpecSchema | undefined;
+    },
+    [spec],
+  );
+
   if (!exp) return null;
 
   const method = extractMethodData(exp);
@@ -43,7 +52,7 @@ export function MethodSectionFromSpec({
       className={cn('openpkg-method-from-spec', className)}
     >
       {method.parameters.map((param) => (
-        <ExpandableParameter key={param.name} parameter={param} />
+        <ExpandableParameter key={param.name} parameter={param} resolveRef={resolveRef} />
       ))}
     </MethodSection>
   );

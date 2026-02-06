@@ -1,15 +1,15 @@
 'use client';
 
-import { formatSchema } from '@openpkg-ts/sdk/browser';
-import type { OpenPkg, SpecExport, SpecMember } from '@openpkg-ts/spec';
-import { APIParameterItem, APISection, ParameterList } from '@openpkg-ts/ui/docskit';
-import type { ReactNode } from 'react';
-import { ExpandableParameter } from '@/registry/new-york/components/expandable-parameter/expandable-parameter';
 import {
   buildImportStatement,
-  getLanguagesFromExamples,
+  formatSchema,
+  getLangForHighlight,
+  resolveTypeRef,
   specExamplesToCodeExamples,
-} from './spec-to-docskit';
+} from '@openpkg-ts/sdk/browser';
+import type { OpenPkg, SpecExport, SpecMember, SpecSchema } from '@openpkg-ts/spec';
+import { APIParameterItem, APISection, ExpandableParameter, ParameterList } from '@/registry/new-york/docskit/api';
+import { type ReactNode, useCallback } from 'react';
 
 export interface ClassSectionProps {
   export: SpecExport;
@@ -54,6 +54,14 @@ function buildMemberDescription(member: SpecMember): string | undefined {
 }
 
 export function ClassSection({ export: exp, spec }: ClassSectionProps): ReactNode {
+  const resolveRef = useCallback(
+    (ref: string): SpecSchema | undefined => {
+      const resolved = resolveTypeRef(ref, spec);
+      return resolved?.schema as SpecSchema | undefined;
+    },
+    [spec],
+  );
+
   const constructors = exp.members?.filter((m) => m.kind === 'constructor') ?? [];
   const properties = exp.members?.filter((m) => m.kind === 'property' || m.kind === 'field') ?? [];
   const methods = exp.members?.filter((m) => m.kind === 'method') ?? [];
@@ -68,7 +76,6 @@ export function ClassSection({ export: exp, spec }: ClassSectionProps): ReactNod
   const constructorSig = constructors[0]?.signatures?.[0];
   const constructorParams = constructorSig?.parameters ?? [];
 
-  const languages = getLanguagesFromExamples(exp.examples);
   const examples = specExamplesToCodeExamples(exp.examples);
   const importStatement = buildImportStatement(exp, spec);
 
@@ -77,14 +84,12 @@ export function ClassSection({ export: exp, spec }: ClassSectionProps): ReactNod
       ? examples
       : [
           {
-            languageId: 'typescript',
+            id: 'default',
+            label: 'TypeScript',
             code: `${importStatement}\n\nconst instance = new ${exp.name}(${constructorParams.map((p) => p.name).join(', ')});`,
-            highlightLang: 'ts',
+            language: getLangForHighlight('typescript'),
           },
         ];
-
-  const displayLanguages =
-    languages.length > 0 ? languages : [{ id: 'typescript', label: 'TypeScript' }];
 
   const inheritance = [
     exp.extends && `extends ${exp.extends}`,
@@ -108,14 +113,13 @@ export function ClassSection({ export: exp, spec }: ClassSectionProps): ReactNod
           </code>
         </div>
       }
-      languages={displayLanguages}
       examples={displayExamples}
       codePanelTitle={`new ${exp.name}()`}
     >
       {constructorParams.length > 0 && (
         <ParameterList title="Constructor">
           {constructorParams.map((param, index) => (
-            <ExpandableParameter key={param.name ?? index} parameter={param} />
+            <ExpandableParameter key={param.name ?? index} parameter={param} resolveRef={resolveRef} />
           ))}
         </ParameterList>
       )}

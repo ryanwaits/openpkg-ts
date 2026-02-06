@@ -1,0 +1,24 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "export-section",
+  "title": "Export Section",
+  "description": "Router component rendering appropriate section by export kind",
+  "dependencies": [
+    "@openpkg-ts/spec"
+  ],
+  "registryDependencies": [
+    "@openpkg-ts/function-section",
+    "@openpkg-ts/class-section",
+    "@openpkg-ts/interface-section",
+    "@openpkg-ts/enum-section",
+    "@openpkg-ts/variable-section"
+  ],
+  "files": [
+    {
+      "path": "registry/new-york/components/export-section/export-section.tsx",
+      "content": "'use client';\n\nimport type { OpenPkg, SpecExport } from '@openpkg-ts/spec';\nimport type { ReactNode } from 'react';\nimport { ClassSection } from '@/registry/new-york/components/class-section/class-section';\nimport { EnumSection } from '@/registry/new-york/components/enum-section/enum-section';\nimport { FunctionSection } from '@/registry/new-york/components/function-section/function-section';\nimport { InterfaceSection } from '@/registry/new-york/components/interface-section/interface-section';\nimport { VariableSection } from '@/registry/new-york/components/variable-section/variable-section';\n\nexport interface ExportSectionProps {\n  export: SpecExport;\n  spec: OpenPkg;\n}\n\n/**\n * Router component that renders the appropriate section based on export kind.\n */\nexport function ExportSection({ export: exp, spec }: ExportSectionProps): ReactNode {\n  const props = { export: exp, spec };\n\n  switch (exp.kind) {\n    case 'function':\n      return <FunctionSection {...props} />;\n    case 'class':\n      return <ClassSection {...props} />;\n    case 'interface':\n    case 'type':\n      return <InterfaceSection {...props} />;\n    case 'enum':\n      return <EnumSection {...props} />;\n    default:\n      return <VariableSection {...props} />;\n  }\n}\n",
+      "type": "registry:component"
+    }
+  ],
+  "type": "registry:component"
+}

@@ -1,13 +1,13 @@
 'use client';
 
-import type { OpenPkg, SpecExport } from '@openpkg-ts/spec';
-import { APIParameterItem, APISection, ParameterList } from '@openpkg-ts/ui/docskit';
-import type { ReactNode } from 'react';
 import {
   buildImportStatement,
-  getLanguagesFromExamples,
+  getLangForHighlight,
   specExamplesToCodeExamples,
-} from './spec-to-docskit';
+} from '@openpkg-ts/sdk/browser';
+import type { OpenPkg, SpecExport } from '@openpkg-ts/spec';
+import { APIParameterItem, APISection, ParameterList } from '@/registry/new-york/docskit/api';
+import type { ReactNode } from 'react';
 
 export interface EnumSectionProps {
   export: SpecExport;
@@ -17,7 +17,6 @@ export interface EnumSectionProps {
 export function EnumSection({ export: exp, spec }: EnumSectionProps): ReactNode {
   const members = exp.members ?? [];
 
-  const languages = getLanguagesFromExamples(exp.examples);
   const examples = specExamplesToCodeExamples(exp.examples);
   const importStatement = buildImportStatement(exp, spec);
 
@@ -42,14 +41,12 @@ export function EnumSection({ export: exp, spec }: EnumSectionProps): ReactNode 
       ? examples
       : [
           {
-            languageId: 'typescript',
+            id: 'default',
+            label: 'TypeScript',
             code: `${importStatement}\n\n${enumDefinition}`,
-            highlightLang: 'ts',
+            language: getLangForHighlight('typescript'),
           },
         ];
-
-  const displayLanguages =
-    languages.length > 0 ? languages : [{ id: 'typescript', label: 'TypeScript' }];
 
   return (
     <APISection
@@ -68,7 +65,6 @@ export function EnumSection({ export: exp, spec }: EnumSectionProps): ReactNode 
           </code>
         </div>
       }
-      languages={displayLanguages}
       examples={displayExamples}
       codePanelTitle={exp.name}
     >

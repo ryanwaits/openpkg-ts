@@ -1,5 +1,28 @@
 # @openpkg-ts/extract
 
+## 0.36.0
+
+### Minor Changes
+
+- Separate visitedTypes/registeredTypes, resolve external transitive types, kill packages/ui
+
+  **SDK:**
+
+  - Split `visitedTypes` (stack-scoped recursion guard) from `registeredTypes` (permanent registration set) to prevent cross-contamination between schema building and type registration
+  - Add `findTypeInProgram()` to resolve $ref targets from transitive dependencies (monorepo siblings, .d.ts files) not visible from entry file scope
+  - Emit $ref for named type aliases before union/intersection decomposition — prevents inlining of types like `SignedMultiSigTokenTransferOptions`
+  - Post-process pass now searches all program source files, not just entry scope
+
+  **Registry:**
+
+  - Kill `packages/ui`, consolidate all docskit source into `packages/registry`
+  - `ExpandableParameter` now resolves anyOf/allOf $ref members and merges object properties into expandable param list
+  - Restructure shadcn registry components to import from docskit barrel
+
+  **Adapters:**
+
+  - Update imports for registry consolidation
+
 ## 0.35.1
 
 ### Patch Changes

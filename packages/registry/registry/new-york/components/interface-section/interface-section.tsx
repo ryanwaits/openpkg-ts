@@ -1,14 +1,14 @@
 'use client';
 
-import { formatSchema } from '@openpkg-ts/sdk/browser';
-import type { OpenPkg, SpecExport, SpecMember } from '@openpkg-ts/spec';
-import { APIParameterItem, APISection, ParameterList } from '@openpkg-ts/ui/docskit';
-import type { ReactNode } from 'react';
 import {
   buildImportStatement,
-  getLanguagesFromExamples,
+  formatSchema,
+  getLangForHighlight,
   specExamplesToCodeExamples,
-} from './spec-to-docskit';
+} from '@openpkg-ts/sdk/browser';
+import type { OpenPkg, SpecExport, SpecMember } from '@openpkg-ts/spec';
+import { APIParameterItem, APISection, ParameterList } from '@/registry/new-york/docskit/api';
+import type { ReactNode } from 'react';
 
 export interface InterfaceSectionProps {
   export: SpecExport;
@@ -43,7 +43,6 @@ export function InterfaceSection({ export: exp, spec }: InterfaceSectionProps): 
     exp.members?.filter((m) => m.kind === 'property' || m.kind === 'field' || !m.kind) ?? [];
   const methods = exp.members?.filter((m) => m.kind === 'method' || m.kind === 'function') ?? [];
 
-  const languages = getLanguagesFromExamples(exp.examples);
   const examples = specExamplesToCodeExamples(exp.examples);
   const importStatement = buildImportStatement(exp, spec);
 
@@ -57,14 +56,12 @@ export function InterfaceSection({ export: exp, spec }: InterfaceSectionProps): 
       ? examples
       : [
           {
-            languageId: 'typescript',
+            id: 'default',
+            label: 'TypeScript',
             code: `${importStatement}\n\n${typeDefinition}`,
-            highlightLang: 'ts',
+            language: getLangForHighlight('typescript'),
           },
         ];
-
-  const displayLanguages =
-    languages.length > 0 ? languages : [{ id: 'typescript', label: 'TypeScript' }];
 
   const kindLabel = exp.kind === 'type' ? 'type' : 'interface';
 
@@ -90,7 +87,6 @@ export function InterfaceSection({ export: exp, spec }: InterfaceSectionProps): 
           </code>
         </div>
       }
-      languages={displayLanguages}
       examples={displayExamples}
       codePanelTitle={exp.name}
     >

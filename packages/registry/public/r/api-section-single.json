@@ -1,0 +1,21 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "api-section-single",
+  "title": "API Section Single",
+  "description": "Single-column API section for MoneyKit-style docs",
+  "dependencies": [
+    "@openpkg-ts/ui"
+  ],
+  "registryDependencies": [
+    "@openpkg-ts/section-accordion",
+    "@openpkg-ts/expandable-parameter"
+  ],
+  "files": [
+    {
+      "path": "registry/new-york/components/api-section-single/api-section-single.tsx",
+      "content": "'use client';\n\nimport type { SpecSchema } from '@openpkg-ts/spec';\nimport { ClientDocsKitCode, PackageInstall } from '@openpkg-ts/ui/docskit';\nimport { cn } from '@openpkg-ts/ui/lib/utils';\nimport type * as React from 'react';\nimport { SectionAccordion } from '@/registry/new-york/ui/section-accordion/section-accordion';\n\nexport interface APISectionSingleProps {\n  /** Section title (e.g., \"createCustomer\") */\n  title: string;\n  /** Optional anchor id for deep linking */\n  id?: string;\n  /** Optional description */\n  description?: React.ReactNode;\n  /** Code example */\n  example: { code: string; lang?: string };\n  /** Package name for install command */\n  packageName: string;\n  /** Parameters content (ExpandableParameter children) */\n  parameters?: React.ReactNode;\n  /** Return type info */\n  returns?: { type: string; description?: React.ReactNode };\n  /** Callback to resolve $ref schemas */\n  resolveRef?: (ref: string) => SpecSchema | undefined;\n  /** Custom className */\n  className?: string;\n}\n\n/**\n * Single-column API section for MoneyKit-style docs.\n * Vertical layout with code example, install command, parameters accordion, returns.\n */\nexport function APISectionSingle({\n  title,\n  id,\n  description,\n  example,\n  packageName,\n  parameters,\n  returns,\n  className,\n}: APISectionSingleProps): React.ReactNode {\n  return (\n    <section id={id} className={cn('max-w-[780px] mx-auto py-12 px-6', className)}>\n      {/* Header */}\n      <header>\n        <h1 className=\"font-mono text-2xl font-semibold text-foreground\">{title}</h1>\n        {description && (\n          <div className=\"mt-3 text-muted-foreground prose prose-sm dark:prose-invert\">\n            {description}\n          </div>\n        )}\n      </header>\n\n      {/* Code example */}\n      <div className=\"mt-8\">\n        <ClientDocsKitCode\n          codeblock={{ value: example.code, lang: example.lang || 'typescript', meta: '-c' }}\n        />\n      </div>\n\n      <hr className=\"border-border my-8\" />\n\n      {/* Package install */}\n      <PackageInstall package={packageName} />\n\n      {/* Parameters */}\n      {parameters && (\n        <>\n          <hr className=\"border-border my-8\" />\n          <SectionAccordion title=\"Parameters\" defaultExpanded>\n            <div className=\"space-y-4 pt-2\">{parameters}</div>\n          </SectionAccordion>\n        </>\n      )}\n\n      {/* Returns */}\n      {returns && (\n        <>\n          <hr className=\"border-border my-8\" />\n          <div className=\"returns-section\">\n            <h3 className=\"text-xs font-medium tracking-wider text-muted-foreground uppercase font-mono mb-4\">\n              Returns\n            </h3>\n            <code className=\"text-sm font-mono text-foreground bg-muted px-2 py-1 rounded\">\n              {returns.type}\n            </code>\n            {returns.description && (\n              <div className=\"mt-2 text-sm text-muted-foreground\">{returns.description}</div>\n            )}\n          </div>\n        </>\n      )}\n    </section>\n  );\n}\n",
+      "type": "registry:component"
+    }
+  ],
+  "type": "registry:component"
+}

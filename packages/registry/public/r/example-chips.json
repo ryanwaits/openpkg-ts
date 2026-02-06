@@ -1,0 +1,17 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "example-chips",
+  "title": "Example Chips",
+  "description": "Tab-like chips for switching between code examples",
+  "dependencies": [
+    "@openpkg-ts/ui"
+  ],
+  "files": [
+    {
+      "path": "registry/new-york/ui/example-chips/example-chips.tsx",
+      "content": "export {\n  type ExampleChip,\n  ExampleChips,\n  type ExampleChipsProps,\n} from '@openpkg-ts/ui/docskit';\n",
+      "type": "registry:ui"
+    }
+  ],
+  "type": "registry:ui"
+}

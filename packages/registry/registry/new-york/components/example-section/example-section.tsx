@@ -1,8 +1,7 @@
 'use client';
 
-import { cn } from '@openpkg-ts/ui/lib/utils';
+import { cn } from '@/lib/utils';
 import { type ReactNode, useEffect, useRef, useState } from 'react';
-import { useSyncScroll } from '@/registry/new-york/hooks/use-sync-scroll/use-sync-scroll';
 import { CodeBlock } from '@/registry/new-york/ui/code-block/code-block';
 import { CollapsiblePanel } from '@/registry/new-york/ui/collapsible-panel/collapsible-panel';
 import { ExampleChips } from '@/registry/new-york/ui/example-chips/example-chips';
@@ -19,7 +18,7 @@ export interface CodeExample {
 }
 
 export interface ExampleSectionProps {
-  /** Section ID for sync scroll */
+  /** Section ID used for intersection-based active tracking */
   id: string;
   /** Code examples to display */
   examples: CodeExample[];
@@ -35,7 +34,7 @@ export interface ExampleSectionProps {
 
 /**
  * Complete right-column section combining chips, code, and collapsible panels.
- * Integrates with SyncScrollProvider for synchronized scrolling.
+ * Uses IntersectionObserver on the parent section to dim when not in viewport.
  */
 export function ExampleSection({
   id,
@@ -47,16 +46,25 @@ export function ExampleSection({
 }: ExampleSectionProps): ReactNode {
   const [activeExampleId, setActiveExampleId] = useState(examples[0]?.id ?? '');
   const ref = useRef<HTMLDivElement>(null);
-  const syncScroll = useSyncScrollSafe();
+  const [isActive, setIsActive] = useState(true);
 
   const activeExample = examples.find((e) => e.id === activeExampleId) ?? examples[0];
-  const isActive = syncScroll?.activeSection === id;
 
   useEffect(() => {
-    if (ref.current) {
-      ref.current.setAttribute('data-section', id);
-    }
-  }, [id]);
+    const el = ref.current;
+    if (!el) return;
+
+    const section = el.closest('section');
+    const target = section ?? el;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => setIsActive(entry.isIntersecting),
+      { rootMargin: '-20% 0px -40% 0px', threshold: 0 },
+    );
+
+    observer.observe(target);
+    return () => observer.disconnect();
+  }, []);
 
   return (
     <div
@@ -119,12 +127,4 @@ export function ExampleSection({
       )}
     </div>
   );
-}
-
-function useSyncScrollSafe() {
-  try {
-    return useSyncScroll();
-  } catch {
-    return null;
-  }
 }

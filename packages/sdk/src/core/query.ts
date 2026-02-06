@@ -26,8 +26,12 @@ function formatFunctionSchema(schema: Record<string, unknown>): string {
 export interface FormatSchemaOptions {
   /** Include package attribution for external types */
   includePackage?: boolean;
-  /** Collapse unions with more than N members (default: no collapse) */
+  /** Collapse unions with more than N members (default: 5) */
   collapseUnionThreshold?: number;
+  /** Max recursion depth before returning "..." (default: 3) */
+  maxDepth?: number;
+  /** @internal current recursion depth */
+  _depth?: number;
 }
 
 /**
@@ -52,6 +56,11 @@ export function formatSchema(
 ): string {
   if (!schema) return 'unknown';
   if (typeof schema === 'string') return schema;
+
+  const depth = options?._depth ?? 0;
+  const maxDepth = options?.maxDepth ?? 3;
+  if (depth >= maxDepth) return '...';
+  const nextOpts: FormatSchemaOptions = { ...options, _depth: depth + 1 };
 
   // Helper to append package info
   const withPackage = (typeStr: string): string => {
@@ -81,7 +90,7 @@ export function formatSchema(
     // Handle x-ts-type-predicate (type guards)
     if ('x-ts-type-predicate' in schema) {
       const pred = schema['x-ts-type-predicate'] as { parameterName: string; type: SpecSchema };
-      return `${pred.parameterName} is ${formatSchema(pred.type, options)}`;
+      return `${pred.parameterName} is ${formatSchema(pred.type, nextOpts)}`;
     }
 
     // Handle $ref with x-ts-type-arguments (generics)
@@ -89,7 +98,7 @@ export function formatSchema(
       const baseName = schema.$ref.replace('#/types/', '');
       if ('x-ts-type-arguments' in schema && Array.isArray(schema['x-ts-type-arguments'])) {
         const args = (schema['x-ts-type-arguments'] as SpecSchema[])
-          .map((s) => formatSchema(s, options))
+          .map((s) => formatSchema(s, nextOpts))
           .join(', ');
         return withPackage(`${baseName}<${args}>`);
       }
@@ -98,35 +107,35 @@ export function formatSchema(
 
     // Handle anyOf (union)
     if ('anyOf' in schema && Array.isArray(schema.anyOf)) {
-      const threshold = options?.collapseUnionThreshold;
+      const threshold = options?.collapseUnionThreshold ?? 5;
       const members = schema.anyOf as SpecSchema[];
 
-      // Collapse large unions if threshold is set
-      if (threshold && members.length > threshold) {
+      // Collapse large unions when exceeding threshold
+      if (members.length > threshold) {
         const shown = members.slice(0, 3);
         const remaining = members.length - 3;
-        const shownStr = shown.map((s) => formatSchema(s, options)).join(' | ');
-        return `${shownStr} | ... (${remaining} more)`;
+        const shownStr = shown.map((s) => formatSchema(s, nextOpts)).join(' | ');
+        return `${shownStr} | ... and ${remaining} more`;
       }
 
-      return members.map((s) => formatSchema(s, options)).join(' | ');
+      return members.map((s) => formatSchema(s, nextOpts)).join(' | ');
     }
 
     // Handle allOf (intersection)
     if ('allOf' in schema && Array.isArray(schema.allOf)) {
-      return schema.allOf.map((s) => formatSchema(s, options)).join(' & ');
+      return schema.allOf.map((s) => formatSchema(s, nextOpts)).join(' & ');
     }
 
     // Handle array
     if ('type' in schema && schema.type === 'array') {
       const items =
-        'items' in schema ? formatSchema(schema.items as SpecSchema, options) : 'unknown';
+        'items' in schema ? formatSchema(schema.items as SpecSchema, nextOpts) : 'unknown';
       return `${items}[]`;
     }
 
     // Handle tuple
     if ('type' in schema && schema.type === 'tuple' && 'items' in schema) {
-      const items = (schema.items as SpecSchema[]).map((s) => formatSchema(s, options)).join(', ');
+      const items = (schema.items as SpecSchema[]).map((s) => formatSchema(s, nextOpts)).join(', ');
       return `[${items}]`;
     }
 
@@ -134,7 +143,7 @@ export function formatSchema(
     if ('type' in schema && schema.type === 'object') {
       if ('properties' in schema && schema.properties) {
         const props = Object.entries(schema.properties)
-          .map(([k, v]) => `${k}: ${formatSchema(v as SpecSchema, options)}`)
+          .map(([k, v]) => `${k}: ${formatSchema(v as SpecSchema, nextOpts)}`)
           .join('; ');
         return `{ ${props} }`;
       }

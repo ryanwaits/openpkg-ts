@@ -38,4 +38,11 @@ report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 repo.json
 
 # shadcn registry build output
-packages/registry/public/r/
+packages/registry/public/r/.env.local
+
+# Next.js build output
+.next
+
+# Temporary files and git-lore
+tmp/
+.git-lore/

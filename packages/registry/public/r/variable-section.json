@@ -1,0 +1,19 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "variable-section",
+  "title": "Variable Section",
+  "description": "Variable/constant documentation section",
+  "dependencies": [
+    "@openpkg-ts/sdk",
+    "@openpkg-ts/spec",
+    "@openpkg-ts/ui"
+  ],
+  "files": [
+    {
+      "path": "registry/new-york/components/variable-section/variable-section.tsx",
+      "content": "'use client';\n\nimport {\n  buildImportStatement,\n  formatSchema,\n  getLangForHighlight,\n  specExamplesToCodeExamples,\n} from '@openpkg-ts/sdk/browser';\nimport type { OpenPkg, SpecExport } from '@openpkg-ts/spec';\nimport { APIParameterItem, APISection, ParameterList } from '@openpkg-ts/ui/docskit';\nimport type { ReactNode } from 'react';\n\nexport interface VariableSectionProps {\n  export: SpecExport;\n  spec: OpenPkg;\n}\n\nexport function VariableSection({ export: exp, spec }: VariableSectionProps): ReactNode {\n  const typeValue = typeof exp.type === 'string' ? exp.type : formatSchema(exp.schema);\n\n  const examples = specExamplesToCodeExamples(exp.examples);\n  const importStatement = buildImportStatement(exp, spec);\n\n  const constValue =\n    exp.schema && typeof exp.schema === 'object'\n      ? (exp.schema as Record<string, unknown>).const\n      : undefined;\n\n  const displayExamples =\n    examples.length > 0\n      ? examples\n      : [\n          {\n            id: 'default',\n            label: 'TypeScript',\n            code: `${importStatement}\\n\\nconsole.log(${exp.name}); // ${constValue !== undefined ? JSON.stringify(constValue) : typeValue}`,\n            language: getLangForHighlight('typescript'),\n          },\n        ];\n\n  return (\n    <APISection\n      id={exp.id || exp.name}\n      title={`const ${exp.name}`}\n      description={\n        <div className=\"space-y-3\">\n          {exp.description && <p>{exp.description}</p>}\n          {exp.deprecated && (\n            <div className=\"rounded-md bg-[color-mix(in_srgb,var(--openpkg-accent-yellow)_10%,transparent)] border border-[color-mix(in_srgb,var(--openpkg-accent-yellow)_20%,transparent)] px-3 py-2 text-sm text-[var(--openpkg-accent-yellow)]\">\n              <strong>Deprecated:</strong> This export is deprecated.\n            </div>\n          )}\n          <code className=\"text-sm font-mono bg-[var(--openpkg-bg-badge)] px-2 py-1 rounded inline-block\">\n            {importStatement}\n          </code>\n        </div>\n      }\n      examples={displayExamples}\n      codePanelTitle={exp.name}\n    >\n      <ParameterList title=\"Type\">\n        <APIParameterItem\n          name={exp.name}\n          type={typeValue}\n          description={\n            constValue !== undefined ? `Value: ${JSON.stringify(constValue)}` : undefined\n          }\n        />\n      </ParameterList>\n    </APISection>\n  );\n}\n",
+      "type": "registry:component"
+    }
+  ],
+  "type": "registry:component"
+}

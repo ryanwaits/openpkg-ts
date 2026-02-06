@@ -1,0 +1,18 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "api-parameter-item",
+  "title": "API Parameter Item",
+  "description": "Single parameter row with name, type, badges, and description",
+  "dependencies": [
+    "@openpkg-ts/ui",
+    "lucide-react"
+  ],
+  "files": [
+    {
+      "path": "registry/new-york/ui/api-parameter-item/api-parameter-item.tsx",
+      "content": "export {\n  APIParameterItem,\n  type APIParameterItemProps,\n  type APIParameterSchema,\n} from '@openpkg-ts/ui/docskit';\n",
+      "type": "registry:ui"
+    }
+  ],
+  "type": "registry:ui"
+}

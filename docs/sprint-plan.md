@@ -1,4 +1,6 @@
-# Phase 1: Component Consolidation Sprint Plan
+# Phase 1: Component Consolidation Sprint Plan ✅ COMPLETED
+
+> **Status:** All sprints completed. `packages/react` deleted. `packages/ui` deleted and replaced by `packages/registry`. All docskit source now lives in `packages/registry/registry/new-york/docskit/`. Internal consumers import from `@openpkg-ts/registry/docskit`.
 
 ## Sprint 1 — Gut Headless, Clean React Exports
 

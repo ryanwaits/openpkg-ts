@@ -15,8 +15,10 @@ export interface SerializerContext {
   resolveExternalTypes: boolean;
   typeRegistry: TypeRegistry;
   exportedIds: Set<string>;
-  /** Track visited types to prevent infinite recursion */
+  /** Stack-style recursion guard for buildSchemaInternal (add before recurse, delete after) */
   visitedTypes: Set<ts.Type>;
+  /** Permanent "already processed" set for registerReferencedTypes */
+  registeredTypes: Set<ts.Type>;
   /** Flag to indicate we're processing tuple elements - skip Array prototype methods */
   inTupleElement?: boolean;
   /** Include private/protected class members (default: false) */
@@ -45,13 +47,14 @@ export function createContext(
     typeChecker: program.getTypeChecker(),
     program,
     sourceFile,
-    maxTypeDepth: options.maxTypeDepth ?? 4,
+    maxTypeDepth: options.maxTypeDepth ?? 5,
     maxExternalTypeDepth: options.maxExternalTypeDepth ?? 2,
     currentDepth: 0,
     resolveExternalTypes: options.resolveExternalTypes ?? true,
     typeRegistry: new TypeRegistry(),
     exportedIds: new Set<string>(),
     visitedTypes: new Set<ts.Type>(),
+    registeredTypes: new Set<ts.Type>(),
     includePrivate: options.includePrivate ?? false,
     maxProperties: options.maxProperties ?? 20,
     onTruncation: options.onTruncation,

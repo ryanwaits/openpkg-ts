@@ -1,0 +1,18 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "use-method-from-spec",
+  "title": "useMethodFromSpec",
+  "description": "Extract method data from OpenPkg spec exports",
+  "dependencies": [
+    "@openpkg-ts/sdk",
+    "@openpkg-ts/spec"
+  ],
+  "files": [
+    {
+      "path": "registry/new-york/hooks/use-method-from-spec/use-method-from-spec.ts",
+      "content": "import { buildSignatureString, formatSchema } from '@openpkg-ts/sdk/browser';\nimport type {\n  OpenPkg,\n  SpecExample,\n  SpecExport,\n  SpecSchema,\n  SpecSignatureParameter,\n} from '@openpkg-ts/spec';\nimport { useMemo } from 'react';\n\nexport interface MethodData {\n  /** Export data */\n  export: SpecExport;\n  /** Method title (function name with parens) */\n  title: string;\n  /** Full signature string */\n  signature: string;\n  /** Description text */\n  description?: string;\n  /** Parameters from first signature */\n  parameters: SpecSignatureParameter[];\n  /** Examples from export or signature */\n  examples: SpecExample[];\n  /** Return type schema */\n  returnType?: SpecSchema;\n  /** Return type formatted */\n  returnTypeString?: string;\n  /** Return description */\n  returnDescription?: string;\n  /** Is async function */\n  isAsync?: boolean;\n}\n\n/**\n * Extract method data from a spec export.\n * Provides all data needed to render a MethodSection.\n */\nexport function useMethodFromSpec(spec: OpenPkg, exportName: string): MethodData | null {\n  return useMemo(() => {\n    const exp = spec.exports.find((e) => e.name === exportName);\n    if (!exp) return null;\n\n    return extractMethodData(exp);\n  }, [spec, exportName]);\n}\n\n/**\n * Extract method data from all function exports.\n */\nexport function useMethodsFromSpec(spec: OpenPkg): MethodData[] {\n  return useMemo(() => {\n    return spec.exports\n      .filter((exp) => exp.kind === 'function')\n      .map((exp) => extractMethodData(exp));\n  }, [spec]);\n}\n\n/**\n * Pure function to extract method data from an export.\n */\nexport function extractMethodData(exp: SpecExport): MethodData {\n  const sig = exp.signatures?.[0];\n  const params = sig?.parameters ?? [];\n\n  const title = exp.kind === 'function' ? `${exp.name}()` : exp.name;\n  const signature = buildSignatureString(exp);\n  const description = exp.description || sig?.description;\n\n  const rawExamples = exp.examples || sig?.examples || [];\n  const examples: SpecExample[] = rawExamples.map((ex) =>\n    typeof ex === 'string' ? { code: ex } : ex,\n  );\n\n  const returnType = sig?.returns?.schema;\n  const returnTypeString = returnType ? formatSchema(returnType) : undefined;\n  const returnDescription = sig?.returns?.description;\n\n  const isAsync = !!(exp.flags as Record<string, unknown> | undefined)?.async;\n\n  return {\n    export: exp,\n    title,\n    signature,\n    description,\n    parameters: params,\n    examples,\n    returnType,\n    returnTypeString,\n    returnDescription,\n    isAsync,\n  };\n}\n",
+      "type": "registry:hook"
+    }
+  ],
+  "type": "registry:hook"
+}

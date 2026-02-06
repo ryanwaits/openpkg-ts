@@ -1,18 +1,21 @@
 'use client';
 
-import { resolveTypeRef } from '@openpkg-ts/sdk/browser';
-import type { OpenPkg, SpecExample, SpecExport, SpecSchema } from '@openpkg-ts/spec';
+import {
+  getLangForHighlight,
+  resolveTypeRef,
+  specExamplesToCodeExamples,
+} from '@openpkg-ts/sdk/browser';
+import type { CodeExample } from '@openpkg-ts/sdk/browser';
+import type { OpenPkg, SpecExport, SpecSchema } from '@openpkg-ts/spec';
 import {
   APIParameterItem,
   APIReferencePage,
   APISection,
   APISectionSingle,
-  type CodeExample,
   ExpandableParameter,
-  type Language,
   ParameterList,
-} from '@openpkg-ts/ui/docskit';
-import { cn } from '@openpkg-ts/ui/lib/utils';
+} from '@/registry/new-york/docskit/api';
+import { cn } from '@/lib/utils';
 import { type ReactNode, useCallback } from 'react';
 import { extractMethodData } from '@/registry/new-york/hooks/use-method-from-spec/use-method-from-spec';
 
@@ -73,7 +76,7 @@ export function ApiReferencePage({
                 id={exp.id || exp.name}
                 title={method.title}
                 description={method.description}
-                example={{ code: examples[0]?.code || '', lang: examples[0]?.languageId }}
+                example={{ code: examples[0]?.code || '', lang: examples[0]?.language }}
                 packageName={spec.meta.name}
                 resolveRef={resolveRef}
                 parameters={
@@ -101,15 +104,12 @@ export function ApiReferencePage({
             );
           }
 
-          const languages = getLanguagesFromExamples(examples);
-
           return (
             <APISection
               key={exp.id || exp.name}
               id={exp.id || exp.name}
               title={method.title}
               description={method.description}
-              languages={languages}
               examples={examples}
             >
               {method.parameters.length > 0 && (
@@ -145,21 +145,6 @@ export function ApiReferencePage({
   );
 }
 
-function specExampleToCodeExample(example: SpecExample | string, _index: number): CodeExample {
-  if (typeof example === 'string') {
-    return { languageId: 'typescript', code: example };
-  }
-  return {
-    languageId: mapLanguage(example.language),
-    code: example.code,
-    highlightLang: mapLanguage(example.language),
-  };
-}
-
-function specExamplesToCodeExamples(examples: (SpecExample | string)[]): CodeExample[] {
-  return examples.map(specExampleToCodeExample);
-}
-
 function generateDefaultExample(
   packageName: string,
   exportName: string,
@@ -168,22 +153,12 @@ function generateDefaultExample(
   const importLine = `import { ${exportName} } from '${packageName}';`;
   const callArgs = paramNames.join(', ');
   const callLine = `const result = await ${exportName}(${callArgs});`;
-  return { languageId: 'typescript', code: `${importLine}\n\n${callLine}` };
-}
-
-function mapLanguage(lang: string | undefined): string {
-  switch (lang) {
-    case 'ts':
-    case 'tsx':
-      return 'typescript';
-    case 'js':
-    case 'jsx':
-      return 'javascript';
-    case 'shell':
-      return 'bash';
-    default:
-      return lang || 'typescript';
-  }
+  return {
+    id: 'default',
+    label: 'TypeScript',
+    code: `${importLine}\n\n${callLine}`,
+    language: getLangForHighlight('typescript'),
+  };
 }
 
 function getExamplesForExport(exp: SpecExport, spec: OpenPkg): CodeExample[] {
@@ -191,18 +166,6 @@ function getExamplesForExport(exp: SpecExport, spec: OpenPkg): CodeExample[] {
   if (method.examples.length > 0) return specExamplesToCodeExamples(method.examples);
   const paramNames = method.parameters.map((p) => p.name);
   return [generateDefaultExample(spec.meta.name, exp.name, paramNames)];
-}
-
-function getLanguagesFromExamples(examples: CodeExample[]): Language[] {
-  const seen = new Set<string>();
-  const languages: Language[] = [];
-  for (const ex of examples) {
-    if (!seen.has(ex.languageId)) {
-      seen.add(ex.languageId);
-      languages.push({ id: ex.languageId, label: ex.languageId });
-    }
-  }
-  return languages;
 }
 
 /**

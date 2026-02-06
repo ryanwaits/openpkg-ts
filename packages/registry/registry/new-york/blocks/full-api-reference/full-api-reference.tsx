@@ -2,8 +2,8 @@
 
 import type { OpenPkg, SpecExport, SpecExportKind } from '@openpkg-ts/spec';
 import { DISPLAY_KIND_ORDER, type DisplayKind, KIND_LABELS } from '@openpkg-ts/spec';
-import { APIReferencePage } from '@openpkg-ts/ui/docskit';
-import { cn } from '@openpkg-ts/ui/lib/utils';
+import { APIReferencePage } from '@/registry/new-york/docskit/api';
+import { cn } from '@/lib/utils';
 import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ExportSection } from '@/registry/new-york/components/export-section/export-section';
 

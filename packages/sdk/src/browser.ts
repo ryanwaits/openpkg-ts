@@ -39,6 +39,19 @@ export {
 } from './core/query';
 // Query builder
 export { QueryBuilder, query } from './core/query-builder';
+// Spec converters (shared types + utilities)
+export {
+  type APIParameterSchema,
+  buildImportStatement,
+  type CodeExample,
+  getLangForHighlight,
+  getLanguageLabel,
+  getLanguagesFromExamples,
+  type Language,
+  specExamplesToCodeExamples,
+  specParamToAPIParam,
+  specSchemaToAPISchema,
+} from './core/spec-converters';
 // Search utilities
 export {
   type AlgoliaRecord,

@@ -1,15 +1,15 @@
 'use client';
 
-import { formatSchema } from '@openpkg-ts/sdk/browser';
-import type { OpenPkg, SpecExport } from '@openpkg-ts/spec';
-import { APIParameterItem, APISection, ParameterList, ResponseBlock } from '@openpkg-ts/ui/docskit';
-import type { ReactNode } from 'react';
-import { ExpandableParameter } from '@/registry/new-york/components/expandable-parameter/expandable-parameter';
 import {
   buildImportStatement,
-  getLanguagesFromExamples,
+  formatSchema,
+  getLangForHighlight,
+  resolveTypeRef,
   specExamplesToCodeExamples,
-} from './spec-to-docskit';
+} from '@openpkg-ts/sdk/browser';
+import type { OpenPkg, SpecExport, SpecSchema } from '@openpkg-ts/spec';
+import { APIParameterItem, APISection, ExpandableParameter, ParameterList, ResponseBlock } from '@/registry/new-york/docskit/api';
+import { type ReactNode, useCallback } from 'react';
 
 export interface FunctionSectionProps {
   export: SpecExport;
@@ -20,7 +20,14 @@ export function FunctionSection({ export: exp, spec }: FunctionSectionProps): Re
   const sig = exp.signatures?.[0];
   const hasParams = sig?.parameters && sig.parameters.length > 0;
 
-  const languages = getLanguagesFromExamples(exp.examples);
+  const resolveRef = useCallback(
+    (ref: string): SpecSchema | undefined => {
+      const resolved = resolveTypeRef(ref, spec);
+      return resolved?.schema as SpecSchema | undefined;
+    },
+    [spec],
+  );
+
   const examples = specExamplesToCodeExamples(exp.examples);
   const importStatement = buildImportStatement(exp, spec);
 
@@ -29,14 +36,12 @@ export function FunctionSection({ export: exp, spec }: FunctionSectionProps): Re
       ? examples
       : [
           {
-            languageId: 'typescript',
+            id: 'default',
+            label: 'TypeScript',
             code: `${importStatement}\n\n// Usage\n${exp.name}(${sig?.parameters?.map((p) => p.name).join(', ') || ''})`,
-            highlightLang: 'ts',
+            language: getLangForHighlight('typescript'),
           },
         ];
-
-  const displayLanguages =
-    languages.length > 0 ? languages : [{ id: 'typescript', label: 'TypeScript' }];
 
   return (
     <APISection
@@ -50,14 +55,13 @@ export function FunctionSection({ export: exp, spec }: FunctionSectionProps): Re
           </code>
         </div>
       }
-      languages={displayLanguages}
       examples={displayExamples}
       codePanelTitle={`${exp.name}()`}
     >
       {hasParams && (
         <ParameterList title="Parameters">
           {sig.parameters?.map((param, index) => (
-            <ExpandableParameter key={param.name ?? index} parameter={param} />
+            <ExpandableParameter key={param.name ?? index} parameter={param} resolveRef={resolveRef} />
           ))}
         </ParameterList>
       )}

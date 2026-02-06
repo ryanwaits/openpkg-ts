@@ -1,0 +1,23 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "example-section",
+  "title": "Example Section",
+  "description": "Complete right-column section with chips, code, and panels",
+  "dependencies": [
+    "@openpkg-ts/ui"
+  ],
+  "registryDependencies": [
+    "@openpkg-ts/code-block",
+    "@openpkg-ts/collapsible-panel",
+    "@openpkg-ts/example-chips",
+    "@openpkg-ts/use-sync-scroll"
+  ],
+  "files": [
+    {
+      "path": "registry/new-york/components/example-section/example-section.tsx",
+      "content": "'use client';\n\nimport { cn } from '@openpkg-ts/ui/lib/utils';\nimport { type ReactNode, useEffect, useRef, useState } from 'react';\nimport { useSyncScroll } from '@/registry/new-york/hooks/use-sync-scroll/use-sync-scroll';\nimport { CodeBlock } from '@/registry/new-york/ui/code-block/code-block';\nimport { CollapsiblePanel } from '@/registry/new-york/ui/collapsible-panel/collapsible-panel';\nimport { ExampleChips } from '@/registry/new-york/ui/example-chips/example-chips';\n\nexport interface CodeExample {\n  /** Unique identifier */\n  id: string;\n  /** Display label for chip */\n  label: string;\n  /** Code content */\n  code: string;\n  /** Language for highlighting */\n  language?: string;\n}\n\nexport interface ExampleSectionProps {\n  /** Section ID for sync scroll */\n  id: string;\n  /** Code examples to display */\n  examples: CodeExample[];\n  /** Data source code (SQL/schema) */\n  dataSource?: string;\n  /** Response JSON */\n  response?: string;\n  /** Notes text */\n  notes?: ReactNode;\n  /** Custom className */\n  className?: string;\n}\n\n/**\n * Complete right-column section combining chips, code, and collapsible panels.\n * Integrates with SyncScrollProvider for synchronized scrolling.\n */\nexport function ExampleSection({\n  id,\n  examples,\n  dataSource,\n  response,\n  notes,\n  className,\n}: ExampleSectionProps): ReactNode {\n  const [activeExampleId, setActiveExampleId] = useState(examples[0]?.id ?? '');\n  const ref = useRef<HTMLDivElement>(null);\n  const syncScroll = useSyncScrollSafe();\n\n  const activeExample = examples.find((e) => e.id === activeExampleId) ?? examples[0];\n  const isActive = syncScroll?.activeSection === id;\n\n  useEffect(() => {\n    if (ref.current) {\n      ref.current.setAttribute('data-section', id);\n    }\n  }, [id]);\n\n  return (\n    <div\n      ref={ref}\n      data-section={id}\n      className={cn(\n        'openpkg-example-section',\n        'mb-12 last:mb-0',\n        'transition-opacity duration-300',\n        isActive ? 'opacity-100' : 'opacity-40',\n        className,\n      )}\n    >\n      {examples.length > 1 && (\n        <ExampleChips\n          examples={examples.map((e) => ({ id: e.id, label: e.label }))}\n          activeId={activeExampleId}\n          onSelect={setActiveExampleId}\n        />\n      )}\n\n      {activeExample && (\n        <CodeBlock\n          code={activeExample.code}\n          language={activeExample.language ?? 'typescript'}\n          showLineNumbers\n        />\n      )}\n\n      {dataSource && (\n        <CollapsiblePanel title=\"Data source\">\n          <div className=\"p-4\">\n            <CodeBlock code={dataSource} language=\"sql\" />\n          </div>\n        </CollapsiblePanel>\n      )}\n\n      {response && (\n        <CollapsiblePanel title=\"Response\">\n          <div className=\"p-4\">\n            <CodeBlock code={response} language=\"json\" />\n          </div>\n        </CollapsiblePanel>\n      )}\n\n      {notes && (\n        <CollapsiblePanel title=\"Notes\">\n          <div\n            className={cn(\n              'openpkg-panel-note',\n              'p-4',\n              'text-[13px] text-[var(--openpkg-text-secondary)]',\n              'leading-relaxed',\n              '[&_code]:font-mono [&_code]:text-xs [&_code]:bg-[var(--openpkg-bg-badge)] [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:rounded',\n            )}\n          >\n            {typeof notes === 'string' ? <p>{notes}</p> : notes}\n          </div>\n        </CollapsiblePanel>\n      )}\n    </div>\n  );\n}\n\nfunction useSyncScrollSafe() {\n  try {\n    return useSyncScroll();\n  } catch {\n    return null;\n  }\n}\n",
+      "type": "registry:component"
+    }
+  ],
+  "type": "registry:component"
+}

@@ -1,0 +1,17 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "use-sync-scroll",
+  "title": "useSyncScroll",
+  "description": "Synchronized scrolling between left and right columns",
+  "dependencies": [
+    "@openpkg-ts/ui"
+  ],
+  "files": [
+    {
+      "path": "registry/new-york/hooks/use-sync-scroll/use-sync-scroll.tsx",
+      "content": "export {\n  type SyncScrollContextValue,\n  SyncScrollProvider,\n  type SyncScrollProviderProps,\n  useSyncScroll,\n  useSyncSection,\n} from '@openpkg-ts/ui/docskit';\n",
+      "type": "registry:hook"
+    }
+  ],
+  "type": "registry:hook"
+}

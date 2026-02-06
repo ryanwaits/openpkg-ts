@@ -1,0 +1,18 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "section-accordion",
+  "title": "Section Accordion",
+  "description": "Collapsible section with header toggle",
+  "dependencies": [
+    "@openpkg-ts/ui",
+    "lucide-react"
+  ],
+  "files": [
+    {
+      "path": "registry/new-york/ui/section-accordion/section-accordion.tsx",
+      "content": "export { SectionAccordion, type SectionAccordionProps } from '@openpkg-ts/ui/docskit';\n",
+      "type": "registry:ui"
+    }
+  ],
+  "type": "registry:ui"
+}

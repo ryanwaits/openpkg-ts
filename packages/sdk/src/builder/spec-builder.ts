@@ -15,7 +15,7 @@ import { serializeInterface } from '../serializers/interfaces';
 import { buildSignatures } from '../serializers/shared';
 import { serializeTypeAlias } from '../serializers/type-aliases';
 import { serializeVariable } from '../serializers/variables';
-import type { Diagnostic, ExportTracker, ExtractOptions, ExtractResult } from '../types';
+import type { Diagnostic, ExportTracker, ExtractOptions, ExtractResult, TypeReference } from '../types';
 import { registerReferencedTypes } from '../types/parameters';
 import { buildSchema } from '../types/schema-builder';
 import { normalizeExport, normalizeType } from '../types/schema-normalizer';
@@ -26,7 +26,12 @@ import {
 } from './external-resolver';
 import { mergeRuntimeSchemas } from './schema-merger';
 import { clearTypeDefinitionCache, getRegexCache } from './type-cache';
-import { buildVerificationSummary, collectForgottenExports } from './verification';
+import {
+  BUILTIN_TYPES as BUILTIN_TYPES_SET,
+  buildVerificationSummary,
+  collectAllRefsWithContext,
+  collectForgottenExports,
+} from './verification';
 
 // Re-export for API compatibility
 export { clearTypeDefinitionCache } from './type-cache';
@@ -341,6 +346,43 @@ export async function extract(options: ExtractOptions): Promise<ExtractResult> {
 
     // Get package metadata
     const meta = await getPackageMeta(entryFile, baseDir);
+
+    // Post-process: register any $ref targets missing from the type registry.
+    // Iterates until stable since newly registered types may introduce new $ref targets.
+    {
+      const symFlags = ts.SymbolFlags.Type | ts.SymbolFlags.Interface | ts.SymbolFlags.Class;
+      const maxPasses = 5;
+      for (let pass = 0; pass < maxPasses; pass++) {
+        const allRefs = new Map<string, TypeReference[]>();
+        for (const exp of exports) {
+          collectAllRefsWithContext(exp, allRefs, {
+            exportName: exp.id || exp.name,
+            location: 'property',
+            path: [],
+          });
+        }
+        for (const t of ctx.typeRegistry.getAll()) {
+          collectAllRefsWithContext(t, allRefs, {
+            exportName: t.id,
+            location: 'property',
+            path: [],
+          });
+        }
+        let added = 0;
+        for (const [typeName] of allRefs) {
+          if (ctx.typeRegistry.has(typeName)) continue;
+          if (BUILTIN_TYPES_SET.has(typeName)) continue;
+
+          const tsType = findTypeInProgram(typeName, typeChecker, program, sourceFile, symFlags);
+          if (tsType) {
+            ctx.typeRegistry.registerType(tsType, ctx);
+            added++;
+          }
+        }
+        if (added === 0) break;
+      }
+    }
+
     const types = ctx.typeRegistry.getAll();
 
     // Check for forgotten exports (refs to types not defined)
@@ -797,25 +839,65 @@ function createEmptySpec(
   };
 }
 
+/**
+ * Find a type by name across the program's source files.
+ * Tries entry file scope first (fast path), then searches .d.ts files
+ * for transitive external types not directly visible from the entry.
+ */
+function findTypeInProgram(
+  name: string,
+  checker: ts.TypeChecker,
+  program: ts.Program,
+  sourceFile: ts.SourceFile,
+  symFlags: ts.SymbolFlags,
+): ts.Type | undefined {
+  // Fast path: entry file scope
+  const localSym = checker.resolveName(name, sourceFile, symFlags, false);
+  if (localSym) return checker.getDeclaredTypeOfSymbol(localSym);
+
+  // Determine the entry file's directory to distinguish "own" vs "external" source files
+  const entryDir = path.dirname(sourceFile.fileName);
+
+  // Search all source files reachable from the program.
+  // Includes .d.ts files AND .ts files from other packages (monorepo siblings, node_modules).
+  // Skips ambient globals and the entry package's own source files (already covered above).
+  for (const sf of program.getSourceFiles()) {
+    const fn = sf.fileName;
+    // Skip ambient globals
+    if (fn.includes('/typescript/lib/lib.') || fn.includes('\\typescript\\lib\\lib.')) continue;
+    if (fn.includes('/@types/node/') || fn.includes('\\@types\\node\\')) continue;
+    // Skip entry file's own package (already searched via entry scope)
+    if (fn.startsWith(entryDir)) continue;
+
+    const sym = checker.resolveName(name, sf, symFlags, false);
+    if (sym) return checker.getDeclaredTypeOfSymbol(sym);
+  }
+  return undefined;
+}
+
 async function getPackageMeta(
   entryFile: string,
   baseDir?: string,
 ): Promise<{ name: string; version?: string; description?: string }> {
-  const searchDir = baseDir ?? path.dirname(entryFile);
-  const pkgPath = path.join(searchDir, 'package.json');
+  let dir = baseDir ?? path.dirname(entryFile);
 
-  try {
-    if (fs.existsSync(pkgPath)) {
-      const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf-8'));
-      return {
-        name: pkg.name ?? path.basename(searchDir),
-        version: pkg.version,
-        description: pkg.description,
-      };
+  // Walk up directory tree to find nearest package.json
+  while (dir !== path.dirname(dir)) {
+    const pkgPath = path.join(dir, 'package.json');
+    try {
+      if (fs.existsSync(pkgPath)) {
+        const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf-8'));
+        return {
+          name: pkg.name ?? path.basename(dir),
+          version: pkg.version,
+          description: pkg.description,
+        };
+      }
+    } catch {
+      // Ignore errors, keep walking
     }
-  } catch {
-    // Ignore errors
+    dir = path.dirname(dir);
   }
 
-  return { name: path.basename(searchDir) };
+  return { name: path.basename(baseDir ?? path.dirname(entryFile)) };
 }

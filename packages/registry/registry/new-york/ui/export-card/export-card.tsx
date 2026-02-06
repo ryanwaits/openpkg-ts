@@ -1,6 +1,6 @@
 'use client';
 
-import { cn } from '@openpkg-ts/ui/lib/utils';
+import { cn } from '@/lib/utils';
 import type { ElementType } from 'react';
 
 export interface ExportCardProps {

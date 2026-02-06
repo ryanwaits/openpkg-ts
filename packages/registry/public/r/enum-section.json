@@ -1,0 +1,19 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "enum-section",
+  "title": "Enum Section",
+  "description": "Enum documentation section with members",
+  "dependencies": [
+    "@openpkg-ts/sdk",
+    "@openpkg-ts/spec",
+    "@openpkg-ts/ui"
+  ],
+  "files": [
+    {
+      "path": "registry/new-york/components/enum-section/enum-section.tsx",
+      "content": "'use client';\n\nimport {\n  buildImportStatement,\n  getLangForHighlight,\n  specExamplesToCodeExamples,\n} from '@openpkg-ts/sdk/browser';\nimport type { OpenPkg, SpecExport } from '@openpkg-ts/spec';\nimport { APIParameterItem, APISection, ParameterList } from '@openpkg-ts/ui/docskit';\nimport type { ReactNode } from 'react';\n\nexport interface EnumSectionProps {\n  export: SpecExport;\n  spec: OpenPkg;\n}\n\nexport function EnumSection({ export: exp, spec }: EnumSectionProps): ReactNode {\n  const members = exp.members ?? [];\n\n  const examples = specExamplesToCodeExamples(exp.examples);\n  const importStatement = buildImportStatement(exp, spec);\n\n  const enumDefinition =\n    members.length > 0\n      ? `enum ${exp.name} {\\n${members\n          .map((m) => {\n            const value =\n              m.schema !== undefined\n                ? typeof m.schema === 'object' && m.schema !== null\n                  ? ((m.schema as Record<string, unknown>).const ??\n                    (m.schema as Record<string, unknown>).default)\n                  : m.schema\n                : undefined;\n            return `  ${m.name}${value !== undefined ? ` = ${JSON.stringify(value)}` : ''},`;\n          })\n          .join('\\n')}\\n}`\n      : `enum ${exp.name} { }`;\n\n  const displayExamples =\n    examples.length > 0\n      ? examples\n      : [\n          {\n            id: 'default',\n            label: 'TypeScript',\n            code: `${importStatement}\\n\\n${enumDefinition}`,\n            language: getLangForHighlight('typescript'),\n          },\n        ];\n\n  return (\n    <APISection\n      id={exp.id || exp.name}\n      title={`enum ${exp.name}`}\n      description={\n        <div className=\"space-y-3\">\n          {exp.description && <p>{exp.description}</p>}\n          {exp.deprecated && (\n            <div className=\"rounded-md bg-[color-mix(in_srgb,var(--openpkg-accent-yellow)_10%,transparent)] border border-[color-mix(in_srgb,var(--openpkg-accent-yellow)_20%,transparent)] px-3 py-2 text-sm text-[var(--openpkg-accent-yellow)]\">\n              <strong>Deprecated:</strong> This export is deprecated.\n            </div>\n          )}\n          <code className=\"text-sm font-mono bg-[var(--openpkg-bg-badge)] px-2 py-1 rounded inline-block\">\n            {importStatement}\n          </code>\n        </div>\n      }\n      examples={displayExamples}\n      codePanelTitle={exp.name}\n    >\n      {members.length > 0 && (\n        <ParameterList title=\"Members\">\n          {members.map((member, index) => {\n            const value =\n              member.schema !== undefined\n                ? typeof member.schema === 'object' && member.schema !== null\n                  ? ((member.schema as Record<string, unknown>).const ??\n                    (member.schema as Record<string, unknown>).default ??\n                    undefined)\n                  : member.schema\n                : undefined;\n\n            return (\n              <APIParameterItem\n                key={member.name ?? index}\n                name={member.name}\n                type={value !== undefined ? String(value) : 'auto'}\n                description={member.description}\n              />\n            );\n          })}\n        </ParameterList>\n      )}\n    </APISection>\n  );\n}\n",
+      "type": "registry:component"
+    }
+  ],
+  "type": "registry:component"
+}

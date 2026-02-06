@@ -1,0 +1,22 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "api-page",
+  "title": "API Page",
+  "description": "Router dispatching to index or detail page by export ID",
+  "dependencies": [
+    "@openpkg-ts/sdk",
+    "@openpkg-ts/spec"
+  ],
+  "registryDependencies": [
+    "@openpkg-ts/export-section",
+    "@openpkg-ts/export-index-page"
+  ],
+  "files": [
+    {
+      "path": "registry/new-york/blocks/api-page/api-page.tsx",
+      "content": "'use client';\n\nimport type { DocsInstance } from '@openpkg-ts/sdk/browser';\nimport type { OpenPkg } from '@openpkg-ts/spec';\nimport { ExportIndexPage } from '@/registry/new-york/blocks/export-index-page/export-index-page';\nimport { ExportSection } from '@/registry/new-york/components/export-section/export-section';\n\nexport interface APIPageProps {\n  /** Direct spec object */\n  spec?: OpenPkg;\n  /** Or docs instance from createDocs() */\n  instance?: DocsInstance;\n  /** Export ID to render, or undefined for index page */\n  id?: string;\n  /** Base href for index page links */\n  baseHref?: string;\n  /** Description for index page */\n  description?: string;\n}\n\nfunction NotFound({ id }: { id: string }) {\n  return (\n    <div className=\"rounded-lg border border-[var(--openpkg-border-subtle)] bg-[var(--openpkg-bg-card)] p-6 text-center\">\n      <p className=\"text-[var(--openpkg-text-muted)]\">\n        Export <code className=\"font-mono text-[var(--openpkg-accent-link)]\">{id}</code> not found\n        in spec.\n      </p>\n    </div>\n  );\n}\n\nfunction NoSpec() {\n  return (\n    <div className=\"rounded-lg border border-[color-mix(in_srgb,var(--openpkg-accent-red)_20%,transparent)] bg-[color-mix(in_srgb,var(--openpkg-accent-red)_10%,transparent)] p-6 text-center\">\n      <p className=\"text-[var(--openpkg-accent-red)]\">\n        No spec provided. Pass either <code>spec</code> or <code>instance</code> prop.\n      </p>\n    </div>\n  );\n}\n\n/**\n * Main API page component. Renders index (grid) or detail (section) based on id prop.\n */\nexport function APIPage({\n  spec,\n  instance,\n  id,\n  baseHref = '',\n  description,\n}: APIPageProps): React.ReactNode {\n  const resolvedSpec = spec ?? instance?.spec;\n\n  if (!resolvedSpec) return <NoSpec />;\n\n  if (!id) {\n    return <ExportIndexPage spec={resolvedSpec} baseHref={baseHref} description={description} />;\n  }\n\n  const exp = resolvedSpec.exports.find((e) => e.id === id);\n  if (!exp) return <NotFound id={id} />;\n\n  return <ExportSection export={exp} spec={resolvedSpec} />;\n}\n",
+      "type": "registry:block"
+    }
+  ],
+  "type": "registry:block"
+}

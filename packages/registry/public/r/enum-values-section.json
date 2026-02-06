@@ -1,0 +1,17 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "enum-values-section",
+  "title": "Enum Values Section",
+  "description": "Display enum values with optional descriptions",
+  "dependencies": [
+    "@openpkg-ts/ui"
+  ],
+  "files": [
+    {
+      "path": "registry/new-york/ui/enum-values-section/enum-values-section.tsx",
+      "content": "export {\n  type EnumValue,\n  EnumValuesSection,\n  type EnumValuesSectionProps,\n} from '@openpkg-ts/ui/docskit';\n",
+      "type": "registry:ui"
+    }
+  ],
+  "type": "registry:ui"
+}

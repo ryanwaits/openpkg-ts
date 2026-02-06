@@ -231,16 +231,16 @@ function extractDefaultValue(initializer: ts.Expression): unknown {
 
 /**
  * Recursively register types referenced by a ts.Type.
- * Uses ctx.visitedTypes to prevent infinite recursion on circular types.
+ * Uses ctx.registeredTypes to prevent re-processing already-registered types.
  */
 export function registerReferencedTypes(type: ts.Type, ctx: SerializerContext, depth = 0): void {
   // Limit traversal depth to prevent explosion
   if (depth > ctx.maxTypeDepth) return;
 
-  // Prevent infinite recursion on circular types
-  if (ctx.visitedTypes.has(type)) return;
+  // Prevent re-registration of already-processed types
+  if (ctx.registeredTypes.has(type)) return;
 
-  // Only add complex types to visitedTypes (not primitives/literals which can't be circular)
+  // Only add complex types to registeredTypes (not primitives/literals which can't be circular)
   const isPrimitive =
     type.flags &
     (ts.TypeFlags.String |
@@ -257,7 +257,7 @@ export function registerReferencedTypes(type: ts.Type, ctx: SerializerContext, d
       ts.TypeFlags.BooleanLiteral);
 
   if (!isPrimitive) {
-    ctx.visitedTypes.add(type);
+    ctx.registeredTypes.add(type);
   }
 
   const { typeChecker: checker, typeRegistry } = ctx;

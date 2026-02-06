@@ -20,7 +20,7 @@ export default defineConfig([
       '@openpkg-ts/adapters',
       '@openpkg-ts/sdk',
       '@openpkg-ts/spec',
-      '@openpkg-ts/ui',
+      '@openpkg-ts/registry',
       'fumadocs-core',
     ],
   },

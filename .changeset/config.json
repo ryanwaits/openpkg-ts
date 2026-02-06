@@ -9,5 +9,6 @@
   "access": "public",
   "baseBranch": "main",
   "updateInternalDependencies": "patch",
-  "ignore": []
+  "ignore": ["@openpkg-ts/json-render", "@openpkg-ts/playground"],
+  "privatePackages": { "version": true, "tag": false }
 }

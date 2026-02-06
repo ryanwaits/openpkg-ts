@@ -2,7 +2,7 @@
 
 import type { OpenPkg, SpecExport } from '@openpkg-ts/spec';
 import { DISPLAY_KIND_ORDER, type DisplayKind, KIND_LABELS, KIND_SLUGS } from '@openpkg-ts/spec';
-import { cn } from '@openpkg-ts/ui/lib/utils';
+import { cn } from '@/lib/utils';
 import { Search } from 'lucide-react';
 import { type ReactNode, useMemo, useState } from 'react';
 import { ExportCard } from '@/registry/new-york/ui/export-card/export-card';

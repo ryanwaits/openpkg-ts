@@ -1,6 +1,6 @@
 'use client';
 
-import { cn } from '@openpkg-ts/ui/lib/utils';
+import { cn } from '@/lib/utils';
 import { type ReactNode, useEffect, useRef } from 'react';
 import { useSyncScroll } from '@/registry/new-york/hooks/use-sync-scroll/use-sync-scroll';
 
