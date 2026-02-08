@@ -98,6 +98,16 @@ export function serializeFunctionExport(
     };
   });
 
+  // Detect async and generator flags
+  const flags: Record<string, unknown> = {};
+  const modifiers = ts.getModifiers(node);
+  if (modifiers?.some((m) => m.kind === ts.SyntaxKind.AsyncKeyword)) {
+    flags.async = true;
+  }
+  if (node.asteriskToken) {
+    flags.generator = true;
+  }
+
   return {
     id: name,
     name,
@@ -107,6 +117,7 @@ export function serializeFunctionExport(
     source,
     typeParameters,
     signatures,
+    ...(Object.keys(flags).length > 0 ? { flags } : {}),
     ...(deprecated ? { deprecated: true, deprecationReason } : {}),
     ...(examples.length > 0 ? { examples } : {}),
   };

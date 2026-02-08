@@ -71,14 +71,14 @@ const BUILTINS = new Set([
 /**
  * Heuristic to detect generic type parameter names.
  * Matches: T, K, V, TType, TValue, TResult, TWire, etc.
+ * NOTE: Only match names that are ALWAYS generic params.
+ * Names like "Item", "Key", "Value" are commonly used as real types.
  */
 function isGenericTypeParameter(name: string): boolean {
-  // Single uppercase letter
+  // Single uppercase letter (T, K, V, etc.)
   if (/^[A-Z]$/.test(name)) return true;
   // Starts with T followed by uppercase (TType, TValue, TWire, etc.)
   if (/^T[A-Z]/.test(name)) return true;
-  // Common generic names
-  if (['Key', 'Value', 'Item', 'Element'].includes(name)) return true;
   return false;
 }
 
