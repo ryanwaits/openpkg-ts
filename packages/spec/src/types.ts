@@ -270,6 +270,8 @@ export type SpecMember = {
   schema?: SpecSchema;
   signatures?: SpecSignature[];
   decorators?: SpecDecorator[];
+  deprecated?: boolean;
+  deprecationReason?: string;
 };
 
 export type SpecInheritedMember = SpecMember & {
