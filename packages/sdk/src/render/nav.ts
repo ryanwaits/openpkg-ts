@@ -283,6 +283,8 @@ export function toNavigation(
 /**
  * Generate Fumadocs meta.json file content.
  *
+ * Returns a JSON string suitable for writing to a meta.json file — not a React component.
+ *
  * @param spec - The OpenPkg spec
  * @param options - Navigation options (format is forced to fumadocs)
  * @returns JSON string for meta.json file
@@ -303,6 +305,8 @@ export function toFumadocsMetaJSON(
 
 /**
  * Generate Docusaurus sidebar config.
+ *
+ * Returns a JavaScript module.exports string suitable for writing to a sidebars.js file — not a React component.
  *
  * @param spec - The OpenPkg spec
  * @param options - Navigation options (format is forced to docusaurus)

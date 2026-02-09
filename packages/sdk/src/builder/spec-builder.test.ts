@@ -104,3 +104,47 @@ describe('spec-builder external re-exports', () => {
     expect(barExport?.kind).toBe('external');
   });
 });
+
+describe('spec-builder prototype method filtering', () => {
+  test('find method on non-array object is NOT filtered out', async () => {
+    const code = `
+      interface ChatClient {
+        find(params?: { limit?: number }): Promise<Chat[]>;
+        create(params: { name: string }): Promise<Chat>;
+        delete(id: string): Promise<void>;
+      }
+      interface Chat { id: string; name: string; }
+      export function createClient(): { chats: ChatClient } {
+        return null as any;
+      }
+    `;
+
+    const result = await extract({ entryFile: 'test.ts', content: code });
+    const exp = result.spec.exports.find((e) => e.id === 'createClient');
+    expect(exp).toBeDefined();
+
+    // ChatClient is a $ref type — check in types array
+    const chatClient = result.spec.types?.find((t) => t.name === 'ChatClient');
+    expect(chatClient).toBeDefined();
+    const props = chatClient?.schema?.properties;
+    expect(props?.find).toBeDefined();
+    expect(props?.create).toBeDefined();
+    expect(props?.delete).toBeDefined();
+  });
+
+  test('array prototype methods ARE filtered from actual arrays', async () => {
+    const code = `
+      export const items: string[] = [];
+    `;
+
+    const result = await extract({ entryFile: 'test.ts', content: code });
+    const exp = result.spec.exports.find((e) => e.id === 'items');
+    expect(exp).toBeDefined();
+
+    // Array schema should NOT include find/map/filter etc
+    const props = exp?.schema?.properties ?? {};
+    expect(props.find).toBeUndefined();
+    expect(props.map).toBeUndefined();
+    expect(props.filter).toBeUndefined();
+  });
+});

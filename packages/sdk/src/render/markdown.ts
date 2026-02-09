@@ -494,6 +494,9 @@ export function exportToMarkdown(exp: SpecExport, options: MarkdownOptions = {})
 /**
  * Render entire spec to MDX.
  *
+ * Returns an MDX-formatted string — not a React component. Write the result to
+ * a `.mdx` file or pass it to your docs framework's content pipeline.
+ *
  * @param spec - The OpenPkg spec to render
  * @param options - Markdown options, optionally with export name for single export mode
  * @returns MDX string

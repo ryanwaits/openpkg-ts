@@ -1,6 +1,6 @@
 import type { SpecExport, SpecMember, SpecVisibility } from '@openpkg-ts/spec';
 import ts from 'typescript';
-import { extractTypeParameters, getJSDocComment } from '../ast/utils';
+import { extractTypeParameters, getJSDocComment, isSymbolDeprecated } from '../ast/utils';
 import { extractParameters, registerReferencedTypes } from '../types/parameters';
 import { buildSchema } from '../types/schema-builder';
 import { getInheritedMembers, type SerializerContext } from './context';
@@ -173,6 +173,9 @@ function serializeProperty(
   if (isReadonly(node)) flags.readonly = true;
   if (node.questionToken) flags.optional = true;
 
+  const symbol = checker.getSymbolAtLocation(node.name ?? node);
+  const { deprecated, reason: deprecationReason } = isSymbolDeprecated(symbol);
+
   return {
     name,
     kind: 'property',
@@ -181,6 +184,7 @@ function serializeProperty(
     visibility,
     schema,
     flags: Object.keys(flags).length > 0 ? flags : undefined,
+    ...(deprecated ? { deprecated: true, deprecationReason } : {}),
   };
 }
 
@@ -216,6 +220,9 @@ function serializeMethod(node: ts.MethodDeclaration, ctx: SerializerContext): Sp
     flags.abstract = true;
   }
 
+  const symbol = checker.getSymbolAtLocation(node.name ?? node);
+  const { deprecated, reason: deprecationReason } = isSymbolDeprecated(symbol);
+
   return {
     name,
     kind: 'method',
@@ -224,6 +231,7 @@ function serializeMethod(node: ts.MethodDeclaration, ctx: SerializerContext): Sp
     visibility,
     signatures: signatures.length > 0 ? signatures : undefined,
     flags: Object.keys(flags).length > 0 ? flags : undefined,
+    ...(deprecated ? { deprecated: true, deprecationReason } : {}),
   };
 }
 

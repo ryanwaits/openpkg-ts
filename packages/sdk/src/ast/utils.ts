@@ -381,6 +381,22 @@ export function isSymbolDeprecated(symbol: ts.Symbol | undefined): {
       }
       return { deprecated: true, reason };
     }
+    // ExportSpecifier: JSDoc lives on parent ExportDeclaration
+    if (ts.isExportSpecifier(declaration)) {
+      const exportDecl = declaration.parent?.parent;
+      if (exportDecl && ts.isExportDeclaration(exportDecl)) {
+        const parentTag = ts.getJSDocDeprecatedTag(exportDecl);
+        if (parentTag) {
+          let reason: string | undefined;
+          if (typeof parentTag.comment === 'string') {
+            reason = parentTag.comment;
+          } else if (Array.isArray(parentTag.comment)) {
+            reason = parentTag.comment.map((c) => (typeof c === 'string' ? c : c.text)).join('');
+          }
+          return { deprecated: true, reason };
+        }
+      }
+    }
   }
 
   return { deprecated: false };
@@ -469,6 +485,8 @@ export function getExportKind(declaration: ts.Declaration, type: ts.Type): SpecE
   if (ts.isTypeAliasDeclaration(declaration)) return 'type';
   if (ts.isEnumDeclaration(declaration)) return 'enum';
   if (ts.isModuleDeclaration(declaration) || ts.isNamespaceExport(declaration)) return 'namespace';
+  if (ts.isVariableDeclaration(declaration) && type.getConstructSignatures().length > 0)
+    return 'class';
   if (ts.isVariableDeclaration(declaration) && type.getCallSignatures().length > 0)
     return 'function';
   return 'variable';

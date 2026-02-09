@@ -352,9 +352,12 @@ function renderExport(exp: SpecExport): string {
 /**
  * Render spec to standalone HTML page.
  *
+ * Returns an HTML string — not a React component. Write the result to an
+ * `.html` file or embed it in a template.
+ *
  * @param spec - The OpenPkg spec to render
  * @param options - HTML rendering options
- * @returns Complete HTML document or fragment
+ * @returns Complete HTML document string or HTML fragment string
  *
  * @example
  * ```ts

@@ -8,6 +8,7 @@ import { serializeFunctionExport } from '../serializers/functions';
 import { serializeInterface } from '../serializers/interfaces';
 import { serializeTypeAlias } from '../serializers/type-aliases';
 import { serializeVariable } from '../serializers/variables';
+import { getExportKind } from '../ast/utils';
 import { normalizeExport, normalizeType } from '../types/schema-normalizer';
 
 export interface GetExportOptions {
@@ -43,14 +44,14 @@ export async function getExport(options: GetExportOptions): Promise<GetExportRes
   const { program, sourceFile } = result;
 
   if (!sourceFile) {
-    return { export: null, types: [], errors: [`Could not load source file: ${entryFile}`] };
+    return { export: null, types: [], errors: [`Entry file not found: ${entryFile}. Specify with: drift get src/index.ts <name>`] };
   }
 
   const checker = program.getTypeChecker();
   const moduleSymbol = checker.getSymbolAtLocation(sourceFile);
 
   if (!moduleSymbol) {
-    return { export: null, types: [], errors: ['Could not get module symbol'] };
+    return { export: null, types: [], errors: [`No exports found in ${entryFile}. Is this the right entry point?`] };
   }
 
   const exportedSymbols = checker.getExportsOfModule(moduleSymbol);
@@ -70,9 +71,34 @@ export async function getExport(options: GetExportOptions): Promise<GetExportRes
   ctx.exportedIds = exportedIds;
 
   try {
+    // Check if original symbol is a namespace export before resolving alias
+    const originalDecls = targetSymbol.declarations ?? [];
+    const isNamespaceExportDecl = originalDecls.some(
+      (d) => ts.isNamespaceExport(d) || ts.isNamespaceImport(d),
+    );
+
+    if (isNamespaceExportDecl) {
+      const spec = serializeNamespaceForGet(targetSymbol, exportName, ctx);
+      const types = ctx.typeRegistry
+        .getAll()
+        .map((t) => normalizeType(t, { dialect: 'draft-2020-12' }));
+      return { export: normalizeExport(spec, { dialect: 'draft-2020-12' }) as SpecExport, types, errors };
+    }
+
     const { declaration, resolvedSymbol, isTypeOnly } = resolveExportTarget(targetSymbol, checker);
 
     if (!declaration) {
+      // Check if this is an external re-export
+      const externalPackage = detectExternalPackage(targetSymbol, checker);
+      if (externalPackage) {
+        const stub: SpecExport = {
+          id: exportName,
+          name: exportName,
+          kind: 'external',
+          source: { package: externalPackage },
+        };
+        return { export: stub, types: [], errors };
+      }
       return { export: null, types: [], errors: [`No declaration found for '${exportName}'`] };
     }
 
@@ -86,6 +112,17 @@ export async function getExport(options: GetExportOptions): Promise<GetExportRes
     );
 
     if (!spec) {
+      // Fallback: check if external re-export that couldn't be serialized
+      const externalPackage = detectExternalPackage(targetSymbol, checker);
+      if (externalPackage) {
+        const stub: SpecExport = {
+          id: exportName,
+          name: exportName,
+          kind: 'external',
+          source: { package: externalPackage },
+        };
+        return { export: stub, types: [], errors };
+      }
       return { export: null, types: [], errors: [`Could not serialize '${exportName}'`] };
     }
 
@@ -165,22 +202,41 @@ function serializeDeclaration(
   } else if (ts.isVariableDeclaration(declaration)) {
     const varStatement = declaration.parent?.parent as ts.VariableStatement | undefined;
     if (varStatement && ts.isVariableStatement(varStatement)) {
-      // Check if it's an arrow function - serialize as function instead of variable
-      if (declaration.initializer && ts.isArrowFunction(declaration.initializer)) {
+      // Check if it's an arrow/function expression - serialize as function instead of variable
+      if (
+        declaration.initializer &&
+        (ts.isArrowFunction(declaration.initializer) ||
+          ts.isFunctionExpression(declaration.initializer))
+      ) {
         const varName = ts.isIdentifier(declaration.name)
           ? declaration.name.text
           : declaration.name.getText();
         result = serializeFunctionExport(declaration.initializer, ctx, varName);
       } else {
-        result = serializeVariable(declaration, varStatement, ctx);
+        // Check if the variable's type has call signatures (function type annotation)
+        const checker = ctx.program.getTypeChecker();
+        const varType = checker.getTypeAtLocation(declaration);
+        if (varType.getCallSignatures().length > 0) {
+          result = serializeVariable(declaration, varStatement, ctx);
+          if (result) result = { ...result, kind: 'function' };
+        } else {
+          result = serializeVariable(declaration, varStatement, ctx);
+        }
       }
     }
+  } else if (
+    ts.isNamespaceExport(declaration) ||
+    ts.isModuleDeclaration(declaration) ||
+    ts.isNamespaceImport(declaration) ||
+    ts.isSourceFile(declaration)
+  ) {
+    result = serializeNamespaceForGet(_exportSymbol, exportName, ctx);
   }
 
   if (result) {
     // Ensure export name matches
     if (result.name !== exportName) {
-      result = { ...result, id: exportName, name: result.name };
+      result = { ...result, id: exportName, name: exportName };
     }
     // Add typeOnly flag
     if (isTypeOnly) {
@@ -189,4 +245,78 @@ function serializeDeclaration(
   }
 
   return result;
+}
+
+function serializeNamespaceForGet(
+  symbol: ts.Symbol,
+  exportName: string,
+  ctx: ReturnType<typeof createContext>,
+): SpecExport {
+  const checker = ctx.program.getTypeChecker();
+
+  // Resolve alias to get the actual module symbol
+  let targetSymbol = symbol;
+  if (symbol.flags & ts.SymbolFlags.Alias) {
+    const aliased = checker.getAliasedSymbol(symbol);
+    if (aliased && aliased !== symbol) {
+      targetSymbol = aliased;
+    }
+  }
+
+  // Get exports from the namespace module
+  const members: Array<{ name: string; kind: string }> = [];
+  try {
+    const nsExports = checker.getExportsOfModule(targetSymbol);
+    for (const memberSymbol of nsExports) {
+      const memberName = memberSymbol.getName();
+      const memberDecls = memberSymbol.declarations ?? [];
+      const memberDecl = memberSymbol.valueDeclaration || memberDecls[0];
+      if (memberDecl) {
+        const type = checker.getTypeAtLocation(memberDecl);
+        const kind = getExportKind(memberDecl, type);
+        members.push({ name: memberName, kind });
+      }
+    }
+  } catch {
+    // Namespace member enumeration may fail for some external modules
+  }
+
+  return {
+    id: exportName,
+    name: exportName,
+    kind: 'namespace',
+    tags: [],
+    ...(members.length > 0 ? { members } : {}),
+  };
+}
+
+function detectExternalPackage(symbol: ts.Symbol, checker: ts.TypeChecker): string | undefined {
+  // Check all declarations (original + aliased) for node_modules paths
+  let targetSymbol = symbol;
+  if (symbol.flags & ts.SymbolFlags.Alias) {
+    const aliased = checker.getAliasedSymbol(symbol);
+    if (aliased && aliased !== symbol) {
+      targetSymbol = aliased;
+    }
+  }
+
+  const allDecls = [...(targetSymbol.declarations ?? []), ...(symbol.declarations ?? [])];
+  for (const decl of allDecls) {
+    const sf = decl.getSourceFile();
+    if (sf?.fileName.includes('node_modules')) {
+      const match = sf.fileName.match(/node_modules\/(@[^/]+\/[^/]+|[^/]+)/);
+      if (match) return match[1];
+    }
+    // Check export specifier with module specifier
+    if (ts.isExportSpecifier(decl)) {
+      const exportDecl = decl.parent?.parent;
+      if (exportDecl && ts.isExportDeclaration(exportDecl) && exportDecl.moduleSpecifier) {
+        const moduleText = (exportDecl.moduleSpecifier as ts.StringLiteral).text;
+        if (!moduleText.startsWith('.') && !moduleText.startsWith('/')) {
+          return moduleText;
+        }
+      }
+    }
+  }
+  return undefined;
 }

@@ -59,20 +59,21 @@ export interface DocsInstance {
   /** Get exports grouped by kind */
   groupByKind(): Record<SpecExportKind, SpecExport[]>;
 
-  // Render methods
-  /** Render spec or single export to MDX */
+  // Render methods — all return strings or plain data, not React components.
+  // For React UI components, see the @openpkg-ts/registry package.
+  /** Render spec or single export to an MDX string */
   toMarkdown(options?: ExportMarkdownOptions): string;
-  /** Render spec or single export to HTML */
+  /** Render spec or single export to an HTML string */
   toHTML(options?: HTMLOptions): string;
-  /** Render spec or single export to JSON structure */
+  /** Render spec or single export to a simplified JSON structure */
   toJSON(options?: JSONOptions): SimplifiedSpec | SimplifiedExport;
-  /** Generate navigation structure */
+  /** Generate navigation data structure (JSON object, not a component) */
   toNavigation(options?: NavOptions): GenericNav | FumadocsMeta | DocusaurusSidebar;
-  /** Generate search index */
+  /** Generate search index data */
   toSearchIndex(options?: SearchOptions): SearchIndex;
-  /** Generate Pagefind-compatible records */
+  /** Generate Pagefind-compatible record objects */
   toPagefindRecords(options?: SearchOptions): PagefindRecord[];
-  /** Generate Algolia-compatible records */
+  /** Generate Algolia-compatible record objects */
   toAlgoliaRecords(options?: SearchOptions): AlgoliaRecord[];
 }
 
@@ -94,6 +95,10 @@ export function loadSpec(spec: OpenPkg): DocsInstance {
 
 /**
  * Creates a docs instance for querying and rendering API documentation.
+ *
+ * Render methods (toMarkdown, toHTML, toJSON, toNavigation) return strings or
+ * plain data objects — not React components. For React UI components, see the
+ * `@openpkg-ts/registry` package.
  *
  * @example
  * ```ts

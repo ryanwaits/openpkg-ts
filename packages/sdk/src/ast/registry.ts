@@ -1,7 +1,7 @@
 import type { SpecType, SpecTypeKind } from '@openpkg-ts/spec';
 import ts from 'typescript';
 import type { SerializerContext } from '../serializers/context';
-import { ARRAY_PROTOTYPE_METHODS, buildSchema, PRIMITIVES } from '../types/schema-builder';
+import { ARRAY_PROTOTYPE_METHODS, NUMBER_PROTOTYPE_METHODS, STRING_PROTOTYPE_METHODS, buildSchema, PRIMITIVES } from '../types/schema-builder';
 
 /** Built-in types that shouldn't be registered */
 const BUILTINS = new Set([
@@ -116,7 +116,9 @@ export class TypeRegistry {
    * Returns the type ID if registered, undefined if skipped.
    */
   registerType(type: ts.Type, ctx: SerializerContext): string | undefined {
-    const symbol = type.getSymbol() || type.aliasSymbol;
+    // Prefer aliasSymbol — for `type Foo = { ... }`, getSymbol() returns __type (anonymous)
+    // but aliasSymbol gives us the real name "Foo"
+    const symbol = type.aliasSymbol || type.getSymbol();
     if (!symbol) return undefined;
 
     const name = symbol.getName();
@@ -178,9 +180,9 @@ export class TypeRegistry {
     // Build structured schema - but avoid self-referential $ref
     let schema = buildSchema(type, checker, ctx);
 
-    // If schema is just a self-ref, build object schema from properties
+    // If schema is just a self-ref, resolve the actual type structure
     if (this.isSelfRef(schema, name)) {
-      schema = this.buildObjectSchemaFromType(type, checker, ctx);
+      schema = this.resolveSelRefSchema(type, checker, ctx);
     }
 
     return {
@@ -202,9 +204,73 @@ export class TypeRegistry {
   }
 
   /**
+   * Resolve a self-referential $ref to the actual type structure.
+   * Handles unions (string literal → enum), enums (numeric → enum), and objects.
+   */
+  private resolveSelRefSchema(
+    type: ts.Type,
+    checker: ts.TypeChecker,
+    ctx: SerializerContext,
+  ): Record<string, unknown> {
+    // String literal union → { type: "string", enum: [...] }
+    if (type.isUnion()) {
+      const types = type.types;
+      const allStringLiterals = types.every((t) => t.flags & ts.TypeFlags.StringLiteral);
+      if (allStringLiterals) {
+        return {
+          type: 'string',
+          enum: types.map((t) => (t as ts.StringLiteralType).value),
+        };
+      }
+      const allNumberLiterals = types.every((t) => t.flags & ts.TypeFlags.NumberLiteral);
+      if (allNumberLiterals) {
+        return {
+          type: 'number',
+          enum: types.map((t) => (t as ts.NumberLiteralType).value),
+        };
+      }
+      // Mixed union — build anyOf without alias (to avoid re-triggering $ref)
+      return {
+        anyOf: types.map((t) => buildSchema(t, checker, ctx)),
+      };
+    }
+
+    // Enum type — extract members directly from the declaration
+    const symbol = type.getSymbol() ?? type.aliasSymbol;
+    if (symbol) {
+      const decl = symbol.declarations?.find(ts.isEnumDeclaration);
+      if (decl) {
+        const members: Record<string, unknown>[] = [];
+        for (const member of decl.members) {
+          const memberSymbol = checker.getSymbolAtLocation(member.name);
+          if (memberSymbol) {
+            const constantValue = checker.getConstantValue(member);
+            if (constantValue !== undefined) {
+              members.push({
+                name: memberSymbol.getName(),
+                value: constantValue,
+              });
+            }
+          }
+        }
+        if (members.length > 0) {
+          return {
+            type: typeof members[0].value === 'string' ? 'string' : 'number',
+            enum: members.map((m) => m.value),
+            'x-enum-members': members,
+          };
+        }
+      }
+    }
+
+    // Fallback: build object schema from properties
+    return this.buildObjectSchemaFromProperties(type, checker, ctx);
+  }
+
+  /**
    * Build object schema from type properties (for interfaces/classes)
    */
-  private buildObjectSchemaFromType(
+  private buildObjectSchemaFromProperties(
     type: ts.Type,
     checker: ts.TypeChecker,
     ctx: SerializerContext,
@@ -223,12 +289,22 @@ export class TypeRegistry {
       ctx.onTruncation(typeName, properties.length, limit);
     }
 
+    // Only filter prototype methods when the type is actually array/string/number-like
+    const isArrayLike =
+      checker.isArrayType(type) ||
+      checker.isTupleType(type) ||
+      (type.symbol?.getName() === 'Array' && type.symbol?.getDeclarations()?.[0]?.getSourceFile()?.fileName?.includes('/typescript/lib/lib.'));
+    const isStringLike = type.flags & ts.TypeFlags.StringLike;
+    const isNumberLike = type.flags & ts.TypeFlags.NumberLike;
+
     for (const prop of properties.slice(0, limit)) {
       const propName = prop.getName();
       if (propName.startsWith('_')) continue;
 
-      // Skip Array prototype methods to prevent explosion
-      if (ARRAY_PROTOTYPE_METHODS.has(propName)) continue;
+      // Skip prototype methods only for their matching built-in types
+      if (isArrayLike && ARRAY_PROTOTYPE_METHODS.has(propName)) continue;
+      if (isStringLike && STRING_PROTOTYPE_METHODS.has(propName)) continue;
+      if (isNumberLike && NUMBER_PROTOTYPE_METHODS.has(propName)) continue;
 
       const propType = checker.getTypeOfSymbol(prop);
 

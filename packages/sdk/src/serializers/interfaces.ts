@@ -1,6 +1,6 @@
 import type { SpecExport, SpecMember } from '@openpkg-ts/spec';
 import ts from 'typescript';
-import { extractTypeParameters, getJSDocComment } from '../ast/utils';
+import { extractTypeParameters, getJSDocComment, isSymbolDeprecated } from '../ast/utils';
 import { extractParameters, registerReferencedTypes } from '../types/parameters';
 import { buildSchema } from '../types/schema-builder';
 import type { SerializerContext } from './context';
@@ -149,6 +149,9 @@ function serializePropertySignature(
     flags.readonly = true;
   }
 
+  const symbol = checker.getSymbolAtLocation(node.name);
+  const { deprecated, reason: deprecationReason } = isSymbolDeprecated(symbol);
+
   return {
     name,
     kind: 'property',
@@ -156,6 +159,7 @@ function serializePropertySignature(
     tags: tags.length > 0 ? tags : undefined,
     schema,
     flags: Object.keys(flags).length > 0 ? flags : undefined,
+    ...(deprecated ? { deprecated: true, deprecationReason } : {}),
   };
 }
 
@@ -176,6 +180,9 @@ function serializeMethodSignature(
   const flags: Record<string, unknown> = {};
   if (node.questionToken) flags.optional = true;
 
+  const symbol = checker.getSymbolAtLocation(node.name);
+  const { deprecated, reason: deprecationReason } = isSymbolDeprecated(symbol);
+
   return {
     name,
     kind: 'method',
@@ -183,6 +190,7 @@ function serializeMethodSignature(
     tags: tags.length > 0 ? tags : undefined,
     signatures: signatures.length > 0 ? signatures : undefined,
     flags: Object.keys(flags).length > 0 ? flags : undefined,
+    ...(deprecated ? { deprecated: true, deprecationReason } : {}),
   };
 }
 

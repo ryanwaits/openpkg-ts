@@ -166,7 +166,7 @@ export async function extract(options: ExtractOptions): Promise<ExtractResult> {
     if (!sourceFile) {
       return {
         spec: createEmptySpec(entryFile, includeSchema, isDtsSource),
-        diagnostics: [{ message: `Could not load source file: ${entryFile}`, severity: 'error' }],
+        diagnostics: [{ message: `Entry file not found: ${entryFile}. Specify with: drift list src/index.ts`, severity: 'error' }],
       };
     }
 
@@ -177,7 +177,7 @@ export async function extract(options: ExtractOptions): Promise<ExtractResult> {
     if (!moduleSymbol) {
       return {
         spec: createEmptySpec(entryFile, includeSchema, isDtsSource),
-        diagnostics: [{ message: 'Could not get module symbol', severity: 'warning' }],
+        diagnostics: [{ message: `No exports found in ${entryFile}. Is this the right entry point?`, severity: 'warning' }],
       };
     }
 
@@ -571,14 +571,25 @@ function serializeDeclaration(
   } else if (ts.isVariableDeclaration(declaration)) {
     const varStatement = declaration.parent?.parent as ts.VariableStatement | undefined;
     if (varStatement && ts.isVariableStatement(varStatement)) {
-      // Check if it's an arrow function - serialize as function instead of variable
-      if (declaration.initializer && ts.isArrowFunction(declaration.initializer)) {
+      // Check if it's an arrow/function expression - serialize as function instead of variable
+      if (
+        declaration.initializer &&
+        (ts.isArrowFunction(declaration.initializer) ||
+          ts.isFunctionExpression(declaration.initializer))
+      ) {
         const varName = ts.isIdentifier(declaration.name)
           ? declaration.name.text
           : declaration.name.getText();
         result = serializeFunctionExport(declaration.initializer, ctx, varName);
       } else {
         result = serializeVariable(declaration, varStatement, ctx);
+        // Reclassify as 'class' if variable has construct signatures
+        if (result?.kind === 'variable') {
+          const type = ctx.typeChecker.getTypeAtLocation(declaration);
+          if (type.getConstructSignatures().length > 0) {
+            result = { ...result, kind: 'class' };
+          }
+        }
       }
     }
   } else if (
@@ -610,6 +621,13 @@ function serializeDeclaration(
         ...result,
         flags: { ...(result.flags ?? {}), typeOnly: true },
       };
+    }
+    // Check export specifier symbol for @deprecated (covers re-export deprecation)
+    if (!result.deprecated) {
+      const { deprecated, reason: deprecationReason } = isSymbolDeprecated(exportSymbol);
+      if (deprecated) {
+        result = { ...result, deprecated: true, deprecationReason };
+      }
     }
   }
 
@@ -684,7 +702,7 @@ function serializeNamespaceMember(
 
   const type = checker.getTypeAtLocation(declaration);
   const callSignatures = type.getCallSignatures();
-  const deprecated = isSymbolDeprecated(targetSymbol);
+  const { deprecated } = isSymbolDeprecated(targetSymbol);
 
   // Determine kind
   let kind: string = 'variable';

@@ -60,7 +60,7 @@ function buildReturnSchema(sig: ts.Signature, ctx: SerializerContext): SpecSigna
 }
 
 export function serializeFunctionExport(
-  node: ts.FunctionDeclaration | ts.ArrowFunction,
+  node: ts.FunctionDeclaration | ts.ArrowFunction | ts.FunctionExpression,
   ctx: SerializerContext,
   nameOverride?: string,
 ): SpecExport | null {

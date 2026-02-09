@@ -2,8 +2,8 @@ import { describe, expect, test } from 'bun:test';
 import { extract } from '../builder/spec-builder';
 
 describe('property limit warning', () => {
-  test('25 properties triggers onTruncation callback', async () => {
-    const props = Array.from({ length: 25 }, (_, i) => `prop${i}: string;`).join('\n  ');
+  test('105 properties triggers onTruncation callback', async () => {
+    const props = Array.from({ length: 105 }, (_, i) => `prop${i}: string;`).join('\n  ');
     const code = `
       export interface BigType {
         ${props}
@@ -23,8 +23,8 @@ describe('property limit warning', () => {
     expect(truncations.length).toBeGreaterThan(0);
     const bigTypeTruncation = truncations.find((t) => t.typeName === 'BigType');
     expect(bigTypeTruncation).toBeDefined();
-    expect(bigTypeTruncation?.actual).toBe(25);
-    expect(bigTypeTruncation?.limit).toBe(20);
+    expect(bigTypeTruncation?.actual).toBe(105);
+    expect(bigTypeTruncation?.limit).toBe(100);
   });
 
   test('15 properties does not trigger onTruncation', async () => {

@@ -157,6 +157,24 @@ export const ARRAY_PROTOTYPE_METHODS: Set<string> = new Set([
   'toLocaleString',
 ]);
 
+// String prototype methods — prevent explosion when string literal unions fall through to object handling
+export const STRING_PROTOTYPE_METHODS: Set<string> = new Set([
+  'charAt', 'charCodeAt', 'codePointAt', 'concat', 'endsWith', 'includes',
+  'indexOf', 'lastIndexOf', 'localeCompare', 'match', 'matchAll', 'normalize',
+  'padEnd', 'padStart', 'repeat', 'replace', 'replaceAll', 'search', 'slice',
+  'split', 'startsWith', 'substring', 'toLocaleLowerCase', 'toLocaleUpperCase',
+  'toLowerCase', 'toUpperCase', 'trim', 'trimEnd', 'trimStart', 'at', 'bold',
+  'fixed', 'italics', 'link', 'small', 'strike', 'sub', 'sup', 'anchor',
+  'big', 'blink', 'fontcolor', 'fontsize', 'substr', 'toString', 'valueOf',
+  'length',
+]);
+
+// Number prototype methods — prevent explosion when numeric enums fall through to object handling
+export const NUMBER_PROTOTYPE_METHODS: Set<string> = new Set([
+  'toFixed', 'toExponential', 'toPrecision', 'toString', 'valueOf',
+  'toLocaleString',
+]);
+
 /**
  * Check if a name is a primitive type
  */
@@ -379,7 +397,7 @@ function buildSchemaInternal(
     if (type.flags & ts.TypeFlags.ESSymbol) return { type: 'symbol' };
 
     // Handle 'this' type - mark with x-ts-type for fluent patterns
-    if (type.isThisType?.()) {
+    if ((type as any).isThisType === true) {
       // Get the constraint (the class type) and create a $ref with this marker
       const constraint = type.getConstraint?.();
       const symbol = constraint?.getSymbol() ?? type.getSymbol();
@@ -724,6 +742,13 @@ function buildObjectSchema(
   ctx: SerializerContext | undefined,
   originalType?: ts.Type,
 ): SpecSchema {
+  // Only filter array prototype methods when the type is actually array-like.
+  const isArrayLikeType = originalType
+    ? checker.isArrayType(originalType) ||
+      checker.isTupleType(originalType) ||
+      (originalType.symbol?.getName() === 'Array' && isBuiltinSymbol(originalType.symbol))
+    : false;
+
   const buildProps = () => {
     const props: Record<string, SpecSchema> = {};
     const required: string[] = [];
@@ -733,10 +758,10 @@ function buildObjectSchema(
       // Skip private/internal properties
       if (propName.startsWith('_')) continue;
 
-      // Skip Array prototype methods - they cause "explosion" where
-      // tuple/array types include all 50+ Array methods in output.
-      // These are always inherited from TypeScript built-in Array interface.
-      if (ARRAY_PROTOTYPE_METHODS.has(propName)) {
+      // Skip Array prototype methods only when the type is actually array-like.
+      // Previously this was unconditional, which dropped real methods named
+      // "find", "keys", "values", "entries", etc. from plain objects.
+      if (isArrayLikeType && ARRAY_PROTOTYPE_METHODS.has(propName)) {
         continue;
       }
 

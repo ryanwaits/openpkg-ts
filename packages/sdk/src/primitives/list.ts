@@ -19,7 +19,7 @@ export interface ExportItem {
   /** Export name */
   name: string;
   /** Export kind */
-  kind: 'function' | 'class' | 'interface' | 'type' | 'enum' | 'variable' | 'namespace';
+  kind: 'function' | 'class' | 'interface' | 'type' | 'enum' | 'variable' | 'namespace' | 'external';
   /** Source file path */
   file: string;
   /** Line number (1-indexed) */
@@ -49,14 +49,14 @@ export async function listExports(options: ListExportsOptions): Promise<ListExpo
   const { program, sourceFile } = result;
 
   if (!sourceFile) {
-    return { exports: [], errors: [`Could not load source file: ${entryFile}`] };
+    return { exports: [], errors: [`Entry file not found: ${entryFile}. Specify with: drift list src/index.ts`] };
   }
 
   const checker = program.getTypeChecker();
   const moduleSymbol = checker.getSymbolAtLocation(sourceFile);
 
   if (!moduleSymbol) {
-    return { exports: [], errors: ['Could not get module symbol'] };
+    return { exports: [], errors: [`No exports found in ${entryFile}. Is this the right entry point?`] };
   }
 
   const exportedSymbols = checker.getExportsOfModule(moduleSymbol);
@@ -106,7 +106,16 @@ function extractExportItem(
     declarations.find((d) => d.kind !== ts.SyntaxKind.ExportSpecifier) ||
     declarations[0];
 
-  if (!declaration) return null;
+  if (!declaration) {
+    // No declaration found — likely an external re-export that couldn't be resolved
+    return {
+      name,
+      kind: 'external' as const,
+      file: '<external>',
+      line: 0,
+      reexport: true,
+    };
+  }
 
   // Handle namespace re-exports (export * as X from './module')
   // These resolve to SourceFile declarations - handle specially

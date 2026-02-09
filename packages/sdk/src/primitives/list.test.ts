@@ -121,6 +121,18 @@ describe('listExports', () => {
     expect(names).toEqual(['alpha', 'mike', 'zebra']);
   });
 
+  test('function expression assigned to const gets kind=function', async () => {
+    const code = `
+      /** A handler */
+      export const handler = function(req: string): string { return req; };
+    `;
+
+    const result = await listExports({ entryFile: 'test.ts', content: code });
+
+    expect(result.exports).toHaveLength(1);
+    expect(result.exports[0].kind).toBe('function');
+  });
+
   test('aliased exports use export name, not original name', async () => {
     const code = `
       const internalFunc = () => {};

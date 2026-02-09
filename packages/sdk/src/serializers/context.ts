@@ -56,7 +56,7 @@ export function createContext(
     visitedTypes: new Set<ts.Type>(),
     registeredTypes: new Set<ts.Type>(),
     includePrivate: options.includePrivate ?? false,
-    maxProperties: options.maxProperties ?? 20,
+    maxProperties: options.maxProperties ?? 100,
     onTruncation: options.onTruncation,
   };
 }
