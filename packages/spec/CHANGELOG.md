@@ -1,5 +1,11 @@
 # @openpkg-ts/spec
 
+## 0.37.0
+
+### Minor Changes
+
+- f0edc6d: Add type guards (isFunction, isClass, isInterface, etc.) and schema utils (isOptional, unwrapArray, etc.)
+
 ## 0.35.1
 
 ### Patch Changes
