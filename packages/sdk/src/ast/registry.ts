@@ -1,7 +1,13 @@
 import type { SpecType, SpecTypeKind } from '@openpkg-ts/spec';
 import ts from 'typescript';
 import type { SerializerContext } from '../serializers/context';
-import { ARRAY_PROTOTYPE_METHODS, NUMBER_PROTOTYPE_METHODS, STRING_PROTOTYPE_METHODS, buildSchema, PRIMITIVES } from '../types/schema-builder';
+import {
+  ARRAY_PROTOTYPE_METHODS,
+  buildSchema,
+  NUMBER_PROTOTYPE_METHODS,
+  PRIMITIVES,
+  STRING_PROTOTYPE_METHODS,
+} from '../types/schema-builder';
 
 /** Built-in types that shouldn't be registered */
 const BUILTINS = new Set([
@@ -293,7 +299,11 @@ export class TypeRegistry {
     const isArrayLike =
       checker.isArrayType(type) ||
       checker.isTupleType(type) ||
-      (type.symbol?.getName() === 'Array' && type.symbol?.getDeclarations()?.[0]?.getSourceFile()?.fileName?.includes('/typescript/lib/lib.'));
+      (type.symbol?.getName() === 'Array' &&
+        type.symbol
+          ?.getDeclarations()?.[0]
+          ?.getSourceFile()
+          ?.fileName?.includes('/typescript/lib/lib.'));
     const isStringLike = type.flags & ts.TypeFlags.StringLike;
     const isNumberLike = type.flags & ts.TypeFlags.NumberLike;
 

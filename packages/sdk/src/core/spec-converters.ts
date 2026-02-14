@@ -113,8 +113,7 @@ export function specParamToAPIParam(param: SpecSignatureParameter): {
 } {
   const type = formatSchema(param.schema);
   const children = specSchemaToAPISchema(param.schema);
-  const hasNestedProperties =
-    children?.properties && Object.keys(children.properties).length > 0;
+  const hasNestedProperties = children?.properties && Object.keys(children.properties).length > 0;
 
   return {
     name: param.name ?? 'unknown',
@@ -136,9 +135,7 @@ export function specExamplesToCodeExamples(
     const lang = typeof ex === 'string' ? defaultLang : ex.language || defaultLang;
     const code = typeof ex === 'string' ? ex : ex.code;
     const label =
-      typeof ex === 'string'
-        ? getLanguageLabel(lang)
-        : ex.title || getLanguageLabel(lang);
+      typeof ex === 'string' ? getLanguageLabel(lang) : ex.title || getLanguageLabel(lang);
 
     return {
       id: `example-${i}`,

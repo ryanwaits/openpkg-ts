@@ -1,21 +1,21 @@
 import { describe, expect, test } from 'bun:test';
 import {
-  isStringSchema,
-  isNumberSchema,
-  isBooleanSchema,
-  isIntegerSchema,
-  isNullSchema,
-  isVoidSchema,
-  isNeverSchema,
-  isAnySchema,
-  isObjectSchema,
-  isArraySchema,
-  isTupleSchema,
-  isFunctionSchema,
-  isAnyOfSchema,
   isAllOfSchema,
+  isAnyOfSchema,
+  isAnySchema,
+  isArraySchema,
+  isBooleanSchema,
+  isFunctionSchema,
+  isIntegerSchema,
+  isNeverSchema,
+  isNullSchema,
+  isNumberSchema,
+  isObjectSchema,
   isOneOfSchema,
   isRefSchema,
+  isStringSchema,
+  isTupleSchema,
+  isVoidSchema,
 } from './guards';
 import type { SpecSchema } from './types';
 
@@ -75,7 +75,9 @@ describe('composite guards', () => {
   });
 
   test('isTupleSchema', () => {
-    expect(isTupleSchema({ type: 'tuple', items: [{ type: 'string' }, { type: 'number' }] })).toBe(true);
+    expect(isTupleSchema({ type: 'tuple', items: [{ type: 'string' }, { type: 'number' }] })).toBe(
+      true,
+    );
     expect(isTupleSchema({ type: 'array' })).toBe(false);
   });
 

@@ -15,7 +15,13 @@ import { serializeInterface } from '../serializers/interfaces';
 import { buildSignatures } from '../serializers/shared';
 import { serializeTypeAlias } from '../serializers/type-aliases';
 import { serializeVariable } from '../serializers/variables';
-import type { Diagnostic, ExportTracker, ExtractOptions, ExtractResult, TypeReference } from '../types';
+import type {
+  Diagnostic,
+  ExportTracker,
+  ExtractOptions,
+  ExtractResult,
+  TypeReference,
+} from '../types';
 import { registerReferencedTypes } from '../types/parameters';
 import { buildSchema } from '../types/schema-builder';
 import { normalizeExport, normalizeType } from '../types/schema-normalizer';
@@ -166,7 +172,12 @@ export async function extract(options: ExtractOptions): Promise<ExtractResult> {
     if (!sourceFile) {
       return {
         spec: createEmptySpec(entryFile, includeSchema, isDtsSource),
-        diagnostics: [{ message: `Entry file not found: ${entryFile}. Specify with: drift list src/index.ts`, severity: 'error' }],
+        diagnostics: [
+          {
+            message: `Entry file not found: ${entryFile}. Specify with: drift list src/index.ts`,
+            severity: 'error',
+          },
+        ],
       };
     }
 
@@ -177,7 +188,12 @@ export async function extract(options: ExtractOptions): Promise<ExtractResult> {
     if (!moduleSymbol) {
       return {
         spec: createEmptySpec(entryFile, includeSchema, isDtsSource),
-        diagnostics: [{ message: `No exports found in ${entryFile}. Is this the right entry point?`, severity: 'warning' }],
+        diagnostics: [
+          {
+            message: `No exports found in ${entryFile}. Is this the right entry point?`,
+            severity: 'warning',
+          },
+        ],
       };
     }
 

@@ -9,8 +9,8 @@ describe('getExport', () => {
     `;
     const result = await getExport({ entryFile: 'test.ts', exportName: 'add', content: code });
     expect(result.export).not.toBeNull();
-    expect(result.export!.kind).toBe('function');
-    expect(result.export!.name).toBe('add');
+    expect(result.export?.kind).toBe('function');
+    expect(result.export?.name).toBe('add');
   });
 
   test('gets a namespace export (export * as X)', async () => {
@@ -20,8 +20,8 @@ describe('getExport', () => {
     const result = await getExport({ entryFile: 'test.ts', exportName: 'Utils', content: code });
     expect(result.errors).toHaveLength(0);
     expect(result.export).not.toBeNull();
-    expect(result.export!.kind).toBe('namespace');
-    expect(result.export!.name).toBe('Utils');
+    expect(result.export?.kind).toBe('namespace');
+    expect(result.export?.name).toBe('Utils');
   });
 
   test('gets a namespace from module declaration', async () => {
@@ -33,8 +33,8 @@ describe('getExport', () => {
     `;
     const result = await getExport({ entryFile: 'test.ts', exportName: 'Config', content: code });
     expect(result.export).not.toBeNull();
-    expect(result.export!.kind).toBe('namespace');
-    expect(result.export!.name).toBe('Config');
+    expect(result.export?.kind).toBe('namespace');
+    expect(result.export?.name).toBe('Config');
   });
 
   test('aliased re-export uses export name for both id and name', async () => {
@@ -42,10 +42,14 @@ describe('getExport', () => {
       function internalName(): void {}
       export { internalName as publicApi };
     `;
-    const result = await getExport({ entryFile: 'test.ts', exportName: 'publicApi', content: code });
+    const result = await getExport({
+      entryFile: 'test.ts',
+      exportName: 'publicApi',
+      content: code,
+    });
     expect(result.export).not.toBeNull();
-    expect(result.export!.id).toBe('publicApi');
-    expect(result.export!.name).toBe('publicApi');
+    expect(result.export?.id).toBe('publicApi');
+    expect(result.export?.name).toBe('publicApi');
   });
 
   test('string literal union type schema does not expand to String prototype', async () => {
@@ -53,10 +57,14 @@ describe('getExport', () => {
       export type Status = 'active' | 'inactive' | 'pending';
       export function getStatus(): Status { return 'active'; }
     `;
-    const result = await getExport({ entryFile: 'test.ts', exportName: 'getStatus', content: code });
+    const result = await getExport({
+      entryFile: 'test.ts',
+      exportName: 'getStatus',
+      content: code,
+    });
     expect(result.export).not.toBeNull();
     // The Status type in types[] should be {type: "string", enum: [...]} not String prototype
-    const statusType = result.types.find(t => t.name === 'Status');
+    const statusType = result.types.find((t) => t.name === 'Status');
     if (statusType) {
       const schema = statusType.schema as Record<string, unknown>;
       expect(schema.type).toBe('string');
@@ -71,9 +79,13 @@ describe('getExport', () => {
       export enum Priority { Low = 0, Medium = 1, High = 2 }
       export function getPriority(): Priority { return Priority.Medium; }
     `;
-    const result = await getExport({ entryFile: 'test.ts', exportName: 'getPriority', content: code });
+    const result = await getExport({
+      entryFile: 'test.ts',
+      exportName: 'getPriority',
+      content: code,
+    });
     expect(result.export).not.toBeNull();
-    const priorityType = result.types.find(t => t.name === 'Priority');
+    const priorityType = result.types.find((t) => t.name === 'Priority');
     if (priorityType) {
       const schema = priorityType.schema as Record<string, unknown>;
       // Should have enum values, not Number prototype methods like toFixed
@@ -90,10 +102,14 @@ describe('getExport', () => {
         gt(value: number): this;
       }
     `;
-    const result = await getExport({ entryFile: 'test.ts', exportName: 'NumericType', content: code });
+    const result = await getExport({
+      entryFile: 'test.ts',
+      exportName: 'NumericType',
+      content: code,
+    });
     expect(result.export).not.toBeNull();
-    expect(result.export!.kind).toBe('interface');
-    expect(result.export!.name).toBe('NumericType');
+    expect(result.export?.kind).toBe('interface');
+    expect(result.export?.name).toBe('NumericType');
   });
 
   test('const with function type annotation gets kind=function', async () => {
@@ -103,7 +119,7 @@ describe('getExport', () => {
     `;
     const result = await getExport({ entryFile: 'test.ts', exportName: 'parse', content: code });
     expect(result.export).not.toBeNull();
-    expect(result.export!.kind).toBe('function');
+    expect(result.export?.kind).toBe('function');
   });
 
   test('function expression assigned to const gets kind=function', async () => {
@@ -113,6 +129,6 @@ describe('getExport', () => {
     `;
     const result = await getExport({ entryFile: 'test.ts', exportName: 'handler', content: code });
     expect(result.export).not.toBeNull();
-    expect(result.export!.kind).toBe('function');
+    expect(result.export?.kind).toBe('function');
   });
 });

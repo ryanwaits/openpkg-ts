@@ -39,6 +39,18 @@ export {
 } from './core/query';
 // Query builder
 export { QueryBuilder, query } from './core/query-builder';
+// Search utilities
+export {
+  type AlgoliaRecord,
+  type PagefindRecord,
+  type SearchIndex,
+  type SearchOptions,
+  type SearchRecord,
+  toAlgoliaRecords,
+  toPagefindRecords,
+  toSearchIndex,
+  toSearchIndexJSON,
+} from './core/search';
 // Spec converters (shared types + utilities)
 export {
   type APIParameterSchema,
@@ -52,15 +64,3 @@ export {
   specParamToAPIParam,
   specSchemaToAPISchema,
 } from './core/spec-converters';
-// Search utilities
-export {
-  type AlgoliaRecord,
-  type PagefindRecord,
-  type SearchIndex,
-  type SearchOptions,
-  type SearchRecord,
-  toAlgoliaRecords,
-  toPagefindRecords,
-  toSearchIndex,
-  toSearchIndexJSON,
-} from './core/search';

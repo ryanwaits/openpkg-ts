@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { resolveRef, flattenAnyOf, getSchemaType } from './schema-utils';
+import { flattenAnyOf, getSchemaType, resolveRef } from './schema-utils';
 import type { OpenPkg, SpecSchema } from './types';
 
 const MOCK_SPEC: OpenPkg = {
@@ -16,7 +16,7 @@ describe('resolveRef', () => {
   test('resolves valid $ref', () => {
     const result = resolveRef({ $ref: '#/types/User' }, MOCK_SPEC);
     expect(result).not.toBeNull();
-    expect(result!.name).toBe('User');
+    expect(result?.name).toBe('User');
   });
 
   test('returns null for missing ref', () => {
@@ -45,10 +45,7 @@ describe('flattenAnyOf', () => {
 
   test('flattens nested anyOf', () => {
     const schema: SpecSchema = {
-      anyOf: [
-        { type: 'string' },
-        { anyOf: [{ type: 'number' }, { type: 'boolean' }] },
-      ],
+      anyOf: [{ type: 'string' }, { anyOf: [{ type: 'number' }, { type: 'boolean' }] }],
     };
     const result = flattenAnyOf(schema);
     expect(result).toHaveLength(3);

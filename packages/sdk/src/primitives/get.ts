@@ -1,5 +1,6 @@
 import type { SpecExport, SpecType } from '@openpkg-ts/spec';
 import ts from 'typescript';
+import { getExportKind } from '../ast/utils';
 import { createProgram } from '../compiler/program';
 import { serializeClass } from '../serializers/classes';
 import { createContext } from '../serializers/context';
@@ -8,7 +9,6 @@ import { serializeFunctionExport } from '../serializers/functions';
 import { serializeInterface } from '../serializers/interfaces';
 import { serializeTypeAlias } from '../serializers/type-aliases';
 import { serializeVariable } from '../serializers/variables';
-import { getExportKind } from '../ast/utils';
 import { normalizeExport, normalizeType } from '../types/schema-normalizer';
 
 export interface GetExportOptions {
@@ -44,14 +44,22 @@ export async function getExport(options: GetExportOptions): Promise<GetExportRes
   const { program, sourceFile } = result;
 
   if (!sourceFile) {
-    return { export: null, types: [], errors: [`Entry file not found: ${entryFile}. Specify with: drift get src/index.ts <name>`] };
+    return {
+      export: null,
+      types: [],
+      errors: [`Entry file not found: ${entryFile}. Specify with: drift get src/index.ts <name>`],
+    };
   }
 
   const checker = program.getTypeChecker();
   const moduleSymbol = checker.getSymbolAtLocation(sourceFile);
 
   if (!moduleSymbol) {
-    return { export: null, types: [], errors: [`No exports found in ${entryFile}. Is this the right entry point?`] };
+    return {
+      export: null,
+      types: [],
+      errors: [`No exports found in ${entryFile}. Is this the right entry point?`],
+    };
   }
 
   const exportedSymbols = checker.getExportsOfModule(moduleSymbol);
@@ -82,7 +90,11 @@ export async function getExport(options: GetExportOptions): Promise<GetExportRes
       const types = ctx.typeRegistry
         .getAll()
         .map((t) => normalizeType(t, { dialect: 'draft-2020-12' }));
-      return { export: normalizeExport(spec, { dialect: 'draft-2020-12' }) as SpecExport, types, errors };
+      return {
+        export: normalizeExport(spec, { dialect: 'draft-2020-12' }) as SpecExport,
+        types,
+        errors,
+      };
     }
 
     const { declaration, resolvedSymbol, isTypeOnly } = resolveExportTarget(targetSymbol, checker);

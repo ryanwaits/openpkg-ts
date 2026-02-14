@@ -12,8 +12,14 @@ describe('formatSchema recursive union explosion', () => {
         { type: 'object', properties: { type: { const: 'uint' }, value: { type: 'integer' } } },
         { type: 'object', properties: { type: { const: 'bool' }, value: { type: 'boolean' } } },
         { type: 'object', properties: { type: { const: 'buffer' }, value: { type: 'string' } } },
-        { type: 'object', properties: { type: { const: 'string-ascii' }, value: { type: 'string' } } },
-        { type: 'object', properties: { type: { const: 'string-utf8' }, value: { type: 'string' } } },
+        {
+          type: 'object',
+          properties: { type: { const: 'string-ascii' }, value: { type: 'string' } },
+        },
+        {
+          type: 'object',
+          properties: { type: { const: 'string-utf8' }, value: { type: 'string' } },
+        },
         { type: 'object', properties: { type: { const: 'principal' }, value: { type: 'string' } } },
         {
           type: 'object',
@@ -24,13 +30,34 @@ describe('formatSchema recursive union explosion', () => {
               items: {
                 // Recursive: the list items are themselves the full union
                 anyOf: [
-                  { type: 'object', properties: { type: { const: 'int' }, value: { type: 'integer' } } },
-                  { type: 'object', properties: { type: { const: 'uint' }, value: { type: 'integer' } } },
-                  { type: 'object', properties: { type: { const: 'bool' }, value: { type: 'boolean' } } },
-                  { type: 'object', properties: { type: { const: 'buffer' }, value: { type: 'string' } } },
-                  { type: 'object', properties: { type: { const: 'string-ascii' }, value: { type: 'string' } } },
-                  { type: 'object', properties: { type: { const: 'string-utf8' }, value: { type: 'string' } } },
-                  { type: 'object', properties: { type: { const: 'principal' }, value: { type: 'string' } } },
+                  {
+                    type: 'object',
+                    properties: { type: { const: 'int' }, value: { type: 'integer' } },
+                  },
+                  {
+                    type: 'object',
+                    properties: { type: { const: 'uint' }, value: { type: 'integer' } },
+                  },
+                  {
+                    type: 'object',
+                    properties: { type: { const: 'bool' }, value: { type: 'boolean' } },
+                  },
+                  {
+                    type: 'object',
+                    properties: { type: { const: 'buffer' }, value: { type: 'string' } },
+                  },
+                  {
+                    type: 'object',
+                    properties: { type: { const: 'string-ascii' }, value: { type: 'string' } },
+                  },
+                  {
+                    type: 'object',
+                    properties: { type: { const: 'string-utf8' }, value: { type: 'string' } },
+                  },
+                  {
+                    type: 'object',
+                    properties: { type: { const: 'principal' }, value: { type: 'string' } },
+                  },
                   {
                     type: 'object',
                     properties: {
@@ -42,12 +69,48 @@ describe('formatSchema recursive union explosion', () => {
                             type: 'array',
                             items: {
                               anyOf: [
-                                { type: 'object', properties: { type: { const: 'int' }, value: { type: 'integer' } } },
-                                { type: 'object', properties: { type: { const: 'uint' }, value: { type: 'integer' } } },
-                                { type: 'object', properties: { type: { const: 'bool' }, value: { type: 'boolean' } } },
-                                { type: 'object', properties: { type: { const: 'buffer' }, value: { type: 'string' } } },
-                                { type: 'object', properties: { type: { const: 'string-ascii' }, value: { type: 'string' } } },
-                                { type: 'object', properties: { type: { const: 'string-utf8' }, value: { type: 'string' } } },
+                                {
+                                  type: 'object',
+                                  properties: {
+                                    type: { const: 'int' },
+                                    value: { type: 'integer' },
+                                  },
+                                },
+                                {
+                                  type: 'object',
+                                  properties: {
+                                    type: { const: 'uint' },
+                                    value: { type: 'integer' },
+                                  },
+                                },
+                                {
+                                  type: 'object',
+                                  properties: {
+                                    type: { const: 'bool' },
+                                    value: { type: 'boolean' },
+                                  },
+                                },
+                                {
+                                  type: 'object',
+                                  properties: {
+                                    type: { const: 'buffer' },
+                                    value: { type: 'string' },
+                                  },
+                                },
+                                {
+                                  type: 'object',
+                                  properties: {
+                                    type: { const: 'string-ascii' },
+                                    value: { type: 'string' },
+                                  },
+                                },
+                                {
+                                  type: 'object',
+                                  properties: {
+                                    type: { const: 'string-utf8' },
+                                    value: { type: 'string' },
+                                  },
+                                },
                               ],
                             },
                           },
@@ -71,12 +134,30 @@ describe('formatSchema recursive union explosion', () => {
                   type: 'array',
                   items: {
                     anyOf: [
-                      { type: 'object', properties: { type: { const: 'int' }, value: { type: 'integer' } } },
-                      { type: 'object', properties: { type: { const: 'uint' }, value: { type: 'integer' } } },
-                      { type: 'object', properties: { type: { const: 'bool' }, value: { type: 'boolean' } } },
-                      { type: 'object', properties: { type: { const: 'buffer' }, value: { type: 'string' } } },
-                      { type: 'object', properties: { type: { const: 'string-ascii' }, value: { type: 'string' } } },
-                      { type: 'object', properties: { type: { const: 'string-utf8' }, value: { type: 'string' } } },
+                      {
+                        type: 'object',
+                        properties: { type: { const: 'int' }, value: { type: 'integer' } },
+                      },
+                      {
+                        type: 'object',
+                        properties: { type: { const: 'uint' }, value: { type: 'integer' } },
+                      },
+                      {
+                        type: 'object',
+                        properties: { type: { const: 'bool' }, value: { type: 'boolean' } },
+                      },
+                      {
+                        type: 'object',
+                        properties: { type: { const: 'buffer' }, value: { type: 'string' } },
+                      },
+                      {
+                        type: 'object',
+                        properties: { type: { const: 'string-ascii' }, value: { type: 'string' } },
+                      },
+                      {
+                        type: 'object',
+                        properties: { type: { const: 'string-utf8' }, value: { type: 'string' } },
+                      },
                     ],
                   },
                 },

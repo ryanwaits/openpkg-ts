@@ -1,8 +1,8 @@
 import type {
   SpecSchema,
-  SpecSchemaPrimitive,
-  SpecSchemaComposite,
   SpecSchemaCombinator,
+  SpecSchemaComposite,
+  SpecSchemaPrimitive,
   SpecSchemaRef,
 } from './types';
 
@@ -18,19 +18,27 @@ function hasType(s: SpecSchema, t: string): boolean {
 
 // --- Primitive guards ---
 
-export function isStringSchema(s: SpecSchema): s is Extract<SpecSchemaPrimitive, { type: 'string' }> {
+export function isStringSchema(
+  s: SpecSchema,
+): s is Extract<SpecSchemaPrimitive, { type: 'string' }> {
   return hasType(s, 'string');
 }
 
-export function isNumberSchema(s: SpecSchema): s is Extract<SpecSchemaPrimitive, { type: 'number' }> {
+export function isNumberSchema(
+  s: SpecSchema,
+): s is Extract<SpecSchemaPrimitive, { type: 'number' }> {
   return hasType(s, 'number');
 }
 
-export function isBooleanSchema(s: SpecSchema): s is Extract<SpecSchemaPrimitive, { type: 'boolean' }> {
+export function isBooleanSchema(
+  s: SpecSchema,
+): s is Extract<SpecSchemaPrimitive, { type: 'boolean' }> {
   return hasType(s, 'boolean');
 }
 
-export function isIntegerSchema(s: SpecSchema): s is Extract<SpecSchemaPrimitive, { type: 'integer' }> {
+export function isIntegerSchema(
+  s: SpecSchema,
+): s is Extract<SpecSchemaPrimitive, { type: 'integer' }> {
   return hasType(s, 'integer');
 }
 
@@ -52,7 +60,9 @@ export function isAnySchema(s: SpecSchema): s is Extract<SpecSchemaPrimitive, { 
 
 // --- Composite guards ---
 
-export function isObjectSchema(s: SpecSchema): s is Extract<SpecSchemaComposite, { type: 'object' }> {
+export function isObjectSchema(
+  s: SpecSchema,
+): s is Extract<SpecSchemaComposite, { type: 'object' }> {
   return hasType(s, 'object');
 }
 
@@ -64,21 +74,29 @@ export function isTupleSchema(s: SpecSchema): s is Extract<SpecSchemaComposite, 
   return hasType(s, 'tuple');
 }
 
-export function isFunctionSchema(s: SpecSchema): s is Extract<SpecSchemaComposite, { type: 'function' }> {
+export function isFunctionSchema(
+  s: SpecSchema,
+): s is Extract<SpecSchemaComposite, { type: 'function' }> {
   return hasType(s, 'function');
 }
 
 // --- Combinator guards ---
 
-export function isAnyOfSchema(s: SpecSchema): s is Extract<SpecSchemaCombinator, { anyOf: SpecSchema[] }> {
+export function isAnyOfSchema(
+  s: SpecSchema,
+): s is Extract<SpecSchemaCombinator, { anyOf: SpecSchema[] }> {
   return isObj(s) && 'anyOf' in s && Array.isArray((s as { anyOf?: unknown }).anyOf);
 }
 
-export function isAllOfSchema(s: SpecSchema): s is Extract<SpecSchemaCombinator, { allOf: SpecSchema[] }> {
+export function isAllOfSchema(
+  s: SpecSchema,
+): s is Extract<SpecSchemaCombinator, { allOf: SpecSchema[] }> {
   return isObj(s) && 'allOf' in s && Array.isArray((s as { allOf?: unknown }).allOf);
 }
 
-export function isOneOfSchema(s: SpecSchema): s is Extract<SpecSchemaCombinator, { oneOf: SpecSchema[] }> {
+export function isOneOfSchema(
+  s: SpecSchema,
+): s is Extract<SpecSchemaCombinator, { oneOf: SpecSchema[] }> {
   return isObj(s) && 'oneOf' in s && Array.isArray((s as { oneOf?: unknown }).oneOf);
 }
 

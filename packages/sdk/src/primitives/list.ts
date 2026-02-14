@@ -19,7 +19,15 @@ export interface ExportItem {
   /** Export name */
   name: string;
   /** Export kind */
-  kind: 'function' | 'class' | 'interface' | 'type' | 'enum' | 'variable' | 'namespace' | 'external';
+  kind:
+    | 'function'
+    | 'class'
+    | 'interface'
+    | 'type'
+    | 'enum'
+    | 'variable'
+    | 'namespace'
+    | 'external';
   /** Source file path */
   file: string;
   /** Line number (1-indexed) */
@@ -49,14 +57,20 @@ export async function listExports(options: ListExportsOptions): Promise<ListExpo
   const { program, sourceFile } = result;
 
   if (!sourceFile) {
-    return { exports: [], errors: [`Entry file not found: ${entryFile}. Specify with: drift list src/index.ts`] };
+    return {
+      exports: [],
+      errors: [`Entry file not found: ${entryFile}. Specify with: drift list src/index.ts`],
+    };
   }
 
   const checker = program.getTypeChecker();
   const moduleSymbol = checker.getSymbolAtLocation(sourceFile);
 
   if (!moduleSymbol) {
-    return { exports: [], errors: [`No exports found in ${entryFile}. Is this the right entry point?`] };
+    return {
+      exports: [],
+      errors: [`No exports found in ${entryFile}. Is this the right entry point?`],
+    };
   }
 
   const exportedSymbols = checker.getExportsOfModule(moduleSymbol);

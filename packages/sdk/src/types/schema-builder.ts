@@ -1,4 +1,4 @@
-import type { SpecSchema, SpecSchemaRef, SpecSignature } from '@openpkg-ts/spec';
+import type { SpecSchema, SpecSignature } from '@openpkg-ts/spec';
 import ts from 'typescript';
 import type { SerializerContext } from '../serializers/context';
 
@@ -159,19 +159,62 @@ export const ARRAY_PROTOTYPE_METHODS: Set<string> = new Set([
 
 // String prototype methods — prevent explosion when string literal unions fall through to object handling
 export const STRING_PROTOTYPE_METHODS: Set<string> = new Set([
-  'charAt', 'charCodeAt', 'codePointAt', 'concat', 'endsWith', 'includes',
-  'indexOf', 'lastIndexOf', 'localeCompare', 'match', 'matchAll', 'normalize',
-  'padEnd', 'padStart', 'repeat', 'replace', 'replaceAll', 'search', 'slice',
-  'split', 'startsWith', 'substring', 'toLocaleLowerCase', 'toLocaleUpperCase',
-  'toLowerCase', 'toUpperCase', 'trim', 'trimEnd', 'trimStart', 'at', 'bold',
-  'fixed', 'italics', 'link', 'small', 'strike', 'sub', 'sup', 'anchor',
-  'big', 'blink', 'fontcolor', 'fontsize', 'substr', 'toString', 'valueOf',
+  'charAt',
+  'charCodeAt',
+  'codePointAt',
+  'concat',
+  'endsWith',
+  'includes',
+  'indexOf',
+  'lastIndexOf',
+  'localeCompare',
+  'match',
+  'matchAll',
+  'normalize',
+  'padEnd',
+  'padStart',
+  'repeat',
+  'replace',
+  'replaceAll',
+  'search',
+  'slice',
+  'split',
+  'startsWith',
+  'substring',
+  'toLocaleLowerCase',
+  'toLocaleUpperCase',
+  'toLowerCase',
+  'toUpperCase',
+  'trim',
+  'trimEnd',
+  'trimStart',
+  'at',
+  'bold',
+  'fixed',
+  'italics',
+  'link',
+  'small',
+  'strike',
+  'sub',
+  'sup',
+  'anchor',
+  'big',
+  'blink',
+  'fontcolor',
+  'fontsize',
+  'substr',
+  'toString',
+  'valueOf',
   'length',
 ]);
 
 // Number prototype methods — prevent explosion when numeric enums fall through to object handling
 export const NUMBER_PROTOTYPE_METHODS: Set<string> = new Set([
-  'toFixed', 'toExponential', 'toPrecision', 'toString', 'valueOf',
+  'toFixed',
+  'toExponential',
+  'toPrecision',
+  'toString',
+  'valueOf',
   'toLocaleString',
 ]);
 
@@ -334,9 +377,7 @@ function buildMaxDepthSchema(type: ts.Type, checker: ts.TypeChecker): SpecSchema
 
   // Intersections → allOf with leaf schemas per member
   if (type.isIntersection()) {
-    const schemas = (type as ts.IntersectionType).types.map((t) =>
-      buildMaxDepthSchema(t, checker),
-    );
+    const schemas = (type as ts.IntersectionType).types.map((t) => buildMaxDepthSchema(t, checker));
     return { allOf: schemas };
   }
 
@@ -397,7 +438,7 @@ function buildSchemaInternal(
     if (type.flags & ts.TypeFlags.ESSymbol) return { type: 'symbol' };
 
     // Handle 'this' type - mark with x-ts-type for fluent patterns
-    if ((type as any).isThisType === true) {
+    if ((type as unknown as { isThisType?: boolean }).isThisType === true) {
       // Get the constraint (the class type) and create a $ref with this marker
       const constraint = type.getConstraint?.();
       const symbol = constraint?.getSymbol() ?? type.getSymbol();
@@ -688,7 +729,7 @@ function buildSchemaInternal(
   } finally {
     // Stack-style cleanup: remove from visited after processing completes
     if (addedToVisited) {
-      ctx!.visitedTypes.delete(type);
+      ctx?.visitedTypes.delete(type);
     }
   }
 }

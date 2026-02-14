@@ -1,25 +1,6 @@
 export * from './constants';
 export { dereference } from './deref';
 export {
-  isStringSchema,
-  isNumberSchema,
-  isBooleanSchema,
-  isIntegerSchema,
-  isNullSchema,
-  isVoidSchema,
-  isNeverSchema,
-  isAnySchema,
-  isObjectSchema,
-  isArraySchema,
-  isTupleSchema,
-  isFunctionSchema,
-  isAnyOfSchema,
-  isAllOfSchema,
-  isOneOfSchema,
-  isRefSchema,
-} from './guards';
-export { resolveRef, flattenAnyOf, getSchemaType } from './schema-utils';
-export {
   type BreakingSeverity,
   type CategorizedBreaking,
   calculateNextVersion,
@@ -32,7 +13,26 @@ export {
   type SemverRecommendation,
   type SpecDiff,
 } from './diff';
+export {
+  isAllOfSchema,
+  isAnyOfSchema,
+  isAnySchema,
+  isArraySchema,
+  isBooleanSchema,
+  isFunctionSchema,
+  isIntegerSchema,
+  isNeverSchema,
+  isNullSchema,
+  isNumberSchema,
+  isObjectSchema,
+  isOneOfSchema,
+  isRefSchema,
+  isStringSchema,
+  isTupleSchema,
+  isVoidSchema,
+} from './guards';
 export { normalize } from './normalize';
+export { flattenAnyOf, getSchemaType, resolveRef } from './schema-utils';
 export * from './types';
 export {
   assertSpec,
