@@ -1,5 +1,13 @@
 import { describe, expect, test } from 'bun:test';
+import type { SpecExport, SpecSignatureParameter } from '@openpkg-ts/spec';
 import { extract } from '../builder/spec-builder';
+
+/** Narrow to the first signature's parameters, failing the test if missing. */
+function firstSignatureParams(fn: SpecExport | undefined): SpecSignatureParameter[] {
+  const params = fn?.signatures?.[0]?.parameters;
+  if (!params) throw new Error('expected export to have a signature with parameters');
+  return params;
+}
 
 describe('optional parameter detection', () => {
   test('marks optional param with ? as required: false', async () => {
@@ -14,10 +22,9 @@ describe('optional parameter detection', () => {
     expect(fn).toBeDefined();
     expect(fn?.kind).toBe('function');
 
-    const signatures = fn?.signatures;
-    expect(signatures).toHaveLength(1);
+    expect(fn?.signatures).toHaveLength(1);
 
-    const params = signatures[0].parameters;
+    const params = firstSignatureParams(fn);
     expect(params).toHaveLength(2);
 
     expect(params[0].name).toBe('a');
@@ -38,8 +45,7 @@ describe('optional parameter detection', () => {
     const fn = result.spec.exports.find((e) => e.name === 'test');
     expect(fn).toBeDefined();
 
-    const signatures = fn?.signatures;
-    const params = signatures[0].parameters;
+    const params = firstSignatureParams(fn);
 
     expect(params[0].name).toBe('a');
     expect(params[0].required).toBe(true);
@@ -59,8 +65,7 @@ describe('optional parameter detection', () => {
     const fn = result.spec.exports.find((e) => e.name === 'test');
     expect(fn).toBeDefined();
 
-    const signatures = fn?.signatures;
-    const params = signatures[0].parameters;
+    const params = firstSignatureParams(fn);
 
     expect(params).toHaveLength(1);
     expect(params[0].name).toBe('a');
@@ -76,8 +81,7 @@ describe('optional parameter detection', () => {
     });
 
     const fn = result.spec.exports.find((e) => e.name === 'test');
-    const signatures = fn?.signatures;
-    const params = signatures[0].parameters;
+    const params = firstSignatureParams(fn);
 
     expect(params[0].required).toBe(true);
     expect(params[1].required).toBe(false);
@@ -93,8 +97,7 @@ describe('optional parameter detection', () => {
     });
 
     const fn = result.spec.exports.find((e) => e.name === 'test');
-    const signatures = fn?.signatures;
-    const params = signatures[0].parameters;
+    const params = firstSignatureParams(fn);
 
     expect(params[0].name).toBe('a');
     expect(params[0].required).toBe(true);

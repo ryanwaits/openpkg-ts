@@ -21,8 +21,13 @@ function stripUndefinedFromType(type: ts.Type, checker: ts.TypeChecker): ts.Type
   // If only one type remains, return it directly
   if (nonUndefinedTypes.length === 1) return nonUndefinedTypes[0];
 
-  // Otherwise, create a new union type without undefined
-  return checker.getUnionType(nonUndefinedTypes);
+  // Otherwise, create a new union type without undefined.
+  // getUnionType is an internal TypeScript API absent from public typings but
+  // verified present at runtime in TS 5.x; revisit on TypeScript upgrades.
+  type CheckerWithUnion = ts.TypeChecker & {
+    getUnionType(types: readonly ts.Type[]): ts.Type;
+  };
+  return (checker as CheckerWithUnion).getUnionType(nonUndefinedTypes);
 }
 
 export function extractParameters(

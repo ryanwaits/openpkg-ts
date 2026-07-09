@@ -1,5 +1,13 @@
 import { describe, expect, test } from 'bun:test';
+import type { SpecExport, SpecSignatureParameter } from '@openpkg-ts/spec';
 import { extract } from '../builder/spec-builder';
+
+/** Narrow to the first signature's parameters, failing the test if missing. */
+function firstSignatureParams(fn: SpecExport | undefined): SpecSignatureParameter[] {
+  const params = fn?.signatures?.[0]?.parameters;
+  if (!params) throw new Error('expected export to have a signature with parameters');
+  return params;
+}
 
 describe('arrow function exports', () => {
   test('arrow function const has kind: function', async () => {
@@ -29,8 +37,7 @@ describe('arrow function exports', () => {
     expect(fn).toBeDefined();
     expect(fn?.kind).toBe('function');
 
-    const signatures = fn?.signatures;
-    const params = signatures[0].parameters;
+    const params = firstSignatureParams(fn);
 
     expect(params[0].name).toBe('name');
     expect(params[0].required).toBe(true);
@@ -50,8 +57,7 @@ describe('arrow function exports', () => {
     const fn = result.spec.exports.find((e) => e.name === 'multiply');
     expect(fn?.kind).toBe('function');
 
-    const signatures = fn?.signatures;
-    const params = signatures[0].parameters;
+    const params = firstSignatureParams(fn);
 
     expect(params[0].required).toBe(true);
     expect(params[1].required).toBe(false);
@@ -94,8 +100,11 @@ describe('arrow function exports', () => {
     const fn = result.spec.exports.find((e) => e.name === 'double');
     expect(fn?.kind).toBe('function');
 
-    const signatures = fn?.signatures;
-    const returnSchema = signatures[0].returns.schema;
+    const returnSchema = fn?.signatures?.[0]?.returns?.schema;
+    // SpecSchema is a union including a string shorthand; narrow to an object with `type`
+    if (typeof returnSchema !== 'object' || returnSchema === null || !('type' in returnSchema)) {
+      throw new Error('expected return schema to be an object with a type');
+    }
     expect(returnSchema.type).toBe('number');
   });
 });

@@ -32,6 +32,7 @@ describe('createProgram local re-export resolution', () => {
 
     // Verify the declaration is in the correct file
     const decl = aliased.declarations?.[0];
+    if (!decl) throw new Error('expected aliased symbol to have a declaration');
     expect(decl.getSourceFile().fileName).toContain('subdir/data.ts');
   });
 

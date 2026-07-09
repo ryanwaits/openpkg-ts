@@ -1,4 +1,4 @@
-import type { SpecExport, SpecMember, SpecVisibility } from '@openpkg-ts/spec';
+import type { SpecExport, SpecMember, SpecSignature, SpecVisibility } from '@openpkg-ts/spec';
 import ts from 'typescript';
 import { extractTypeParameters, getJSDocComment, isSymbolDeprecated } from '../ast/utils';
 import { extractParameters, registerReferencedTypes } from '../types/parameters';

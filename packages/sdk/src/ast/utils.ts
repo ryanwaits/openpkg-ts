@@ -306,7 +306,8 @@ type DeclarationWithTypeParams =
   | ts.InterfaceDeclaration
   | ts.TypeAliasDeclaration
   | ts.MethodDeclaration
-  | ts.ArrowFunction;
+  | ts.ArrowFunction
+  | ts.FunctionExpression;
 
 /**
  * Extract type parameters from declarations like `<T extends Base, K = Default>`
@@ -477,7 +478,10 @@ export function extractTypeParametersFromSignature(
 }
 
 /** Classify a declaration node into an export kind */
-export function getExportKind(declaration: ts.Declaration, type: ts.Type): SpecExportKind {
+export function getExportKind(
+  declaration: ts.Declaration,
+  type: ts.Type,
+): Exclude<SpecExportKind, 'module' | 'reference' | 'external'> {
   if (ts.isFunctionDeclaration(declaration) || ts.isFunctionExpression(declaration))
     return 'function';
   if (ts.isClassDeclaration(declaration)) return 'class';
