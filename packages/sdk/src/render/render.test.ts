@@ -5,6 +5,7 @@ import { type SimplifiedSpec, toJSON } from './json';
 import { toMarkdown } from './markdown';
 
 const mockSpec: OpenPkg = {
+  openpkg: '0.4.0',
   meta: { name: 'test-pkg', version: '1.0.0', description: 'Test package' },
   exports: [
     { id: 'fn-greet', name: 'greet', kind: 'function', signatures: [] },
