@@ -7,8 +7,18 @@ const MOCK_SPEC: OpenPkg = {
   meta: { name: 'test', version: '1.0.0' },
   exports: [],
   types: [
-    { name: 'User', schema: { type: 'object', properties: { id: { type: 'string' } } } },
-    { name: 'Status', schema: { type: 'string', enum: ['active', 'inactive'] } },
+    {
+      id: 'User',
+      name: 'User',
+      kind: 'interface',
+      schema: { type: 'object', properties: { id: { type: 'string' } } },
+    },
+    {
+      id: 'Status',
+      name: 'Status',
+      kind: 'type',
+      schema: { type: 'string', enum: ['active', 'inactive'] },
+    },
   ],
 };
 

@@ -1,4 +1,4 @@
-import type { SpecSignature, SpecSource } from '@openpkg-ts/spec';
+import type { SpecExample, SpecSignature, SpecSource, SpecTag } from '@openpkg-ts/spec';
 import type ts from 'typescript';
 import {
   extractTypeParametersFromSignature,
@@ -13,8 +13,8 @@ import type { SerializerContext } from './context';
 
 export interface ExportMetadata {
   description?: string;
-  tags?: string[];
-  examples?: string[];
+  tags: SpecTag[];
+  examples: SpecExample[];
   source: SpecSource;
   deprecated: boolean;
   deprecationReason?: string;

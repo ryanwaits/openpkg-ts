@@ -1,5 +1,18 @@
 import { describe, expect, test } from 'bun:test';
+import type { SpecSchema } from '@openpkg-ts/spec';
 import { extract } from './spec-builder';
+
+/**
+ * Extract `properties` from an object schema.
+ * SpecSchema is a union including a string shorthand, so narrow structurally first.
+ */
+function schemaProperties(schema: SpecSchema | undefined): Record<string, unknown> {
+  if (typeof schema !== 'object' || schema === null || !('properties' in schema)) return {};
+  const props = schema.properties;
+  if (typeof props !== 'object' || props === null) return {};
+  // narrowed `unknown` to `object`; index access needs a Record shape
+  return props as Record<string, unknown>;
+}
 
 describe('spec-builder aliased exports', () => {
   test('aliased function export has correct name', async () => {
@@ -126,10 +139,10 @@ describe('spec-builder prototype method filtering', () => {
     // ChatClient is a $ref type — check in types array
     const chatClient = result.spec.types?.find((t) => t.name === 'ChatClient');
     expect(chatClient).toBeDefined();
-    const props = chatClient?.schema?.properties;
-    expect(props?.find).toBeDefined();
-    expect(props?.create).toBeDefined();
-    expect(props?.delete).toBeDefined();
+    const props = schemaProperties(chatClient?.schema);
+    expect(props.find).toBeDefined();
+    expect(props.create).toBeDefined();
+    expect(props.delete).toBeDefined();
   });
 
   test('array prototype methods ARE filtered from actual arrays', async () => {
@@ -142,7 +155,7 @@ describe('spec-builder prototype method filtering', () => {
     expect(exp).toBeDefined();
 
     // Array schema should NOT include find/map/filter etc
-    const props = exp?.schema?.properties ?? {};
+    const props = schemaProperties(exp?.schema);
     expect(props.find).toBeUndefined();
     expect(props.map).toBeUndefined();
     expect(props.filter).toBeUndefined();

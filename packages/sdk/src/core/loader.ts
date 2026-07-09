@@ -60,7 +60,7 @@ export interface DocsInstance {
   groupByKind(): Record<SpecExportKind, SpecExport[]>;
 
   // Render methods — all return strings or plain data, not React components.
-  // For React UI components, see the @openpkg-ts/registry package.
+  // Bring your own UI components.
   /** Render spec or single export to an MDX string */
   toMarkdown(options?: ExportMarkdownOptions): string;
   /** Render spec or single export to an HTML string */
@@ -97,8 +97,7 @@ export function loadSpec(spec: OpenPkg): DocsInstance {
  * Creates a docs instance for querying and rendering API documentation.
  *
  * Render methods (toMarkdown, toHTML, toJSON, toNavigation) return strings or
- * plain data objects — not React components. For React UI components, see the
- * `@openpkg-ts/registry` package.
+ * plain data objects — not React components. Bring your own UI components.
  *
  * @example
  * ```ts
