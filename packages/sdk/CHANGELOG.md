@@ -1,5 +1,15 @@
 # @openpkg-ts/extract
 
+## 0.38.0
+
+### Minor Changes
+
+- 623d86b: Remove toReact/toReactString and the ReactLayoutOptions type. The generated scaffolds pointed at the retired component registry workflow ("openpkg docs add") and never-shipped components. For framework docs generation use toMarkdown/toHTML with toNavigation/toFumadocsMetaJSON/toDocusaurusSidebarJS, or the generate-docs agent skill shipped with @openpkg-ts/cli.
+
+### Patch Changes
+
+- 3dc6c72: Type-level fixes, no runtime changes: ExportMetadata now correctly types tags/examples as SpecTag[]/SpecExample[]; getExportKind return type narrowed to the kinds it can actually produce; getUnionType internal-API call wrapped in a scoped typed cast; removed stale JSDoc pointing at the retired component registry. Zero tsc errors across the monorepo.
+
 ## 0.37.1
 
 ### Patch Changes
