@@ -1,5 +1,17 @@
 # @openpkg-ts/cli
 
+## 0.8.0
+
+### Minor Changes
+
+- 623d86b: Ship the generate-docs agent skill in the npm tarball (skills/generate-docs/SKILL.md). Copy it into your project's .claude/skills/ to let an agent scaffold framework-ready API reference docs (Fumadocs, Docusaurus, plain Markdown) with navigation, search indexes, and output verification.
+
+### Patch Changes
+
+- Updated dependencies [623d86b]
+- Updated dependencies [3dc6c72]
+  - @openpkg-ts/sdk@0.38.0
+
 ## 0.7.0
 
 ### Minor Changes
