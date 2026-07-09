@@ -36,7 +36,8 @@
     "test": "bun test",
     "lint": "biome check src/",
     "lint:fix": "biome check --write src/",
-    "format": "biome format --write src/"
+    "format": "biome format --write src/",
+    "typecheck": "tsc --noEmit -p ."
   },
   "dependencies": {
     "ajv": "^8.17.1",
