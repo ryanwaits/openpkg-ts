@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test';
 import type { OpenPkg } from '@openpkg-ts/spec';
-import { toPagefindRecords } from './search';
+import { toAlgoliaRecords, toPagefindRecords } from './search';
 
 const makeSpec = (): OpenPkg => ({
   openpkg: '0.4.0',
@@ -63,5 +63,24 @@ describe('toPagefindRecords', () => {
     const customMaxWeight = Math.max(...customSections.map((s) => s.weight));
     const customHighest = customSections.find((s) => s.weight === customMaxWeight);
     expect(customHighest?.text).toBe('Greets a person'); // description now highest
+  });
+});
+
+describe('toAlgoliaRecords', () => {
+  it('uses proper plural kind labels in hierarchy', () => {
+    const spec = makeSpec();
+    spec.exports.push({
+      id: 'cls-user',
+      name: 'User',
+      kind: 'class',
+      signatures: [],
+    });
+
+    const records = toAlgoliaRecords(spec);
+    const fnRecord = records.find((r) => r.name === 'greet');
+    const clsRecord = records.find((r) => r.name === 'User');
+
+    expect(fnRecord?.hierarchy.lvl1).toBe('Functions');
+    expect(clsRecord?.hierarchy.lvl1).toBe('Classes');
   });
 });

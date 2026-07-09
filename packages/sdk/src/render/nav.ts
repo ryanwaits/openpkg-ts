@@ -1,4 +1,4 @@
-import type { OpenPkg, SpecExport, SpecExportKind } from '@openpkg-ts/spec';
+import { KIND_LABELS, type OpenPkg, type SpecExport, type SpecExportKind } from '@openpkg-ts/spec';
 import { KIND_ORDER, sortByName } from '../core/query';
 
 export type NavFormat = 'fumadocs' | 'docusaurus' | 'generic';
@@ -66,19 +66,6 @@ export interface DocusaurusSidebarItem {
 }
 
 export type DocusaurusSidebar = DocusaurusSidebarItem[];
-
-const defaultKindLabels: Record<SpecExportKind, string> = {
-  function: 'Functions',
-  class: 'Classes',
-  interface: 'Interfaces',
-  type: 'Types',
-  enum: 'Enums',
-  variable: 'Variables',
-  namespace: 'Namespaces',
-  module: 'Modules',
-  reference: 'References',
-  external: 'External',
-};
 
 const defaultSlugify = (name: string): string => name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
 
@@ -154,10 +141,10 @@ function toGenericNav(spec: OpenPkg, options: NavOptions): GenericNav {
     includeGroupIndex = false,
   } = options;
 
-  const labels = { ...defaultKindLabels, ...kindLabels };
+  const labels = { ...KIND_LABELS, ...kindLabels };
   const grouped = groupExports(spec.exports, groupBy);
 
-  const groups: NavGroup[] = [];
+  const keyedGroups: { key: string; group: NavGroup }[] = [];
 
   for (const [key, exports] of grouped) {
     const sortedExports = sortAlphabetically ? sortByName(exports) : exports;
@@ -169,21 +156,25 @@ function toGenericNav(spec: OpenPkg, options: NavOptions): GenericNav {
 
     const title = groupBy === 'kind' ? labels[key as SpecExportKind] || key : key;
 
-    groups.push({
-      title,
-      items,
-      index: includeGroupIndex ? `${basePath}/${slugify(key)}` : undefined,
+    keyedGroups.push({
+      key,
+      group: {
+        title,
+        items,
+        index: includeGroupIndex ? `${basePath}/${slugify(key)}` : undefined,
+      },
     });
   }
 
   // Sort groups by kind order if grouping by kind
   if (groupBy === 'kind') {
-    groups.sort((a, b) => {
-      const aIdx = KIND_ORDER.indexOf(a.title.toLowerCase().replace(/s$/, '') as SpecExportKind);
-      const bIdx = KIND_ORDER.indexOf(b.title.toLowerCase().replace(/s$/, '') as SpecExportKind);
-      return aIdx - bIdx;
-    });
+    keyedGroups.sort(
+      (a, b) =>
+        KIND_ORDER.indexOf(a.key as SpecExportKind) - KIND_ORDER.indexOf(b.key as SpecExportKind),
+    );
   }
+
+  const groups: NavGroup[] = keyedGroups.map((g) => g.group);
 
   // Flatten to items if no grouping
   const flatItems: NavItem[] =

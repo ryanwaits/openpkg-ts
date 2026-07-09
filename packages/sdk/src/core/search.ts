@@ -1,4 +1,4 @@
-import type { OpenPkg, SpecExport, SpecExportKind } from '@openpkg-ts/spec';
+import { KIND_LABELS, type OpenPkg, type SpecExport, type SpecExportKind } from '@openpkg-ts/spec';
 import { buildSignatureString, getMethods, getProperties } from './query';
 
 export interface SearchOptions {
@@ -326,7 +326,7 @@ export function toAlgoliaRecords(spec: OpenPkg, options: SearchOptions = {}): Al
     url: `${baseUrl}/${slugify(exp.name)}`,
     hierarchy: {
       lvl0: spec.meta.name,
-      lvl1: `${exp.kind.charAt(0).toUpperCase() + exp.kind.slice(1)}s`,
+      lvl1: KIND_LABELS[exp.kind],
       lvl2: exp.name,
     },
   }));
