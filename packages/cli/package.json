@@ -1,0 +1,46 @@
+{
+  "name": "@openpkg-ts/cli",
+  "version": "0.6.4",
+  "description": "CLI for OpenPkg - extract TypeScript API specs and generate docs",
+  "keywords": [
+    "openpkg",
+    "typescript",
+    "api-extractor",
+    "cli",
+    "docs"
+  ],
+  "homepage": "https://github.com/ryanwaits/openpkg-ts#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ryanwaits/openpkg-ts.git",
+    "directory": "packages/cli"
+  },
+  "license": "MIT",
+  "author": "Ryan Waits",
+  "type": "module",
+  "bin": {
+    "openpkg": "./dist/index.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "bunup",
+    "dev": "bunup --watch",
+    "lint": "biome check src/",
+    "lint:fix": "biome check --write src/",
+    "format": "biome format --write src/",
+    "test": "bun test"
+  },
+  "dependencies": {
+    "@openpkg-ts/sdk": "^0.37.1"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/node": "^20.0.0",
+    "bunup": "^0.16.20"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
