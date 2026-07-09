@@ -1,6 +1,6 @@
 {
   "name": "@openpkg-ts/cli",
-  "version": "0.6.4",
+  "version": "0.7.0",
   "description": "CLI for OpenPkg - extract TypeScript API specs and generate docs",
   "keywords": [
     "openpkg",
