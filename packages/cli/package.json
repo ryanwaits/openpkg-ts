@@ -22,7 +22,8 @@
     "openpkg": "./dist/index.js"
   },
   "files": [
-    "dist"
+    "dist",
+    "skills"
   ],
   "scripts": {
     "build": "bunup",
