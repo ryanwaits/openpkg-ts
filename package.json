@@ -12,6 +12,11 @@
     "build:cli": "cd packages/cli && bun run build",
     "lint": "bunx biome check packages/",
     "lint:fix": "bunx biome check --write packages/",
+    "test": "bun test",
+    "typecheck": "bun run typecheck:spec && bun run typecheck:sdk && bun run typecheck:cli",
+    "typecheck:spec": "cd packages/spec && bun run typecheck",
+    "typecheck:sdk": "cd packages/sdk && bun run typecheck",
+    "typecheck:cli": "cd packages/cli && bun run typecheck",
     "format": "bunx biome format --write packages/",
     "changeset": "changeset",
     "version": "changeset version && bun install",
@@ -21,12 +26,7 @@
     "@biomejs/biome": "2.1.2",
     "@changesets/cli": "^2.29.8",
     "@types/bun": "latest",
-    "ajv": "^8.17.1",
-    "ajv-formats": "^3.0.1",
     "bunup": "^0.11.30",
     "typescript": "^5.9.3"
-  },
-  "dependencies": {
-    "zod": "^4.3.6"
   }
 }

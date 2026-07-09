@@ -39,6 +39,7 @@
     "lint": "biome check src/",
     "lint:fix": "biome check --write src/",
     "format": "biome format --write src/",
+    "typecheck": "tsc --noEmit -p .",
     "test": "bun test"
   },
   "dependencies": {
@@ -57,7 +58,11 @@
   "devDependencies": {
     "@types/bun": "latest",
     "@types/node": "^20.0.0",
-    "bunup": "^0.16.20"
+    "@types/picomatch": "4.0.3",
+    "ajv": "^8.17.1",
+    "ajv-formats": "^3.0.1",
+    "bunup": "^0.16.20",
+    "zod": "^4.3.6"
   },
   "publishConfig": {
     "access": "public"
