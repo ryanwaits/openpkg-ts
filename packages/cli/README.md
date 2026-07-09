@@ -32,6 +32,16 @@ bunx @openpkg-ts/cli diff old.json new.json
 
 For programmatic use, richer options, and framework integrations (search indexes, nav trees), use `@openpkg-ts/sdk` directly.
 
+## Agent-assisted docs generation
+
+The package ships an agent skill that scaffolds framework-ready API reference pages (Fumadocs, Docusaurus, or plain Markdown) — framework detection, page-per-export MDX with navigation, search indexes, and output verification. Copy it into your project's skills directory:
+
+```bash
+cp -r node_modules/@openpkg-ts/cli/skills/generate-docs .claude/skills/
+```
+
+Then ask your agent to "generate API docs" (or run `/generate-docs` in Claude Code).
+
 > Versions ≤ 0.6.4 are broken (unresolvable dependency) and deprecated. Use 0.7.0+.
 
 ## License

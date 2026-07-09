@@ -31,6 +31,3 @@ export type {
   NavOptions,
 } from './nav';
 export { toDocusaurusSidebarJS, toFumadocsMetaJSON, toNavigation } from './nav';
-// React layout generator
-export type { ReactLayoutOptions } from './react';
-export { toReact, toReactString } from './react';
