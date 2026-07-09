@@ -12,6 +12,14 @@ TypeScript API extraction and documentation toolkit. Extract complete API specif
 ## Quick Start
 
 ```bash
+# CLI: extract a spec and generate markdown docs
+bunx @openpkg-ts/cli spec src/index.ts -o openpkg.json
+bunx @openpkg-ts/cli docs src/index.ts -o docs/api.md
+```
+
+Or use the SDK programmatically:
+
+```bash
 npm install @openpkg-ts/sdk
 ```
 
@@ -43,13 +51,15 @@ const { export: fn } = await getExport({ entryFile: './src/index.ts', exportName
 
 | Package | Description |
 |---------|-------------|
+| [@openpkg-ts/cli](./packages/cli) | CLI — thin wrapper over the SDK (spec, docs, list, diff) |
 | [@openpkg-ts/sdk](./packages/sdk) | Programmatic SDK for extraction, rendering, and querying |
 | [@openpkg-ts/spec](./packages/spec) | Spec types, validation, normalization, diffing |
 
-> `@openpkg-ts/cli` and `@openpkg-ts/adapters` are deprecated — use `@openpkg-ts/sdk` instead.
+> `@openpkg-ts/adapters` is deprecated — use `@openpkg-ts/sdk` instead. CLI versions ≤ 0.6.4 are broken and deprecated; use 0.7.0+.
 
 ### Which package?
 
+- **Terminal / CI usage** → `@openpkg-ts/cli`
 - **Building tooling / generating docs** → `@openpkg-ts/sdk`
 - **Browser/client-side** → `@openpkg-ts/sdk/browser` (no Node.js deps)
 - **Spec types and validation only** → `@openpkg-ts/spec`
