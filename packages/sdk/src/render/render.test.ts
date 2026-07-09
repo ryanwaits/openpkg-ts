@@ -63,6 +63,21 @@ describe('toMarkdown exports[]', () => {
   });
 });
 
+describe('kind heading pluralization', () => {
+  test('markdown uses proper plural labels', () => {
+    const result = toMarkdown(mockSpec, { frontmatter: false });
+    expect(result).toContain('## Classes');
+    expect(result).toContain('## Functions');
+    expect(result).not.toContain('Classs');
+  });
+
+  test('html uses proper plural labels', () => {
+    const result = toHTML(mockSpec, { fullDocument: false });
+    expect(result).toContain('<h2>Classes</h2>');
+    expect(result).not.toContain('Classs');
+  });
+});
+
 describe('toHTML exports[]', () => {
   test('filters to multiple exports', () => {
     const result = toHTML(mockSpec, { exports: ['greet', 'User'], fullDocument: false });

@@ -1,4 +1,12 @@
-import type { OpenPkg, SpecExample, SpecExport, SpecMember, SpecSignature } from '@openpkg-ts/spec';
+import {
+  KIND_LABELS,
+  type OpenPkg,
+  type SpecExample,
+  type SpecExport,
+  type SpecExportKind,
+  type SpecMember,
+  type SpecSignature,
+} from '@openpkg-ts/spec';
 import {
   buildSignatureString,
   filterExports,
@@ -421,7 +429,7 @@ export function toHTML(spec: OpenPkg, options: HTMLOptions = {}): string {
   const navItems = Object.entries(byKind)
     .map(([kind, exports]) => {
       const links = exports.map((e) => `<a href="#${e.id}">${escapeHTML(e.name)}</a>`).join('');
-      return `<li><strong>${kind}s:</strong> ${links}</li>`;
+      return `<li><strong>${KIND_LABELS[kind as SpecExportKind] ?? kind}:</strong> ${links}</li>`;
     })
     .join('');
 
@@ -433,7 +441,7 @@ export function toHTML(spec: OpenPkg, options: HTMLOptions = {}): string {
       const exports = byKind[kind].map(renderExport).join('');
       return `
         <section class="kind-section">
-          <h2>${kind.charAt(0).toUpperCase() + kind.slice(1)}s</h2>
+          <h2>${KIND_LABELS[kind]}</h2>
           ${exports}
         </section>`;
     })

@@ -1,4 +1,11 @@
-import type { OpenPkg, SpecExample, SpecExport, SpecMember, SpecSignature } from '@openpkg-ts/spec';
+import {
+  KIND_LABELS,
+  type OpenPkg,
+  type SpecExample,
+  type SpecExport,
+  type SpecMember,
+  type SpecSignature,
+} from '@openpkg-ts/spec';
 import {
   buildSignatureString,
   type FormatSchemaOptions,
@@ -566,7 +573,7 @@ export function toMarkdown(spec: OpenPkg, options: ExportMarkdownOptions = {}): 
     const exports = byKind[kind];
     if (!exports?.length) continue;
 
-    parts.push(`## ${kind.charAt(0).toUpperCase() + kind.slice(1)}s`);
+    parts.push(`## ${KIND_LABELS[kind]}`);
     parts.push('');
 
     for (const exp of exports) {
