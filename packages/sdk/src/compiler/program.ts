@@ -48,10 +48,36 @@ export interface ProgramResult {
  * Used to resolve re-exports from workspace packages.
  */
 export interface WorkspaceMap {
-  /** Package name -> source directory path */
+  /** Package name -> package directory path */
   packages: Map<string, string>;
   /** Root directory of the workspace */
   rootDir: string;
+}
+
+/**
+ * Resolve a workspace package directory to its entry file.
+ * Prefers TS source over declaration files so extraction sees full type info.
+ */
+function resolveWorkspaceEntry(pkgDir: string): string | undefined {
+  const candidates = [
+    path.join(pkgDir, 'src', 'index.ts'),
+    path.join(pkgDir, 'src', 'index.tsx'),
+    path.join(pkgDir, 'index.ts'),
+  ];
+
+  // Fall back to the package's declared types entry (may be a .d.ts)
+  try {
+    const pkg = JSON.parse(fs.readFileSync(path.join(pkgDir, 'package.json'), 'utf-8'));
+    for (const field of [pkg.types, pkg.typings]) {
+      if (typeof field === 'string') {
+        candidates.push(path.resolve(pkgDir, field));
+      }
+    }
+  } catch {
+    // Ignore missing/invalid package.json
+  }
+
+  return candidates.find((c) => fs.existsSync(c));
 }
 
 /**
@@ -192,11 +218,7 @@ function buildWorkspaceMap(baseDir: string): WorkspaceMap | undefined {
       try {
         const pkg = JSON.parse(fs.readFileSync(pkgJsonPath, 'utf-8'));
         if (pkg.name) {
-          // Find source directory
-          const srcDir = fs.existsSync(path.join(pkgDir, 'src'))
-            ? path.join(pkgDir, 'src')
-            : pkgDir;
-          packages.set(pkg.name, srcDir);
+          packages.set(pkg.name, pkgDir);
         }
       } catch {
         // Ignore parse errors
@@ -207,11 +229,14 @@ function buildWorkspaceMap(baseDir: string): WorkspaceMap | undefined {
   return packages.size > 0 ? { packages, rootDir } : undefined;
 }
 
-export function createProgram({
-  entryFile,
-  baseDir = path.dirname(entryFile),
-  content,
-}: ProgramOptions): ProgramResult {
+export function createProgram(options: ProgramOptions): ProgramResult {
+  const { content } = options;
+  // Absolutize before any upward walk: a relative entry makes buildWorkspaceMap
+  // and node_modules resolution terminate at '.' instead of reaching the
+  // workspace root, so workspace imports silently resolve to nothing.
+  const entryFile = path.resolve(options.entryFile);
+  const baseDir = path.resolve(options.baseDir ?? path.dirname(entryFile));
+
   // Look for tsconfig.json first, fallback to jsconfig.json
   let configPath = ts.findConfigFile(baseDir, ts.sys.fileExists, 'tsconfig.json');
   if (!configPath) {
@@ -280,12 +305,11 @@ export function createProgram({
     ): (ts.ResolvedModule | undefined)[] => {
       return moduleNames.map((moduleName) => {
         // Check if this is a workspace package
-        const srcDir = workspaceMap.packages.get(moduleName);
-        if (srcDir) {
-          // Try to resolve to the package's index file
-          const indexFile = path.join(srcDir, 'index.ts');
-          if (fs.existsSync(indexFile)) {
-            return { resolvedFileName: indexFile, isExternalLibraryImport: false };
+        const pkgDir = workspaceMap.packages.get(moduleName);
+        if (pkgDir) {
+          const entryPath = resolveWorkspaceEntry(pkgDir);
+          if (entryPath) {
+            return { resolvedFileName: entryPath, isExternalLibraryImport: false };
           }
         }
 

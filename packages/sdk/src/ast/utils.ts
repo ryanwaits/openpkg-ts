@@ -1,3 +1,4 @@
+import * as path from 'node:path';
 import type {
   SpecExample,
   SpecExampleLanguage,
@@ -234,8 +235,12 @@ export function getJSDocComment(
 
 export function getSourceLocation(node: ts.Node, sourceFile: ts.SourceFile): SpecSource {
   const { line } = sourceFile.getLineAndCharacterOfPosition(node.getStart(sourceFile));
+  // Entry paths are absolutized for module resolution; emit cwd-relative paths
+  // so specs stay stable across machines. Files outside cwd stay absolute.
+  const relative = path.relative(process.cwd(), sourceFile.fileName);
+  const file = relative.startsWith('..') ? sourceFile.fileName : relative;
   return {
-    file: sourceFile.fileName,
+    file,
     line: line + 1,
   };
 }
