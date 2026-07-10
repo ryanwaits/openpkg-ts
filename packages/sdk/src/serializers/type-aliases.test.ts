@@ -86,9 +86,7 @@ export type AliasToNamed = Named;
     const point = result.spec.exports.find((e) => e.name === 'Point');
     expect(JSON.stringify(point?.schema)).toContain('Point');
     const pointType = result.spec.types?.find((t) => t.name === 'Point');
-    expect(
-      ((pointType?.schema ?? {}) as Record<string, unknown>).properties,
-    ).toBeDefined();
+    expect(((pointType?.schema ?? {}) as Record<string, unknown>).properties).toBeDefined();
     const alias = result.spec.exports.find((e) => e.name === 'AliasToNamed');
     expect(JSON.stringify(alias?.schema)).toContain('Named');
     expect(point?.members).toBeUndefined();

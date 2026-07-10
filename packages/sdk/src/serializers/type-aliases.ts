@@ -138,8 +138,7 @@ function buildConditionalArmDocs(
     if (!ts.isTypeReferenceNode(armType)) return undefined;
     const symbol = checker.getSymbolAtLocation(armType.typeName);
     if (!symbol) return undefined;
-    const target =
-      symbol.flags & ts.SymbolFlags.Alias ? checker.getAliasedSymbol(symbol) : symbol;
+    const target = symbol.flags & ts.SymbolFlags.Alias ? checker.getAliasedSymbol(symbol) : symbol;
     const { deprecated, reason } = isSymbolDeprecated(target);
     const targetDecl = target.getDeclarations()?.[0];
     const description = targetDecl
