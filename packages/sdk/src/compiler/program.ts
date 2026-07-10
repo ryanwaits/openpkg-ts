@@ -25,6 +25,9 @@ const DEFAULT_COMPILER_OPTIONS: ts.CompilerOptions = {
   lib: ['lib.es2021.d.ts'],
   declaration: true,
   moduleResolution: ts.ModuleResolutionKind.NodeJs,
+  // Without strictNullChecks the checker collapses `T | undefined` to `T`
+  // before extraction sees the union — extracted types must reflect the source.
+  strict: true,
 };
 
 export interface ProgramOptions {

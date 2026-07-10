@@ -1,10 +1,10 @@
-import type { SpecExport, SpecSchema } from '@openpkg-ts/spec';
+import type { SpecExport, SpecMember, SpecSchema } from '@openpkg-ts/spec';
 import ts from 'typescript';
-import { extractTypeParameters } from '../ast/utils';
+import { extractTypeParameters, getJSDocComment, isSymbolDeprecated } from '../ast/utils';
 import { registerReferencedTypes } from '../types/parameters';
-import { buildSchema } from '../types/schema-builder';
+import { buildFunctionSchema, buildObjectSchema, buildSchema } from '../types/schema-builder';
 import type { SerializerContext } from './context';
-import { extractExportMetadata } from './shared';
+import { buildSignatures, extractExportMetadata } from './shared';
 
 /**
  * Build schema from an intersection type node, preserving structure as allOf.
@@ -56,8 +56,23 @@ export function serializeTypeAlias(
 
   // Check if this is an intersection type node - preserve structure
   let schema: SpecSchema;
+  let members: SpecMember[] | undefined;
   if (ts.isIntersectionTypeNode(node.type)) {
     schema = buildIntersectionSchemaFromNode(node.type, ctx);
+  } else if (isInlineFunctionAlias(node.type) && type.getCallSignatures().length > 0) {
+    // `type CallFn = (...) => R` (or callable literal): buildSchema at the top level
+    // would short-circuit to a self-$ref; build the function schema from the
+    // resolved call signatures instead.
+    schema = buildFunctionSchema(type.getCallSignatures(), ctx.typeChecker, ctx);
+  } else if (
+    (ts.isMappedTypeNode(node.type) || ts.isConditionalTypeNode(node.type)) &&
+    type.getProperties().length > 0 &&
+    type.getCallSignatures().length === 0
+  ) {
+    // Mapped/conditional aliases (`{[K in keyof SDK]: ...}`) have no syntax members;
+    // flatten via the checker so consumers see the resolved properties.
+    schema = buildObjectSchema(type.getProperties(), ctx.typeChecker, ctx, type);
+    members = serializeResolvedMembers(type, node, ctx);
   } else {
     // Then build the schema normally
     schema = buildSchema(type, ctx.typeChecker, ctx);
@@ -72,7 +87,132 @@ export function serializeTypeAlias(
     source,
     typeParameters,
     schema,
+    ...(members && members.length > 0 ? { members } : {}),
     ...(deprecated ? { deprecated: true, deprecationReason } : {}),
     ...(examples.length > 0 ? { examples } : {}),
   };
+}
+
+/** Syntax check: alias body is an inline function type or a callable type literal. */
+function isInlineFunctionAlias(typeNode: ts.TypeNode): boolean {
+  return (
+    ts.isFunctionTypeNode(typeNode) ||
+    (ts.isTypeLiteralNode(typeNode) && typeNode.members.some(ts.isCallSignatureDeclaration))
+  );
+}
+
+interface ArmDoc {
+  deprecated: boolean;
+  deprecationReason?: string;
+  description?: string;
+}
+
+/**
+ * Walk a mapped type's conditional template (`K extends "a" | "b" ? Arm : ...`)
+ * and map literal key names to the JSDoc of the arm's alias. The checker erases
+ * alias identity when instantiating conditionals, so this is syntax-only —
+ * it's how `@deprecated` on an intermediate alias (`type RunSnippet = SDK["runSnippet"]`)
+ * reaches the mapped member.
+ */
+function buildConditionalArmDocs(
+  typeNode: ts.TypeNode,
+  checker: ts.TypeChecker,
+): Map<string, ArmDoc> {
+  const docs = new Map<string, ArmDoc>();
+  if (!ts.isMappedTypeNode(typeNode) || !typeNode.type) return docs;
+
+  const literalKeys = (extendsType: ts.TypeNode): string[] => {
+    const keys: string[] = [];
+    const visit = (n: ts.TypeNode) => {
+      if (ts.isUnionTypeNode(n)) {
+        for (const member of n.types) visit(member);
+      } else if (ts.isLiteralTypeNode(n) && ts.isStringLiteral(n.literal)) {
+        keys.push(n.literal.text);
+      }
+    };
+    visit(extendsType);
+    return keys;
+  };
+
+  const armDoc = (armType: ts.TypeNode): ArmDoc | undefined => {
+    if (!ts.isTypeReferenceNode(armType)) return undefined;
+    const symbol = checker.getSymbolAtLocation(armType.typeName);
+    if (!symbol) return undefined;
+    const target =
+      symbol.flags & ts.SymbolFlags.Alias ? checker.getAliasedSymbol(symbol) : symbol;
+    const { deprecated, reason } = isSymbolDeprecated(target);
+    const targetDecl = target.getDeclarations()?.[0];
+    const description = targetDecl
+      ? getJSDocComment(targetDecl, target, checker).description
+      : undefined;
+    if (!deprecated && !description) return undefined;
+    return { deprecated, deprecationReason: reason, description };
+  };
+
+  let current: ts.TypeNode | undefined = typeNode.type;
+  while (current && ts.isConditionalTypeNode(current)) {
+    const doc = armDoc(current.trueType);
+    if (doc) {
+      for (const key of literalKeys(current.extendsType)) {
+        if (!docs.has(key)) docs.set(key, doc);
+      }
+    }
+    current = current.falseType;
+  }
+  return docs;
+}
+
+/**
+ * Serialize the checker-resolved properties of a mapped/conditional type alias
+ * into members. JSDoc and @deprecated are read from the property symbol first,
+ * then from the conditional arm's alias (e.g. `K extends "runSnippet" ?
+ * RunSnippet : ...` where the @deprecated lives on `RunSnippet`).
+ */
+function serializeResolvedMembers(
+  type: ts.Type,
+  node: ts.TypeAliasDeclaration,
+  ctx: SerializerContext,
+): SpecMember[] {
+  const { typeChecker: checker } = ctx;
+  const members: SpecMember[] = [];
+  const armDocs = buildConditionalArmDocs(node.type, checker);
+
+  for (const prop of type.getProperties()) {
+    const decl = prop.getDeclarations()?.[0] ?? node;
+    const propType = checker.getTypeOfSymbolAtLocation(prop, decl);
+    registerReferencedTypes(propType, ctx);
+
+    const callSigs = propType.getCallSignatures();
+    const kind = callSigs.length > 0 ? 'method' : 'property';
+
+    let { description, tags } = getJSDocComment(decl, prop, checker);
+    let { deprecated, reason: deprecationReason } = isSymbolDeprecated(prop);
+
+    // Fallbacks for docs the checker erased: the arm alias of a conditional
+    // template (syntax walk), then the resolved type's alias symbol.
+    const arm = armDocs.get(prop.getName());
+    if (arm) {
+      if (!deprecated && arm.deprecated) {
+        deprecated = true;
+        deprecationReason = arm.deprecationReason;
+      }
+      if (!description) description = arm.description;
+    }
+    const armAlias = propType.aliasSymbol;
+    if (!deprecated && armAlias) {
+      ({ deprecated, reason: deprecationReason } = isSymbolDeprecated(armAlias));
+    }
+
+    members.push({
+      name: prop.getName(),
+      kind,
+      description,
+      tags: tags.length > 0 ? tags : undefined,
+      schema: kind === 'property' ? buildSchema(propType, checker, ctx) : undefined,
+      signatures: kind === 'method' ? buildSignatures(callSigs, checker, ctx) : undefined,
+      ...(deprecated ? { deprecated: true, deprecationReason } : {}),
+    });
+  }
+
+  return members;
 }

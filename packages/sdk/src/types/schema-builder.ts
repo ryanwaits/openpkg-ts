@@ -765,7 +765,7 @@ function buildSchemaInternal(
 /**
  * Build schema for function types
  */
-function buildFunctionSchema(
+export function buildFunctionSchema(
   callSignatures: readonly ts.Signature[],
   checker: ts.TypeChecker,
   ctx: SerializerContext | undefined,
@@ -805,7 +805,7 @@ function buildFunctionSchema(
 /**
  * Build schema for object types with properties
  */
-function buildObjectSchema(
+export function buildObjectSchema(
   properties: ts.Symbol[],
   checker: ts.TypeChecker,
   ctx: SerializerContext | undefined,
