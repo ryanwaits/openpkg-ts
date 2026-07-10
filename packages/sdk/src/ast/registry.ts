@@ -282,7 +282,10 @@ export class TypeRegistry {
     ctx: SerializerContext,
   ): Record<string, unknown> {
     const properties = type.getProperties();
-    if (properties.length === 0) {
+    const stringIndex = checker
+      .getIndexInfosOfType(type)
+      .find((i) => i.keyType.flags & ts.TypeFlags.String);
+    if (properties.length === 0 && !stringIndex) {
       return { type: checker.typeToString(type) };
     }
 
@@ -332,6 +335,7 @@ export class TypeRegistry {
       type: 'object',
       properties: props,
       ...(required.length > 0 ? { required } : {}),
+      ...(stringIndex ? { additionalProperties: buildSchema(stringIndex.type, checker, ctx) } : {}),
     };
   }
 }

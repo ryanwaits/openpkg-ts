@@ -86,6 +86,22 @@ const BUILTIN_GENERICS = new Set([
   'Awaited',
 ]);
 
+// Utility types whose instantiations the checker resolves eagerly.
+// Emitting `$ref: #/types/Omit` for these produces a dangling ref (lib types
+// are never registered in types[]), so flatten to effective members instead.
+const RESOLVED_UTILITY_TYPES = new Set([
+  'Partial',
+  'Required',
+  'Readonly',
+  'Pick',
+  'Omit',
+  'Record',
+  'Exclude',
+  'Extract',
+  'NonNullable',
+  'Awaited',
+]);
+
 // Built-in non-generic types
 const BUILTIN_TYPES = new Set([
   'Date',
@@ -654,6 +670,18 @@ function buildSchemaInternal(
         return { $ref: `#/types/${name}` };
       }
 
+      // Utility-type instantiations (Omit<Config, 'x'>, Partial<T>, Record<K, V>)
+      // are already resolved by the checker — flatten to their effective members.
+      // Deferred instantiations (generic context, e.g. Omit<T, 'x'> where T is a
+      // type parameter) have no members and keep the $ref + typeArguments form.
+      if (RESOLVED_UTILITY_TYPES.has(name) && type.flags & ts.TypeFlags.Object) {
+        const props = type.getProperties();
+        const hasIndex = checker.getIndexInfosOfType(type).length > 0;
+        if (props.length > 0 || hasIndex) {
+          return buildObjectSchema(props, checker, ctx, type);
+        }
+      }
+
       if (isBuiltinGeneric(name) || !name.startsWith('__')) {
         const packageOrigin = getTypeOrigin(type, checker);
         if (ctx) {
@@ -820,8 +848,20 @@ function buildObjectSchema(
       ...(required.length > 0 ? { required } : {}),
     };
 
+    // Index signatures ({ [key: string]: V }, Record<string, V>) → additionalProperties
+    const stringIndex = originalType
+      ? checker.getIndexInfosOfType(originalType).find((i) => i.keyType.flags & ts.TypeFlags.String)
+      : undefined;
+    if (stringIndex) {
+      (schema as Record<string, unknown>).additionalProperties = buildSchema(
+        stringIndex.type,
+        checker,
+        ctx,
+      );
+    }
+
     // Add x-ts-type for empty properties to provide context
-    if (Object.keys(props).length === 0 && originalType) {
+    if (Object.keys(props).length === 0 && originalType && !stringIndex) {
       setSchemaExtension(schema, 'x-ts-type', checker.typeToString(originalType));
     }
 
