@@ -1,5 +1,11 @@
 # @openpkg-ts/extract
 
+## 0.40.0
+
+### Minor Changes
+
+- f9e2049: Extraction fidelity for wasm/proxy-style surfaces. Mapped/conditional type aliases (`{[K in keyof SDK]: ...}`) now flatten into `members[]` via the checker, with `@deprecated`/JSDoc recovered from conditional arm aliases (syntax walk — the checker erases alias identity on instantiation). Inline function-type aliases get real signatures instead of an opaque self-`$ref`. Default compilerOptions now include `strict: true` so `T | undefined` unions survive extraction when no tsconfig is present.
+
 ## 0.39.0
 
 ### Minor Changes
