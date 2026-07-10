@@ -1,5 +1,16 @@
 # @openpkg-ts/extract
 
+## 0.39.0
+
+### Minor Changes
+
+- Monorepo/workspace extraction fixes + utility-type flattening:
+
+  - Workspace-package types no longer collapse to `<external>` stubs: entry paths are absolutized before resolution (relative entries previously broke the workspace-root walk and node_modules lookup), and workspace entry resolution falls back through `src/index.ts` → `src/index.tsx` → `index.ts` → package.json `types`/`typings`.
+  - Instantiated utility types (`Omit`, `Pick`, `Partial`, `Required`, `Readonly`, `Record`, `Exclude`, `Extract`, `NonNullable`, `Awaited`) flatten to their effective members instead of emitting dangling `$ref: #/types/Omit`. Deferred instantiations in generic context keep the `$ref` + type-arguments form.
+  - Index signatures now emit `additionalProperties` (`Record<string, V>` and inline `{ [key: string]: V }`).
+  - Emitted `source.file` paths are cwd-relative for machine-independent specs.
+
 ## 0.38.0
 
 ### Minor Changes
