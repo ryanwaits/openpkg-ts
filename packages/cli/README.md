@@ -1,6 +1,6 @@
 # @openpkg-ts/cli
 
-CLI for [OpenPkg](https://github.com/ryanwaits/openpkg-ts) — extract TypeScript API specs and generate docs. Thin wrapper over [@openpkg-ts/sdk](https://www.npmjs.com/package/@openpkg-ts/sdk).
+Extract [OpenPkg](https://openpkg.dev) documents and generate docs from the command line. The CLI of [openpkg-ts](https://github.com/ryanwaits/openpkg-ts), the TypeScript reference implementation of the OpenPkg standard. Thin wrapper over [@openpkg-ts/sdk](https://www.npmjs.com/package/@openpkg-ts/sdk).
 
 ## Usage
 

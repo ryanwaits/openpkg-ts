@@ -1,6 +1,6 @@
 # @openpkg-ts/sdk
 
-Programmatic SDK for TypeScript API extraction and documentation generation.
+Extract [OpenPkg](https://openpkg.dev) documents from TypeScript source and generate documentation. The SDK of [openpkg-ts](https://github.com/ryanwaits/openpkg-ts), the TypeScript reference implementation of the OpenPkg standard.
 
 ## Install
 

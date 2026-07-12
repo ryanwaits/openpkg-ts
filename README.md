@@ -1,6 +1,8 @@
 # openpkg-ts
 
-TypeScript API extraction and documentation toolkit. Extract complete API specifications from source code, then generate docs for any framework.
+**OpenPkg is a machine-readable standard for describing package APIs. openpkg-ts is its TypeScript reference implementation.**
+
+Extract complete OpenPkg documents from TypeScript source, then generate docs for any framework. The standard lives at [openpkg.dev](https://openpkg.dev); this repo ships the TypeScript toolchain: `@openpkg-ts/spec`, `@openpkg-ts/sdk`, and `@openpkg-ts/cli`.
 
 ## Why
 

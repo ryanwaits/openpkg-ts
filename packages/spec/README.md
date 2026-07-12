@@ -1,6 +1,6 @@
 # @openpkg-ts/spec
 
-OpenPkg specification types, validation, normalization, and diffing utilities.
+Types, validation, normalization, and diffing for [OpenPkg](https://openpkg.dev) documents. Part of [openpkg-ts](https://github.com/ryanwaits/openpkg-ts), the TypeScript reference implementation of the OpenPkg standard.
 
 ## Install
 
