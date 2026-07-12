@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>OG card source — screenshot at 1200×630 to produce og.png</title>
+<style>
+:root {
+  --paper: oklch(99% 0.004 90);
+  --ink: oklch(23% 0.012 270);
+  --ink-soft: oklch(42% 0.01 270);
+  --link: oklch(46% 0.19 262);
+  --rule: oklch(87% 0.006 270);
+  --mark-bg: oklch(96% 0.02 90);
+  --font-body: 'Times New Roman', Times, 'Liberation Serif', Georgia, serif;
+  --font-mono: ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+}
+* { margin: 0; box-sizing: border-box; }
+body {
+  width: 1200px;
+  height: 630px;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-body);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 72px 84px 64px;
+  overflow: hidden;
+}
+.top {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  border-bottom: 2px solid var(--rule);
+  padding-bottom: 28px;
+}
+.site {
+  font-family: var(--font-mono);
+  font-size: 26px;
+  color: var(--link);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.status {
+  font-variant: small-caps;
+  letter-spacing: 0.05em;
+  font-size: 28px;
+  background: var(--mark-bg);
+  padding: 2px 14px;
+  border-radius: 3px;
+}
+h1 {
+  font-size: 108px;
+  font-weight: 700;
+  line-height: 1.06;
+  letter-spacing: -0.01em;
+}
+.subtitle {
+  font-size: 36px;
+  color: var(--ink-soft);
+  margin-top: 26px;
+  line-height: 1.35;
+  max-width: 21em;
+}
+.meta {
+  display: flex;
+  gap: 14px;
+  align-items: baseline;
+  border-top: 2px solid var(--rule);
+  padding-top: 26px;
+  font-family: var(--font-mono);
+  font-size: 25px;
+  color: var(--ink-soft);
+  font-variant-numeric: tabular-nums;
+}
+.meta b { color: var(--ink); font-weight: 700; }
+</style>
+</head>
+<body>
+  <div class="top">
+    <span class="site">openpkg.dev</span>
+    <span class="status">Draft</span>
+  </div>
+  <div>
+    <h1>OpenPkg<br>Specification</h1>
+    <p class="subtitle">A machine-readable standard for describing package APIs.</p>
+  </div>
+  <div class="meta">
+    <span><b>Version</b> 0.4.0</span>
+    <span>·</span>
+    <span><b>Schema</b> JSON Schema draft 2020-12</span>
+    <span>·</span>
+    <span><b>License</b> MIT</span>
+  </div>
+</body>
+</html>
