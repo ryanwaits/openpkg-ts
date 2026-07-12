@@ -43,3 +43,4 @@ repo.json
 # Temporary files and git-lore
 tmp/
 .git-lore/
+.npmrc
