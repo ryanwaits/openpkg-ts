@@ -18,6 +18,7 @@
     "typecheck:sdk": "cd packages/sdk && bun run typecheck",
     "typecheck:cli": "cd packages/cli && bun run typecheck",
     "format": "bunx biome format --write packages/",
+    "site:sync-schemas": "rm -rf site/schemas && cp -r packages/spec/schemas site/schemas",
     "changeset": "changeset",
     "version": "changeset version && bun install",
     "release": "bun run build && changeset publish"

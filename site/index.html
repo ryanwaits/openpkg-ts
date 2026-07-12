@@ -1,0 +1,604 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="OpenPkg is a machine-readable standard for describing package APIs. This document defines the OpenPkg Specification, version 0.4.0.">
+<link rel="canonical" href="https://openpkg.dev/">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>&#128230;</text></svg>">
+<meta property="og:title" content="OpenPkg Specification v0.4.0">
+<meta property="og:description" content="A machine-readable standard for describing package APIs.">
+<meta property="og:url" content="https://openpkg.dev/">
+<meta property="og:type" content="website">
+<title>OpenPkg Specification v0.4.0</title>
+<style>
+/* Hallmark · pre-emit critique: P5 H5 E4 S5 R5 V4 */
+/* Hallmark · macrostructure: Long Document · tone: austere/technical · anchor hue: 262 (link blue)
+ * theme: custom (vibe: "browser-default homage, W3C spec, polished")
+ * paper oklch(99% 0.004 90) · accent oklch(48% 0.19 262) cool-blue · Times system serif + ui-monospace
+ * axes: light / roman-serif / cool · nav: document ToC · footer: colophon line · enrichment: none
+ */
+:root {
+  --paper: oklch(99% 0.004 90);
+  --ink: oklch(23% 0.012 270);
+  --ink-soft: oklch(42% 0.01 270);
+  --link: oklch(46% 0.19 262);
+  --link-visited: oklch(44% 0.14 305);
+  --rule: oklch(87% 0.006 270);
+  --rule-soft: oklch(92% 0.005 270);
+  --code-bg: oklch(96.5% 0.005 90);
+  --code-ink: oklch(30% 0.02 270);
+  --mark-bg: oklch(96% 0.02 90);
+  --focus: oklch(46% 0.19 262);
+
+  --font-body: 'Times New Roman', Times, 'Liberation Serif', Georgia, serif;
+  --font-mono: ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+
+  --text-body: 1.0625rem;
+  --text-sm: 0.875rem;
+  --text-h3: 1.125rem;
+  --text-h2: 1.375rem;
+  --text-h1: 2rem;
+
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 1rem;
+  --space-4: 1.5rem;
+  --space-5: 2.5rem;
+  --space-6: 4rem;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: oklch(19% 0.008 270);
+    --ink: oklch(87% 0.006 90);
+    --ink-soft: oklch(68% 0.008 90);
+    --link: oklch(72% 0.12 262);
+    --link-visited: oklch(70% 0.09 305);
+    --rule: oklch(32% 0.008 270);
+    --rule-soft: oklch(27% 0.008 270);
+    --code-bg: oklch(24% 0.01 270);
+    --code-ink: oklch(82% 0.01 90);
+    --mark-bg: oklch(28% 0.015 90);
+    --focus: oklch(72% 0.12 262);
+  }
+}
+:root[data-theme="dark"] {
+  --paper: oklch(19% 0.008 270);
+  --ink: oklch(87% 0.006 90);
+  --ink-soft: oklch(68% 0.008 90);
+  --link: oklch(72% 0.12 262);
+  --link-visited: oklch(70% 0.09 305);
+  --rule: oklch(32% 0.008 270);
+  --rule-soft: oklch(27% 0.008 270);
+  --code-bg: oklch(24% 0.01 270);
+  --code-ink: oklch(82% 0.01 90);
+  --mark-bg: oklch(28% 0.015 90);
+  --focus: oklch(72% 0.12 262);
+}
+:root[data-theme="light"] {
+  --paper: oklch(99% 0.004 90);
+  --ink: oklch(23% 0.012 270);
+  --ink-soft: oklch(42% 0.01 270);
+  --link: oklch(46% 0.19 262);
+  --link-visited: oklch(44% 0.14 305);
+  --rule: oklch(87% 0.006 270);
+  --rule-soft: oklch(92% 0.005 270);
+  --code-bg: oklch(96.5% 0.005 90);
+  --code-ink: oklch(30% 0.02 270);
+  --mark-bg: oklch(96% 0.02 90);
+  --focus: oklch(46% 0.19 262);
+}
+
+html { overflow-x: clip; }
+body {
+  overflow-x: clip;
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: var(--text-body);
+  line-height: 1.6;
+  -webkit-text-size-adjust: 100%;
+}
+main {
+  max-width: 72ch;
+  margin: 0 auto;
+  padding: var(--space-5) var(--space-4) var(--space-6);
+}
+
+h1, h2, h3, h4 { font-family: var(--font-body); font-style: normal; line-height: 1.25; text-wrap: balance; }
+h1 { font-size: var(--text-h1); font-weight: 700; margin: 0 0 var(--space-2); }
+h2 { font-size: var(--text-h2); font-weight: 700; margin: var(--space-6) 0 var(--space-3); }
+h3 { font-size: var(--text-h3); font-weight: 700; margin: var(--space-5) 0 var(--space-3); }
+h4 { font-size: var(--text-body); font-weight: 700; margin: var(--space-4) 0 var(--space-2); }
+h2, h3 { overflow-wrap: anywhere; min-width: 0; }
+
+p { margin: 0 0 var(--space-3); }
+.subtitle { font-size: var(--text-h3); color: var(--ink-soft); margin: 0 0 var(--space-4); }
+
+a { color: var(--link); text-decoration: underline; text-underline-offset: 2px; }
+a:visited { color: var(--link-visited); }
+a:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; border-radius: 1px; }
+h2 a, h3 a, h2 a:visited, h3 a:visited { color: inherit; text-decoration: none; }
+h2 a:hover, h3 a:hover { text-decoration: underline; }
+
+hr { border: 0; border-top: 1px solid var(--rule); margin: var(--space-5) 0; }
+
+code, pre, .mono {
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+}
+code {
+  background: var(--code-bg);
+  color: var(--code-ink);
+  padding: 0.08em 0.3em;
+  border-radius: 2px;
+}
+pre {
+  background: var(--code-bg);
+  color: var(--code-ink);
+  border: 1px solid var(--rule-soft);
+  border-radius: 2px;
+  padding: var(--space-3);
+  overflow-x: auto;
+  line-height: 1.5;
+  margin: 0 0 var(--space-3);
+}
+pre code { background: none; padding: 0; border-radius: 0; }
+
+/* Document header block, W3C style */
+.doc-meta { margin: 0 0 var(--space-4); }
+.doc-meta dl {
+  margin: 0;
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  column-gap: var(--space-3);
+  row-gap: var(--space-1);
+  font-size: var(--text-body);
+}
+.doc-meta dt { font-weight: 700; }
+.doc-meta dd { margin: 0; overflow-wrap: anywhere; }
+.status-draft {
+  font-variant: small-caps;
+  letter-spacing: 0.04em;
+  background: var(--mark-bg);
+  padding: 0 0.35em;
+  border-radius: 2px;
+}
+
+/* Table of contents */
+nav.toc ol {
+  list-style: none;
+  counter-reset: toc;
+  margin: 0;
+  padding-left: 0;
+}
+nav.toc > ol > li { margin: var(--space-1) 0; }
+nav.toc ol ol { padding-left: 1.5rem; }
+nav.toc li::before {
+  counter-increment: toc;
+  content: counters(toc, ".") ".";
+  display: inline-block;
+  min-width: 2.6ch;
+  margin-right: 0.5ch;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-soft);
+}
+nav.toc ol ol li::before { min-width: 3.8ch; }
+
+/* Section numbering mirrors the ToC */
+main > section { counter-increment: sec; }
+main { counter-reset: sec; }
+section h2 .secno, section h3 .secno {
+  color: var(--ink-soft);
+  font-weight: 700;
+  margin-right: 0.6ch;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Field tables */
+table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0 0 var(--space-4);
+  font-size: var(--text-sm);
+  line-height: 1.5;
+}
+.table-wrap { overflow-x: auto; margin: 0 0 var(--space-4); }
+.table-wrap table { margin: 0; min-width: 34rem; }
+caption {
+  text-align: left;
+  font-style: italic;
+  color: var(--ink-soft);
+  padding: 0 0 var(--space-2);
+}
+th, td {
+  border: 1px solid var(--rule);
+  padding: var(--space-2) var(--space-3);
+  text-align: left;
+  vertical-align: top;
+}
+th { font-weight: 700; background: var(--code-bg); }
+td:first-child { font-family: var(--font-mono); font-size: 0.85em; white-space: nowrap; }
+td { font-variant-numeric: tabular-nums; }
+.req { font-variant: small-caps; letter-spacing: 0.03em; color: var(--ink-soft); white-space: nowrap; }
+
+/* RFC 2119 keywords */
+em.rfc {
+  font-style: normal;
+  font-variant: small-caps;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+
+/* Definition lists in running text */
+dl.terms dt { font-weight: 700; margin-top: var(--space-3); }
+dl.terms dt code { font-size: 0.9em; }
+dl.terms dd { margin: var(--space-1) 0 0 var(--space-4); }
+
+/* Notes */
+.note {
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  padding: var(--space-2) var(--space-3);
+  margin: 0 0 var(--space-3);
+  font-size: var(--text-sm);
+  color: var(--ink-soft);
+}
+.note strong { font-variant: small-caps; letter-spacing: 0.03em; color: var(--ink); }
+
+/* References list */
+dl.refs dt { font-family: var(--font-mono); font-size: 0.85em; font-weight: 700; margin-top: var(--space-2); }
+dl.refs dd { margin: 0 0 0 var(--space-4); }
+
+footer {
+  margin-top: var(--space-6);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--rule);
+  font-size: var(--text-sm);
+  color: var(--ink-soft);
+}
+
+ul, ol { margin: 0 0 var(--space-3); padding-left: 1.6rem; }
+li { margin: var(--space-1) 0; }
+
+@media (max-width: 480px) {
+  :root { --text-h1: 1.6rem; --text-h2: 1.25rem; }
+  main { padding: var(--space-4) var(--space-3) var(--space-5); }
+  .doc-meta dl { grid-template-columns: 1fr; row-gap: 0; }
+  .doc-meta dt { margin-top: var(--space-2); }
+}
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; }
+}
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>OpenPkg Specification</h1>
+    <p class="subtitle">A machine-readable description format for TypeScript package APIs</p>
+    <div class="doc-meta">
+      <dl>
+        <dt>Version</dt>
+        <dd><span class="mono">0.4.0</span></dd>
+        <dt>Status</dt>
+        <dd><span class="status-draft">Draft</span></dd>
+        <dt>This document</dt>
+        <dd>12 July 2026</dd>
+        <dt>Schema</dt>
+        <dd><a href="https://openpkg.dev/schemas/v0.4.0/openpkg.schema.json">openpkg.schema.json</a> (JSON&nbsp;Schema draft&nbsp;2020-12) · <a href="https://unpkg.com/@openpkg-ts/spec/schemas/v0.4.0/openpkg.schema.json">npm mirror</a></dd>
+        <dt>Editor</dt>
+        <dd>Ryan Waits</dd>
+        <dt>Reference implementation</dt>
+        <dd><a href="https://github.com/ryanwaits/openpkg-ts">openpkg-ts</a> (TypeScript): @openpkg-ts/spec · @openpkg-ts/sdk · @openpkg-ts/cli</dd>
+        <dt>License</dt>
+        <dd>MIT</dd>
+      </dl>
+    </div>
+  </header>
+
+  <section>
+    <h2 id="abstract">Abstract</h2>
+    <p>The OpenPkg Specification defines a standard, language-service-independent interface description for TypeScript packages. An OpenPkg document describes the complete public surface of a package (its functions, classes, interfaces, type aliases, enums, and variables) as JSON Schema, allowing both humans and machines to discover and understand the capabilities of a package without access to its source code, its <span class="mono">node_modules</span>, or a TypeScript compiler.</p>
+    <p>An OpenPkg document can then be used by documentation generators to display the API, code-generation tools to consume it, diff tools to detect breaking changes between versions, and agents to reason about a package's capabilities.</p>
+  </section>
+
+  <section>
+    <h2 id="status">Status of This Document</h2>
+    <p>This is a draft of the 0.4.0 line of the specification. It is published for implementers and is subject to change. The canonical JSON Schema for validation is published with each release of <a href="https://www.npmjs.com/package/@openpkg-ts/spec">@openpkg-ts/spec</a>. Earlier document versions <span class="mono">0.2.0</span> and <span class="mono">0.3.0</span> remain valid; see <a href="#versioning">§ 9 Versioning</a>.</p>
+  </section>
+
+  <hr>
+
+  <nav class="toc" aria-label="Table of contents">
+    <h2 id="toc">Table of Contents</h2>
+    <ol>
+      <li><a href="#introduction">Introduction</a></li>
+      <li><a href="#conventions">Notational Conventions</a></li>
+      <li><a href="#format">Format and Media Type</a></li>
+      <li><a href="#structure">Document Structure</a></li>
+      <li><a href="#objects">Object Definitions</a>
+        <ol>
+          <li><a href="#meta-object">Meta Object</a></li>
+          <li><a href="#export-object">Export Object</a></li>
+          <li><a href="#signature-object">Signature Object</a></li>
+          <li><a href="#member-object">Member Object</a></li>
+          <li><a href="#type-object">Type Object</a></li>
+          <li><a href="#schema-object">Schema Object</a></li>
+          <li><a href="#source-object">Source Object</a></li>
+          <li><a href="#generation-object">Generation Object</a></li>
+        </ol>
+      </li>
+      <li><a href="#references-mechanics">Type References</a></li>
+      <li><a href="#extensions">Specification Extensions</a></li>
+      <li><a href="#example">Complete Example</a></li>
+      <li><a href="#versioning">Versioning and Conformance</a></li>
+    </ol>
+    <p style="margin-top: var(--space-3);">Appendix <a href="#appendix-a">A. Export Kinds</a> · <a href="#normative-refs">Normative References</a></p>
+  </nav>
+
+  <hr>
+
+  <section>
+    <h2 id="introduction"><span class="secno">1.</span><a href="#introduction">Introduction</a></h2>
+    <p>TypeScript's type system is the richest description of a JavaScript package's behavior, but that description is locked inside the compiler: consuming it requires source files, dependency installation, and a type checker. The OpenPkg Specification extracts that description into a single portable JSON document, in the same way the OpenAPI Specification extracts the description of an HTTP service out of its implementation.</p>
+    <p>A conforming document is self-contained. Every named type referenced by an exported symbol is either inlined as a schema or declared in the document's <a href="#structure"><code>types</code></a> section and referenced by a <a href="#references-mechanics">JSON Reference</a>. Consumers never need to resolve anything outside the document.</p>
+  </section>
+
+  <section>
+    <h2 id="conventions"><span class="secno">2.</span><a href="#conventions">Notational Conventions</a></h2>
+    <p>The key words <em class="rfc">must</em>, <em class="rfc">must not</em>, <em class="rfc">required</em>, <em class="rfc">shall</em>, <em class="rfc">should</em>, <em class="rfc">should not</em>, <em class="rfc">recommended</em>, <em class="rfc">may</em>, and <em class="rfc">optional</em> in this document are to be interpreted as described in <a href="#normative-refs">[RFC2119]</a>.</p>
+    <p>Fields marked <span class="req">required</span> in the tables below <em class="rfc">must</em> be present. All other fields are <em class="rfc">optional</em>. Producers <em class="rfc">must not</em> emit fields whose value is <code>undefined</code>; omission and <code>undefined</code> are equivalent.</p>
+  </section>
+
+  <section>
+    <h2 id="format"><span class="secno">3.</span><a href="#format">Format and Media Type</a></h2>
+    <p>An OpenPkg document is a single JSON object encoded in UTF-8. The conventional filename is <code>openpkg.json</code>. Schema values within the document are expressed in a constrained profile of JSON Schema draft 2020-12 <a href="#normative-refs">[JSON-SCHEMA]</a>, extended with the vendor fields defined in <a href="#schema-object">§ 5.6</a>.</p>
+    <p>A document <em class="rfc">may</em> declare the meta-schema it validates against via the <code>$schema</code> field:</p>
+    <pre><code>{ "$schema": "https://openpkg.dev/schemas/v0.4.0/openpkg.schema.json" }</code></pre>
+  </section>
+
+  <section>
+    <h2 id="structure"><span class="secno">4.</span><a href="#structure">Document Structure</a></h2>
+    <p>The root of every OpenPkg document is the <strong>OpenPkg Object</strong>.</p>
+    <div class="table-wrap">
+    <table>
+      <caption>Table 1. OpenPkg Object, top-level fields</caption>
+      <thead><tr><th scope="col">Field</th><th scope="col">Type</th><th scope="col">Description</th></tr></thead>
+      <tbody>
+        <tr><td>openpkg</td><td><span class="req">required</span> · string</td><td>The version of the OpenPkg Specification this document conforms to: <code>"0.2.0"</code>, <code>"0.3.0"</code>, or <code>"0.4.0"</code>.</td></tr>
+        <tr><td>meta</td><td><span class="req">required</span> · <a href="#meta-object">Meta Object</a></td><td>Identity of the described package.</td></tr>
+        <tr><td>exports</td><td><span class="req">required</span> · [<a href="#export-object">Export Object</a>]</td><td>Every symbol exported from the package entry point, in declaration order.</td></tr>
+        <tr><td>types</td><td>[<a href="#type-object">Type Object</a>]</td><td>Named types referenced by exports. The target namespace for <code>#/types/…</code> references.</td></tr>
+        <tr><td>$schema</td><td>string</td><td>URI of the meta-schema for this document.</td></tr>
+        <tr><td>examples</td><td>[Example Object]</td><td>Package-level usage examples.</td></tr>
+        <tr><td>extensions</td><td>object</td><td>Specification extensions; see <a href="#extensions">§ 7</a>.</td></tr>
+        <tr><td>generation</td><td><a href="#generation-object">Generation Object</a></td><td>Provenance metadata describing how the document was produced.</td></tr>
+      </tbody>
+    </table>
+    </div>
+  </section>
+
+  <section>
+    <h2 id="objects"><span class="secno">5.</span><a href="#objects">Object Definitions</a></h2>
+
+    <h3 id="meta-object"><span class="secno">5.1</span><a href="#meta-object">Meta Object</a></h3>
+    <div class="table-wrap">
+    <table>
+      <caption>Table 2. Meta Object</caption>
+      <thead><tr><th scope="col">Field</th><th scope="col">Type</th><th scope="col">Description</th></tr></thead>
+      <tbody>
+        <tr><td>name</td><td><span class="req">required</span> · string</td><td>Package name as published (e.g. <code>"@openpkg-ts/sdk"</code>).</td></tr>
+        <tr><td>version</td><td>string</td><td>Package version the document was extracted from.</td></tr>
+        <tr><td>description</td><td>string</td><td>Short package description.</td></tr>
+        <tr><td>license</td><td>string</td><td>SPDX license identifier.</td></tr>
+        <tr><td>repository</td><td>string</td><td>Repository URL.</td></tr>
+        <tr><td>ecosystem</td><td>string</td><td>Source ecosystem. Producers targeting npm <em class="rfc">should</em> emit <code>"js/ts"</code>.</td></tr>
+      </tbody>
+    </table>
+    </div>
+
+    <h3 id="export-object"><span class="secno">5.2</span><a href="#export-object">Export Object</a></h3>
+    <p>Describes one exported symbol. The <code>kind</code> field determines which of the remaining fields are meaningful: callable kinds carry <code>signatures</code>, structural kinds carry <code>members</code>, and value kinds carry <code>schema</code>.</p>
+    <div class="table-wrap">
+    <table>
+      <caption>Table 3. Export Object</caption>
+      <thead><tr><th scope="col">Field</th><th scope="col">Type</th><th scope="col">Description</th></tr></thead>
+      <tbody>
+        <tr><td>id</td><td><span class="req">required</span> · string</td><td>Document-unique identifier for the export.</td></tr>
+        <tr><td>name</td><td><span class="req">required</span> · string</td><td>The exported name.</td></tr>
+        <tr><td>kind</td><td><span class="req">required</span> · string</td><td>One of the kinds in <a href="#appendix-a">Appendix A</a>.</td></tr>
+        <tr><td>description</td><td>string</td><td>Documentation comment, with tags stripped.</td></tr>
+        <tr><td>signatures</td><td>[<a href="#signature-object">Signature Object</a>]</td><td>Call signatures. One entry per overload; see <code>overloadIndex</code>.</td></tr>
+        <tr><td>members</td><td>[<a href="#member-object">Member Object</a>]</td><td>Properties, methods, accessors, and enum members.</td></tr>
+        <tr><td>schema</td><td><a href="#schema-object">Schema Object</a></td><td>The symbol's type as a schema (variables, type aliases).</td></tr>
+        <tr><td>typeParameters</td><td>[TypeParameter Object]</td><td>Generic parameters: <code>name</code>, <code>constraint</code>, <code>default</code>, <code>variance</code>, <code>const</code>.</td></tr>
+        <tr><td>extends</td><td>string</td><td>Name of the extended class or interface.</td></tr>
+        <tr><td>implements</td><td>[string]</td><td>Implemented interface names.</td></tr>
+        <tr><td>source</td><td><a href="#source-object">Source Object</a></td><td>Where the symbol is declared.</td></tr>
+        <tr><td>deprecated</td><td>boolean</td><td>Whether the symbol carries a <code>@deprecated</code> tag.</td></tr>
+        <tr><td>deprecationReason</td><td>string</td><td>Text of the <code>@deprecated</code> tag, when present.</td></tr>
+        <tr><td>examples</td><td>[Example Object]</td><td>Code examples from <code>@example</code> tags.</td></tr>
+        <tr><td>tags</td><td>[Tag Object]</td><td>Remaining JSDoc tags: <code>name</code>, <code>text</code>, structured <code>param</code>.</td></tr>
+      </tbody>
+    </table>
+    </div>
+    <div class="note"><p style="margin:0"><strong>Note.</strong> Type aliases additionally carry <code>typeAliasKind</code> (<code>"alias"</code> · <code>"conditional"</code> · <code>"mapped"</code> · <code>"template-literal"</code> · <code>"infer"</code>) with structural detail in <code>conditionalType</code> / <code>mappedType</code>, so consumers can render conditional and mapped types faithfully.</p></div>
+
+    <h3 id="signature-object"><span class="secno">5.3</span><a href="#signature-object">Signature Object</a></h3>
+    <div class="table-wrap">
+    <table>
+      <caption>Table 4. Signature Object</caption>
+      <thead><tr><th scope="col">Field</th><th scope="col">Type</th><th scope="col">Description</th></tr></thead>
+      <tbody>
+        <tr><td>parameters</td><td>[Parameter Object]</td><td>Ordered parameters: <code>name</code>, <code>schema</code> <span class="req">(required)</span>, <code>required</code>, <code>default</code>, <code>rest</code>, <code>description</code>.</td></tr>
+        <tr><td>returns</td><td>Return Object</td><td><code>schema</code> <span class="req">(required)</span> and optional <code>description</code> from <code>@returns</code>.</td></tr>
+        <tr><td>typeParameters</td><td>[TypeParameter Object]</td><td>Generic parameters scoped to this signature.</td></tr>
+        <tr><td>throws</td><td>[Throws Object]</td><td>Declared failure modes from <code>@throws</code>: <code>type</code>, <code>description</code>.</td></tr>
+        <tr><td>overloadIndex</td><td>integer</td><td>Zero-based position among overloads of the same symbol.</td></tr>
+        <tr><td>isImplementation</td><td>boolean</td><td>Marks the implementation signature of an overloaded function.</td></tr>
+        <tr><td>description</td><td>string</td><td>Per-overload documentation.</td></tr>
+        <tr><td>examples</td><td>[Example Object]</td><td>Per-overload examples.</td></tr>
+      </tbody>
+    </table>
+    </div>
+
+    <h3 id="member-object"><span class="secno">5.4</span><a href="#member-object">Member Object</a></h3>
+    <p>Describes one member of a class, interface, or enum. Fields mirror the Export Object where meaningful: <code>name</code>, <code>kind</code>, <code>description</code>, <code>schema</code>, <code>signatures</code>, <code>tags</code>, <code>deprecated</code>. Two fields are member-specific:</p>
+    <dl class="terms">
+      <dt><code>visibility</code></dt>
+      <dd><code>"public"</code> · <code>"protected"</code> · <code>"private"</code>. Producers <em class="rfc">should</em> omit private members unless explicitly configured otherwise.</dd>
+      <dt><code>flags</code></dt>
+      <dd>Modifier map (e.g. <code>static</code>, <code>readonly</code>, <code>abstract</code>, <code>async</code>, <code>optional</code>).</dd>
+    </dl>
+    <p>Members inherited from a base class are listed with an <code>inheritedFrom</code> field naming the ancestor, so consumers can render flattened or hierarchical views without re-walking the inheritance chain.</p>
+
+    <h3 id="type-object"><span class="secno">5.5</span><a href="#type-object">Type Object</a></h3>
+    <p>A named type declared in the document's <code>types</code> section. Type Objects are the targets of <code>#/types/…</code> references and use the same field vocabulary as Export Objects (<code>id</code>, <code>name</code>, <code>kind</code>, <code>schema</code>, <code>members</code>, <code>source</code>, <code>extends</code>, <code>implements</code>). Its <code>kind</code> is one of <code>"class"</code> · <code>"interface"</code> · <code>"type"</code> · <code>"enum"</code> · <code>"external"</code>. Types resolved from a package's dependencies carry <code>external:&nbsp;true</code> together with a <a href="#source-object">Source Object</a> naming the providing package.</p>
+
+    <h3 id="schema-object"><span class="secno">5.6</span><a href="#schema-object">Schema Object</a></h3>
+    <p>Type shapes are expressed as JSON Schema draft 2020-12 vocabulary: <code>type</code>, <code>properties</code>, <code>required</code>, <code>items</code>, <code>enum</code>, <code>additionalProperties</code>, <code>anyOf</code>, <code>allOf</code>, <code>oneOf</code>, and <code>$ref</code>. TypeScript constructs with no JSON Schema equivalent are preserved through the following vendor extensions, which consumers <em class="rfc">may</em> ignore without losing structural validity:</p>
+    <div class="table-wrap">
+    <table>
+      <caption>Table 5. Schema Object vendor extensions</caption>
+      <thead><tr><th scope="col">Extension</th><th scope="col">Purpose</th></tr></thead>
+      <tbody>
+        <tr><td>x-ts-type</td><td>Preserves the original TypeScript type where the JSON Schema mapping loses fidelity (<code>bigint</code> → <code>integer</code>, <code>symbol</code> → <code>string</code>, <code>void</code>, <code>never</code>, <code>unknown</code>, …).</td></tr>
+        <tr><td>x-ts-function</td><td>Marks a schema as a callable function type.</td></tr>
+        <tr><td>x-ts-signatures</td><td>Carries the <a href="#signature-object">Signature Objects</a> of a callable type.</td></tr>
+        <tr><td>x-ts-type-arguments</td><td>Preserves generic instantiation on a <code>$ref</code> (e.g. <code>Map&lt;string, number&gt;</code>).</td></tr>
+        <tr><td>x-ts-type-predicate</td><td>Preserves type-guard narrowing: the parameter name and narrowed type of <code>value is T</code>.</td></tr>
+        <tr><td>x-ts-package</td><td>Names the providing package on an external type reference.</td></tr>
+      </tbody>
+    </table>
+    </div>
+    <p>Unions of literals collapse to <code>enum</code>. Optional properties are expressed by omission from <code>required</code>, never by <code>| undefined</code> in the schema. Tuples use <code>items</code> with <code>minItems</code>/<code>maxItems</code>. Index signatures map to <code>additionalProperties</code>.</p>
+
+    <h3 id="source-object"><span class="secno">5.7</span><a href="#source-object">Source Object</a></h3>
+    <div class="table-wrap">
+    <table>
+      <caption>Table 6. Source Object</caption>
+      <thead><tr><th scope="col">Field</th><th scope="col">Type</th><th scope="col">Description</th></tr></thead>
+      <tbody>
+        <tr><td>file</td><td>string</td><td>Declaring file, relative to the package root.</td></tr>
+        <tr><td>line</td><td>integer</td><td>1-based line of the declaration.</td></tr>
+        <tr><td>url</td><td>string</td><td>Permalink to the declaration, when a repository is known.</td></tr>
+        <tr><td>package</td><td>string</td><td>Providing package, for external types.</td></tr>
+        <tr><td>version</td><td>string</td><td>Version of the providing package.</td></tr>
+      </tbody>
+    </table>
+    </div>
+
+    <h3 id="generation-object"><span class="secno">5.8</span><a href="#generation-object">Generation Object</a></h3>
+    <p>Optional provenance for the document: <code>generator</code> (tool name and version), <code>timestamp</code> (ISO 8601), <code>mode</code> (<code>"source"</code> or <code>"declaration-only"</code>), known <code>limitations</code> of declaration-only extraction, and a <code>skipped</code> list naming exports the producer omitted and why (<code>"filtered"</code> · <code>"no-declaration"</code> · <code>"internal"</code> · <code>"external-unresolved"</code>). Consumers <em class="rfc">must not</em> treat generation metadata as part of the described API.</p>
+  </section>
+
+  <section>
+    <h2 id="references-mechanics"><span class="secno">6.</span><a href="#references-mechanics">Type References</a></h2>
+    <p>A schema referencing a named type uses a JSON Reference whose target is the document's own <code>types</code> section:</p>
+    <pre><code>{ "$ref": "#/types/ExtractOptions" }</code></pre>
+    <p>The fragment <em class="rfc">must</em> take the form <code>#/types/{id}</code>, where <code>{id}</code> matches the <code>id</code> of exactly one <a href="#type-object">Type Object</a>. Producers <em class="rfc">must</em> emit a Type Object for every reference target (no dangling references) and <em class="rfc">must not</em> reference targets outside the document. Generic instantiations attach <code>x-ts-type-arguments</code> beside the <code>$ref</code> rather than minting new type entries per instantiation.</p>
+  </section>
+
+  <section>
+    <h2 id="extensions"><span class="secno">7.</span><a href="#extensions">Specification Extensions</a></h2>
+    <p>Two extension surfaces exist. Schema-level extensions are the <code>x-</code> prefixed fields of <a href="#schema-object">§ 5.6</a>. Document-level extensions live under the root <code>extensions</code> object, which is an open map; the single field defined by this specification is <code>presentation</code>, a map from export id to display metadata (<code>slug</code>, <code>displayName</code>, <code>category</code>, <code>importPath</code>, <code>alias</code>) for documentation front ends. Unknown extension fields <em class="rfc">must</em> be preserved by tools that rewrite documents.</p>
+  </section>
+
+  <section>
+    <h2 id="example"><span class="secno">8.</span><a href="#example">Complete Example</a></h2>
+    <p>A minimal, conforming document describing a package with one function and one referenced interface:</p>
+    <pre><code>{
+  "$schema": "https://openpkg.dev/schemas/v0.4.0/openpkg.schema.json",
+  "openpkg": "0.4.0",
+  "meta": {
+    "name": "greeter",
+    "version": "1.0.0",
+    "ecosystem": "js/ts"
+  },
+  "exports": [
+    {
+      "id": "greet",
+      "name": "greet",
+      "kind": "function",
+      "description": "Render a greeting for a person.",
+      "signatures": [
+        {
+          "parameters": [
+            { "name": "person", "required": true,
+              "schema": { "$ref": "#/types/Person" } }
+          ],
+          "returns": { "schema": { "type": "string" } }
+        }
+      ],
+      "source": { "file": "src/index.ts", "line": 12 }
+    }
+  ],
+  "types": [
+    {
+      "id": "Person",
+      "name": "Person",
+      "kind": "interface",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "age": { "type": "number" }
+        },
+        "required": ["name"]
+      },
+      "source": { "file": "src/index.ts", "line": 4 }
+    }
+  ]
+}</code></pre>
+  </section>
+
+  <section>
+    <h2 id="versioning"><span class="secno">9.</span><a href="#versioning">Versioning and Conformance</a></h2>
+    <p>The specification is versioned by the root <code>openpkg</code> field. Recognized versions are <code>0.2.0</code>, <code>0.3.0</code>, and <code>0.4.0</code>; each publishes its own JSON Schema. Within the 0.x line, minor versions <em class="rfc">may</em> add fields but <em class="rfc">must not</em> change the meaning of existing ones.</p>
+    <p>A document is <strong>conforming</strong> when it validates against the JSON Schema of its declared version and satisfies the prose constraints of this document (no dangling references, no <code>undefined</code> members in <code>required</code>, unique <code>id</code> values). A consumer is conforming when it accepts every conforming document of the versions it claims to support and ignores unrecognized <code>x-</code> fields rather than rejecting them.</p>
+  </section>
+
+  <hr>
+
+  <section>
+    <h2 id="appendix-a">Appendix A. Export Kinds</h2>
+    <div class="table-wrap">
+    <table>
+      <caption>Table 7. <code>kind</code> values for Export Objects</caption>
+      <thead><tr><th scope="col">Kind</th><th scope="col">Meaning</th></tr></thead>
+      <tbody>
+        <tr><td>function</td><td>Callable export; carries <code>signatures</code>.</td></tr>
+        <tr><td>class</td><td>Class declaration; carries <code>members</code>, optionally <code>extends</code> / <code>implements</code>.</td></tr>
+        <tr><td>interface</td><td>Interface declaration; carries <code>members</code>.</td></tr>
+        <tr><td>type</td><td>Type alias; carries <code>schema</code> and optionally <code>typeAliasKind</code>.</td></tr>
+        <tr><td>enum</td><td>Enum declaration; carries <code>members</code> with constant values.</td></tr>
+        <tr><td>variable</td><td>Exported value; carries <code>schema</code>.</td></tr>
+        <tr><td>namespace</td><td>Namespace export; members are listed as their own exports.</td></tr>
+        <tr><td>module</td><td>Module re-export.</td></tr>
+        <tr><td>reference</td><td>Re-exported symbol declared elsewhere in the document.</td></tr>
+        <tr><td>external</td><td>Re-exported symbol originating in another package.</td></tr>
+      </tbody>
+    </table>
+    </div>
+  </section>
+
+  <section>
+    <h2 id="normative-refs">Normative References</h2>
+    <dl class="refs">
+      <dt>[RFC2119]</dt>
+      <dd>Bradner, S., "Key words for use in RFCs to Indicate Requirement Levels", <a href="https://www.rfc-editor.org/rfc/rfc2119">RFC 2119</a>, March 1997.</dd>
+      <dt>[JSON-SCHEMA]</dt>
+      <dd>"JSON Schema: A Media Type for Describing JSON Documents", <a href="https://json-schema.org/draft/2020-12/schema">draft 2020-12</a>.</dd>
+      <dt>[RFC8259]</dt>
+      <dd>Bray, T., "The JavaScript Object Notation (JSON) Data Interchange Format", <a href="https://www.rfc-editor.org/rfc/rfc8259">RFC 8259</a>, December 2017.</dd>
+    </dl>
+  </section>
+
+  <footer>
+    <p>OpenPkg Specification, version 0.4.0 · Draft of 12 July 2026 · MIT · <a href="https://github.com/ryanwaits/openpkg-ts">github.com/ryanwaits/openpkg-ts</a></p>
+  </footer>
+</main>
+</body>
+</html>
