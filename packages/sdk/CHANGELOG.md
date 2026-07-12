@@ -1,5 +1,13 @@
 # @openpkg-ts/extract
 
+## 0.41.0
+
+### Patch Changes
+
+- 30b370c: Formatting fix in type-alias serializer (biome, no behavior change).
+- Updated dependencies [5a78ddb]
+  - @openpkg-ts/spec@0.41.0
+
 ## 0.40.0
 
 ### Minor Changes
