@@ -1,7 +1,11 @@
 import type { OpenPkgVersion, SpecExportKind } from './types';
 
 export const SCHEMA_VERSION: OpenPkgVersion = '0.4.0';
-export const SCHEMA_URL = 'https://unpkg.com/@openpkg-ts/spec/schemas/v0.4.0/openpkg.schema.json';
+/** Canonical schema URL — hosted by the OpenPkg standard, independent of any implementation's packaging. */
+export const SCHEMA_URL = 'https://openpkg.dev/schemas/v0.4.0/openpkg.schema.json';
+/** Mirror of the canonical schema, served from the published @openpkg-ts/spec npm package. */
+export const SCHEMA_URL_MIRROR =
+  'https://unpkg.com/@openpkg-ts/spec/schemas/v0.4.0/openpkg.schema.json';
 export const JSON_SCHEMA_DRAFT = 'https://json-schema.org/draft/2020-12/schema';
 
 /** The 6 export kinds relevant for UI display (excludes namespace, module, reference, external). */

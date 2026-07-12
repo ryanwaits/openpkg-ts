@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://unpkg.com/@openpkg-ts/spec/schemas/v0.4.0/openpkg.schema.json",
+  "$id": "https://openpkg.dev/schemas/v0.4.0/openpkg.schema.json",
   "title": "OpenPkg Specification v0.4.0",
   "description": "Minimal tool-agnostic TypeScript export representation",
   "type": "object",

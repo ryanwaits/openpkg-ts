@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://unpkg.com/@openpkg-ts/spec/schemas/v0.2.0/openpkg.schema.json",
+  "$id": "https://openpkg.dev/schemas/v0.2.0/openpkg.schema.json",
   "title": "OpenPkg Specification",
   "description": "Schema for OpenPkg specification files",
   "type": "object",
