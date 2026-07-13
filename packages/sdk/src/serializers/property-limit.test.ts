@@ -2,8 +2,8 @@ import { describe, expect, test } from 'bun:test';
 import { extract } from '../builder/spec-builder';
 
 describe('property limit warning', () => {
-  test('105 properties triggers onTruncation callback', async () => {
-    const props = Array.from({ length: 105 }, (_, i) => `prop${i}: string;`).join('\n  ');
+  test('505 properties triggers onTruncation callback at default limit 500', async () => {
+    const props = Array.from({ length: 505 }, (_, i) => `prop${i}: string;`).join('\n  ');
     const code = `
       export interface BigType {
         ${props}
@@ -23,8 +23,30 @@ describe('property limit warning', () => {
     expect(truncations.length).toBeGreaterThan(0);
     const bigTypeTruncation = truncations.find((t) => t.typeName === 'BigType');
     expect(bigTypeTruncation).toBeDefined();
-    expect(bigTypeTruncation?.actual).toBe(105);
-    expect(bigTypeTruncation?.limit).toBe(100);
+    expect(bigTypeTruncation?.actual).toBe(505);
+    expect(bigTypeTruncation?.limit).toBe(500);
+  });
+
+  test('130 properties (wide config interface) does not truncate at default limit', async () => {
+    const props = Array.from({ length: 130 }, (_, i) => `prop${i}: string;`).join('\n  ');
+    const code = `
+      export interface WideConfig {
+        ${props}
+      }
+      export function useWide(obj: WideConfig): void {}
+    `;
+
+    const truncations: Array<{ typeName: string; actual: number; limit: number }> = [];
+    await extract({
+      entryFile: 'test.ts',
+      content: code,
+      onTruncation: (typeName, actual, limit) => {
+        truncations.push({ typeName, actual, limit });
+      },
+    });
+
+    const wideTruncation = truncations.find((t) => t.typeName === 'WideConfig');
+    expect(wideTruncation).toBeUndefined();
   });
 
   test('15 properties does not trigger onTruncation', async () => {

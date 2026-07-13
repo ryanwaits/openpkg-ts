@@ -824,8 +824,10 @@ export function buildObjectSchema(
 
     for (const prop of properties) {
       const propName = prop.getName();
-      // Skip private/internal properties
-      if (propName.startsWith('_')) continue;
+      // Skip symbol-keyed members (checker-internal `__@iterator@…` names).
+      // Underscore-prefixed members are real API surface and must survive —
+      // the export serializers keep them, so schema paths must match.
+      if (propName.startsWith('__@')) continue;
 
       // Skip Array prototype methods only when the type is actually array-like.
       // Previously this was unconditional, which dropped real methods named

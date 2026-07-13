@@ -34,7 +34,7 @@ export interface ExtractOptions {
   includePrivate?: boolean;
   /** Configuration for resolving external package re-exports */
   externals?: ExternalsConfig;
-  /** Max properties to serialize per object type (default: 20) */
+  /** Max properties to serialize per object type (default: 500) */
   maxProperties?: number;
   /** Callback when properties are truncated */
   onTruncation?: (typeName: string, actual: number, limit: number) => void;

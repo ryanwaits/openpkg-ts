@@ -23,7 +23,7 @@ export interface SerializerContext {
   inTupleElement?: boolean;
   /** Include private/protected class members (default: false) */
   includePrivate?: boolean;
-  /** Max properties to serialize per object type (default: 20) */
+  /** Max properties to serialize per object type (default: 500) */
   maxProperties: number;
   /** Callback when properties are truncated */
   onTruncation?: (typeName: string, actual: number, limit: number) => void;
@@ -56,7 +56,7 @@ export function createContext(
     visitedTypes: new Set<ts.Type>(),
     registeredTypes: new Set<ts.Type>(),
     includePrivate: options.includePrivate ?? false,
-    maxProperties: options.maxProperties ?? 100,
+    maxProperties: options.maxProperties ?? 500,
     onTruncation: options.onTruncation,
   };
 }

@@ -293,11 +293,6 @@ export class TypeRegistry {
     const required: string[] = [];
     const limit = ctx.maxProperties;
 
-    if (properties.length > limit && ctx.onTruncation) {
-      const typeName = type.getSymbol()?.getName() ?? 'anonymous';
-      ctx.onTruncation(typeName, properties.length, limit);
-    }
-
     // Only filter prototype methods when the type is actually array/string/number-like
     const isArrayLike =
       checker.isArrayType(type) ||
@@ -310,15 +305,27 @@ export class TypeRegistry {
     const isStringLike = type.flags & ts.TypeFlags.StringLike;
     const isNumberLike = type.flags & ts.TypeFlags.NumberLike;
 
-    for (const prop of properties.slice(0, limit)) {
+    // Filter BEFORE slicing — otherwise skipped names consume limit budget and
+    // real members past the raw cutoff are silently dropped (intersection types
+    // append their object-literal branch members last, so those go first).
+    const included = properties.filter((prop) => {
       const propName = prop.getName();
-      if (propName.startsWith('_')) continue;
+      // Symbol-keyed members (checker-internal `__@iterator@…` names) aren't serializable
+      if (propName.startsWith('__@')) return false;
+      // Prototype methods only for their matching built-in types
+      if (isArrayLike && ARRAY_PROTOTYPE_METHODS.has(propName)) return false;
+      if (isStringLike && STRING_PROTOTYPE_METHODS.has(propName)) return false;
+      if (isNumberLike && NUMBER_PROTOTYPE_METHODS.has(propName)) return false;
+      return true;
+    });
 
-      // Skip prototype methods only for their matching built-in types
-      if (isArrayLike && ARRAY_PROTOTYPE_METHODS.has(propName)) continue;
-      if (isStringLike && STRING_PROTOTYPE_METHODS.has(propName)) continue;
-      if (isNumberLike && NUMBER_PROTOTYPE_METHODS.has(propName)) continue;
+    if (included.length > limit && ctx.onTruncation) {
+      const typeName = type.getSymbol()?.getName() ?? 'anonymous';
+      ctx.onTruncation(typeName, included.length, limit);
+    }
 
+    for (const prop of included.slice(0, limit)) {
+      const propName = prop.getName();
       const propType = checker.getTypeOfSymbol(prop);
 
       // Register referenced type so it appears in types[]

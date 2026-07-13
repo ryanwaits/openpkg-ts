@@ -1,5 +1,12 @@
 # @openpkg-ts/cli
 
+## 0.8.4
+
+### Patch Changes
+
+- Updated dependencies
+  - @openpkg-ts/sdk@0.42.0
+
 ## 0.8.3
 
 ### Patch Changes

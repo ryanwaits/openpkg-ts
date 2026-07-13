@@ -57,9 +57,13 @@ describe('utility type flattening', () => {
     const schema = effective?.schema as { allOf?: SpecSchema[] };
 
     expect(schema.allOf).toBeDefined();
-    const [omitPart] = schema.allOf as Array<Record<string, unknown>>;
+    const [omitPart, literalPart] = schema.allOf as Array<Record<string, unknown>>;
     expect(omitPart.$ref).toBeUndefined();
     expect(Object.keys(omitPart.properties as object).sort()).toEqual(['api_host', 'debug']);
+    // The object-literal branch must survive alongside the Omit branch
+    expect(literalPart).toBeDefined();
+    expect(Object.keys(literalPart.properties as object)).toEqual(['ready']);
+    expect(literalPart.required).toEqual(['ready']);
   });
 
   test('deferred instantiation in generic context keeps $ref form', async () => {
