@@ -72,6 +72,11 @@ beforeAll(() => {
       "import { Tracking } from '@acme/core';",
       '// Omit flattens CoreOptions away in the schema — expansion must keep it',
       "export type AppOptions = Omit<CoreOptions, 'flush_interval'> & { app_name: string };",
+      '// external base, some omitted keys re-declared in the literal',
+      "export type StrictOptions = Omit<CoreOptions, 'host' | 'flush_interval'> & {",
+      '  flush_interval?: number;',
+      '  strict: boolean;',
+      '};',
       'export declare function processEvent(event: AnyEvent): AnyEvent;',
       'export declare class App {',
       '  protected builder(): Tracking.ErrorBuilder;',
@@ -99,6 +104,28 @@ describe('reachable workspace-dep type expansion', () => {
     const props = (t?.schema as { properties?: Record<string, unknown> })?.properties ?? {};
     expect(Object.keys(props).sort()).toEqual(['flush_interval', 'host', 'level']);
     expect((props.host as { description?: string })?.description).toBe('Base host');
+  });
+
+  test('Omit on external base subtracts keys unless re-declared', async () => {
+    const { spec } = await extract({ entryFile: path.join(appDir, 'src/index.ts') });
+
+    // Key omitted and NOT re-declared must be absent from the flatten.
+    const app = spec.exports.find((e) => e.name === 'AppOptions');
+    expect(app).toBeDefined();
+    const appMembers = app?.members?.map((m) => m.name).sort();
+    expect(appMembers).toEqual(['app_name', 'host', 'level']);
+
+    // Omitted keys stay out; a re-declared key survives via the literal only.
+    const strict = spec.exports.find((e) => e.name === 'StrictOptions');
+    expect(strict).toBeDefined();
+    const strictMembers = strict?.members?.map((m) => m.name).sort();
+    expect(strictMembers).toEqual(['flush_interval', 'level', 'strict']);
+
+    const allOf = (strict?.schema as { allOf?: { properties?: Record<string, unknown> }[] })
+      ?.allOf;
+    expect(allOf).toBeDefined();
+    const basePart = allOf?.[0]?.properties ?? {};
+    expect(Object.keys(basePart).sort()).toEqual(['level']);
   });
 
   test('checker-erased aliases register by name (alias-to-any, indexed-access union)', async () => {
