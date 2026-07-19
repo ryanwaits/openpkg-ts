@@ -274,6 +274,8 @@
               "properties": { "propertyName": { "type": "string" } }
             },
             "description": { "type": "string" },
+            "deprecated": { "type": "boolean" },
+            "x-deprecated-reason": { "type": "string" },
             "default": {},
             "minimum": { "type": "number" },
             "maximum": { "type": "number" },

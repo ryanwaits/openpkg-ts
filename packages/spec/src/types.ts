@@ -87,6 +87,7 @@ export type SpecSchemaComposite =
       required?: string[];
       additionalProperties?: boolean | SpecSchema;
       description?: string;
+      deprecated?: boolean;
     }
   | { type: 'function'; signatures?: SpecSignature[] };
 
