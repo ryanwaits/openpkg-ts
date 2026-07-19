@@ -5,10 +5,10 @@ import * as path from 'node:path';
 import { extract } from './spec-builder';
 
 /**
- * Repro for the real-SDK round-3 gap: types declared in a workspace
- * dependency, referenced by the public surface but never re-exported from the
- * entry, must land in types[] (api-extractor bundles these; 0.8.4 dropped 37
- * of a real SDK's 124 published types). Covers the three erasure modes:
+ * Repro for the round-3 gap: types declared in a workspace dependency,
+ * referenced by the public surface but never re-exported from the entry,
+ * must land in types[] (api-extractor bundles these; 0.8.4 dropped dozens
+ * of a real SDK's published types). Covers the three erasure modes:
  * utility-type flattening (Omit target), checker-erased aliases
  * (`type X = any`, indexed-access unions), and namespace-qualified refs.
  */

@@ -6,7 +6,7 @@ import type { SpecExport } from '@openpkg-ts/spec';
 import { extract } from './spec-builder';
 
 /**
- * Repro for workspace-package types resolving as external (a-real-sdk run):
+ * Repro for workspace-package types resolving as external (monorepo dogfood run):
  * a pnpm-style monorepo where the entry re-exports types from a sibling
  * workspace package linked via node_modules symlink.
  */

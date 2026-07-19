@@ -61,7 +61,7 @@ export function serializeTypeAlias(
     schema = buildIntersectionSchemaFromNode(node.type, ctx);
     // Parity with mapped/conditional aliases: the allOf shell keeps the
     // intersection structure, but consumers still get resolved members with
-    // per-property docs (WideConfig = Omit<Base,'loaded'> & {…}).
+    // per-property docs (Config = Omit<Base,'loaded'> & {…}).
     if (type.getProperties().length > 0 && type.getCallSignatures().length === 0) {
       members = serializeResolvedMembers(type, node, ctx);
     }

@@ -38,11 +38,11 @@
 
 ### Minor Changes
 
-- Fix silent property truncation on wide types (a-real-sdk dogfood round 2):
+- Fix silent property truncation on wide types (dogfood round 2):
 
-  - `types[]` registry entries sliced properties to `maxProperties` BEFORE filtering, so skipped names consumed limit budget and real members past the raw cutoff were silently dropped. Intersection types (`Omit<A, K> & B`) were hit hardest: the checker appends the object-literal branch's members last, so they always fell past the cutoff on wide bases (WideConfig flattened to 97 of 132 keys). Filters now run before the slice.
+  - `types[]` registry entries sliced properties to `maxProperties` BEFORE filtering, so skipped names consumed limit budget and real members past the raw cutoff were silently dropped. Intersection types (`Omit<A, K> & B`) were hit hardest: the checker appends the object-literal branch's members last, so they always fell past the cutoff on wide bases (a 132-key config flattened to 97). Filters now run before the slice.
   - Underscore-prefixed members (`_onCapture`, `__preview_*`, `__extensionClasses`) were dropped from all schema paths while export serializers kept them — the same name resolved to different shapes in `exports[]` vs `types[]`. They are real API surface and now survive everywhere; only checker-internal symbol-keyed names (`__@iterator@…`) are filtered.
-  - Default `maxProperties` raised 100 → 500. Real-world config interfaces exceed 100 keys (WideConfig has 130); the `onTruncation` warning still fires at the limit, now based on the post-filter count.
+  - Default `maxProperties` raised 100 → 500. Real-world config interfaces exceed 100 keys; the `onTruncation` warning still fires at the limit, now based on the post-filter count.
 
 ## 0.41.0
 

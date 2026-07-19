@@ -5,7 +5,7 @@ import * as path from 'node:path';
 import { extract } from './spec-builder';
 
 /**
- * Repro for a real SDK's dist/entrypoints/index.node.d.ts silently
+ * Repro for a dist/entrypoints/index.node.d.ts entry silently
  * extracting nothing (dogfood round 3, Item 1): multi-dot d.ts entry names
  * must extract identically to plain index.d.ts, and a genuinely export-less
  * entry must fail loudly instead of producing an empty spec.
@@ -54,7 +54,7 @@ describe('multi-dot d.ts entry filenames', () => {
 });
 
 describe('entry colliding with a tsconfig source declaration-emit target', () => {
-  // a-real-sdk shape: tsconfig folds src/** into the program, and
+  // real-world shape: tsconfig folds src/** into the program, and
   // src/entrypoints/index.node.ts declaration-emits to EXACTLY the entry path.
   test('d.ts entry extracts despite an emitting source in the program', async () => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'openpkg-collide-'));

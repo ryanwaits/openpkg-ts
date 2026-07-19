@@ -274,7 +274,7 @@ export function createProgram(options: ProgramOptions): ProgramResult {
     );
     // A tsconfig source whose declaration-emit target IS the entry .d.ts poisons
     // the program: entry + its emitting source in one graph makes
-    // getExportsOfModule(entry) return [] (a-real-sdk index.node.d.ts).
+    // getExportsOfModule(entry) return [] (e.g. a dist index.node.d.ts entry).
     if (/\.d\.[cm]?ts$/.test(entryFile)) {
       sourceFiles = sourceFiles.filter((f) => {
         try {

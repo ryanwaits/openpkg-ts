@@ -6,7 +6,7 @@ import type { SpecSchema, SpecType } from '@openpkg-ts/spec';
 import { extract } from './spec-builder';
 
 /**
- * Repro for the a-real-sdk round-2 dogfood bug: a wide (>100-member) interface
+ * Repro for a round-2 dogfood bug: a wide (>100-member) interface
  * in one workspace package, consumed in a sibling package as
  * `Omit<Iface, 'k'> & { k: NewSig, extra?: boolean }`.
  *
