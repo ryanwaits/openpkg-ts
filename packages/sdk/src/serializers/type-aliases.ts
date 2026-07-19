@@ -59,6 +59,12 @@ export function serializeTypeAlias(
   let members: SpecMember[] | undefined;
   if (ts.isIntersectionTypeNode(node.type)) {
     schema = buildIntersectionSchemaFromNode(node.type, ctx);
+    // Parity with mapped/conditional aliases: the allOf shell keeps the
+    // intersection structure, but consumers still get resolved members with
+    // per-property docs (WideConfig = Omit<Base,'loaded'> & {…}).
+    if (type.getProperties().length > 0 && type.getCallSignatures().length === 0) {
+      members = serializeResolvedMembers(type, node, ctx);
+    }
   } else if (isInlineFunctionAlias(node.type) && type.getCallSignatures().length > 0) {
     // `type CallFn = (...) => R` (or callable literal): buildSchema at the top level
     // would short-circuit to a self-$ref; build the function schema from the
@@ -182,7 +188,11 @@ function serializeResolvedMembers(
     registerReferencedTypes(propType, ctx);
 
     const callSigs = propType.getCallSignatures();
-    const kind = callSigs.length > 0 ? 'method' : 'property';
+    // Match serializeInterface: classification follows declaration syntax.
+    // `loaded: (ph) => void` is a property with a function type, not a method.
+    const isMethodDecl =
+      ts.isMethodSignature(decl) || ts.isMethodDeclaration(decl) || ts.isFunctionDeclaration(decl);
+    const kind = callSigs.length > 0 && isMethodDecl ? 'method' : 'property';
 
     let { description, tags } = getJSDocComment(decl, prop, checker);
     let { deprecated, reason: deprecationReason } = isSymbolDeprecated(prop);

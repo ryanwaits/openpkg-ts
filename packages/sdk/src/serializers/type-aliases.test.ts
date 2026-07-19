@@ -50,6 +50,57 @@ describe('type alias serialization — mapped/conditional and function aliases',
     expect(execute?.deprecated).toBeUndefined();
   });
 
+  test('intersection alias flattens into members with per-property docs', async () => {
+    const code = `
+      interface Base {
+        /** Called on load */
+        loaded: (config: Base) => void;
+        /** API host */
+        api_host?: string;
+        /** @deprecated use api_host */
+        _legacy_host?: string;
+      }
+      export type Config = Omit<Base, 'loaded'> & {
+        /** New loaded signature */
+        loaded: (name: string) => boolean;
+        extra?: boolean;
+      };
+    `;
+    const result = await extract({ entryFile: 'test.ts', content: code });
+    const config = result.spec.exports.find((e) => e.name === 'Config');
+    expect(config).toBeDefined();
+    // Schema keeps the intersection structure
+    expect((config?.schema as { allOf?: unknown[] })?.allOf?.length).toBe(2);
+    // Members carry the resolved surface
+    const members = config?.members ?? [];
+    expect(members.map((m) => m.name).sort()).toEqual([
+      '_legacy_host',
+      'api_host',
+      'extra',
+      'loaded',
+    ]);
+    const loaded = members.find((m) => m.name === 'loaded');
+    // Declared as a property with function type — stays a property (matching
+    // serializeInterface), carrying the literal's signature in its schema
+    expect(loaded?.kind).toBe('property');
+    expect(JSON.stringify(loaded?.schema)).toContain('"name"');
+    expect(loaded?.description).toBe('New loaded signature');
+    const apiHost = members.find((m) => m.name === 'api_host');
+    expect(apiHost?.description).toBe('API host');
+    const legacy = members.find((m) => m.name === '_legacy_host');
+    expect(legacy?.deprecated).toBe(true);
+  });
+
+  test('intersection alias with call signatures keeps schema-only form', async () => {
+    const code = `
+      export type CallableThing = ((x: number) => string) & { cached?: boolean };
+    `;
+    const result = await extract({ entryFile: 'test.ts', content: code });
+    const callable = result.spec.exports.find((e) => e.name === 'CallableThing');
+    expect(callable).toBeDefined();
+    expect(callable?.members).toBeUndefined();
+  });
+
   test('function type alias gets signatures instead of opaque self-ref', async () => {
     const result = await extract({ entryFile: 'test.ts', content: WASM_PROXY_PATTERN });
     const callFn = result.spec.exports.find((e) => e.name === 'CallFn');
