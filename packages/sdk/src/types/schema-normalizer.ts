@@ -93,6 +93,24 @@ export function normalizeSchema(schema: SpecSchema, options: NormalizeOptions = 
  * Internal recursive normalization function
  */
 function normalizeSchemaInternal(schema: SpecSchema, options: NormalizeOptions): JSONSchema {
+  const result = normalizeSchemaDispatch(schema, options);
+  // Deprecation survives every branch — the per-branch keyword lists predate it.
+  if (schema && typeof schema === 'object') {
+    const s = schema as Record<string, unknown>;
+    if (s.deprecated === true && result.deprecated === undefined) {
+      result.deprecated = true;
+    }
+    if (
+      typeof s['x-deprecated-reason'] === 'string' &&
+      result['x-deprecated-reason'] === undefined
+    ) {
+      result['x-deprecated-reason'] = s['x-deprecated-reason'];
+    }
+  }
+  return result;
+}
+
+function normalizeSchemaDispatch(schema: SpecSchema, options: NormalizeOptions): JSONSchema {
   // Handle string shorthand (e.g., "string", "number")
   if (typeof schema === 'string') {
     return normalizeStringType(schema);
@@ -422,9 +440,9 @@ function normalizeStandardType(
     }
   }
 
-  // Preserve all x-ts-* extensions (TypeScript-specific metadata)
+  // Preserve all x-* extensions (x-ts-* TypeScript metadata, x-enum-members, …)
   for (const key of Object.keys(schema)) {
-    if (key.startsWith('x-ts-') && schema[key] !== undefined) {
+    if (key.startsWith('x-') && schema[key] !== undefined) {
       // Recursively normalize the value if it's a schema-like object
       const value = schema[key];
       if (isSchemaLike(value)) {
@@ -476,9 +494,28 @@ function normalizeCombinator(
   originalSchema: Record<string, unknown>,
   options: NormalizeOptions,
 ): JSONSchema {
-  const result: JSONSchema = {
-    [keyword]: schemas.map((s) => normalizeSchemaInternal(s, options)),
-  };
+  let branches = schemas.map((s) => normalizeSchemaInternal(s, options));
+
+  // Dedupe structurally-identical anyOf/oneOf branches — `string | null |
+  // undefined` lowers undefined→null and null→null, yielding double null.
+  if (keyword !== 'allOf') {
+    const seen = new Set<string>();
+    branches = branches.filter((b) => {
+      const key = JSON.stringify(b);
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+    if (branches.length === 1) {
+      const single = { ...branches[0] };
+      if ('description' in originalSchema && originalSchema.description && !single.description) {
+        single.description = originalSchema.description;
+      }
+      return single;
+    }
+  }
+
+  const result: JSONSchema = { [keyword]: branches };
 
   // Preserve discriminator for anyOf/oneOf
   if (
@@ -770,8 +807,25 @@ export function normalizeMembers(
 /**
  * Convert a single member to its JSON Schema representation
  */
+/** Doc fields a member contributes to its property schema (description + deprecation). */
+function memberDocExtras(member: SpecMember): JSONSchema {
+  const extras: JSONSchema = {};
+  if (member.description) {
+    extras.description = member.description;
+  }
+  if (member.deprecated) {
+    extras.deprecated = true;
+    const reason =
+      member.deprecationReason ?? member.tags?.find((t) => t.name === 'deprecated')?.text;
+    if (reason?.trim()) {
+      extras['x-deprecated-reason'] = reason;
+    }
+  }
+  return extras;
+}
+
 function normalizeMemberToSchema(member: SpecMember, options: NormalizeOptions): JSONSchema {
-  const { kind, schema, signatures, description } = member;
+  const { kind, schema, signatures } = member;
 
   // Method members → x-ts-function schema
   // Also handle call-signature for callable interfaces
@@ -785,7 +839,7 @@ function normalizeMemberToSchema(member: SpecMember, options: NormalizeOptions):
     return {
       ...baseSchema,
       'x-ts-accessor': 'getter',
-      ...(description ? { description } : {}),
+      ...memberDocExtras(member),
     };
   }
 
@@ -795,7 +849,7 @@ function normalizeMemberToSchema(member: SpecMember, options: NormalizeOptions):
     return {
       ...baseSchema,
       'x-ts-accessor': 'setter',
-      ...(description ? { description } : {}),
+      ...memberDocExtras(member),
     };
   }
 
@@ -819,8 +873,9 @@ function normalizeMemberToSchema(member: SpecMember, options: NormalizeOptions):
 
   // Regular property
   const baseSchema = schema ? normalizeSchemaInternal(schema, options) : {};
+  const extras = memberDocExtras(member);
 
-  return description ? { ...baseSchema, description } : baseSchema;
+  return Object.keys(extras).length > 0 ? { ...baseSchema, ...extras } : baseSchema;
 }
 
 /**
@@ -835,9 +890,7 @@ function normalizeMethodMember(member: SpecMember, options: NormalizeOptions): J
     result['x-ts-signatures'] = member.signatures.map((sig) => normalizeSignature(sig, options));
   }
 
-  if (member.description) {
-    result.description = member.description;
-  }
+  Object.assign(result, memberDocExtras(member));
 
   return result;
 }

@@ -1,5 +1,6 @@
 import type { SpecSchema, SpecSignature } from '@openpkg-ts/spec';
 import ts from 'typescript';
+import { isSymbolDeprecated } from '../ast/utils';
 import type { SerializerContext } from '../serializers/context';
 
 /**
@@ -837,7 +838,25 @@ export function buildObjectSchema(
       }
 
       const propType = checker.getTypeOfSymbol(prop);
-      props[propName] = buildSchema(propType, checker, ctx);
+      let propSchema = buildSchema(propType, checker, ctx);
+
+      // Carry doc comments into the flattened schema so consumers reading only
+      // schema.properties (not members[]) still see per-property descriptions.
+      // getDocumentationComment works for .d.ts inputs too.
+      const docComment = prop.getDocumentationComment(checker);
+      if (docComment.length > 0) {
+        const description = docComment.map((c) => c.text).join('\n');
+        if (description.trim()) {
+          propSchema = withDescription(propSchema, description);
+        }
+      }
+
+      const { deprecated, reason } = isSymbolDeprecated(prop);
+      if (deprecated) {
+        propSchema = withDeprecated(propSchema, reason);
+      }
+
+      props[propName] = propSchema;
 
       if (!(prop.flags & ts.SymbolFlags.Optional)) {
         required.push(propName);
@@ -902,6 +921,24 @@ export function withDescription(schema: SpecSchema, description: string): SpecSc
     };
   }
   return { ...schema, description };
+}
+
+/**
+ * Mark a schema as deprecated, handling $ref properly.
+ * For pure $ref schemas, wraps in allOf to preserve the reference.
+ */
+export function withDeprecated(schema: SpecSchema, reason?: string): SpecSchema {
+  const extra: Record<string, unknown> = { deprecated: true };
+  if (reason?.trim()) {
+    extra['x-deprecated-reason'] = reason;
+  }
+  if (typeof schema === 'string') {
+    return { type: schema, ...extra };
+  }
+  if (isPureRefSchema(schema)) {
+    return { allOf: [schema], ...extra };
+  }
+  return { ...schema, ...extra };
 }
 
 /**

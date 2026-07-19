@@ -3,11 +3,15 @@ import ts from 'typescript';
 import type { SerializerContext } from '../serializers/context';
 import {
   ARRAY_PROTOTYPE_METHODS,
+  buildFunctionSchema,
   buildSchema,
   NUMBER_PROTOTYPE_METHODS,
   PRIMITIVES,
   STRING_PROTOTYPE_METHODS,
+  withDeprecated,
+  withDescription,
 } from '../types/schema-builder';
+import { isSymbolDeprecated } from './utils';
 
 /** Built-in types that shouldn't be registered */
 const BUILTINS = new Set([
@@ -191,6 +195,15 @@ export class TypeRegistry {
       schema = this.resolveSelRefSchema(type, checker, ctx);
     }
 
+    // Enums always carry member names, not just values — a bare value list
+    // loses the `Compression.GZipJS` identity consumers address members by.
+    if (kind === 'enum') {
+      const enumSchema = this.buildEnumSchema(symbol, checker);
+      if (enumSchema) {
+        schema = enumSchema;
+      }
+    }
+
     return {
       id: name,
       name,
@@ -244,33 +257,53 @@ export class TypeRegistry {
     // Enum type — extract members directly from the declaration
     const symbol = type.getSymbol() ?? type.aliasSymbol;
     if (symbol) {
-      const decl = symbol.declarations?.find(ts.isEnumDeclaration);
-      if (decl) {
-        const members: Record<string, unknown>[] = [];
-        for (const member of decl.members) {
-          const memberSymbol = checker.getSymbolAtLocation(member.name);
-          if (memberSymbol) {
-            const constantValue = checker.getConstantValue(member);
-            if (constantValue !== undefined) {
-              members.push({
-                name: memberSymbol.getName(),
-                value: constantValue,
-              });
-            }
-          }
-        }
-        if (members.length > 0) {
-          return {
-            type: typeof members[0].value === 'string' ? 'string' : 'number',
-            enum: members.map((m) => m.value),
-            'x-enum-members': members,
-          };
-        }
+      const enumSchema = this.buildEnumSchema(symbol, checker);
+      if (enumSchema) {
+        return enumSchema;
       }
+    }
+
+    // Function aliases (`type Fn = (x) => y`) — emit signatures, not a stub
+    const callSignatures = type.getCallSignatures();
+    if (callSignatures.length > 0 && type.getProperties().length === 0) {
+      return buildFunctionSchema(callSignatures, checker, ctx) as Record<string, unknown>;
     }
 
     // Fallback: build object schema from properties
     return this.buildObjectSchemaFromProperties(type, checker, ctx);
+  }
+
+  /**
+   * Build an enum schema with member names from the enum declaration.
+   * Returns undefined when the symbol has no enum declaration or no
+   * constant-valued members.
+   */
+  private buildEnumSchema(
+    symbol: ts.Symbol,
+    checker: ts.TypeChecker,
+  ): Record<string, unknown> | undefined {
+    const decl = symbol.declarations?.find(ts.isEnumDeclaration);
+    if (!decl) return undefined;
+
+    const members: Record<string, unknown>[] = [];
+    for (const member of decl.members) {
+      const memberSymbol = checker.getSymbolAtLocation(member.name);
+      if (memberSymbol) {
+        const constantValue = checker.getConstantValue(member);
+        if (constantValue !== undefined) {
+          members.push({
+            name: memberSymbol.getName(),
+            value: constantValue,
+          });
+        }
+      }
+    }
+    if (members.length === 0) return undefined;
+    return {
+      type: typeof members[0].value === 'string' ? 'string' : 'number',
+      enum: members.map((m) => m.value),
+      'x-enum-members': members,
+    };
   }
 
   /**
@@ -331,7 +364,23 @@ export class TypeRegistry {
       // Register referenced type so it appears in types[]
       this.registerType(propType, ctx);
 
-      props[propName] = buildSchema(propType, checker, ctx);
+      let propSchema = buildSchema(propType, checker, ctx);
+
+      // Mirror buildObjectSchema: flattened registry schemas carry per-property
+      // doc comments and deprecation for consumers reading only the schema layer.
+      const docComment = prop.getDocumentationComment(checker);
+      if (docComment.length > 0) {
+        const description = docComment.map((c) => c.text).join('\n');
+        if (description.trim()) {
+          propSchema = withDescription(propSchema, description);
+        }
+      }
+      const { deprecated, reason } = isSymbolDeprecated(prop);
+      if (deprecated) {
+        propSchema = withDeprecated(propSchema, reason);
+      }
+
+      props[propName] = propSchema;
 
       if (!(prop.flags & ts.SymbolFlags.Optional)) {
         required.push(propName);
