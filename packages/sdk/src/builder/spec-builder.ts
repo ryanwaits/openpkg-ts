@@ -32,6 +32,7 @@ import {
 } from './external-resolver';
 import { mergeRuntimeSchemas } from './schema-merger';
 import { clearTypeDefinitionCache, getRegexCache } from './type-cache';
+import { expandReachableTypes } from './type-expansion';
 import {
   BUILTIN_TYPES as BUILTIN_TYPES_SET,
   buildVerificationSummary,
@@ -191,13 +192,25 @@ export async function extract(options: ExtractOptions): Promise<ExtractResult> {
         diagnostics: [
           {
             message: `No exports found in ${entryFile}. Is this the right entry point?`,
-            severity: 'warning',
+            severity: 'error',
           },
         ],
       };
     }
 
     const exportedSymbols = typeChecker.getExportsOfModule(moduleSymbol);
+
+    if (exportedSymbols.length === 0) {
+      return {
+        spec: createEmptySpec(entryFile, includeSchema, isDtsSource),
+        diagnostics: [
+          {
+            message: `No exports found in ${entryFile}. Is this the right entry point?`,
+            severity: 'error',
+          },
+        ],
+      };
+    }
 
     // First pass: collect all export names so we can skip them when registering types
     const exportedIds = new Set<string>();
@@ -362,6 +375,15 @@ export async function extract(options: ExtractOptions): Promise<ExtractResult> {
 
     // Get package metadata
     const meta = await getPackageMeta(entryFile, baseDir);
+
+    // Reachability expansion: register named types the exported surface
+    // references but flattening erased (Omit targets, heritage bases,
+    // inherited signature types). Workspace deps by default; see followExternal.
+    expandReachableTypes(filteredSymbols, ctx, {
+      followExternal: options.followExternal,
+      workspacePackages: result.workspacePackages ?? new Map(),
+      entryFile,
+    });
 
     // Post-process: register any $ref targets missing from the type registry.
     // Iterates until stable since newly registered types may introduce new $ref targets.

@@ -44,6 +44,8 @@ export interface ProgramResult {
   configPath?: string;
   /** Resolved project references (workspace packages) */
   projectReferences?: ts.ResolvedProjectReference[];
+  /** Workspace sibling packages discovered from the workspace map (name → dir) */
+  workspacePackages?: Map<string, string>;
 }
 
 /**
@@ -263,13 +265,27 @@ export function createProgram(options: ProgramOptions): ProgramResult {
     // Include all source files from tsconfig to ensure re-exported modules are loaded
     // This fixes the case where tsx files aren't auto-loaded due to missing jsx config
     // (e.g., when extended config can't be resolved from workspace package)
-    const sourceFiles = parsedConfig.fileNames.filter(
+    let sourceFiles = parsedConfig.fileNames.filter(
       (f) =>
         !f.includes('.test.') &&
         !f.includes('.spec.') &&
         !f.includes('/dist/') &&
         !f.includes('/node_modules/'),
     );
+    // A tsconfig source whose declaration-emit target IS the entry .d.ts poisons
+    // the program: entry + its emitting source in one graph makes
+    // getExportsOfModule(entry) return [] (a-real-sdk index.node.d.ts).
+    if (/\.d\.[cm]?ts$/.test(entryFile)) {
+      sourceFiles = sourceFiles.filter((f) => {
+        try {
+          return !ts
+            .getOutputFileNames(parsedConfig, f, !ts.sys.useCaseSensitiveFileNames)
+            .some((out) => path.resolve(out) === entryFile);
+        } catch {
+          return true;
+        }
+      });
+    }
     additionalRootFiles.push(...sourceFiles);
   }
 
@@ -370,5 +386,6 @@ export function createProgram(options: ProgramOptions): ProgramResult {
     compilerOptions,
     sourceFile,
     configPath,
+    workspacePackages: new Map(workspaceMap?.packages ?? []),
   };
 }

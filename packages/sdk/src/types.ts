@@ -36,6 +36,13 @@ export interface ExtractOptions {
   externals?: ExternalsConfig;
   /** Max properties to serialize per object type (default: 500) */
   maxProperties?: number;
+  /**
+   * Register referenced-but-not-exported types from dependencies as named
+   * types[] entries. true → all packages; string[] → listed packages (plus
+   * workspace siblings); false → disable the expansion pass; default →
+   * workspace sibling packages only.
+   */
+  followExternal?: boolean | string[];
   /** Callback when properties are truncated */
   onTruncation?: (typeName: string, actual: number, limit: number) => void;
 }

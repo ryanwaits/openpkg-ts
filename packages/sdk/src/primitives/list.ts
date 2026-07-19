@@ -75,6 +75,13 @@ export async function listExports(options: ListExportsOptions): Promise<ListExpo
 
   const exportedSymbols = checker.getExportsOfModule(moduleSymbol);
 
+  if (exportedSymbols.length === 0) {
+    return {
+      exports: [],
+      errors: [`No exports found in ${entryFile}. Is this the right entry point?`],
+    };
+  }
+
   for (const symbol of exportedSymbols) {
     try {
       const exportItem = extractExportItem(symbol, checker, entryFile, sourceFile);

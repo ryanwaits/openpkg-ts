@@ -60,6 +60,9 @@ function reportDiagnostics(diagnostics: Array<{ severity: string; message: strin
       console.error(`${d.severity}: ${d.message}`);
     }
   }
+  if (diagnostics.some((d) => d.severity === 'error')) {
+    process.exit(1);
+  }
 }
 
 async function specCommand(args: string[]): Promise<void> {
@@ -117,7 +120,13 @@ async function listCommand(args: string[]): Promise<void> {
   const entryFile = positionals[0];
   if (!entryFile) fail('list requires an entry file (openpkg list src/index.ts)');
 
-  const { exports } = await listExports({ entryFile });
+  const { exports, errors } = await listExports({ entryFile });
+  for (const err of errors) {
+    console.error(`error: ${err}`);
+  }
+  if (errors.length > 0 && exports.length === 0) {
+    process.exit(1);
+  }
   if (values.json) {
     console.log(JSON.stringify(exports, null, 2));
     return;
