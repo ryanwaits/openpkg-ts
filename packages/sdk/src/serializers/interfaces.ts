@@ -189,11 +189,18 @@ function serializeMethodSignature(
   const symbol = checker.getSymbolAtLocation(node.name);
   const { deprecated, reason: deprecationReason } = isSymbolDeprecated(symbol);
 
+  // Signature-carrying members get a synthetic function schema so the
+  // checker-rendered type text is available at the member level too.
+  const schema = symbol
+    ? decoratePropertySchema({ 'x-ts-function': true }, symbol, type, checker)
+    : undefined;
+
   return {
     name,
     kind: 'method',
     description,
     tags: tags.length > 0 ? tags : undefined,
+    schema,
     signatures: signatures.length > 0 ? signatures : undefined,
     flags: Object.keys(flags).length > 0 ? flags : undefined,
     ...(deprecated ? { deprecated: true, deprecationReason } : {}),

@@ -897,6 +897,15 @@ function normalizeMethodMember(member: SpecMember, options: NormalizeOptions): J
     result['x-ts-method'] = true;
   }
 
+  // Carry the member's checker-rendered type text onto the flattened schema.
+  const memberTypeText =
+    member.schema && typeof member.schema === 'object'
+      ? (member.schema as Record<string, unknown>)['x-ts-type']
+      : undefined;
+  if (typeof memberTypeText === 'string') {
+    result['x-ts-type'] = memberTypeText;
+  }
+
   if (member.signatures && member.signatures.length > 0) {
     result['x-ts-signatures'] = member.signatures.map((sig) => normalizeSignature(sig, options));
   }

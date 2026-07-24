@@ -269,10 +269,12 @@ function serializeResolvedMembers(
     // keep SymbolFlags.Method, mapped (Omit/Pick) members lose it.
     if (prop.flags & ts.SymbolFlags.Method) flags.methodSyntax = true;
 
-    let schema: SpecSchema | undefined;
-    if (kind === 'property') {
-      schema = decoratePropertySchema(buildSchema(propType, checker, ctx), prop, propType, checker);
-    }
+    // Property members decorate their structural schema; signature-carrying
+    // members get a synthetic function schema so type text survives there too.
+    const schema =
+      kind === 'property'
+        ? decoratePropertySchema(buildSchema(propType, checker, ctx), prop, propType, checker)
+        : decoratePropertySchema({ 'x-ts-function': true }, prop, propType, checker);
 
     members.push({
       name: prop.getName(),

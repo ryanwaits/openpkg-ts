@@ -3,7 +3,7 @@ import ts from 'typescript';
 import { TypeRegistry } from '../ast/registry';
 import { getJSDocComment, getJSDocForSignature } from '../ast/utils';
 import { extractParameters, registerReferencedTypes } from '../types/parameters';
-import { buildSchema } from '../types/schema-builder';
+import { buildSchema, decoratePropertySchema } from '../types/schema-builder';
 
 export interface SerializerContext {
   typeChecker: ts.TypeChecker;
@@ -246,7 +246,10 @@ function serializeInheritedMember(
     description,
     tags: tags.length > 0 ? tags : undefined,
     visibility,
-    schema: kind !== 'method' ? buildSchema(type, checker, ctx) : undefined,
+    schema:
+      kind !== 'method'
+        ? buildSchema(type, checker, ctx)
+        : decoratePropertySchema({ 'x-ts-function': true }, symbol, type, checker),
     signatures,
     flags: Object.keys(flags).length > 0 ? flags : undefined,
   };
