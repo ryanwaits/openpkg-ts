@@ -140,6 +140,7 @@ export type AliasToNamed = Named;
     expect(((pointType?.schema ?? {}) as Record<string, unknown>).properties).toBeDefined();
     const alias = result.spec.exports.find((e) => e.name === 'AliasToNamed');
     expect(JSON.stringify(alias?.schema)).toContain('Named');
-    expect(point?.members).toBeUndefined();
+    // Object-literal aliases now carry the members layer too
+    expect(point?.members?.map((m) => m.name)).toEqual(['x', 'y']);
   });
 });

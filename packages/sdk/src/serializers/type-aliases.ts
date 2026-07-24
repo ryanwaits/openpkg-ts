@@ -7,6 +7,7 @@ import {
   buildObjectSchema,
   buildSchema,
   decoratePropertySchema,
+  isBuiltinSymbol,
   PRIMITIVES,
   renderTypeText,
   shouldEmitAliasTypeText,
@@ -90,6 +91,12 @@ export function serializeTypeAlias(
   } else {
     // Then build the schema normally
     schema = buildSchema(type, ctx.typeChecker, ctx);
+    // Object-shaped aliases beyond intersections/mapped — object literals,
+    // utility instantiations (Pick/Omit), cross-package references — also get
+    // the JSDoc-rich members layer (descriptions, tags, flags).
+    if (isObjectShapedAlias(type, ctx)) {
+      members = serializeResolvedMembers(type, node, ctx);
+    }
   }
 
   // Alias-level x-ts-type: renderable RHS text ("Item[]", "Generic<A, B>")
@@ -119,6 +126,26 @@ export function serializeTypeAlias(
     ...(deprecated ? { deprecated: true, deprecationReason } : {}),
     ...(examples.length > 0 ? { examples } : {}),
   };
+}
+
+/**
+ * Object-shaped alias check for the members layer: has resolved properties,
+ * no call signatures, and isn't an array/tuple (whose "properties" are
+ * prototype methods) or a TS-lib builtin (Promise, Date, …).
+ */
+function isObjectShapedAlias(type: ts.Type, ctx: SerializerContext): boolean {
+  const { typeChecker: checker } = ctx;
+  if (!(type.flags & ts.TypeFlags.Object)) return false;
+  if (checker.isArrayType(type) || checker.isTupleType(type)) return false;
+  // Mapped instantiations (Pick/Omit/Partial) carry the lib mapped-type node
+  // as their symbol but their members come from user code — never builtin.
+  const objectFlags = (type as ts.ObjectType).objectFlags;
+  if (!(objectFlags & ts.ObjectFlags.Mapped)) {
+    const targetSymbol = (type as ts.TypeReference).target?.getSymbol?.() ?? type.getSymbol();
+    // Builtins (Promise, Date, …) would surface lib prototype methods as members.
+    if (isBuiltinSymbol(targetSymbol)) return false;
+  }
+  return type.getProperties().length > 0 && type.getCallSignatures().length === 0;
 }
 
 /** Syntax check: alias body is an inline function type or a callable type literal. */
