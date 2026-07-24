@@ -240,16 +240,26 @@ function serializeConstructor(
   ctx: SerializerContext,
 ): SpecSignature | null {
   const { typeChecker: checker } = ctx;
-  const { description } = getJSDocComment(node);
 
   const sig = checker.getSignatureFromDeclaration(node);
   if (!sig) return null;
 
+  return serializeConstructorSignature(node, sig, ctx);
+}
+
+function serializeConstructorSignature(
+  node: ts.ConstructorDeclaration,
+  sig: ts.Signature,
+  ctx: SerializerContext,
+): SpecSignature {
+  const { description, tags, examples } = getJSDocComment(node);
   const params = extractParameters(sig, ctx);
 
   return {
     description,
     parameters: params.length > 0 ? params : undefined,
+    ...(tags.length > 0 ? { tags } : {}),
+    ...(examples.length > 0 ? { examples } : {}),
   };
 }
 
