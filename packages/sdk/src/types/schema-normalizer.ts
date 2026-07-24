@@ -94,17 +94,20 @@ export function normalizeSchema(schema: SpecSchema, options: NormalizeOptions = 
  */
 function normalizeSchemaInternal(schema: SpecSchema, options: NormalizeOptions): JSONSchema {
   const result = normalizeSchemaDispatch(schema, options);
-  // Deprecation survives every branch — the per-branch keyword lists predate it.
-  if (schema && typeof schema === 'object') {
+  // Deprecation, x-* extensions, and readOnly survive every branch — the
+  // per-branch keyword lists predate them.
+  if (schema && typeof schema === 'object' && !Array.isArray(schema)) {
     const s = schema as Record<string, unknown>;
     if (s.deprecated === true && result.deprecated === undefined) {
       result.deprecated = true;
     }
-    if (
-      typeof s['x-deprecated-reason'] === 'string' &&
-      result['x-deprecated-reason'] === undefined
-    ) {
-      result['x-deprecated-reason'] = s['x-deprecated-reason'];
+    if (s.readOnly === true && result.readOnly === undefined) {
+      result.readOnly = true;
+    }
+    for (const key of Object.keys(s)) {
+      if (key.startsWith('x-') && s[key] !== undefined && result[key] === undefined) {
+        result[key] = s[key];
+      }
     }
   }
   return result;
@@ -812,6 +815,9 @@ function memberDocExtras(member: SpecMember): JSONSchema {
   const extras: JSONSchema = {};
   if (member.description) {
     extras.description = member.description;
+  }
+  if (member.flags?.readonly === true) {
+    extras.readOnly = true;
   }
   if (member.deprecated) {
     extras.deprecated = true;

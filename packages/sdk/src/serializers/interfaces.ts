@@ -2,7 +2,7 @@ import type { SpecExport, SpecMember, SpecSignature } from '@openpkg-ts/spec';
 import ts from 'typescript';
 import { extractTypeParameters, getJSDocComment, isSymbolDeprecated } from '../ast/utils';
 import { extractParameters, registerReferencedTypes } from '../types/parameters';
-import { buildSchema } from '../types/schema-builder';
+import { buildSchema, decoratePropertySchema } from '../types/schema-builder';
 import type { SerializerContext } from './context';
 import { buildSignatures, extractExportMetadata } from './shared';
 
@@ -140,7 +140,7 @@ function serializePropertySignature(
   const { description, tags } = getJSDocComment(node);
 
   const type = checker.getTypeAtLocation(node);
-  const schema = buildSchema(type, checker, ctx);
+  let schema = buildSchema(type, checker, ctx);
   registerReferencedTypes(type, ctx);
 
   const flags: Record<string, unknown> = {};
@@ -150,6 +150,9 @@ function serializePropertySignature(
   }
 
   const symbol = checker.getSymbolAtLocation(node.name);
+  if (symbol) {
+    schema = decoratePropertySchema(schema, symbol, type, checker);
+  }
   const { deprecated, reason: deprecationReason } = isSymbolDeprecated(symbol);
 
   return {

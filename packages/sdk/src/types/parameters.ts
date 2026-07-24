@@ -2,33 +2,7 @@ import type { SpecSignatureParameter } from '@openpkg-ts/spec';
 import ts from 'typescript';
 import { getParamDescription } from '../ast/utils';
 import type { SerializerContext } from '../serializers/context';
-import { buildSchema } from './schema-builder';
-
-/**
- * Strip `undefined` from a union type when the parameter is already optional.
- * This avoids redundant `{ anyOf: [{ type: 'number' }, { type: 'undefined' }] }`
- * when `required: false` already expresses optionality.
- */
-function stripUndefinedFromType(type: ts.Type, checker: ts.TypeChecker): ts.Type {
-  if (!type.isUnion()) return type;
-
-  // Filter out undefined from the union
-  const nonUndefinedTypes = type.types.filter((t) => !(t.flags & ts.TypeFlags.Undefined));
-
-  // If no types remain or all were undefined, return original
-  if (nonUndefinedTypes.length === 0) return type;
-
-  // If only one type remains, return it directly
-  if (nonUndefinedTypes.length === 1) return nonUndefinedTypes[0];
-
-  // Otherwise, create a new union type without undefined.
-  // getUnionType is an internal TypeScript API absent from public typings but
-  // verified present at runtime in TS 5.x; revisit on TypeScript upgrades.
-  type CheckerWithUnion = ts.TypeChecker & {
-    getUnionType(types: readonly ts.Type[]): ts.Type;
-  };
-  return (checker as CheckerWithUnion).getUnionType(nonUndefinedTypes);
-}
+import { buildSchema, stripUndefinedFromType } from './schema-builder';
 
 export function extractParameters(
   signature: ts.Signature,

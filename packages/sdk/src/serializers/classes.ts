@@ -2,7 +2,7 @@ import type { SpecExport, SpecMember, SpecSignature, SpecVisibility } from '@ope
 import ts from 'typescript';
 import { extractTypeParameters, getJSDocComment, isSymbolDeprecated } from '../ast/utils';
 import { extractParameters, registerReferencedTypes } from '../types/parameters';
-import { buildSchema } from '../types/schema-builder';
+import { buildSchema, decoratePropertySchema } from '../types/schema-builder';
 import { getInheritedMembers, type SerializerContext } from './context';
 import { buildSignatures, extractExportMetadata } from './shared';
 
@@ -171,7 +171,7 @@ function serializeProperty(
   registerReferencedTypes(type, ctx);
 
   // Then build the schema
-  const schema = buildSchema(type, checker, ctx);
+  let schema = buildSchema(type, checker, ctx);
 
   const flags: Record<string, unknown> = {};
   if (isStatic(node)) flags.static = true;
@@ -179,6 +179,9 @@ function serializeProperty(
   if (node.questionToken) flags.optional = true;
 
   const symbol = checker.getSymbolAtLocation(node.name ?? node);
+  if (symbol) {
+    schema = decoratePropertySchema(schema, symbol, type, checker);
+  }
   const { deprecated, reason: deprecationReason } = isSymbolDeprecated(symbol);
 
   return {

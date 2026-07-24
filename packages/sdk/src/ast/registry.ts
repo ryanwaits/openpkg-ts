@@ -5,9 +5,12 @@ import {
   ARRAY_PROTOTYPE_METHODS,
   buildFunctionSchema,
   buildSchema,
+  decoratePropertySchema,
   NUMBER_PROTOTYPE_METHODS,
   PRIMITIVES,
+  renderTypeText,
   STRING_PROTOTYPE_METHODS,
+  shouldEmitAliasTypeText,
   withDeprecated,
   withDescription,
 } from '../types/schema-builder';
@@ -204,6 +207,24 @@ export class TypeRegistry {
       }
     }
 
+    // Alias-level x-ts-type: array/instantiation/union/intersection/function
+    // aliases have no renderable text in their structural schema — attach the
+    // checker-rendered RHS ("Item[]", "Generic<A, B>") for display consumers.
+    if (
+      kind === 'type' &&
+      decl &&
+      ts.isTypeAliasDeclaration(decl) &&
+      shouldEmitAliasTypeText(decl.type) &&
+      typeof schema === 'object' &&
+      schema !== null &&
+      !('x-ts-type' in schema)
+    ) {
+      const text = renderTypeText(type, checker, decl, ts.TypeFormatFlags.InTypeAlias);
+      if (!PRIMITIVES.has(text) && text !== name) {
+        (schema as Record<string, unknown>)['x-ts-type'] = text;
+      }
+    }
+
     return {
       id: name,
       name,
@@ -267,6 +288,25 @@ export class TypeRegistry {
     const callSignatures = type.getCallSignatures();
     if (callSignatures.length > 0 && type.getProperties().length === 0) {
       return buildFunctionSchema(callSignatures, checker, ctx) as Record<string, unknown>;
+    }
+
+    // Array/tuple aliases (`type L = Item[]`) — getProperties() only yields
+    // prototype methods, which the object fallback filters to an empty shape.
+    // Build the real array structure instead.
+    if (checker.isTupleType(type)) {
+      const elementTypes = checker.getTypeArguments(type as ts.TypeReference) ?? [];
+      return {
+        type: 'array',
+        prefixedItems: elementTypes.map((t) => buildSchema(t, checker, ctx)),
+        minItems: elementTypes.length,
+        maxItems: elementTypes.length,
+      };
+    }
+    if (checker.isArrayType(type)) {
+      const elementType = checker.getTypeArguments(type as ts.TypeReference)?.[0];
+      return elementType
+        ? { type: 'array', items: buildSchema(elementType, checker, ctx) }
+        : { type: 'array' };
     }
 
     // Fallback: build object schema from properties
@@ -379,6 +419,8 @@ export class TypeRegistry {
       if (deprecated) {
         propSchema = withDeprecated(propSchema, reason);
       }
+
+      propSchema = decoratePropertySchema(propSchema, prop, propType, checker);
 
       props[propName] = propSchema;
 

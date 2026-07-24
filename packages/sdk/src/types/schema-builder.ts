@@ -37,6 +37,110 @@ function setSchemaExtension(schema: SpecSchema, key: string, value: unknown): vo
   (schema as Record<string, unknown>)[key] = value;
 }
 
+/**
+ * Remove `import("<abs path>").` qualifiers from checker-rendered type text.
+ * Machine-specific paths must never appear in a published spec.
+ */
+export function scrubImportQualifiers(text: string): string {
+  return text.replace(/import\((?:"[^"]*"|'[^']*')\)\./g, '');
+}
+
+/**
+ * Render the developer-facing type text at its owning declaration.
+ * NoTruncation keeps long unions intact; import() qualifiers are scrubbed.
+ */
+export function renderTypeText(
+  type: ts.Type,
+  checker: ts.TypeChecker,
+  enclosing?: ts.Node,
+  extraFlags: ts.TypeFormatFlags = 0,
+): string {
+  return scrubImportQualifiers(
+    checker.typeToString(type, enclosing, ts.TypeFormatFlags.NoTruncation | extraFlags),
+  );
+}
+
+/**
+ * Strip `undefined` from a union type when optionality is already expressed
+ * elsewhere (`required: false`, `flags.optional`). Used for both schema shape
+ * and x-ts-type text so neither re-encodes optionality as `| undefined`.
+ */
+export function stripUndefinedFromType(type: ts.Type, checker: ts.TypeChecker): ts.Type {
+  if (!type.isUnion()) return type;
+
+  const nonUndefinedTypes = type.types.filter((t) => !(t.flags & ts.TypeFlags.Undefined));
+
+  if (nonUndefinedTypes.length === 0) return type;
+  if (nonUndefinedTypes.length === 1) return nonUndefinedTypes[0];
+
+  // getUnionType is an internal TypeScript API absent from public typings but
+  // verified present at runtime in TS 5.x; revisit on TypeScript upgrades.
+  type CheckerWithUnion = ts.TypeChecker & {
+    getUnionType(types: readonly ts.Type[]): ts.Type;
+  };
+  return (checker as CheckerWithUnion).getUnionType(nonUndefinedTypes);
+}
+
+/** Declaration-modifier readonly check — matches the member-layer flags.readonly source. */
+export function isReadonlyPropertySymbol(prop: ts.Symbol): boolean {
+  const decls = prop.getDeclarations() ?? [];
+  return decls.some((d) => (ts.getCombinedModifierFlags(d) & ts.ModifierFlags.Readonly) !== 0);
+}
+
+/**
+ * Decorate a property schema with TS-fidelity metadata:
+ * - `x-ts-type`: checker-rendered text at the owning declaration. Emitted
+ *   unless trivially derivable — a bare primitive keyword, or a $ref whose
+ *   target name equals the text. Optional props render without `| undefined`.
+ * - `readOnly`: JSON Schema readonly marker from the declaration modifier.
+ * - `x-ts-method`: declaration form marker for method-syntax members
+ *   (SymbolFlags.Method survives on true methods, is stripped by mapping).
+ */
+export function decoratePropertySchema(
+  schema: SpecSchema,
+  prop: ts.Symbol,
+  propType: ts.Type,
+  checker: ts.TypeChecker,
+): SpecSchema {
+  if (typeof schema !== 'object' || schema === null || Array.isArray(schema)) return schema;
+
+  const decl = prop.valueDeclaration ?? prop.getDeclarations()?.[0];
+  const optional = !!(prop.flags & ts.SymbolFlags.Optional);
+  const textType = optional ? stripUndefinedFromType(propType, checker) : propType;
+  const text = renderTypeText(textType, checker, decl);
+
+  const obj = schema as Record<string, unknown>;
+  const refTarget =
+    typeof obj.$ref === 'string'
+      ? obj.$ref
+      : Array.isArray(obj.allOf) && obj.allOf.length === 1 && isPureRefSchema(obj.allOf[0])
+        ? (obj.allOf[0] as { $ref: string }).$ref
+        : undefined;
+  const derivable = PRIMITIVES.has(text) || refTarget === `#/types/${text}`;
+
+  let result: Record<string, unknown> = obj;
+  if (!derivable && !('x-ts-type' in obj)) {
+    result = { ...result, 'x-ts-type': text };
+  }
+  if (isReadonlyPropertySymbol(prop) && !('readOnly' in obj)) {
+    result = { ...result, readOnly: true };
+  }
+  if (prop.flags & ts.SymbolFlags.Method && !('x-ts-method' in obj)) {
+    result = { ...result, 'x-ts-method': true };
+  }
+  return result as SpecSchema;
+}
+
+/**
+ * Alias-level x-ts-type is emitted when the alias RHS is a renderable
+ * expression (array, instantiation, union, intersection, function, keyof, …).
+ * Type-literal and mapped bodies are skipped — their structure is already
+ * carried by schema.properties and the text would be the whole literal body.
+ */
+export function shouldEmitAliasTypeText(typeNode: ts.TypeNode): boolean {
+  return !ts.isTypeLiteralNode(typeNode) && !ts.isMappedTypeNode(typeNode);
+}
+
 // Primitive type names
 export const PRIMITIVES: Set<string> = new Set([
   'string',
@@ -246,7 +350,7 @@ export function isPrimitiveName(name: string): boolean {
  * Check if a symbol is from TypeScript's built-in lib (lib.es*.d.ts).
  * Used to detect Array, Object, and other built-in types.
  */
-function isBuiltinSymbol(symbol: ts.Symbol | undefined): boolean {
+export function isBuiltinSymbol(symbol: ts.Symbol | undefined): boolean {
   if (!symbol) return false;
   const declarations = symbol.getDeclarations();
   if (!declarations || declarations.length === 0) return false;
@@ -855,6 +959,8 @@ export function buildObjectSchema(
       if (deprecated) {
         propSchema = withDeprecated(propSchema, reason);
       }
+
+      propSchema = decoratePropertySchema(propSchema, prop, propType, checker);
 
       props[propName] = propSchema;
 

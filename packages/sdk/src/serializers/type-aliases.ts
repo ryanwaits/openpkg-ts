@@ -2,7 +2,15 @@ import type { SpecExport, SpecMember, SpecSchema } from '@openpkg-ts/spec';
 import ts from 'typescript';
 import { extractTypeParameters, getJSDocComment, isSymbolDeprecated } from '../ast/utils';
 import { registerReferencedTypes } from '../types/parameters';
-import { buildFunctionSchema, buildObjectSchema, buildSchema } from '../types/schema-builder';
+import {
+  buildFunctionSchema,
+  buildObjectSchema,
+  buildSchema,
+  decoratePropertySchema,
+  PRIMITIVES,
+  renderTypeText,
+  shouldEmitAliasTypeText,
+} from '../types/schema-builder';
 import type { SerializerContext } from './context';
 import { buildSignatures, extractExportMetadata } from './shared';
 
@@ -82,6 +90,20 @@ export function serializeTypeAlias(
   } else {
     // Then build the schema normally
     schema = buildSchema(type, ctx.typeChecker, ctx);
+  }
+
+  // Alias-level x-ts-type: renderable RHS text ("Item[]", "Generic<A, B>")
+  // for aliases whose structural schema carries no display text.
+  if (
+    shouldEmitAliasTypeText(node.type) &&
+    typeof schema === 'object' &&
+    schema !== null &&
+    !('x-ts-type' in schema)
+  ) {
+    const text = renderTypeText(type, ctx.typeChecker, node, ts.TypeFormatFlags.InTypeAlias);
+    if (!PRIMITIVES.has(text) && text !== name) {
+      (schema as Record<string, unknown>)['x-ts-type'] = text;
+    }
   }
 
   return {
@@ -212,12 +234,17 @@ function serializeResolvedMembers(
       ({ deprecated, reason: deprecationReason } = isSymbolDeprecated(armAlias));
     }
 
+    let schema: SpecSchema | undefined;
+    if (kind === 'property') {
+      schema = decoratePropertySchema(buildSchema(propType, checker, ctx), prop, propType, checker);
+    }
+
     members.push({
       name: prop.getName(),
       kind,
       description,
       tags: tags.length > 0 ? tags : undefined,
-      schema: kind === 'property' ? buildSchema(propType, checker, ctx) : undefined,
+      schema,
       signatures: kind === 'method' ? buildSignatures(callSigs, checker, ctx) : undefined,
       ...(deprecated ? { deprecated: true, deprecationReason } : {}),
     });
