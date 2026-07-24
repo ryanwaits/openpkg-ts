@@ -309,6 +309,88 @@ describe('member order regression — declaration order preserved', () => {
   });
 });
 
+describe('x-ts-type on signature-carrying members', () => {
+  test('method members get a synthetic function schema with type text', async () => {
+    const result = await extract({ entryFile: 'test.ts', content: DECLARATION_FORMS });
+    const api = result.spec.exports.find((e) => e.name === 'Api');
+    const byName = new Map(api?.members?.map((m) => [m.name, m]));
+
+    expect(schemaOf(byName.get('jog')?.schema)['x-ts-type']).toBe('(pace: number) => void');
+    expect(schemaOf(byName.get('run')?.schema)['x-ts-type']).toBe('(cmd: string) => void');
+    // Marker and text are orthogonal — run keeps x-ts-method, jog doesn't
+    expect(schemaOf(byName.get('run')?.schema)['x-ts-method']).toBe(true);
+    expect(schemaOf(byName.get('jog')?.schema)['x-ts-method']).toBeUndefined();
+    // Function-typed property unchanged: full structural schema plus text
+    expect(schemaOf(byName.get('walk')?.schema)['x-ts-type']).toBe('() => void');
+    expect(schemaOf(byName.get('walk')?.schema)['x-ts-signatures']).toBeDefined();
+  });
+
+  test('interface and class method members carry type text too', async () => {
+    const result = await extract({
+      entryFile: 'test.ts',
+      content: `
+export interface Api { run(cmd: string): void; }
+export class Runner {
+  /** Start it. */
+  start(fast: boolean): number { return fast ? 1 : 0; }
+}
+`,
+    });
+    const api = result.spec.exports.find((e) => e.name === 'Api');
+    const run = api?.members?.find((m) => m.name === 'run');
+    expect(schemaOf(run?.schema)['x-ts-type']).toBe('(cmd: string) => void');
+
+    const runner = result.spec.exports.find((e) => e.name === 'Runner');
+    const start = runner?.members?.find((m) => m.name === 'start');
+    expect(schemaOf(start?.schema)['x-ts-type']).toBe('(fast: boolean) => number');
+  });
+});
+
+describe('typeParameters on registry entries', () => {
+  const ROUND3_C = `
+/** Generic wrapper — resolvable only with its type parameters known. */
+type Wrap<T> = { value: T; tag: string };
+
+/** Non-exported interface reached through the export below. */
+interface Inner {
+  /** Documented. */
+  level: number;
+}
+
+/** Entry export referencing both. */
+export function use(w: Wrap<string>, i: Inner): void {
+  void w;
+  void i;
+}
+`;
+
+  test('generic alias registry entry carries typeParameters', async () => {
+    const result = await extract({ entryFile: 'test.ts', content: ROUND3_C });
+    const wrap = result.spec.types?.find((t) => t.name === 'Wrap');
+    expect(wrap?.typeParameters?.map((tp) => tp.name)).toEqual(['T']);
+  });
+
+  test('constraints survive when present', async () => {
+    const result = await extract({
+      entryFile: 'test.ts',
+      content: `
+type Keyed<K extends string, V = number> = { key: K; value: V };
+export function pick(k: Keyed<'a'>): void { void k; }
+`,
+    });
+    const keyed = result.spec.types?.find((t) => t.name === 'Keyed');
+    expect(keyed?.typeParameters?.map((tp) => tp.name)).toEqual(['K', 'V']);
+    expect(keyed?.typeParameters?.[0]?.constraint).toBe('string');
+  });
+
+  test('non-generic registry entries stay unchanged (kind fidelity guard)', async () => {
+    const result = await extract({ entryFile: 'test.ts', content: ROUND3_C });
+    const inner = result.spec.types?.find((t) => t.name === 'Inner');
+    expect(inner?.kind).toBe('interface');
+    expect(inner?.typeParameters).toBeUndefined();
+  });
+});
+
 // Type-level sanity: x-ts-method is part of the published extension surface.
 const _schemaWithMethod: SpecSchema = { 'x-ts-function': true, 'x-ts-method': true };
 void _schemaWithMethod;
