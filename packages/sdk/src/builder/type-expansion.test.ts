@@ -121,8 +121,7 @@ describe('reachable workspace-dep type expansion', () => {
     const strictMembers = strict?.members?.map((m) => m.name).sort();
     expect(strictMembers).toEqual(['flush_interval', 'level', 'strict']);
 
-    const allOf = (strict?.schema as { allOf?: { properties?: Record<string, unknown> }[] })
-      ?.allOf;
+    const allOf = (strict?.schema as { allOf?: { properties?: Record<string, unknown> }[] })?.allOf;
     expect(allOf).toBeDefined();
     const basePart = allOf?.[0]?.properties ?? {};
     expect(Object.keys(basePart).sort()).toEqual(['level']);
