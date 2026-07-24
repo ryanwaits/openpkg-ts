@@ -336,6 +336,7 @@ export type SpecType = {
   description?: string;
   schema?: SpecSchema;
   type?: string | SpecSchema;
+  typeParameters?: SpecTypeParameter[];
   members?: SpecMember[];
   source?: SpecSource;
   tags?: SpecTag[];

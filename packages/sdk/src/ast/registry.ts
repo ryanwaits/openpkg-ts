@@ -1,4 +1,4 @@
-import type { SpecType, SpecTypeKind } from '@openpkg-ts/spec';
+import type { SpecType, SpecTypeKind, SpecTypeParameter } from '@openpkg-ts/spec';
 import ts from 'typescript';
 import type { SerializerContext } from '../serializers/context';
 import {
@@ -14,7 +14,7 @@ import {
   withDeprecated,
   withDescription,
 } from '../types/schema-builder';
-import { isSymbolDeprecated } from './utils';
+import { extractTypeParameters, isSymbolDeprecated } from './utils';
 
 /** Built-in types that shouldn't be registered */
 const BUILTINS = new Set([
@@ -225,10 +225,23 @@ export class TypeRegistry {
       }
     }
 
+    // Generic types keep their type parameters — consumers can't meaningfully
+    // flatten a generic alias without knowing it takes arguments.
+    let typeParameters: SpecTypeParameter[] | undefined;
+    if (
+      decl &&
+      (ts.isTypeAliasDeclaration(decl) ||
+        ts.isInterfaceDeclaration(decl) ||
+        ts.isClassDeclaration(decl))
+    ) {
+      typeParameters = extractTypeParameters(decl, checker);
+    }
+
     return {
       id: name,
       name,
       kind,
+      ...(typeParameters && typeParameters.length > 0 ? { typeParameters } : {}),
       schema,
       ...(external ? { external: true } : {}),
     };
