@@ -181,6 +181,8 @@ export type SpecSignature = {
   overloadIndex?: number;
   isImplementation?: boolean;
   throws?: SpecThrows[];
+  /** Name of the base class this signature was inherited from (e.g. a subclass constructor declared only on its base) */
+  inheritedFrom?: string;
 };
 
 // ============================================================================

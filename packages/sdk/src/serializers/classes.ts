@@ -64,6 +64,11 @@ export function serializeClass(
   // Add deduplicated methods
   members.push(...methodsByName.values());
 
+  // No own constructor: surface inherited construct signatures from the base chain
+  if (signatures.length === 0) {
+    signatures.push(...serializeInheritedConstructors(node, ctx));
+  }
+
   // Collect own member names for inheritance filtering
   const ownMemberNames = new Set<string>();
   for (const member of node.members) {
@@ -261,6 +266,41 @@ function serializeConstructorSignature(
     ...(tags.length > 0 ? { tags } : {}),
     ...(examples.length > 0 ? { examples } : {}),
   };
+}
+
+/**
+ * Resolve constructor signatures inherited from a base class when the class
+ * declares none of its own. Only signatures backed by a real constructor
+ * declaration are serialized — a default synthesized constructor has none.
+ */
+function serializeInheritedConstructors(
+  node: ts.ClassDeclaration,
+  ctx: SerializerContext,
+): SpecSignature[] {
+  const { typeChecker: checker } = ctx;
+  const hasExtends = node.heritageClauses?.some((c) => c.token === ts.SyntaxKind.ExtendsKeyword);
+  if (!hasExtends) return [];
+
+  const symbol = checker.getSymbolAtLocation(node.name ?? node);
+  if (!symbol) return [];
+
+  // The static side of the class carries construct signatures, including inherited ones
+  const staticType = checker.getTypeOfSymbolAtLocation(symbol, node);
+  const ctorSigs = staticType.getConstructSignatures().filter((sig) => {
+    const decl = sig.getDeclaration();
+    return decl !== undefined && ts.isConstructorDeclaration(decl);
+  });
+
+  return ctorSigs.map((sig, index) => {
+    const decl = sig.getDeclaration() as ts.ConstructorDeclaration;
+    const owner = ts.isClassLike(decl.parent) ? decl.parent.name?.text : undefined;
+
+    return {
+      ...serializeConstructorSignature(decl, sig, ctx),
+      ...(owner ? { inheritedFrom: owner } : {}),
+      ...(ctorSigs.length > 1 ? { overloadIndex: index } : {}),
+    };
+  });
 }
 
 function serializeAccessor(
