@@ -1,5 +1,34 @@
 # @openpkg-ts/extract
 
+## 0.46.0
+
+### Minor Changes
+
+- 73bc6d9: Preserve `typeParameters` on registry entries.
+
+  - **sdk**: registry entries for generic aliases, interfaces, and classes now
+    carry `typeParameters` (names, constraints, defaults, variance) the same way
+    exports do — consumers can tell a generic alias (which cannot be flattened
+    without its arguments) from a concrete one.
+  - **spec**: `SpecType.typeParameters?: SpecTypeParameter[]` added (additive).
+
+- 73bc6d9: Emit `x-ts-type` on signature-carrying members.
+
+  Members with `signatures[]` (interface/class methods, resolved alias method
+  members, inherited methods) previously had no renderable type text at any
+  level. They now carry a synthetic function schema —
+  `{ "x-ts-function": true, "x-ts-type": "(pace: number) => void" }` — chosen
+  over a member-level field so the text lives where all other type text lives
+  (the schema layer) and flows through the normalizer unchanged. Same renderer,
+  policy, and `import()` scrub as property schemas; `x-ts-method` still marks
+  method-syntax declarations independently. Flattened interface/class schema
+  properties generated from members mirror the text.
+
+### Patch Changes
+
+- Updated dependencies [73bc6d9]
+  - @openpkg-ts/spec@0.46.0
+
 ## 0.45.0
 
 ### Minor Changes

@@ -1,5 +1,17 @@
 # @openpkg-ts/spec
 
+## 0.46.0
+
+### Minor Changes
+
+- 73bc6d9: Preserve `typeParameters` on registry entries.
+
+  - **sdk**: registry entries for generic aliases, interfaces, and classes now
+    carry `typeParameters` (names, constraints, defaults, variance) the same way
+    exports do — consumers can tell a generic alias (which cannot be flattened
+    without its arguments) from a concrete one.
+  - **spec**: `SpecType.typeParameters?: SpecTypeParameter[]` added (additive).
+
 ## 0.45.0
 
 ### Minor Changes
