@@ -8,6 +8,7 @@ import {
   buildSchema,
   decoratePropertySchema,
   isBuiltinSymbol,
+  isReadonlyPropertySymbol,
   PRIMITIVES,
   renderTypeText,
   shouldEmitAliasTypeText,
@@ -261,6 +262,13 @@ function serializeResolvedMembers(
       ({ deprecated, reason: deprecationReason } = isSymbolDeprecated(armAlias));
     }
 
+    const flags: Record<string, unknown> = {};
+    if (prop.flags & ts.SymbolFlags.Optional) flags.optional = true;
+    if (isReadonlyPropertySymbol(prop)) flags.readonly = true;
+    // Declaration form survives on the RESOLVED symbol: method-syntax members
+    // keep SymbolFlags.Method, mapped (Omit/Pick) members lose it.
+    if (prop.flags & ts.SymbolFlags.Method) flags.methodSyntax = true;
+
     let schema: SpecSchema | undefined;
     if (kind === 'property') {
       schema = decoratePropertySchema(buildSchema(propType, checker, ctx), prop, propType, checker);
@@ -273,6 +281,7 @@ function serializeResolvedMembers(
       tags: tags.length > 0 ? tags : undefined,
       schema,
       signatures: kind === 'method' ? buildSignatures(callSigs, checker, ctx) : undefined,
+      flags: Object.keys(flags).length > 0 ? flags : undefined,
       ...(deprecated ? { deprecated: true, deprecationReason } : {}),
     });
   }

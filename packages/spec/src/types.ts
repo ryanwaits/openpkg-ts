@@ -218,6 +218,7 @@ export type SpecTypePredicate = {
  * | `x-ts-type-arguments`| Preserves generic type arguments for parameterized types            |
  * | `x-ts-type-predicate`| Preserves type guard narrowing information                          |
  * | `x-ts-package`       | Package name for external type references                           |
+ * | `x-ts-method`        | Marks function-valued properties declared with method syntax        |
  */
 export type JSONSchemaExtensions = {
   /**
@@ -260,6 +261,14 @@ export type JSONSchemaExtensions = {
    * Example: AnyRouter from @trpc/server → { "$ref": "#/types/AnyRouter", "x-ts-package": "@trpc/server" }
    */
   'x-ts-package'?: string;
+
+  /**
+   * Marks a function-valued property declared with method syntax
+   * (`run(cmd: string): void`) as opposed to a function-typed property
+   * (`walk: () => void`). Mapped members (Omit/Pick) lose method form;
+   * this preserves the checker's distinction for doc pipelines.
+   */
+  'x-ts-method'?: boolean;
 };
 
 export type SpecMember = {

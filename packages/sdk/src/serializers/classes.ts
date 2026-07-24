@@ -218,6 +218,8 @@ function serializeMethod(node: ts.MethodDeclaration, ctx: SerializerContext): Sp
   const flags: Record<string, unknown> = {};
   if (isStatic(node)) flags.static = true;
   if (node.asteriskToken) flags.generator = true;
+  // Declaration form: method syntax vs function-typed property.
+  flags.methodSyntax = true;
 
   // Check for async and abstract
   const modifiers = ts.getModifiers(node);

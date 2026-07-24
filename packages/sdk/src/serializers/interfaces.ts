@@ -182,6 +182,9 @@ function serializeMethodSignature(
 
   const flags: Record<string, unknown> = {};
   if (node.questionToken) flags.optional = true;
+  // Declaration form: method syntax vs function-typed property (GAP-visible
+  // on mapped members where SymbolFlags.Method is stripped).
+  flags.methodSyntax = true;
 
   const symbol = checker.getSymbolAtLocation(node.name);
   const { deprecated, reason: deprecationReason } = isSymbolDeprecated(symbol);

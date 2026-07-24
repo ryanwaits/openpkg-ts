@@ -892,6 +892,11 @@ function normalizeMethodMember(member: SpecMember, options: NormalizeOptions): J
     'x-ts-function': true,
   };
 
+  // Mirror declaration form on the flattened schema layer.
+  if (member.flags?.methodSyntax === true) {
+    result['x-ts-method'] = true;
+  }
+
   if (member.signatures && member.signatures.length > 0) {
     result['x-ts-signatures'] = member.signatures.map((sig) => normalizeSignature(sig, options));
   }
