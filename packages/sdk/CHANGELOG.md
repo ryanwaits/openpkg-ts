@@ -1,5 +1,55 @@
 # @openpkg-ts/extract
 
+## 0.45.0
+
+### Minor Changes
+
+- 60f9238: Extract `members[]` for object-literal, mapped, and cross-package aliases.
+
+  Previously only intersection and mapped-node aliases got the JSDoc-rich
+  members layer; `type Options = {…}` and `type Chosen = Pick<Base, 'a'>`
+  silently dropped per-property descriptions, tags, and flags. Array/tuple
+  aliases and TS-lib builtins (`Promise`, `Date`) are excluded so prototype
+  methods never leak in as members. The intersection path is unchanged.
+
+- 60f9238: Record method-syntax declaration form on members.
+
+  - **sdk**: members declared with method syntax (`run(cmd: string): void`) now
+    carry `flags.methodSyntax: true`; function-typed properties
+    (`walk: () => void`) do not. For resolved alias members the flag comes from
+    `SymbolFlags.Method` on the post-mapping symbol — Omit/Pick-mapped members
+    lose it, method-syntax re-declarations keep it — preserving the checker
+    distinction doc pipelines filter on. Mirrored as `x-ts-method: true` on
+    schema-layer function-valued properties. Resolved alias members also gain
+    `flags.optional` and `flags.readonly` for parity with interface members.
+  - **spec**: new optional `x-ts-method` JSON Schema extension documented on
+    `JSONSchemaExtensions` (additive).
+
+- 60f9238: Emit `x-ts-type` (checker-rendered type text) on member, property, and alias schemas.
+
+  - Every property schema — both `members[].schema` and registry
+    `schema.properties` — now carries the developer-facing type text rendered at
+    the owning declaration with `NoTruncation` (`"Handler | Handler[]"`,
+    `"boolean | Config"`, `"(c: Config) => void"`, `"\"auto\" | \"manual\""`).
+    Omitted only when trivially derivable: bare primitive keywords and `$ref`s
+    whose target name equals the text. Optional properties render without
+    `| undefined`.
+  - Alias-level `x-ts-type` for array, instantiation, union, intersection, and
+    function aliases (`"Item[]"`, `"Holder<string, Item>"`).
+  - `import("<abs path>").` qualifiers are scrubbed from all rendered text —
+    machine-specific paths never land in a published spec.
+  - `readonly` members now surface at the schema layer as JSON Schema
+    `readOnly: true` (previously member-layer `flags.readonly` only).
+  - Array aliases (`type L = Item[]`) get a real `{type: "array", items}`
+    registry schema instead of an empty object.
+  - The normalizer preserves `x-*` extensions and `readOnly` across all branches
+    (combinators, objects, arrays, refs).
+
+### Patch Changes
+
+- Updated dependencies [60f9238]
+  - @openpkg-ts/spec@0.45.0
+
 ## 0.44.0
 
 ### Minor Changes
