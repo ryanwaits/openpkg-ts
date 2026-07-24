@@ -1,5 +1,27 @@
 # @openpkg-ts/extract
 
+## 0.44.0
+
+### Minor Changes
+
+- 4f50432: Surface inherited constructor signatures on subclasses that declare none of their own.
+
+  - **sdk**: when a class has no own constructor, construct signatures are resolved
+    through the type checker — so base-class constructors (same file or sibling
+    workspace package) appear on the subclass export with full JSDoc (description,
+    param docs, tags, examples). Overloaded base constructors all serialize with
+    `overloadIndex`. Default synthesized constructors (no declaration anywhere in
+    the chain) still emit no signatures.
+  - **spec**: new optional `SpecSignature.inheritedFrom` field marks which base
+    class declared the signature. Added to the v0.4.0 JSON schema along with the
+    previously undocumented signature `tags`/`examples` fields (additive).
+
+### Patch Changes
+
+- 93e5e73: Constructor signatures keep JSDoc `tags` and `examples` (`@param`, `@remarks`, `@example`) instead of dropping everything but the description — matching method signature serialization.
+- Updated dependencies [4f50432]
+  - @openpkg-ts/spec@0.44.0
+
 ## 0.43.0
 
 ### Minor Changes
