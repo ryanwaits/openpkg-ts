@@ -304,6 +304,26 @@ describe('normalizeSchema', () => {
         items: { type: 'integer', 'x-ts-type': 'bigint' },
       });
     });
+
+    test('preserves uniqueItems, contains, title, default', () => {
+      const input = {
+        type: 'array',
+        items: { type: 'string' },
+        uniqueItems: true,
+        contains: { type: 'string', enum: ['a'] },
+        title: 'Tags',
+        default: [],
+      } as unknown as SpecSchema;
+      const result = normalizeSchema(input);
+      expect(result).toEqual({
+        type: 'array',
+        items: { type: 'string' },
+        uniqueItems: true,
+        contains: { type: 'string', enum: ['a'] },
+        title: 'Tags',
+        default: [],
+      });
+    });
   });
 
   describe('object normalization', () => {
@@ -342,6 +362,37 @@ describe('normalizeSchema', () => {
           id: { type: 'integer', 'x-ts-type': 'bigint' },
           sym: { type: 'string', 'x-ts-type': 'symbol' },
         },
+      });
+    });
+
+    test('preserves $defs, patternProperties, propertyNames, title, default', () => {
+      const input = {
+        type: 'object',
+        properties: { next: { $ref: '#/$defs/Node' } },
+        $defs: { Node: { type: 'object', properties: { v: { type: 'bigint' } } } },
+        patternProperties: { '^x-': { type: 'symbol' } },
+        propertyNames: { type: 'string', pattern: '^[a-z]' },
+        title: 'Node',
+        default: {},
+        minProperties: 1,
+        maxProperties: 8,
+      } as unknown as SpecSchema;
+      const result = normalizeSchema(input);
+      expect(result).toEqual({
+        type: 'object',
+        properties: { next: { $ref: '#/$defs/Node' } },
+        $defs: {
+          Node: {
+            type: 'object',
+            properties: { v: { type: 'integer', 'x-ts-type': 'bigint' } },
+          },
+        },
+        patternProperties: { '^x-': { type: 'string', 'x-ts-type': 'symbol' } },
+        propertyNames: { type: 'string', pattern: '^[a-z]' },
+        title: 'Node',
+        default: {},
+        minProperties: 1,
+        maxProperties: 8,
       });
     });
 

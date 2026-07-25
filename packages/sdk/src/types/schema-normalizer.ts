@@ -371,6 +371,19 @@ function normalizeArrayType(
     result.maxItems = schema.maxItems;
   }
 
+  // Standard array keywords — pass through / normalize
+  if (schema.uniqueItems === true) {
+    result.uniqueItems = true;
+  }
+  if (schema.contains && typeof schema.contains === 'object') {
+    result.contains = normalizeSchemaInternal(schema.contains as SpecSchema, options);
+  }
+  for (const keyword of ['title', 'default']) {
+    if (keyword in schema && schema[keyword] !== undefined) {
+      result[keyword] = schema[keyword];
+    }
+  }
+
   // Preserve description
   if ('description' in schema && schema.description) {
     result.description = schema.description;
@@ -413,6 +426,29 @@ function normalizeObjectType(
         schema.additionalProperties as SpecSchema,
         options,
       );
+    }
+  }
+
+  // Standard object keywords that carry schema values — normalize recursively
+  for (const keyword of ['patternProperties', '$defs'] as const) {
+    const value = schema[keyword];
+    if (value && typeof value === 'object' && !Array.isArray(value)) {
+      result[keyword] = Object.fromEntries(
+        Object.entries(value as Record<string, SpecSchema>).map(([key, nested]) => [
+          key,
+          normalizeSchemaInternal(nested, options),
+        ]),
+      );
+    }
+  }
+  if (schema.propertyNames && typeof schema.propertyNames === 'object') {
+    result.propertyNames = normalizeSchemaInternal(schema.propertyNames as SpecSchema, options);
+  }
+
+  // Standard scalar keywords — pass through
+  for (const keyword of ['title', 'default', 'examples', 'minProperties', 'maxProperties']) {
+    if (keyword in schema && schema[keyword] !== undefined) {
+      result[keyword] = schema[keyword];
     }
   }
 
@@ -643,11 +679,23 @@ function mergeSchemaFields(
  * 2. Normalize member schemas
  * 3. Generate a JSON Schema from members if members exist (populates `schema` field)
  */
+/**
+ * True when an export's schema came verbatim from a runtime Standard Schema
+ * vendor (Zod, Valibot, ...) via hybrid extraction. Vendor output is already
+ * valid JSON Schema — re-normalizing it through the static-DSL whitelists
+ * strips keywords the DSL never emits ($defs, patternProperties, ...).
+ */
+function isVendorSchemaExport(exp: SpecExport): boolean {
+  return !!exp.tags?.some((t) => t.name === 'schema-source' && t.text === 'standard-json-schema');
+}
+
 export function normalizeExport(exp: SpecExport, options: NormalizeOptions = {}): SpecExport {
   const result: SpecExport = { ...exp };
+  const vendorSchema = isVendorSchemaExport(exp);
 
-  // Normalize top-level schema if it exists
-  if (exp.schema) {
+  // Normalize top-level schema if it exists — but keep vendor-provided
+  // JSON Schema byte-for-byte
+  if (exp.schema && !vendorSchema) {
     result.schema = normalizeSchema(exp.schema, options) as SpecSchema;
   }
 
@@ -663,7 +711,12 @@ export function normalizeExport(exp: SpecExport, options: NormalizeOptions = {})
 
   // For interfaces and classes, generate schema from members
   // This populates the `schema` field with a JSON Schema object
-  if (shouldGenerateMembersSchema(exp.kind) && exp.members && exp.members.length > 0) {
+  if (
+    !vendorSchema &&
+    shouldGenerateMembersSchema(exp.kind) &&
+    exp.members &&
+    exp.members.length > 0
+  ) {
     result.schema = normalizeMembers(exp.members, options) as SpecSchema;
   }
 
