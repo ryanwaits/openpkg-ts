@@ -58,7 +58,21 @@
       "type": "object",
       "properties": {
         "generator": { "type": "string" },
-        "timestamp": { "type": "string", "format": "date-time" }
+        "timestamp": { "type": "string", "format": "date-time" },
+        "mode": { "type": "string", "enum": ["source", "declaration-only"] },
+        "schemaExtraction": { "type": "string", "enum": ["hybrid"] },
+        "limitations": { "type": "array", "items": { "type": "string" } },
+        "skipped": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "reason"],
+            "properties": {
+              "name": { "type": "string" },
+              "reason": { "type": "string" }
+            }
+          }
+        }
       }
     },
     "presentationMeta": {
@@ -163,7 +177,12 @@
         "rawComments": { "type": "string" },
         "typeAliasKind": { "$ref": "#/$defs/typeAliasKind" },
         "conditionalType": { "$ref": "#/$defs/conditionalType" },
-        "mappedType": { "$ref": "#/$defs/mappedType" }
+        "mappedType": { "$ref": "#/$defs/mappedType" },
+        "external": { "type": "boolean" },
+        "typeParameters": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/typeParameter" }
+        }
       }
     },
     "tag": {
@@ -249,15 +268,27 @@
         "description": { "type": "string" }
       }
     },
+    "jsonSchemaType": {
+      "enum": ["string", "number", "integer", "boolean", "object", "array", "null"]
+    },
     "schema": {
       "oneOf": [
-        { "type": "string" },
         { "type": "boolean" },
         {
           "type": "object",
           "properties": {
             "$schema": { "type": "string" },
-            "type": { "type": "string" },
+            "type": {
+              "oneOf": [
+                { "$ref": "#/$defs/jsonSchemaType" },
+                {
+                  "type": "array",
+                  "items": { "$ref": "#/$defs/jsonSchemaType" },
+                  "minItems": 1,
+                  "uniqueItems": true
+                }
+              ]
+            },
             "format": { "type": "string" },
             "enum": { "type": "array" },
             "const": {},
@@ -272,31 +303,63 @@
             },
             "required": { "type": "array", "items": { "type": "string" } },
             "additionalProperties": {
-              "oneOf": [{ "type": "boolean" }, { "type": "object" }]
+              "oneOf": [{ "type": "boolean" }, { "$ref": "#/$defs/schema" }]
+            },
+            "patternProperties": {
+              "type": "object",
+              "additionalProperties": { "$ref": "#/$defs/schema" }
+            },
+            "propertyNames": { "$ref": "#/$defs/schema" },
+            "$defs": {
+              "type": "object",
+              "additionalProperties": { "$ref": "#/$defs/schema" }
             },
             "anyOf": { "type": "array", "items": { "$ref": "#/$defs/schema" } },
             "allOf": { "type": "array", "items": { "$ref": "#/$defs/schema" } },
             "oneOf": { "type": "array", "items": { "$ref": "#/$defs/schema" } },
+            "not": { "$ref": "#/$defs/schema" },
             "$ref": { "type": "string" },
             "discriminator": {
               "type": "object",
               "properties": { "propertyName": { "type": "string" } }
             },
+            "title": { "type": "string" },
             "description": { "type": "string" },
             "deprecated": { "type": "boolean" },
-            "x-deprecated-reason": { "type": "string" },
+            "readOnly": { "type": "boolean" },
             "default": {},
+            "examples": { "type": "array" },
             "minimum": { "type": "number" },
             "maximum": { "type": "number" },
             "exclusiveMinimum": { "type": "number" },
             "exclusiveMaximum": { "type": "number" },
+            "multipleOf": { "type": "number" },
             "minLength": { "type": "integer" },
             "maxLength": { "type": "integer" },
             "pattern": { "type": "string" },
             "minItems": { "type": "integer" },
             "maxItems": { "type": "integer" },
             "uniqueItems": { "type": "boolean" },
-            "signatures": { "type": "array", "items": { "$ref": "#/$defs/signature" } }
+            "contains": { "$ref": "#/$defs/schema" },
+            "minProperties": { "type": "integer" },
+            "maxProperties": { "type": "integer" },
+            "x-ts-type": { "type": "string" },
+            "x-ts-function": { "type": "boolean" },
+            "x-ts-method": { "type": "boolean" },
+            "x-ts-signatures": { "type": "array", "items": { "$ref": "#/$defs/signature" } },
+            "x-ts-type-arguments": { "type": "array", "items": { "$ref": "#/$defs/schema" } },
+            "x-ts-type-predicate": {
+              "type": "object",
+              "required": ["parameterName", "type"],
+              "properties": {
+                "parameterName": { "type": "string" },
+                "type": { "$ref": "#/$defs/schema" }
+              }
+            },
+            "x-ts-package": { "type": "string" },
+            "x-ts-accessor": { "type": "string", "enum": ["getter", "setter"] },
+            "x-enum-members": { "type": "array" },
+            "x-deprecated-reason": { "type": "string" }
           }
         }
       ]

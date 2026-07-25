@@ -200,3 +200,77 @@ describe('LATEST_VERSION', () => {
     expect(LATEST_VERSION).toBe('0.4.0');
   });
 });
+
+describe('wire-format schema constraints (v0.4.0)', () => {
+  const withSchema = (schema: unknown): OpenPkg =>
+    ({
+      openpkg: '0.4.0',
+      meta: { name: 'schema-test' },
+      exports: [{ id: 'x', name: 'x', kind: 'variable', schema }],
+    }) as OpenPkg;
+
+  test('rejects bare-string schema shorthand', () => {
+    expect(validateSpec(withSchema('string')).ok).toBe(false);
+  });
+
+  test('rejects non-JSON-Schema type values', () => {
+    expect(validateSpec(withSchema({ type: 'tuple' })).ok).toBe(false);
+    expect(validateSpec(withSchema({ type: 'undefined' })).ok).toBe(false);
+    expect(validateSpec(withSchema({ type: 'function' })).ok).toBe(false);
+  });
+
+  test('accepts the seven JSON Schema primitive types', () => {
+    for (const t of ['string', 'number', 'integer', 'boolean', 'object', 'array', 'null']) {
+      expect(validateSpec(withSchema({ type: t })).ok).toBe(true);
+    }
+  });
+
+  test('accepts 2020-12 array form of type', () => {
+    expect(validateSpec(withSchema({ type: ['string', 'null'] })).ok).toBe(true);
+  });
+
+  test('accepts declared x-ts extensions', () => {
+    expect(
+      validateSpec(
+        withSchema({
+          type: 'object',
+          'x-ts-type': 'Map<string, number>',
+          'x-ts-type-arguments': [{ type: 'string' }, { type: 'number' }],
+          'x-ts-package': 'some-lib',
+        }),
+      ).ok,
+    ).toBe(true);
+    expect(validateSpec(withSchema({ 'x-ts-function': true })).ok).toBe(true);
+  });
+
+  test('accepts tuples via prefixItems', () => {
+    expect(
+      validateSpec(
+        withSchema({
+          type: 'array',
+          prefixItems: [{ type: 'string' }, { type: 'number' }],
+          minItems: 2,
+          maxItems: 2,
+        }),
+      ).ok,
+    ).toBe(true);
+  });
+
+  test('accepts vendor schemas with $defs and patternProperties', () => {
+    expect(
+      validateSpec(
+        withSchema({
+          $ref: '#/$defs/Node',
+          $defs: {
+            Node: {
+              type: 'object',
+              title: 'Node',
+              properties: { next: { $ref: '#/$defs/Node' } },
+              patternProperties: { '^x-': { type: 'string' } },
+            },
+          },
+        }),
+      ).ok,
+    ).toBe(true);
+  });
+});
