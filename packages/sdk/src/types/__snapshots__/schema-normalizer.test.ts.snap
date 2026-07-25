@@ -467,7 +467,7 @@ exports[`snapshot tests for complex types tuple types with various configuration
   {
     "maxItems": 2,
     "minItems": 2,
-    "prefixedItems": [
+    "prefixItems": [
       {
         "type": "string",
       },
@@ -480,7 +480,7 @@ exports[`snapshot tests for complex types tuple types with various configuration
   {
     "maxItems": 3,
     "minItems": 3,
-    "prefixedItems": [
+    "prefixItems": [
       {
         "type": "integer",
         "x-ts-type": "bigint",
@@ -499,7 +499,7 @@ exports[`snapshot tests for complex types tuple types with various configuration
   {
     "maxItems": 2,
     "minItems": 2,
-    "prefixedItems": [
+    "prefixItems": [
       {
         "type": "string",
       },

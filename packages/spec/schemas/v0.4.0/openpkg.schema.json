@@ -262,7 +262,7 @@
             "enum": { "type": "array" },
             "const": {},
             "items": { "$ref": "#/$defs/schema" },
-            "prefixedItems": {
+            "prefixItems": {
               "type": "array",
               "items": { "$ref": "#/$defs/schema" }
             },

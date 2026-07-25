@@ -659,7 +659,7 @@ function buildSchemaInternal(
     // and pick up all 50+ Array prototype methods
     const typeString = checker.typeToString(type);
     if (typeString === 'never[]' || typeString === '[]') {
-      return { type: 'array', prefixedItems: [], minItems: 0, maxItems: 0 };
+      return { type: 'array', prefixItems: [], minItems: 0, maxItems: 0 };
     }
 
     // Detect Array interface to prevent prototype expansion
@@ -693,7 +693,7 @@ function buildSchemaInternal(
       return { type: 'array' };
     }
 
-    // Tuple type - uses prefixedItems per JSON Schema 2020-12
+    // Tuple type - uses prefixItems per JSON Schema 2020-12
     // Use checker.getTypeArguments() for consistent type argument resolution
     if (checker.isTupleType(type)) {
       const tupleTypeRef = type as ts.TypeReference;
@@ -706,7 +706,7 @@ function buildSchemaInternal(
           try {
             return {
               type: 'array',
-              prefixedItems: elementTypes.map((t) => buildSchema(t, checker, ctx)),
+              prefixItems: elementTypes.map((t) => buildSchema(t, checker, ctx)),
               minItems: elementTypes.length,
               maxItems: elementTypes.length,
             };
@@ -717,7 +717,7 @@ function buildSchemaInternal(
       }
       return {
         type: 'array',
-        prefixedItems: elementTypes.map((t) => buildSchema(t, checker, ctx)),
+        prefixItems: elementTypes.map((t) => buildSchema(t, checker, ctx)),
         minItems: elementTypes.length,
         maxItems: elementTypes.length,
       };

@@ -310,7 +310,7 @@ export class TypeRegistry {
       const elementTypes = checker.getTypeArguments(type as ts.TypeReference) ?? [];
       return {
         type: 'array',
-        prefixedItems: elementTypes.map((t) => buildSchema(t, checker, ctx)),
+        prefixItems: elementTypes.map((t) => buildSchema(t, checker, ctx)),
         minItems: elementTypes.length,
         maxItems: elementTypes.length,
       };

@@ -200,7 +200,7 @@ describe('normalizeSchema', () => {
   });
 
   describe('tuple normalization', () => {
-    test('tuple with items array → prefixedItems', () => {
+    test('tuple with items array → prefixItems', () => {
       const input: SpecSchema = {
         type: 'tuple',
         items: [{ type: 'string' }, { type: 'number' }],
@@ -208,25 +208,57 @@ describe('normalizeSchema', () => {
       const result = normalizeSchema(input);
       expect(result).toEqual({
         type: 'array',
-        prefixedItems: [{ type: 'string' }, { type: 'number' }],
+        prefixItems: [{ type: 'string' }, { type: 'number' }],
         minItems: 2,
         maxItems: 2,
       });
     });
 
-    test('preserves existing prefixedItems', () => {
+    test('preserves existing prefixItems', () => {
       const input: SpecSchema = {
         type: 'array',
-        prefixedItems: [{ type: 'string' }, { type: 'number' }],
+        prefixItems: [{ type: 'string' }, { type: 'number' }],
         minItems: 2,
         maxItems: 2,
       };
       const result = normalizeSchema(input);
       expect(result).toEqual({
         type: 'array',
+        prefixItems: [{ type: 'string' }, { type: 'number' }],
+        minItems: 2,
+        maxItems: 2,
+      });
+    });
+
+    test('rewrites legacy prefixedItems misspelling to prefixItems', () => {
+      const input: SpecSchema = {
+        type: 'array',
         prefixedItems: [{ type: 'string' }, { type: 'number' }],
         minItems: 2,
         maxItems: 2,
+      } as SpecSchema;
+      const result = normalizeSchema(input);
+      expect(result).toEqual({
+        type: 'array',
+        prefixItems: [{ type: 'string' }, { type: 'number' }],
+        minItems: 2,
+        maxItems: 2,
+      });
+    });
+
+    test('legacy prefixedItems on tuple type rewrites to prefixItems', () => {
+      const input: SpecSchema = {
+        type: 'tuple',
+        prefixedItems: [{ type: 'string' }],
+        minItems: 1,
+        maxItems: 1,
+      } as SpecSchema;
+      const result = normalizeSchema(input);
+      expect(result).toEqual({
+        type: 'array',
+        prefixItems: [{ type: 'string' }],
+        minItems: 1,
+        maxItems: 1,
       });
     });
 
@@ -238,7 +270,7 @@ describe('normalizeSchema', () => {
       const result = normalizeSchema(input);
       expect(result).toEqual({
         type: 'array',
-        prefixedItems: [
+        prefixItems: [
           { type: 'integer', 'x-ts-type': 'bigint' },
           { type: 'string', 'x-ts-type': 'symbol' },
         ],
@@ -2112,14 +2144,14 @@ describe('Zod runtime vs normalized static output comparison', () => {
       };
       const normalized = normalizeSchema(staticSchema);
 
-      // Normalized uses prefixedItems (JSON Schema 2020-12)
+      // Normalized uses prefixItems (JSON Schema 2020-12)
       expect(normalized.type).toBe('array');
-      expect(normalized.prefixedItems).toBeDefined();
-      expect(normalized.prefixedItems).toHaveLength(2);
+      expect(normalized.prefixItems).toBeDefined();
+      expect(normalized.prefixItems).toHaveLength(2);
 
-      // Zod v4 should use prefixedItems too
-      if (zodJson.prefixedItems) {
-        expect(zodJson.prefixedItems).toHaveLength(2);
+      // Zod v4 emits the same 2020-12 keyword
+      if (zodJson.prefixItems) {
+        expect(zodJson.prefixItems).toHaveLength(2);
       } else if (zodJson.items && Array.isArray(zodJson.items)) {
         // Fallback for older format
         expect(zodJson.items).toHaveLength(2);

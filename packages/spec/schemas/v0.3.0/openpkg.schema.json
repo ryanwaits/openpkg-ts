@@ -723,7 +723,7 @@
             "enum": { "type": "array" },
             "const": { "description": "Constant value" },
             "items": { "$ref": "#/$defs/schema" },
-            "prefixedItems": {
+            "prefixItems": {
               "type": "array",
               "items": { "$ref": "#/$defs/schema" },
               "description": "Tuple element schemas (draft-2020-12)"

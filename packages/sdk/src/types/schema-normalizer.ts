@@ -16,7 +16,7 @@
  * | { type: 'symbol' }            | { "type": "string", "x-ts-type": "symbol" }       |
  * | { type: 'function', ... }     | { "x-ts-function": true, "x-ts-signatures": [...] }|
  * | { $ref, typeArguments }       | { "$ref": "...", "x-ts-type-arguments": [...] }   |
- * | { type: 'tuple', items }      | { "type": "array", "prefixedItems": [...] }       |
+ * | { type: 'tuple', items }      | { "type": "array", "prefixItems": [...] }         |
  */
 
 import type { SpecExport, SpecMember, SpecSchema, SpecSignature, SpecType } from '@openpkg-ts/spec';
@@ -287,7 +287,7 @@ function normalizeSignature(
 
 /**
  * Normalize tuple type to JSON Schema 2020-12 format
- * Uses prefixedItems instead of items array
+ * Uses prefixItems instead of items array
  */
 function normalizeTupleType(
   schema: Record<string, unknown>,
@@ -295,20 +295,25 @@ function normalizeTupleType(
 ): JSONSchema {
   const result: JSONSchema = { type: 'array' };
 
-  // Handle legacy 'items' array format for tuples
-  if ('items' in schema && Array.isArray(schema.items)) {
-    result.prefixedItems = (schema.items as SpecSchema[]).map((item) =>
+  // Accept both the 2020-12 keyword and the legacy misspelling emitted by
+  // spec <= 0.4.0 tooling; always emit prefixItems
+  const prefix = Array.isArray(schema.prefixItems)
+    ? schema.prefixItems
+    : Array.isArray(schema.prefixedItems)
+      ? schema.prefixedItems
+      : undefined;
+
+  if (prefix) {
+    result.prefixItems = (prefix as SpecSchema[]).map((item) =>
+      normalizeSchemaInternal(item, options),
+    );
+  } else if ('items' in schema && Array.isArray(schema.items)) {
+    // Legacy 'items' array format for tuples
+    result.prefixItems = (schema.items as SpecSchema[]).map((item) =>
       normalizeSchemaInternal(item, options),
     );
     result.minItems = schema.items.length;
     result.maxItems = schema.items.length;
-  }
-
-  // Handle existing prefixedItems format (already correct)
-  if ('prefixedItems' in schema && Array.isArray(schema.prefixedItems)) {
-    result.prefixedItems = (schema.prefixedItems as SpecSchema[]).map((item) =>
-      normalizeSchemaInternal(item, options),
-    );
   }
 
   // Preserve minItems/maxItems if explicitly set
@@ -341,9 +346,14 @@ function normalizeArrayType(
     result.items = normalizeSchemaInternal(schema.items as SpecSchema, options);
   }
 
-  // Handle prefixedItems (tuple-like arrays)
-  if ('prefixedItems' in schema && Array.isArray(schema.prefixedItems)) {
-    result.prefixedItems = (schema.prefixedItems as SpecSchema[]).map((item) =>
+  // Handle tuple prefixes (accept legacy misspelling on input, emit prefixItems)
+  const arrayPrefix = Array.isArray(schema.prefixItems)
+    ? schema.prefixItems
+    : Array.isArray(schema.prefixedItems)
+      ? schema.prefixedItems
+      : undefined;
+  if (arrayPrefix) {
+    result.prefixItems = (arrayPrefix as SpecSchema[]).map((item) =>
       normalizeSchemaInternal(item, options),
     );
   }
@@ -584,6 +594,7 @@ function isSchemaLike(value: unknown): boolean {
     'oneOf' in obj ||
     'properties' in obj ||
     'items' in obj ||
+    'prefixItems' in obj ||
     'prefixedItems' in obj
   );
 }
