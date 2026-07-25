@@ -103,6 +103,17 @@ function normalizeSchemaInternal(schema: SpecSchema, options: NormalizeOptions):
         result[key] = s[key];
       }
     }
+    // typeArguments ride any schema shape (builtin generics inline structural
+    // schemas, refs keep $ref) — always surface as x-ts-type-arguments.
+    if (
+      Array.isArray(s.typeArguments) &&
+      s.typeArguments.length > 0 &&
+      result['x-ts-type-arguments'] === undefined
+    ) {
+      result['x-ts-type-arguments'] = (s.typeArguments as SpecSchema[]).map((arg) =>
+        normalizeSchemaInternal(arg, options),
+      );
+    }
   }
   return result;
 }

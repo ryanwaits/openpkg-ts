@@ -1,36 +1,18 @@
 import type { SpecSchema, SpecSignature } from '@openpkg-ts/spec';
 import ts from 'typescript';
 import { isSymbolDeprecated } from '../ast/utils';
+import { BUILTIN_TYPE_SCHEMAS, type BuiltinSchema } from '../schema/builtins';
 import type { SerializerContext } from '../serializers/context';
 
-/**
- * Built-in type schemas with JSON Schema format hints.
- * Used for types that have specific serialization formats.
- */
-export const BUILTIN_TYPE_SCHEMAS: Record<string, SpecSchema> = {
-  Date: { type: 'string', format: 'date-time' },
-  RegExp: { type: 'object', description: 'RegExp' },
-  Error: { type: 'object' },
-  Promise: { type: 'object' },
-  Map: { type: 'object' },
-  Set: { type: 'object' },
-  WeakMap: { type: 'object' },
-  WeakSet: { type: 'object' },
-  Function: { type: 'object' },
-  ArrayBuffer: { type: 'string', format: 'binary' },
-  ArrayBufferLike: { type: 'string', format: 'binary' },
-  DataView: { type: 'string', format: 'binary' },
-  Uint8Array: { type: 'string', format: 'byte' },
-  Uint16Array: { type: 'string', format: 'byte' },
-  Uint32Array: { type: 'string', format: 'byte' },
-  Int8Array: { type: 'string', format: 'byte' },
-  Int16Array: { type: 'string', format: 'byte' },
-  Int32Array: { type: 'string', format: 'byte' },
-  Float32Array: { type: 'string', format: 'byte' },
-  Float64Array: { type: 'string', format: 'byte' },
-  BigInt64Array: { type: 'string', format: 'byte' },
-  BigUint64Array: { type: 'string', format: 'byte' },
-};
+export { BUILTIN_TYPE_SCHEMAS } from '../schema/builtins';
+
+/** Structural schema for a built-in lib type reference (never $ref — lib types
+ * are not registered in types[], so a ref would dangle). */
+function builtinSchema(name: string): BuiltinSchema {
+  const schema: BuiltinSchema = { ...(BUILTIN_TYPE_SCHEMAS[name] ?? { type: 'object' }) };
+  setSchemaExtension(schema, 'x-ts-type', name);
+  return schema;
+}
 
 /** Attach a JSON Schema extension field (x-ts-*) to a schema. */
 function setSchemaExtension(schema: SpecSchema, key: string, value: unknown): void {
@@ -473,10 +455,23 @@ export function buildSchema(
  * Named types → $ref, primitives → inline, unions/intersections → decomposed.
  */
 function buildMaxDepthSchema(type: ts.Type, checker: ts.TypeChecker): SpecSchema {
+  // Type parameters are not addressable spec types — never $ref them.
+  // (`this` types also carry TypeParameter flags but legitimately ref their class.)
+  if (
+    type.flags & ts.TypeFlags.TypeParameter &&
+    (type as unknown as { isThisType?: boolean }).isThisType !== true
+  ) {
+    return { 'x-ts-type': checker.typeToString(type) } as SpecSchema;
+  }
+
   // Named types → $ref (zero recursion)
   const symbol = type.getSymbol() || type.aliasSymbol;
   if (symbol && !isAnonymous(type)) {
     const name = symbol.getName();
+    // Lib built-ins are never registered in types[] — inline a structural schema
+    if (BUILTIN_TYPES.has(name) || isBuiltinGeneric(name)) {
+      return builtinSchema(name);
+    }
     if (!name.startsWith('__') && !isPrimitiveName(name)) {
       return { $ref: `#/types/${name}` };
     }
@@ -530,9 +525,13 @@ function buildSchemaInternal(
       return buildFunctionSchema(callSignatures, checker, ctx);
     }
     const symbol = type.getSymbol() || type.aliasSymbol;
-    // Named types → $ref
+    // Named types → $ref (built-ins get structural schemas — never registered)
     if (symbol && !isAnonymous(type)) {
-      return { $ref: `#/types/${symbol.getName()}` };
+      const name = symbol.getName();
+      if (BUILTIN_TYPES.has(name) || isBuiltinGeneric(name)) {
+        return builtinSchema(name);
+      }
+      return { $ref: `#/types/${name}` };
     }
     // Anonymous types → fallback
     return { type: checker.typeToString(type) };
@@ -569,6 +568,12 @@ function buildSchemaInternal(
           'x-ts-type': 'this',
         } as SpecSchema;
       }
+    }
+
+    // Generic type parameters (T, U) are not addressable spec types — emit the
+    // parameter name as x-ts-type text instead of a dangling $ref.
+    if (type.flags & ts.TypeFlags.TypeParameter) {
+      return { 'x-ts-type': checker.typeToString(type) } as SpecSchema;
     }
 
     // String literal
@@ -734,10 +739,20 @@ function buildSchemaInternal(
 
       // Skip typeArguments for built-in non-generic types (like Uint8Array has internal T)
       if (name && BUILTIN_TYPES.has(name)) {
-        return { $ref: `#/types/${name}` };
+        return builtinSchema(name);
       }
 
-      if (name && (isBuiltinGeneric(name) || !isAnonymous(typeRef.target))) {
+      // Built-in generics (Promise<T>, Map<K,V>) are never registered in types[] —
+      // inline a structural schema and keep the instantiation via typeArguments.
+      if (name && isBuiltinGeneric(name)) {
+        const build = (): SpecSchema => ({
+          ...builtinSchema(name),
+          typeArguments: typeArgs.map((t) => buildSchema(t, checker, ctx)),
+        });
+        return ctx ? withDepth(ctx, build) : build();
+      }
+
+      if (name && !isAnonymous(typeRef.target)) {
         const packageOrigin = getTypeOrigin(typeRef.target, checker);
         if (ctx) {
           return withDepth(ctx, () => {
@@ -772,7 +787,7 @@ function buildSchemaInternal(
 
       // Skip built-in non-generic types
       if (BUILTIN_TYPES.has(name)) {
-        return { $ref: `#/types/${name}` };
+        return builtinSchema(name);
       }
 
       // Utility-type instantiations (Omit<Config, 'x'>, Partial<T>, Record<K, V>)
@@ -787,7 +802,18 @@ function buildSchemaInternal(
         }
       }
 
-      if (isBuiltinGeneric(name) || !name.startsWith('__')) {
+      // Built-in generics (incl. deferred utility instantiations like Omit<T, K>
+      // in generic context) are never registered in types[] — inline structural
+      // schema + typeArguments instead of a dangling $ref.
+      if (isBuiltinGeneric(name)) {
+        const build = (): SpecSchema => ({
+          ...builtinSchema(name),
+          typeArguments: aliasTypeArgs.map((t) => buildSchema(t, checker, ctx)),
+        });
+        return ctx ? withDepth(ctx, build) : build();
+      }
+
+      if (!name.startsWith('__')) {
         const packageOrigin = getTypeOrigin(type, checker);
         if (ctx) {
           return withDepth(ctx, () => {
@@ -832,7 +858,13 @@ function buildSchemaInternal(
 
       // Built-in types without generics
       if (BUILTIN_TYPES.has(name)) {
-        return { $ref: `#/types/${name}` };
+        return builtinSchema(name);
+      }
+
+      // Built-in generics reached without type arguments (bare Promise, Map).
+      // Symbol check avoids shadowing user types that share a builtin name.
+      if (isBuiltinGeneric(name) && isBuiltinSymbol(symbol)) {
+        return builtinSchema(name);
       }
 
       // Named type → $ref

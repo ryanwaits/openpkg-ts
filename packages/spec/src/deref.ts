@@ -17,7 +17,19 @@ export function dereference(spec: OpenPkg): OpenPkg {
       const record = value as SpecLike;
       const ref = readTypeRef(record);
       if (ref) {
-        return resolveTypeRef(ref, typeLookup, seen);
+        const resolved = resolveTypeRef(ref, typeLookup, seen);
+        // Ref siblings (x-ts-type-arguments, x-ts-package, description, ...)
+        // carry information the target schema does not — preserve them, but
+        // never let a stale sibling override a key the target defines.
+        const siblings: SpecLike = {};
+        for (const [key, nested] of Object.entries(record)) {
+          if (key === '$ref') continue;
+          siblings[key] = visit(nested, seen);
+        }
+        if (Object.keys(siblings).length === 0) {
+          return resolved;
+        }
+        return { ...siblings, ...(resolved as SpecLike) };
       }
 
       const next: SpecLike = {};

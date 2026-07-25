@@ -66,12 +66,16 @@ describe('utility type flattening', () => {
     expect(literalPart.required).toEqual(['ready']);
   });
 
-  test('deferred instantiation in generic context keeps $ref form', async () => {
+  test('deferred instantiation in generic context inlines structural schema', async () => {
     const spec = await extractFixture();
     const generic = spec.exports.find((e) => e.name === 'generic');
     const x = generic?.signatures?.[0].parameters?.[0]?.schema as Record<string, unknown>;
 
-    // Omit<T, 'id'> with T unresolved has no members to flatten
-    expect(x.$ref).toBe('#/types/Omit');
+    // Omit<T, 'id'> with T unresolved has no members to flatten. Lib utility
+    // types are never registered in types[], so no $ref — structural
+    // approximation with the instantiation preserved via x-ts extensions.
+    expect(x.$ref).toBeUndefined();
+    expect(x).toMatchObject({ type: 'object', 'x-ts-type': 'Omit' });
+    expect(Array.isArray(x['x-ts-type-arguments'])).toBe(true);
   });
 });
