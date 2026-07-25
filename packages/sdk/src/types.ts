@@ -18,8 +18,6 @@ export interface ExtractOptions {
   maxExternalTypeDepth?: number;
   resolveExternalTypes?: boolean;
   schemaExtraction?: 'static' | 'hybrid';
-  /** Target JSON Schema dialect for runtime schema extraction */
-  schemaTarget?: 'draft-2020-12' | 'draft-07' | 'openapi-3.0';
   /** Include $schema URL in output */
   includeSchema?: boolean;
   /** Only extract these exports (supports * wildcards) */

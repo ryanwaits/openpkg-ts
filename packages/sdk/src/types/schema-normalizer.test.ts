@@ -431,14 +431,6 @@ describe('normalizeSchema', () => {
       expect(result.$schema).toBe('https://json-schema.org/draft/2020-12/schema');
     });
 
-    test('draft-07 dialect', () => {
-      const input: SpecSchema = { type: 'string' };
-      const result = normalizeSchema(input, {
-        includeSchemaField: true,
-        dialect: 'draft-07',
-      });
-      expect(result.$schema).toBe('http://json-schema.org/draft-07/schema#');
-    });
   });
 
   describe('deeply nested structures', () => {
@@ -1869,20 +1861,6 @@ describe('AJV validation - normalized output is valid JSON Schema', () => {
       });
     });
 
-    test('with draft-07 $schema', () => {
-      const input: SpecSchema = {
-        type: 'object',
-        properties: { id: { type: 'symbol' } },
-      };
-      const result = normalizeSchema(input, { includeSchemaField: true, dialect: 'draft-07' });
-      expect(result.$schema).toBe('http://json-schema.org/draft-07/schema#');
-      // Verify the schema structure is correct
-      expect(result.type).toBe('object');
-      expect((result.properties as Record<string, unknown>).id).toEqual({
-        type: 'string',
-        'x-ts-type': 'symbol',
-      });
-    });
   });
 });
 

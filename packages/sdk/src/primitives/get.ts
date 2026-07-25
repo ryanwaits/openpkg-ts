@@ -89,9 +89,9 @@ export async function getExport(options: GetExportOptions): Promise<GetExportRes
       const spec = serializeNamespaceForGet(targetSymbol, exportName, ctx);
       const types = ctx.typeRegistry
         .getAll()
-        .map((t) => normalizeType(t, { dialect: 'draft-2020-12' }));
+        .map((t) => normalizeType(t));
       return {
-        export: normalizeExport(spec, { dialect: 'draft-2020-12' }) as SpecExport,
+        export: normalizeExport(spec) as SpecExport,
         types,
         errors,
       };
@@ -139,12 +139,12 @@ export async function getExport(options: GetExportOptions): Promise<GetExportRes
     }
 
     // Normalize the export
-    spec = normalizeExport(spec, { dialect: 'draft-2020-12' }) as SpecExport;
+    spec = normalizeExport(spec) as SpecExport;
 
     // Get types referenced
     const types = ctx.typeRegistry
       .getAll()
-      .map((t) => normalizeType(t, { dialect: 'draft-2020-12' }));
+      .map((t) => normalizeType(t));
 
     return { export: spec, types, errors };
   } catch (err) {

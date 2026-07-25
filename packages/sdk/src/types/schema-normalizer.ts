@@ -19,6 +19,7 @@
  * | { type: 'tuple', items }      | { "type": "array", "prefixItems": [...] }         |
  */
 
+import { JSON_SCHEMA_DRAFT } from '@openpkg-ts/spec';
 import type { SpecExport, SpecMember, SpecSchema, SpecSignature, SpecType } from '@openpkg-ts/spec';
 
 // ============================================================================
@@ -31,8 +32,6 @@ import type { SpecExport, SpecMember, SpecSchema, SpecSignature, SpecType } from
 export interface NormalizeOptions {
   /** Include $schema field in output */
   includeSchemaField?: boolean;
-  /** Target JSON Schema dialect (default: 'draft-2020-12') */
-  dialect?: 'draft-2020-12' | 'draft-07';
 }
 
 /**
@@ -44,11 +43,6 @@ export type JSONSchema = Record<string, unknown>;
 // ============================================================================
 // Constants
 // ============================================================================
-
-const SCHEMA_DIALECT_URLS: Record<string, string> = {
-  'draft-2020-12': 'https://json-schema.org/draft/2020-12/schema',
-  'draft-07': 'http://json-schema.org/draft-07/schema#',
-};
 
 // TypeScript primitive types that need special handling
 // All mappings produce valid JSON Schema while preserving TS type info via x-ts-type
@@ -74,14 +68,14 @@ const TS_PRIMITIVE_NORMALIZATIONS: Record<string, () => JSONSchema> = {
  * @returns JSON Schema 2020-12 compatible schema
  */
 export function normalizeSchema(schema: SpecSchema, options: NormalizeOptions = {}): JSONSchema {
-  const { includeSchemaField = false, dialect = 'draft-2020-12' } = options;
+  const { includeSchemaField = false } = options;
 
   const normalized = normalizeSchemaInternal(schema, options);
 
   // Add $schema field if requested
   if (includeSchemaField && typeof normalized === 'object') {
     return {
-      $schema: SCHEMA_DIALECT_URLS[dialect],
+      $schema: JSON_SCHEMA_DRAFT,
       ...normalized,
     };
   }
