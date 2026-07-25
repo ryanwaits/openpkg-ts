@@ -11,6 +11,7 @@ import {
   renderTypeText,
   STRING_PROTOTYPE_METHODS,
   shouldEmitAliasTypeText,
+  stripUndefinedFromType,
   withDeprecated,
   withDescription,
 } from '../types/schema-builder';
@@ -322,6 +323,13 @@ export class TypeRegistry {
         : { type: 'array' };
     }
 
+    // Deferred conditionals (Cond<T> = T extends string ? ...) have no real
+    // object shape — their apparent properties are the String/Number prototype.
+    // Emit the verbatim type text instead of flattening ~50 lib methods.
+    if (type.flags & ts.TypeFlags.Conditional) {
+      return { 'x-ts-type': renderTypeText(type, checker) };
+    }
+
     // Fallback: build object schema from properties
     return this.buildObjectSchemaFromProperties(type, checker, ctx);
   }
@@ -368,10 +376,10 @@ export class TypeRegistry {
     ctx: SerializerContext,
   ): Record<string, unknown> {
     const properties = type.getProperties();
-    const stringIndex = checker
-      .getIndexInfosOfType(type)
-      .find((i) => i.keyType.flags & ts.TypeFlags.String);
-    if (properties.length === 0 && !stringIndex) {
+    const indexInfos = checker.getIndexInfosOfType(type);
+    const stringIndex = indexInfos.find((i) => i.keyType.flags & ts.TypeFlags.String);
+    const numberIndex = indexInfos.find((i) => i.keyType.flags & ts.TypeFlags.Number);
+    if (properties.length === 0 && !stringIndex && !numberIndex) {
       return { type: checker.typeToString(type) };
     }
 
@@ -412,7 +420,13 @@ export class TypeRegistry {
 
     for (const prop of included.slice(0, limit)) {
       const propName = prop.getName();
-      const propType = checker.getTypeOfSymbol(prop);
+      const rawPropType = checker.getTypeOfSymbol(prop);
+      // Mirror buildObjectSchema: optional props express optionality via
+      // required omission — strip undefined so null isn't admitted
+      const propType =
+        prop.flags & ts.SymbolFlags.Optional
+          ? stripUndefinedFromType(rawPropType, checker)
+          : rawPropType;
 
       // Register referenced type so it appears in types[]
       this.registerType(propType, ctx);
@@ -447,6 +461,12 @@ export class TypeRegistry {
       properties: props,
       ...(required.length > 0 ? { required } : {}),
       ...(stringIndex ? { additionalProperties: buildSchema(stringIndex.type, checker, ctx) } : {}),
+      ...(numberIndex
+        ? {
+            patternProperties: { '^\\d+$': buildSchema(numberIndex.type, checker, ctx) },
+            'x-ts-index-key': 'number',
+          }
+        : {}),
     };
   }
 }

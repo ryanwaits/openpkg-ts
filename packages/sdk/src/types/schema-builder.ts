@@ -6,6 +6,30 @@ import type { SerializerContext } from '../serializers/context';
 
 export { BUILTIN_TYPE_SCHEMAS } from '../schema/builtins';
 
+/** Escape regex metacharacters in a literal template span. */
+function escapeRegex(text: string): string {
+  return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+/**
+ * Lower a template literal type to an anchored regex pattern.
+ * Slot approximations: number → -?\d+(\.\d+)?, bigint → -?\d+,
+ * boolean → (true|false), anything else → .*
+ */
+function buildTemplatePattern(type: ts.TemplateLiteralType): string {
+  const slotPattern = (slot: ts.Type): string => {
+    if (slot.flags & ts.TypeFlags.NumberLike) return '-?\\d+(?:\\.\\d+)?';
+    if (slot.flags & ts.TypeFlags.BigIntLike) return '-?\\d+';
+    if (slot.flags & ts.TypeFlags.BooleanLike) return '(?:true|false)';
+    return '.*';
+  };
+  let pattern = `^${escapeRegex(type.texts[0] ?? '')}`;
+  type.types.forEach((slot, i) => {
+    pattern += slotPattern(slot) + escapeRegex(type.texts[i + 1] ?? '');
+  });
+  return `${pattern}$`;
+}
+
 /** Structural schema for a built-in lib type reference (never $ref — lib types
  * are not registered in types[], so a ref would dangle). */
 function builtinSchema(name: string): BuiltinSchema {
@@ -485,6 +509,15 @@ function buildMaxDepthSchema(type: ts.Type, checker: ts.TypeChecker): SpecSchema
   if (type.flags & ts.TypeFlags.Null) return { type: 'null' };
   if (type.flags & ts.TypeFlags.Void) return { type: 'void' };
 
+  // Template literals → string + pattern (no recursion needed)
+  if (type.flags & ts.TypeFlags.TemplateLiteral) {
+    return {
+      type: 'string',
+      pattern: buildTemplatePattern(type as ts.TemplateLiteralType),
+      'x-ts-type': renderTypeText(type, checker),
+    } as SpecSchema;
+  }
+
   // Unions → anyOf with leaf schemas per member
   if (type.isUnion()) {
     const schemas = type.types.map((t) => buildMaxDepthSchema(t, checker));
@@ -609,6 +642,20 @@ function buildSchemaInternal(
       }
     }
 
+    // Template literal types → string with an approximating pattern
+    if (type.flags & ts.TypeFlags.TemplateLiteral) {
+      return {
+        type: 'string',
+        pattern: buildTemplatePattern(type as ts.TemplateLiteralType),
+        'x-ts-type': renderTypeText(type, checker),
+      } as SpecSchema;
+    }
+
+    // Intrinsic string mappings (Uppercase<T>, Lowercase<T>, ...) → string
+    if (type.flags & ts.TypeFlags.StringMapping) {
+      return { type: 'string', 'x-ts-type': renderTypeText(type, checker) } as SpecSchema;
+    }
+
     // Union types → anyOf
     if (type.isUnion()) {
       // Check if this is a simple string/number literal union → enum
@@ -625,13 +672,29 @@ function buildSchemaInternal(
         return { type: 'number', enum: enumValues };
       }
 
+      const allBooleanLiterals = types.every((t) => t.flags & ts.TypeFlags.BooleanLiteral);
+      if (allBooleanLiterals) {
+        return { type: 'boolean' };
+      }
+
+      // Collapse a true|false literal pair inside mixed unions to one boolean
+      // branch (the checker decomposes `boolean | X` into literals)
+      const isBoolLiteral = (t: ts.Type) => !!(t.flags & ts.TypeFlags.BooleanLiteral);
+      let members: readonly ts.Type[] = types;
+      if (types.filter(isBoolLiteral).length === 2) {
+        const firstBool = types.findIndex(isBoolLiteral);
+        members = types.filter((t, i) => !isBoolLiteral(t) || i === firstBool);
+      }
+
       // General union → anyOf
+      const buildBranch = (t: ts.Type): SpecSchema =>
+        isBoolLiteral(t) ? { type: 'boolean' } : buildSchema(t, checker, ctx);
       if (ctx) {
         return withDepth(ctx, () => ({
-          anyOf: types.map((t) => buildSchema(t, checker, ctx)),
+          anyOf: members.map(buildBranch),
         }));
       }
-      return { anyOf: types.map((t) => buildSchema(t, checker, ctx)) };
+      return { anyOf: members.map(buildBranch) };
     }
 
     // Intersection types → allOf
@@ -882,9 +945,14 @@ function buildSchemaInternal(
     if (type.flags & ts.TypeFlags.Object) {
       const objectType = type as ts.ObjectType;
 
-      // Object with properties
+      // Object with properties or index signatures (index-only types like
+      // { [k: number]: string } have zero properties but real structure)
       const properties = type.getProperties();
-      if (properties.length > 0 || objectType.objectFlags & ts.ObjectFlags.Anonymous) {
+      if (
+        properties.length > 0 ||
+        objectType.objectFlags & ts.ObjectFlags.Anonymous ||
+        checker.getIndexInfosOfType(type).length > 0
+      ) {
         return buildObjectSchema(properties, checker, ctx, type);
       }
     }
@@ -914,9 +982,12 @@ export function buildFunctionSchema(
         if (!decl) return [];
         const paramType = checker.getTypeOfSymbolAtLocation(param, decl);
         const isOptional = !!decl?.questionToken || !!decl?.initializer;
+        // Optionality is expressed via required: false — strip the undefined
+        // branch so the schema doesn't also accept null after normalization
+        const effectiveType = isOptional ? stripUndefinedFromType(paramType, checker) : paramType;
         return {
           name: param.getName(),
-          schema: buildSchema(paramType, checker, ctx),
+          schema: buildSchema(effectiveType, checker, ctx),
           required: !isOptional,
         };
       });
@@ -955,6 +1026,11 @@ export function buildObjectSchema(
       (originalType.symbol?.getName() === 'Array' && isBuiltinSymbol(originalType.symbol))
     : false;
 
+  // String/number-like types expose their prototype as apparent properties —
+  // filter them so primitive-backed types never explode into charAt/toFixed
+  const isStringLikeType = !!(originalType && originalType.flags & ts.TypeFlags.StringLike);
+  const isNumberLikeType = !!(originalType && originalType.flags & ts.TypeFlags.NumberLike);
+
   const buildProps = () => {
     const props: Record<string, SpecSchema> = {};
     const required: string[] = [];
@@ -972,8 +1048,18 @@ export function buildObjectSchema(
       if (isArrayLikeType && ARRAY_PROTOTYPE_METHODS.has(propName)) {
         continue;
       }
+      if (isStringLikeType && STRING_PROTOTYPE_METHODS.has(propName)) {
+        continue;
+      }
+      if (isNumberLikeType && NUMBER_PROTOTYPE_METHODS.has(propName)) {
+        continue;
+      }
 
-      const propType = checker.getTypeOfSymbol(prop);
+      const isOptionalProp = !!(prop.flags & ts.SymbolFlags.Optional);
+      const rawPropType = checker.getTypeOfSymbol(prop);
+      // Optional props: omission from `required` carries the optionality —
+      // strip undefined so the wire schema doesn't also admit null
+      const propType = isOptionalProp ? stripUndefinedFromType(rawPropType, checker) : rawPropType;
       let propSchema = buildSchema(propType, checker, ctx);
 
       // Carry doc comments into the flattened schema so consumers reading only
@@ -1008,9 +1094,8 @@ export function buildObjectSchema(
     };
 
     // Index signatures ({ [key: string]: V }, Record<string, V>) → additionalProperties
-    const stringIndex = originalType
-      ? checker.getIndexInfosOfType(originalType).find((i) => i.keyType.flags & ts.TypeFlags.String)
-      : undefined;
+    const indexInfos = originalType ? checker.getIndexInfosOfType(originalType) : [];
+    const stringIndex = indexInfos.find((i) => i.keyType.flags & ts.TypeFlags.String);
     if (stringIndex) {
       (schema as Record<string, unknown>).additionalProperties = buildSchema(
         stringIndex.type,
@@ -1019,8 +1104,18 @@ export function buildObjectSchema(
       );
     }
 
+    // Number index signatures — JSON keys are strings, so approximate with
+    // patternProperties over digit keys
+    const numberIndex = indexInfos.find((i) => i.keyType.flags & ts.TypeFlags.Number);
+    if (numberIndex) {
+      (schema as Record<string, unknown>).patternProperties = {
+        '^\\d+$': buildSchema(numberIndex.type, checker, ctx),
+      };
+      setSchemaExtension(schema, 'x-ts-index-key', 'number');
+    }
+
     // Add x-ts-type for empty properties to provide context
-    if (Object.keys(props).length === 0 && originalType && !stringIndex) {
+    if (Object.keys(props).length === 0 && originalType && !stringIndex && !numberIndex) {
       setSchemaExtension(schema, 'x-ts-type', checker.typeToString(originalType));
     }
 

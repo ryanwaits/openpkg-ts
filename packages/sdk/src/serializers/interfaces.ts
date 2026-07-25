@@ -2,7 +2,11 @@ import type { SpecExport, SpecMember, SpecSignature } from '@openpkg-ts/spec';
 import ts from 'typescript';
 import { extractTypeParameters, getJSDocComment, isSymbolDeprecated } from '../ast/utils';
 import { extractParameters, registerReferencedTypes } from '../types/parameters';
-import { buildSchema, decoratePropertySchema } from '../types/schema-builder';
+import {
+  buildSchema,
+  decoratePropertySchema,
+  stripUndefinedFromType,
+} from '../types/schema-builder';
 import type { SerializerContext } from './context';
 import { buildSignatures, extractExportMetadata } from './shared';
 
@@ -139,7 +143,10 @@ function serializePropertySignature(
 
   const { description, tags } = getJSDocComment(node);
 
-  const type = checker.getTypeAtLocation(node);
+  const rawType = checker.getTypeAtLocation(node);
+  // Optional members express optionality via flags.optional / required
+  // omission — strip undefined so the schema doesn't admit null
+  const type = node.questionToken ? stripUndefinedFromType(rawType, checker) : rawType;
   let schema = buildSchema(type, checker, ctx);
   registerReferencedTypes(type, ctx);
 

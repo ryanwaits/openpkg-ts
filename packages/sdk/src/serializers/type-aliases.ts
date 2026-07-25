@@ -83,7 +83,13 @@ export function serializeTypeAlias(
   } else if (
     (ts.isMappedTypeNode(node.type) || ts.isConditionalTypeNode(node.type)) &&
     type.getProperties().length > 0 &&
-    type.getCallSignatures().length === 0
+    type.getCallSignatures().length === 0 &&
+    // Deferred generic conditionals (Cond<T> = T extends string ? ...) keep the
+    // Conditional flag and resolve to a primitive-like apparent type whose
+    // getProperties() is the String/Number prototype — flattening that emits
+    // ~50 charAt/toFixed members. Bail to the x-ts-type verbatim text instead.
+    !(type.flags & ts.TypeFlags.Conditional) &&
+    !(type.flags & (ts.TypeFlags.StringLike | ts.TypeFlags.NumberLike))
   ) {
     // Mapped/conditional aliases (`{[K in keyof SDK]: ...}`) have no syntax members;
     // flatten via the checker so consumers see the resolved properties.

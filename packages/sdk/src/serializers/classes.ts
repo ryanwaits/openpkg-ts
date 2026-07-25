@@ -2,7 +2,11 @@ import type { SpecExport, SpecMember, SpecSignature, SpecVisibility } from '@ope
 import ts from 'typescript';
 import { extractTypeParameters, getJSDocComment, isSymbolDeprecated } from '../ast/utils';
 import { extractParameters, registerReferencedTypes } from '../types/parameters';
-import { buildSchema, decoratePropertySchema } from '../types/schema-builder';
+import {
+  buildSchema,
+  decoratePropertySchema,
+  stripUndefinedFromType,
+} from '../types/schema-builder';
 import { getInheritedMembers, type SerializerContext } from './context';
 import { buildSignatures, extractExportMetadata } from './shared';
 
@@ -164,8 +168,10 @@ function serializeProperty(
     return null;
   }
 
-  // Get property type
-  const type = checker.getTypeAtLocation(node);
+  // Get property type — optional members strip undefined (optionality is
+  // carried by flags.optional / required omission, not a null branch)
+  const rawType = checker.getTypeAtLocation(node);
+  const type = node.questionToken ? stripUndefinedFromType(rawType, checker) : rawType;
 
   // Register referenced types FIRST (before buildSchema adds to visitedTypes)
   registerReferencedTypes(type, ctx);

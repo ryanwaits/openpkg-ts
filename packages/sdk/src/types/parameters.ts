@@ -46,6 +46,10 @@ export function extractParameters(
         paramResult.description = description;
       }
 
+      if (decl.initializer) {
+        applyDefault(paramResult, decl.initializer);
+      }
+
       result.push(paramResult);
     }
   }
@@ -113,7 +117,7 @@ function expandBindingPattern(
 
     // Extract default value if present
     if (element.initializer) {
-      param.default = extractDefaultValue(element.initializer);
+      applyDefault(param, element.initializer);
     }
 
     result.push(param);
@@ -186,26 +190,49 @@ function inferParamAlias(jsdocTags: readonly ts.JSDocTag[]): string | undefined 
 }
 
 /**
- * Extract default value from initializer expression.
+ * Extract a default from an initializer expression.
+ * Literals produce a JSON value; anything else (identifiers, calls) is
+ * source text only — a spec must never present it as a runtime value.
  */
-function extractDefaultValue(initializer: ts.Expression): unknown {
+function extractLiteralDefault(
+  initializer: ts.Expression,
+): { literal: true; value: unknown } | { literal: false; text: string } {
   if (ts.isStringLiteral(initializer)) {
-    return initializer.text;
+    return { literal: true, value: initializer.text };
   }
   if (ts.isNumericLiteral(initializer)) {
-    return Number(initializer.text);
+    return { literal: true, value: Number(initializer.text) };
+  }
+  if (
+    ts.isPrefixUnaryExpression(initializer) &&
+    initializer.operator === ts.SyntaxKind.MinusToken &&
+    ts.isNumericLiteral(initializer.operand)
+  ) {
+    return { literal: true, value: -Number(initializer.operand.text) };
   }
   if (initializer.kind === ts.SyntaxKind.TrueKeyword) {
-    return true;
+    return { literal: true, value: true };
   }
   if (initializer.kind === ts.SyntaxKind.FalseKeyword) {
-    return false;
+    return { literal: true, value: false };
   }
   if (initializer.kind === ts.SyntaxKind.NullKeyword) {
-    return null;
+    return { literal: true, value: null };
   }
-  // For complex expressions, return the text representation
-  return initializer.getText();
+  return { literal: false, text: initializer.getText() };
+}
+
+/** Apply an initializer to a parameter: literal → default, non-literal → x-ts-default. */
+function applyDefault(param: SpecSignatureParameter, initializer: ts.Expression): void {
+  const extracted = extractLiteralDefault(initializer);
+  if (extracted.literal) {
+    param.default = extracted.value;
+    if (param.schema && typeof param.schema === 'object' && !Array.isArray(param.schema)) {
+      (param.schema as Record<string, unknown>).default = extracted.value;
+    }
+  } else if (param.schema && typeof param.schema === 'object' && !Array.isArray(param.schema)) {
+    (param.schema as Record<string, unknown>)['x-ts-default'] = extracted.text;
+  }
 }
 
 /**

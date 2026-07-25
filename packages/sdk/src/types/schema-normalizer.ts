@@ -834,14 +834,21 @@ export function normalizeMembers(
   const properties: Record<string, JSONSchema> = {};
   const required: string[] = [];
   let additionalProperties: JSONSchema | boolean | undefined;
+  let numberIndexSchema: JSONSchema | undefined;
 
   for (const member of members) {
     const { name, kind } = member;
 
-    // Handle index signatures → additionalProperties
+    // Handle index signatures → additionalProperties (string keys) or
+    // patternProperties over digit keys (number keys). serializeIndexSignature
+    // names members "[string]"/"[number]".
     // Supports both 'index' and 'index-signature' kind names
     if (kind === 'index' || kind === 'index-signature') {
-      additionalProperties = normalizeMemberToSchema(member, options);
+      if (name === '[number]') {
+        numberIndexSchema = normalizeMemberToSchema(member, options);
+      } else {
+        additionalProperties = normalizeMemberToSchema(member, options);
+      }
       continue;
     }
 
@@ -871,6 +878,10 @@ export function normalizeMembers(
   // Include additionalProperties if we found index signatures
   if (additionalProperties !== undefined) {
     result.additionalProperties = additionalProperties;
+  }
+  if (numberIndexSchema !== undefined) {
+    result.patternProperties = { '^\\d+$': numberIndexSchema };
+    result['x-ts-index-key'] = 'number';
   }
 
   return result;

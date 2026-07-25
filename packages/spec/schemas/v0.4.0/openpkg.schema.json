@@ -357,6 +357,8 @@
               }
             },
             "x-ts-package": { "type": "string" },
+            "x-ts-default": { "type": "string" },
+            "x-ts-index-key": { "type": "string", "enum": ["number"] },
             "x-ts-accessor": { "type": "string", "enum": ["getter", "setter"] },
             "x-enum-members": { "type": "array" },
             "x-deprecated-reason": { "type": "string" }
