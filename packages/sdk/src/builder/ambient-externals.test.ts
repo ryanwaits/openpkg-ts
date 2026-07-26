@@ -65,7 +65,17 @@ describe('ambient/external type stubs', () => {
       const widget = spec.types?.find((t) => t.name === 'Widget');
       expect(widget?.external).toBe(true);
       expect(widget?.members).toBeUndefined();
-      expect((widget?.schema as Record<string, unknown>)?.['x-ts-type']).toBe('Widget');
+      const schema = widget?.schema as Record<string, unknown>;
+      expect(schema?.['x-ts-type']).toBe('Widget');
+      // stub records its declaring package so users know what to follow
+      expect(schema?.['x-ts-package']).toBe('tiny-ext');
+    });
+
+    test('followExternal glob matches the package', async () => {
+      const { spec } = await extract({ entryFile: entry, followExternal: ['tiny-*'] });
+      const widget = spec.types?.find((t) => t.name === 'Widget');
+      const props = ((widget?.schema ?? {}) as Record<string, Record<string, unknown>>).properties;
+      expect(props?.id).toEqual({ type: 'string' });
     });
 
     test('followExternal: true expands the external type fully', async () => {

@@ -56,10 +56,20 @@ export function createExternalExpansionPredicate(opts: {
   followExternal?: boolean | string[];
   workspacePackages: ReadonlyMap<string, string>;
 }): (symbol: ts.Symbol) => boolean {
+  // Match a package name against a followExternal entry. Supports exact names
+  // and `*` globs (e.g. "@ai-sdk/*" expands every @ai-sdk/* package), since a
+  // single logical dependency often spreads its types across sibling packages.
+  const matchesEntry = (entry: string, pkg: string): boolean => {
+    if (!entry.includes('*')) return entry === pkg;
+    const rx = new RegExp(`^${entry.replace(/[.+?^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*')}$`);
+    return rx.test(pkg);
+  };
+
   const packageAllowed = (pkg: string): boolean => {
     if (pkg === 'typescript') return false;
     if (opts.followExternal === true) return true;
-    if (Array.isArray(opts.followExternal) && opts.followExternal.includes(pkg)) return true;
+    if (Array.isArray(opts.followExternal) && opts.followExternal.some((e) => matchesEntry(e, pkg)))
+      return true;
     return opts.workspacePackages.has(pkg);
   };
 

@@ -6,6 +6,7 @@ import {
   buildFunctionSchema,
   buildSchema,
   decoratePropertySchema,
+  getTypeOrigin,
   NUMBER_PROTOTYPE_METHODS,
   PRIMITIVES,
   renderTypeText,
@@ -154,12 +155,20 @@ export class TypeRegistry {
     // resolvable, but the spec doesn't inline a foreign package's full member
     // surface (environment-dependent, hundreds of lines per type).
     if (ctx.shouldExpandExternal && !ctx.shouldExpandExternal(symbol)) {
+      // Record the DECLARING package so consumers know exactly what name to
+      // add to followExternal — the import specifier in user code may differ
+      // (e.g. imported from 'ai' but declared in '@ai-sdk/provider').
+      const origin = getTypeOrigin(type, ctx.typeChecker);
+      const schema: Record<string, unknown> = {
+        'x-ts-type': renderTypeText(type, ctx.typeChecker),
+      };
+      if (origin) schema['x-ts-package'] = origin;
       this.add({
         id: name,
         name,
         kind: 'external',
         external: true,
-        schema: { 'x-ts-type': renderTypeText(type, ctx.typeChecker) },
+        schema: schema as SpecType['schema'],
       } as SpecType);
       return name;
     }

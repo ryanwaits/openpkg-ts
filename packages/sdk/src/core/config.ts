@@ -9,6 +9,16 @@ import type { ExternalsConfig } from '../types';
 export interface OpenpkgConfig {
   /** Configuration for resolving external package re-exports */
   externals?: ExternalsConfig;
+  /**
+   * Expand referenced types from third-party packages instead of recording
+   * them as opaque stubs. `true` follows every dependency; a string[] follows
+   * only the named packages (by declaring package name). Default: stub.
+   */
+  followExternal?: boolean | string[];
+  /** Only extract these exports (supports * wildcards). */
+  only?: string[];
+  /** Ignore these exports (supports * wildcards). */
+  ignore?: string[];
 }
 
 /** Default config filename */
@@ -80,5 +90,10 @@ export function mergeConfig(
   // Only include externals if at least one field is defined
   const hasExternals = externals.include || externals.exclude || externals.depth !== undefined;
 
-  return hasExternals ? { externals } : {};
+  return {
+    ...(hasExternals ? { externals } : {}),
+    followExternal: cliOptions.followExternal ?? fileConfig.followExternal,
+    only: cliOptions.only ?? fileConfig.only,
+    ignore: cliOptions.ignore ?? fileConfig.ignore,
+  };
 }
