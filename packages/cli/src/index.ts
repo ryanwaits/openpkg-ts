@@ -11,6 +11,9 @@ import {
   getAvailableVersions,
   getValidationErrors,
   listExports,
+  loadConfig,
+  mergeConfig,
+  type OpenpkgConfig,
   recommendSemverBump,
   type SchemaVersion,
 } from '@openpkg-ts/sdk';
@@ -21,7 +24,7 @@ type ParsedSpec = { openpkg?: string; meta?: { version?: string } };
 const HELP = `openpkg - extract TypeScript API specs and generate docs
 
 Usage:
-  openpkg spec <entry.ts> [-o spec.json]
+  openpkg spec <entry.ts> [-o spec.json] [--follow-external <pkg,...>]
   openpkg docs <entry.ts | spec.json> [-f md|html|json] [-o out]
   openpkg list <entry.ts> [--json]
   openpkg validate <spec.json>
@@ -35,11 +38,20 @@ Commands:
   diff      Compare two spec files and recommend a semver bump
 
 Options:
-  -o, --output   Write to file instead of stdout
-  -f, --format   docs output format: md (default), html, json
-      --json     list/diff output as JSON
-  -h, --help     Show this help
-  -v, --version  Show version
+  -o, --output            Write to file instead of stdout
+  -f, --format            docs output format: md (default), html, json
+      --json              list/diff output as JSON
+      --follow-external   Expand types from these packages (comma-separated,
+                          globs ok: "@ai-sdk/*"). Default: stub externals.
+      --follow-external-all   Expand every external package (use with care)
+      --only              Only extract these exports (comma-separated, * ok)
+      --ignore            Ignore these exports (comma-separated, * ok)
+  -h, --help              Show this help
+  -v, --version           Show version
+
+Config: reads openpkg.config.json (or package.json "openpkg" field) from the
+cwd. Flags override the file. Example openpkg.config.json:
+  { "followExternal": ["@acme/payment-kit", "@ai-sdk/*"] }
 `;
 
 function fail(message: string): never {
@@ -75,17 +87,72 @@ function reportDiagnostics(diagnostics: Array<{ severity: string; message: strin
   }
 }
 
+/** Split a comma/space-separated flag value into a trimmed list. */
+function toList(value: string | undefined): string[] | undefined {
+  if (!value) return undefined;
+  const items = value
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+  return items.length > 0 ? items : undefined;
+}
+
+/** Print the external packages that were stubbed, with the exact names to
+ * follow — so users never have to guess the declaring package. */
+function reportStubbedExternals(spec: { types?: Array<Record<string, unknown>> }): void {
+  const counts = new Map<string, number>();
+  for (const t of spec.types ?? []) {
+    if (!t.external) continue;
+    const pkg = (t.schema as Record<string, unknown> | undefined)?.['x-ts-package'];
+    const key = typeof pkg === 'string' ? pkg : '(unknown origin)';
+    counts.set(key, (counts.get(key) ?? 0) + 1);
+  }
+  if (counts.size === 0) return;
+  const summary = [...counts.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .map(([pkg, n]) => `${pkg} (${n})`)
+    .join(', ');
+  console.error(`external types stubbed from: ${summary}`);
+  console.error(
+    '  → add package names to followExternal (config or --follow-external) to expand them',
+  );
+}
+
 async function specCommand(args: string[]): Promise<void> {
   const { values, positionals } = parseArgs({
     args,
-    options: { output: { type: 'string', short: 'o' } },
+    options: {
+      output: { type: 'string', short: 'o' },
+      'follow-external': { type: 'string' },
+      'follow-external-all': { type: 'boolean' },
+      only: { type: 'string' },
+      ignore: { type: 'string' },
+    },
     allowPositionals: true,
   });
   const entryFile = positionals[0];
   if (!entryFile) fail('spec requires an entry file (openpkg spec src/index.ts)');
 
-  const { spec, diagnostics } = await extractSpec({ entryFile });
+  // Config file (openpkg.config.json or package.json "openpkg"), overridden by flags.
+  const fileConfig = loadConfig(process.cwd());
+  const cliConfig: Partial<OpenpkgConfig> = {
+    followExternal: values['follow-external-all']
+      ? true
+      : toList(values['follow-external'] as string | undefined),
+    only: toList(values.only as string | undefined),
+    ignore: toList(values.ignore as string | undefined),
+  };
+  const config = mergeConfig(fileConfig, cliConfig);
+
+  const { spec, diagnostics } = await extractSpec({
+    entryFile,
+    followExternal: config.followExternal,
+    only: config.only,
+    ignore: config.ignore,
+    externals: config.externals,
+  });
   reportDiagnostics(diagnostics);
+  if (!config.followExternal) reportStubbedExternals(spec);
   write(JSON.stringify(spec, null, 2), values.output);
 }
 

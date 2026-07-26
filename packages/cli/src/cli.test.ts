@@ -98,6 +98,47 @@ describe('openpkg cli', () => {
     });
   });
 
+  describe('external types (follow / config)', () => {
+    let dir: string;
+    let entry: string;
+
+    beforeAll(() => {
+      dir = fs.mkdtempSync(path.join(os.tmpdir(), 'openpkg-cli-ext-'));
+      fs.writeFileSync(path.join(dir, 'package.json'), JSON.stringify({ name: 'consumer' }));
+      const pkg = path.join(dir, 'node_modules', 'ext-lib');
+      fs.mkdirSync(pkg, { recursive: true });
+      fs.writeFileSync(
+        path.join(pkg, 'package.json'),
+        JSON.stringify({ name: 'ext-lib', types: 'index.d.ts' }),
+      );
+      fs.writeFileSync(path.join(pkg, 'index.d.ts'), 'export interface Widget { id: string; }\n');
+      entry = path.join(dir, 'index.ts');
+      fs.writeFileSync(
+        entry,
+        `import type { Widget } from 'ext-lib';\nexport function use(w: Widget): void {}\n`,
+      );
+    });
+    afterAll(() => fs.rmSync(dir, { recursive: true, force: true }));
+
+    it('default stubs externals and reports the declaring package', async () => {
+      const { stdout, stderr, code } = await run(['spec', entry]);
+      expect(code).toBe(0);
+      expect(stderr).toContain('stubbed from: ext-lib');
+      const spec = JSON.parse(stdout);
+      const widget = spec.types.find((t: { name: string }) => t.name === 'Widget');
+      expect(widget.external).toBe(true);
+      expect(widget.schema['x-ts-package']).toBe('ext-lib');
+    });
+
+    it('--follow-external expands the named package', async () => {
+      const { stdout, code } = await run(['spec', entry, '--follow-external', 'ext-lib']);
+      expect(code).toBe(0);
+      const spec = JSON.parse(stdout);
+      const widget = spec.types.find((t: { name: string }) => t.name === 'Widget');
+      expect(widget.schema.properties.id).toEqual({ type: 'string' });
+    });
+  });
+
   describe('validate', () => {
     let dir: string;
 
