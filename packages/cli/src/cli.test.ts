@@ -97,4 +97,90 @@ describe('openpkg cli', () => {
       expect(stderr).toContain('No exports found');
     });
   });
+
+  describe('validate', () => {
+    let dir: string;
+
+    beforeAll(() => {
+      dir = fs.mkdtempSync(path.join(os.tmpdir(), 'openpkg-cli-validate-'));
+    });
+    afterAll(() => fs.rmSync(dir, { recursive: true, force: true }));
+
+    it('help lists validate and diff --json', async () => {
+      const { stdout } = await run(['--help']);
+      expect(stdout).toContain('openpkg validate');
+      expect(stdout).toContain('diff <old.json> <new.json> [--json]');
+    });
+
+    it('accepts a spec produced by the spec command', async () => {
+      const specFile = path.join(dir, 'valid.json');
+      const { stdout: specOut } = await run(['spec', FIXTURE]);
+      fs.writeFileSync(specFile, specOut);
+      const { stdout, code } = await run(['validate', specFile]);
+      expect(code).toBe(0);
+      expect(stdout).toContain('valid');
+    });
+
+    it('rejects a spec missing required fields', async () => {
+      const bad = path.join(dir, 'bad.json');
+      fs.writeFileSync(bad, JSON.stringify({ openpkg: '0.4.0', exports: [] }));
+      const { stderr, code } = await run(['validate', bad]);
+      expect(code).toBe(1);
+      expect(stderr).toContain('meta');
+    });
+
+    it('rejects a non-JSON file cleanly', async () => {
+      const junk = path.join(dir, 'junk.json');
+      fs.writeFileSync(junk, 'not json{');
+      const { stderr, code } = await run(['validate', junk]);
+      expect(code).toBe(1);
+      expect(stderr).toContain('failed to read');
+    });
+  });
+
+  describe('diff hardening + --json', () => {
+    let dir: string;
+
+    beforeAll(() => {
+      dir = fs.mkdtempSync(path.join(os.tmpdir(), 'openpkg-cli-diff-'));
+    });
+    afterAll(() => fs.rmSync(dir, { recursive: true, force: true }));
+
+    const writeSpec = (name: string, spec: unknown): string => {
+      const file = path.join(dir, name);
+      fs.writeFileSync(file, JSON.stringify(spec));
+      return file;
+    };
+
+    it('fails cleanly on a structurally invalid spec instead of crashing', async () => {
+      const garbage = writeSpec('garbage.json', { foo: 1 });
+      const valid = writeSpec('v.json', {
+        openpkg: '0.4.0',
+        meta: { name: 't', version: '1.0.0' },
+        exports: [],
+      });
+      const { stderr, code } = await run(['diff', garbage, valid]);
+      expect(code).toBe(1);
+      expect(stderr).toContain('invalid spec');
+    });
+
+    it('--json emits a machine-readable payload and exits 2 on breaking', async () => {
+      const oldSpec = writeSpec('old.json', {
+        openpkg: '0.4.0',
+        meta: { name: 't', version: '1.0.0' },
+        exports: [{ id: 'foo', name: 'foo', kind: 'function' }],
+      });
+      const newSpec = writeSpec('new.json', {
+        openpkg: '0.4.0',
+        meta: { name: 't', version: '1.0.0' },
+        exports: [],
+      });
+      const { stdout, code } = await run(['diff', oldSpec, newSpec, '--json']);
+      expect(code).toBe(2);
+      const payload = JSON.parse(stdout);
+      expect(payload.recommendation.bump).toBe('major');
+      expect(payload.breaking.length).toBeGreaterThan(0);
+      expect(payload.nextVersion).toBe('2.0.0');
+    });
+  });
 });

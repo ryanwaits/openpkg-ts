@@ -38,5 +38,8 @@ export {
   assertSpec,
   getAvailableVersions,
   getValidationErrors,
+  LATEST_VERSION,
+  type SchemaVersion,
+  type SpecError,
   validateSpec,
 } from './validate';

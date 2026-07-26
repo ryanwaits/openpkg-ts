@@ -98,3 +98,13 @@ export {
   type ExtractResult,
   extractSpec,
 } from './spec';
+// Validate spec against the meta-schema
+export {
+  assertSpec,
+  getAvailableVersions,
+  getValidationErrors,
+  LATEST_VERSION,
+  type SchemaVersion,
+  type SpecError,
+  validateSpec,
+} from './validate';

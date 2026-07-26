@@ -3,12 +3,20 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { parseArgs } from 'node:util';
 import {
+  calculateNextVersion,
+  categorizeBreakingChanges,
   createDocs,
   diffSpecs,
   extractSpec,
+  getAvailableVersions,
+  getValidationErrors,
   listExports,
   recommendSemverBump,
+  type SchemaVersion,
 } from '@openpkg-ts/sdk';
+
+/** Minimal shape we read off a parsed spec file. */
+type ParsedSpec = { openpkg?: string; meta?: { version?: string } };
 
 const HELP = `openpkg - extract TypeScript API specs and generate docs
 
@@ -16,18 +24,20 @@ Usage:
   openpkg spec <entry.ts> [-o spec.json]
   openpkg docs <entry.ts | spec.json> [-f md|html|json] [-o out]
   openpkg list <entry.ts> [--json]
-  openpkg diff <old.json> <new.json>
+  openpkg validate <spec.json>
+  openpkg diff <old.json> <new.json> [--json]
 
 Commands:
-  spec    Extract an OpenPkg spec from a TypeScript entry point
-  docs    Generate docs from an entry point or an existing spec file
-  list    List exports (name, kind, location)
-  diff    Compare two spec files and recommend a semver bump
+  spec      Extract an OpenPkg spec from a TypeScript entry point
+  docs      Generate docs from an entry point or an existing spec file
+  list      List exports (name, kind, location)
+  validate  Validate a spec file against the OpenPkg meta-schema
+  diff      Compare two spec files and recommend a semver bump
 
 Options:
   -o, --output   Write to file instead of stdout
   -f, --format   docs output format: md (default), html, json
-      --json     list output as JSON
+      --json     list/diff output as JSON
   -h, --help     Show this help
   -v, --version  Show version
 `;
@@ -145,12 +155,78 @@ function readSpecFile(file: string): ReturnType<typeof JSON.parse> {
   }
 }
 
+/** Validate against the spec's declared version when known, else 'latest'. */
+function pickVersion(spec: unknown): SchemaVersion {
+  const declared = (spec as ParsedSpec)?.openpkg;
+  if (typeof declared === 'string' && getAvailableVersions().includes(declared)) {
+    return declared as SchemaVersion;
+  }
+  return 'latest';
+}
+
+/** Parse a spec file and reject it if it doesn't validate against the meta-schema. */
+function readValidSpecFile(file: string): ReturnType<typeof JSON.parse> {
+  const parsed = readSpecFile(file);
+  const errors = getValidationErrors(parsed, pickVersion(parsed));
+  if (errors.length > 0) {
+    const details = errors.map((e) => `  ${e.instancePath || '/'} ${e.message}`).join('\n');
+    fail(`invalid spec ${file}:\n${details}`);
+  }
+  return parsed;
+}
+
+function validateCommand(args: string[]): void {
+  const [file] = args;
+  if (!file) fail('validate requires a spec file (openpkg validate spec.json)');
+
+  const spec = readSpecFile(file);
+  const errors = getValidationErrors(spec, pickVersion(spec));
+  if (errors.length === 0) {
+    console.log(`${file}: valid`);
+    return;
+  }
+  for (const e of errors) {
+    console.error(`${e.instancePath || '/'} ${e.message}`);
+  }
+  process.exit(1);
+}
+
 function diffCommand(args: string[]): void {
-  const [oldFile, newFile] = args;
+  const { values, positionals } = parseArgs({
+    args,
+    options: { json: { type: 'boolean' } },
+    allowPositionals: true,
+  });
+  const [oldFile, newFile] = positionals;
   if (!oldFile || !newFile) fail('diff requires two spec files (openpkg diff old.json new.json)');
 
-  const diff = diffSpecs(readSpecFile(oldFile), readSpecFile(newFile));
+  const oldSpec = readValidSpecFile(oldFile);
+  const newSpec = readValidSpecFile(newFile);
+  const diff = diffSpecs(oldSpec, newSpec);
   const recommendation = recommendSemverBump(diff);
+  const oldVersion = (newSpec as ParsedSpec)?.meta?.version;
+  const nextVersion = oldVersion
+    ? calculateNextVersion(oldVersion, recommendation.bump)
+    : undefined;
+
+  if (values.json) {
+    console.log(
+      JSON.stringify(
+        {
+          breaking: diff.breaking,
+          nonBreaking: diff.nonBreaking,
+          docsOnly: diff.docsOnly,
+          categorized: categorizeBreakingChanges(diff.breaking, oldSpec, newSpec),
+          recommendation,
+          ...(nextVersion ? { nextVersion } : {}),
+        },
+        null,
+        2,
+      ),
+    );
+    if (diff.breaking.length) process.exitCode = 2;
+    return;
+  }
 
   const section = (title: string, items: string[]) => {
     if (!items.length) return;
@@ -164,6 +240,7 @@ function diffCommand(args: string[]): void {
     console.log('No changes.');
   }
   console.log(`\nRecommended bump: ${recommendation.bump} (${recommendation.reason})`);
+  if (nextVersion) console.log(`Next version: ${nextVersion}`);
   if (diff.breaking.length) process.exitCode = 2;
 }
 
@@ -179,6 +256,9 @@ async function main(): Promise<void> {
       break;
     case 'list':
       await listCommand(rest);
+      break;
+    case 'validate':
+      validateCommand(rest);
       break;
     case 'diff':
       diffCommand(rest);
