@@ -125,11 +125,11 @@ function parseExamplesFromTags(tags: SpecTag[]): SpecExample[] {
  */
 function stripParamSeparator(text: string | undefined): string | undefined {
   if (!text) return undefined;
-  let stripped = text.replace(/^-\s*/, '').trim();
-  // Stop at paragraph breaks — loose text after a blank line isn't part of the param
-  const parts = stripped.split(/\n\s*\n/);
-  stripped = parts[0].trim();
-  return stripped || undefined;
+  const stripped = text.replace(/^-\s*/, '').trim();
+  // A block tag runs until the next block tag, so later paragraphs document the
+  // param too and are kept. Only a trailing whole-comment annotation is dropped
+  // here — it is reported at comment level instead.
+  return splitCommentLevelTags(stripped).retained.trim() || undefined;
 }
 
 /**
@@ -148,10 +148,12 @@ function stripTypeParamSeparator(text: string | undefined): string | undefined {
 }
 
 /**
- * Extract text from @see tag, preserving full URLs.
- * TypeScript's getTextOfJSDocComment can sometimes strip URL protocols
- * because it treats protocol prefixes like 'https' as JSDocLink targets.
- * This function extracts the full text from the tag to preserve URLs.
+ * Extract text from @see tag, preserving the leading token.
+ *
+ * TypeScript treats whatever follows `@see` as a link target and drops it from
+ * the flattened comment: `@see https://example.com` yields `://example.com`, and
+ * `@see The guide` yields `guide`. Reading the source text is the only way to
+ * keep it, so this reconstructs rather than using getTextOfJSDocComment.
  */
 function extractSeeTagText(tag: ts.JSDocTag): string {
   // Get the full tag text and extract everything after @see
@@ -172,6 +174,10 @@ function extractSeeTagText(tag: ts.JSDocTag): string {
     let text = seeMatch[1].trim();
     // Remove trailing " * " patterns from multi-line JSDoc
     text = text.replace(/\s*\*\s*$/gm, '').trim();
+    // Reading source text means every continuation line still carries its JSDoc
+    // marker. Strip one asterisk and one space, anchored to horizontal
+    // whitespace so blank lines survive and `*emphasis*` at line start does too.
+    text = text.replace(/^[ \t]*\*[ \t]?/gm, '').trim();
     if (text) return text;
   }
 
