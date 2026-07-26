@@ -32,7 +32,7 @@ import {
 } from './external-resolver';
 import { mergeRuntimeSchemas } from './schema-merger';
 import { clearTypeDefinitionCache, getRegexCache } from './type-cache';
-import { expandReachableTypes } from './type-expansion';
+import { createExternalExpansionPredicate, expandReachableTypes } from './type-expansion';
 import {
   BUILTIN_TYPES as BUILTIN_TYPES_SET,
   buildVerificationSummary,
@@ -238,6 +238,12 @@ export async function extract(options: ExtractOptions): Promise<ExtractResult> {
       includePrivate,
       maxProperties,
       onTruncation,
+      // Ambient/external types outside this scope register as opaque stubs.
+      // followExternal: true (or listing a package) restores full expansion.
+      shouldExpandExternal: createExternalExpansionPredicate({
+        followExternal: options.followExternal,
+        workspacePackages: result.workspacePackages ?? new Map(),
+      }),
     });
     ctx.exportedIds = exportedIds;
 

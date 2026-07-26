@@ -46,6 +46,35 @@ function isLibFile(fileName: string): boolean {
   return fileName.includes('/typescript/lib/lib.') || fileName.includes('\\typescript\\lib\\lib.');
 }
 
+/**
+ * Location predicate shared by reachability expansion and structural type
+ * registration: TS lib files never expand; node_modules packages expand only
+ * when workspace siblings or opted in via `followExternal`; project files
+ * always expand.
+ */
+export function createExternalExpansionPredicate(opts: {
+  followExternal?: boolean | string[];
+  workspacePackages: ReadonlyMap<string, string>;
+}): (symbol: ts.Symbol) => boolean {
+  const packageAllowed = (pkg: string): boolean => {
+    if (pkg === 'typescript') return false;
+    if (opts.followExternal === true) return true;
+    if (Array.isArray(opts.followExternal) && opts.followExternal.includes(pkg)) return true;
+    return opts.workspacePackages.has(pkg);
+  };
+
+  return (symbol: ts.Symbol): boolean => {
+    const decl = symbol.declarations?.[0];
+    if (!decl) return false;
+    const fileName = decl.getSourceFile().fileName;
+    if (isLibFile(fileName)) return false;
+    const match = fileName.match(NODE_MODULES_PKG);
+    if (match) return packageAllowed(match[1]);
+    // Project or workspace-resolved source file
+    return true;
+  };
+}
+
 export function expandReachableTypes(
   exportedSymbols: readonly ts.Symbol[],
   ctx: SerializerContext,
@@ -56,13 +85,6 @@ export function expandReachableTypes(
   const checker = ctx.typeChecker;
   const visited = new Set<ts.Type>();
   const MAX_DEPTH = 30;
-
-  const packageAllowed = (pkg: string): boolean => {
-    if (pkg === 'typescript') return false;
-    if (opts.followExternal === true) return true;
-    if (Array.isArray(opts.followExternal) && opts.followExternal.includes(pkg)) return true;
-    return opts.workspacePackages.has(pkg);
-  };
 
   const entryPackageDir = findPackageDir(opts.entryFile);
 
@@ -81,16 +103,7 @@ export function expandReachableTypes(
     return (pkg ?? 'local').replace(/^@/, '').replace(/\//g, '-');
   };
 
-  const symbolAllowed = (symbol: ts.Symbol): boolean => {
-    const decl = symbol.declarations?.[0];
-    if (!decl) return false;
-    const fileName = decl.getSourceFile().fileName;
-    if (isLibFile(fileName)) return false;
-    const match = fileName.match(NODE_MODULES_PKG);
-    if (match) return packageAllowed(match[1]);
-    // Project or workspace-resolved source file
-    return true;
-  };
+  const symbolAllowed = createExternalExpansionPredicate(opts);
 
   const visit = (type: ts.Type, depth: number): void => {
     if (!type || depth > MAX_DEPTH || visited.has(type)) return;

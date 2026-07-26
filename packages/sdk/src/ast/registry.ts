@@ -149,6 +149,21 @@ export class TypeRegistry {
     if (isGenericTypeParameter(name)) return undefined;
     if (this.has(name)) return name;
 
+    // Ambient/external types outside the expansion scope (lib.dom, bun-types,
+    // non-workspace node_modules) get an opaque stub: the $ref stays
+    // resolvable, but the spec doesn't inline a foreign package's full member
+    // surface (environment-dependent, hundreds of lines per type).
+    if (ctx.shouldExpandExternal && !ctx.shouldExpandExternal(symbol)) {
+      this.add({
+        id: name,
+        name,
+        kind: 'external',
+        external: true,
+        schema: { 'x-ts-type': renderTypeText(type, ctx.typeChecker) },
+      } as SpecType);
+      return name;
+    }
+
     // Prevent infinite recursion
     if (this.processing.has(name)) return name;
     this.processing.add(name);

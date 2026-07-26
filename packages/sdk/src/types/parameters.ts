@@ -293,6 +293,19 @@ export function registerReferencedTypes(type: ts.Type, ctx: SerializerContext, d
     }
   }
 
+  // Skip member recursion for types outside the expansion scope — their
+  // registry entry is an opaque stub, so walking properties would only drag
+  // transitive ambient types (Event, EventTarget, ...) into types[]
+  const typeSymbol = type.aliasSymbol ?? type.getSymbol();
+  if (
+    typeSymbol &&
+    ctx.shouldExpandExternal &&
+    !typeSymbol.getName().startsWith('__') &&
+    !ctx.shouldExpandExternal(typeSymbol)
+  ) {
+    return;
+  }
+
   // Handle object properties (traverse into object members)
   if (type.flags & ts.TypeFlags.Object) {
     const props = type.getProperties();

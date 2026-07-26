@@ -27,6 +27,12 @@ export interface SerializerContext {
   maxProperties: number;
   /** Callback when properties are truncated */
   onTruncation?: (typeName: string, actual: number, limit: number) => void;
+  /**
+   * Location gate for structural expansion of referenced types. When set and
+   * it rejects a symbol, the registry records an opaque external stub instead
+   * of the full member surface. Unset → expand everything (unit-test contexts).
+   */
+  shouldExpandExternal?: (symbol: ts.Symbol) => boolean;
 }
 
 export interface CreateContextOptions {
@@ -36,6 +42,7 @@ export interface CreateContextOptions {
   includePrivate?: boolean;
   maxProperties?: number;
   onTruncation?: (typeName: string, actual: number, limit: number) => void;
+  shouldExpandExternal?: (symbol: ts.Symbol) => boolean;
 }
 
 export function createContext(
@@ -58,6 +65,7 @@ export function createContext(
     includePrivate: options.includePrivate ?? false,
     maxProperties: options.maxProperties ?? 500,
     onTruncation: options.onTruncation,
+    shouldExpandExternal: options.shouldExpandExternal,
   };
 }
 

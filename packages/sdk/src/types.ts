@@ -35,10 +35,20 @@ export interface ExtractOptions {
   /** Max properties to serialize per object type (default: 500) */
   maxProperties?: number;
   /**
-   * Register referenced-but-not-exported types from dependencies as named
-   * types[] entries. true → all packages; string[] → listed packages (plus
-   * workspace siblings); false → disable the expansion pass; default →
-   * workspace sibling packages only.
+   * Controls how types from outside the entry package are handled.
+   *
+   * By default, ambient/global types (lib.dom, bun-types) and non-workspace
+   * `node_modules` packages register as **opaque external stubs** — a `types[]`
+   * entry with `external: true` and an `x-ts-type` name, so `$ref`s stay
+   * resolvable without inlining a foreign package's full (and
+   * environment-dependent) member surface. Referenced-but-not-exported types
+   * from the entry package and workspace siblings always expand fully.
+   *
+   * - `true` → fully expand every referenced package (restores pre-stub
+   *   behavior; output becomes environment-dependent for global types)
+   * - `string[]` → fully expand the listed packages (plus workspace siblings)
+   * - `false` → disable the reachability-expansion pass entirely
+   * - default → workspace siblings only; everything else stubbed
    */
   followExternal?: boolean | string[];
   /** Callback when properties are truncated */
