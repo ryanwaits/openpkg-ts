@@ -81,6 +81,12 @@ export function serializeTypeAlias(
     // would short-circuit to a self-$ref; build the function schema from the
     // resolved call signatures instead.
     schema = buildFunctionSchema(type.getCallSignatures(), ctx.typeChecker, ctx);
+    // A callable type literal can ALSO carry properties
+    // (`{ (input): boolean; label: string }`). Keep those members alongside the
+    // signature so the object half of the type isn't dropped.
+    if (type.getProperties().length > 0) {
+      members = serializeResolvedMembers(type, node, ctx);
+    }
   } else if (
     (ts.isMappedTypeNode(node.type) || ts.isConditionalTypeNode(node.type)) &&
     type.getProperties().length > 0 &&
