@@ -344,6 +344,7 @@
             "minProperties": { "type": "integer" },
             "maxProperties": { "type": "integer" },
             "x-ts-type": { "type": "string" },
+            "x-ts-declared": { "type": "string" },
             "x-ts-function": { "type": "boolean" },
             "x-ts-method": { "type": "boolean" },
             "x-ts-signatures": { "type": "array", "items": { "$ref": "#/$defs/signature" } },

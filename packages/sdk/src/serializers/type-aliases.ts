@@ -6,6 +6,7 @@ import {
   buildFunctionSchema,
   buildObjectSchema,
   buildSchema,
+  declaredTypeNode,
   decoratePropertySchema,
   isBuiltinSymbol,
   isReadonlyPropertySymbol,
@@ -13,6 +14,7 @@ import {
   renderTypeText,
   shouldEmitAliasTypeText,
   stripUndefinedFromType,
+  writtenTypeText,
 } from '../types/schema-builder';
 import type { SerializerContext } from './context';
 import { buildSignatures, extractExportMetadata } from './shared';
@@ -124,6 +126,12 @@ export function serializeTypeAlias(
     const text = renderTypeText(type, ctx.typeChecker, node, ts.TypeFormatFlags.InTypeAlias);
     if (!PRIMITIVES.has(text) && text !== name) {
       (schema as Record<string, unknown>)['x-ts-type'] = text;
+      // Declared RHS alongside the resolved text (`Omit<T, 'kind'>` vs its
+      // expanded mapped type) so docs can render what the author wrote.
+      const declared = writtenTypeText(declaredTypeNode(node));
+      if (declared && declared !== text && !PRIMITIVES.has(declared)) {
+        (schema as Record<string, unknown>)['x-ts-declared'] = declared;
+      }
     }
   }
 

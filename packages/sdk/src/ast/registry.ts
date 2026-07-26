@@ -5,6 +5,7 @@ import {
   ARRAY_PROTOTYPE_METHODS,
   buildFunctionSchema,
   buildSchema,
+  declaredTypeNode,
   decoratePropertySchema,
   getTypeOrigin,
   NUMBER_PROTOTYPE_METHODS,
@@ -15,6 +16,7 @@ import {
   stripUndefinedFromType,
   withDeprecated,
   withDescription,
+  writtenTypeText,
 } from '../types/schema-builder';
 import { resolveTypeId } from './type-identity';
 import { extractTypeParameters, isSymbolDeprecated } from './utils';
@@ -254,6 +256,12 @@ export class TypeRegistry {
       const text = renderTypeText(type, checker, decl, ts.TypeFormatFlags.InTypeAlias);
       if (!PRIMITIVES.has(text) && text !== name) {
         (schema as Record<string, unknown>)['x-ts-type'] = text;
+        // Carry the declared RHS too when it differs from the resolved text
+        // (`Omit<T, 'kind'>` vs its expanded mapped type).
+        const declared = writtenTypeText(declaredTypeNode(decl));
+        if (declared && declared !== text && !PRIMITIVES.has(declared)) {
+          (schema as Record<string, unknown>)['x-ts-declared'] = declared;
+        }
       }
     }
 

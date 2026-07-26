@@ -75,6 +75,41 @@ export function renderTypeText(
 }
 
 /**
+ * The type exactly as the author WROTE it — the annotation node's source text.
+ * `x-ts-type` carries the resolved truth (`Omit<T, K>` expanded to its mapped
+ * type, `InitiatorType` expanded to its union); this recovers the declared form
+ * a docs reader recognizes.
+ *
+ * Restricted to NAMED references and unions — the shapes where the author wrote
+ * a name that resolves to something else. Object literals, mapped, and
+ * conditional bodies are excluded: they differ from their resolved text only by
+ * formatting (a trailing `;`, `readonly T[]` vs `ReadonlyArray<T>`) or would
+ * drag source comments into the spec, both of which are noise, not signal.
+ */
+export function writtenTypeText(typeNode: ts.TypeNode | undefined): string | undefined {
+  if (!typeNode) return undefined;
+  if (!ts.isTypeReferenceNode(typeNode) && !ts.isUnionTypeNode(typeNode)) return undefined;
+  try {
+    const text = scrubImportQualifiers(
+      typeNode
+        .getText()
+        .replace(/\s+/g, ' ')
+        .replace(/^\|\s*/, '')
+        .trim(),
+    );
+    return text.length > 0 ? text : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+/** The annotation TypeNode on a declaration (property, alias, parameter), if any. */
+export function declaredTypeNode(decl: ts.Declaration | undefined): ts.TypeNode | undefined {
+  const withType = decl as { type?: ts.TypeNode } | undefined;
+  return withType?.type;
+}
+
+/**
  * Strip `undefined` from a union type when optionality is already expressed
  * elsewhere (`required: false`, `flags.optional`). Used for both schema shape
  * and x-ts-type text so neither re-encodes optionality as `| undefined`.
@@ -135,6 +170,13 @@ export function decoratePropertySchema(
   let result: Record<string, unknown> = obj;
   if (!derivable && !('x-ts-type' in obj)) {
     result = { ...result, 'x-ts-type': text };
+    // When the author wrote a named type whose resolved rendering differs
+    // (`InitiatorType` → a 21-literal union), also carry the declared form so a
+    // docs consumer can show what was written instead of the expansion.
+    const declared = writtenTypeText(declaredTypeNode(decl));
+    if (declared && declared !== text && !PRIMITIVES.has(declared) && !('x-ts-declared' in obj)) {
+      result = { ...result, 'x-ts-declared': declared };
+    }
   }
   if (isReadonlyPropertySymbol(prop) && !('readOnly' in obj)) {
     result = { ...result, readOnly: true };
