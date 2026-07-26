@@ -67,6 +67,23 @@ describe('optional property honesty (no spurious null)', () => {
     expect(branches).toContainEqual({ type: 'string' });
   });
 
+  test('optional members on a type alias drop the null branch', async () => {
+    const code = `export type Options = {
+  type: 'a' | 'b';
+  network?: 'mainnet' | 'testnet';
+  count?: number;
+};`;
+    const { spec } = await extract({ entryFile: 'test.ts', content: code });
+    const opts = spec.exports.find((e) => e.name === 'Options');
+    const members = opts?.members ?? [];
+    const network = members.find((m) => m.name === 'network');
+    const count = members.find((m) => m.name === 'count');
+    // optional → flags.optional set, but schema must not admit null
+    expect(count?.flags?.optional).toBe(true);
+    expect(count?.schema).toEqual({ type: 'number' });
+    expect(JSON.stringify(network?.schema)).not.toContain('null');
+  });
+
   test('optional param of function-typed property strips undefined', async () => {
     const code = `export interface Api { join: (separator?: string) => string; }`;
     const { spec } = await extract({ entryFile: 'test.ts', content: code });

@@ -12,6 +12,7 @@ import {
   PRIMITIVES,
   renderTypeText,
   shouldEmitAliasTypeText,
+  stripUndefinedFromType,
 } from '../types/schema-builder';
 import type { SerializerContext } from './context';
 import { buildSignatures, extractExportMetadata } from './shared';
@@ -240,7 +241,14 @@ function serializeResolvedMembers(
 
   for (const prop of type.getProperties()) {
     const decl = prop.getDeclarations()?.[0] ?? node;
-    const propType = checker.getTypeOfSymbolAtLocation(prop, decl);
+    const rawPropType = checker.getTypeOfSymbolAtLocation(prop, decl);
+    // Optional members carry optionality via flags.optional — strip the
+    // undefined branch so the schema doesn't also admit null (matches the
+    // interface/class serializers).
+    const propType =
+      prop.flags & ts.SymbolFlags.Optional
+        ? stripUndefinedFromType(rawPropType, checker)
+        : rawPropType;
     registerReferencedTypes(propType, ctx);
 
     const callSigs = propType.getCallSignatures();
