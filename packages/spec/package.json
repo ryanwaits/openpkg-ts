@@ -1,6 +1,6 @@
 {
   "name": "@openpkg-ts/spec",
-  "version": "0.48.1",
+  "version": "0.49.0",
   "description": "Shared schema, validation, and diff utilities for OpenPkg specs",
   "keywords": [
     "openpkg",
