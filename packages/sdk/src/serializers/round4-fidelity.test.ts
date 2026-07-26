@@ -63,3 +63,40 @@ describe('round 4 fidelity', () => {
     expect(text).toContain('string[]');
   });
 });
+
+// R4-4: the declared form of a type is recoverable alongside the resolved one.
+describe('x-ts-declared', () => {
+  const CODE = `
+export type WithoutKind<T> = Omit<T, 'kind'>;
+export type InitiatorType = 'a' | 'b' | 'c';
+export interface Entry {
+  /** How it started. */
+  initiatorType?: InitiatorType;
+  plain: string;
+}
+`;
+
+  test('alias keeps the declared RHS beside the resolved expansion', async () => {
+    const { spec } = await extract({ entryFile: 'test.ts', content: CODE });
+    const wk =
+      spec.exports.find((e) => e.name === 'WithoutKind') ??
+      spec.types?.find((t) => t.name === 'WithoutKind');
+    const schema = schemaOf(wk?.schema);
+    expect(schema['x-ts-declared']).toBe("Omit<T, 'kind'>");
+    // the resolved text is the expanded mapped type, i.e. NOT the declared form
+    expect(schema['x-ts-type']).not.toBe("Omit<T, 'kind'>");
+  });
+
+  test('property keeps the written alias name beside its resolved union', async () => {
+    const { spec } = await extract({ entryFile: 'test.ts', content: CODE });
+    const entry = spec.exports.find((e) => e.name === 'Entry');
+    const props = schemaOf(schemaOf(entry?.schema).properties) as Record<
+      string,
+      Record<string, unknown>
+    >;
+    expect(props.initiatorType['x-ts-declared']).toBe('InitiatorType');
+    expect(props.initiatorType['x-ts-type']).toBe('"a" | "b" | "c"');
+    // no divergence → no x-ts-declared, and no field noise
+    expect(props.plain).toEqual({ type: 'string' });
+  });
+});
