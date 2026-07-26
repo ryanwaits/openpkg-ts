@@ -1,5 +1,22 @@
 # @openpkg-ts/spec
 
+## 0.48.1
+
+### Patch Changes
+
+- Fix same-named types shadowing each other in the type registry. When two
+  different types shared a name (e.g. a `Logger` interface in two packages of one
+  build), the registry keyed them by bare name, so one silently dropped the other:
+  the published type kept one interface's members and references pointing at the
+  shadowed type resolved to the wrong one.
+
+  The registry now keys types by a collision-safe id derived from the DECLARATION.
+  Unique names keep their bare id (specs without collisions are byte-identical to
+  before), import aliases and re-exports of one type collapse to a single id, and
+  two genuinely different same-named types get distinct package-scoped ids
+  (`Logger`, `otherpkg.Logger`) with their own members and correctly disambiguated
+  `$ref`s. `resolveRef` now resolves by id first, name second.
+
 ## 0.47.0
 
 ### Minor Changes
