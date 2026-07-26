@@ -1,5 +1,25 @@
 # @openpkg-ts/extract
 
+## 0.48.0
+
+### Minor Changes
+
+- Make external-type following usable from the CLI, and stop the declaring-package
+  guessing game.
+
+  - External stubs now record their **declaring package** as `x-ts-package`, so a
+    spec is self-documenting about what can be expanded (e.g. a type imported from
+    `ai` but declared in `@ai-sdk/provider-utils` says so).
+  - `followExternal` accepts **glob patterns** — `["@ai-sdk/*"]` expands every
+    `@ai-sdk/*` package, since one logical dependency often spreads types across
+    sibling packages.
+  - The CLI `spec` command gains `--follow-external <pkg,...>` (globs ok),
+    `--follow-external-all`, `--only`, and `--ignore`, and reads
+    `openpkg.config.json` (or a `package.json "openpkg"` field). Flags override
+    the file. `OpenpkgConfig` now carries `followExternal`/`only`/`ignore`.
+  - By default the CLI prints which external packages were stubbed and how to
+    expand them, so you never have to guess the right name to add.
+
 ## 0.47.2
 
 ### Patch Changes
