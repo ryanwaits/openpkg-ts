@@ -152,7 +152,17 @@ export function decoratePropertySchema(
  * carried by schema.properties and the text would be the whole literal body.
  */
 export function shouldEmitAliasTypeText(typeNode: ts.TypeNode): boolean {
-  return !ts.isTypeLiteralNode(typeNode) && !ts.isMappedTypeNode(typeNode);
+  if (ts.isMappedTypeNode(typeNode)) return false;
+  if (ts.isTypeLiteralNode(typeNode)) {
+    // A type literal usually renders through its named members, so it needs no
+    // type text. An index-signature-only literal (`{ [k: string]: V }`) has no
+    // named members, so the text is the only thing a consumer can render.
+    return (
+      typeNode.members.length > 0 &&
+      typeNode.members.every((m) => ts.isIndexSignatureDeclaration(m))
+    );
+  }
+  return true;
 }
 
 // Primitive type names
