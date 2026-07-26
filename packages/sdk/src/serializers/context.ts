@@ -33,6 +33,20 @@ export interface SerializerContext {
    * of the full member surface. Unset → expand everything (unit-test contexts).
    */
   shouldExpandExternal?: (symbol: ts.Symbol) => boolean;
+  /**
+   * Collision-safe type identity, keyed by DECLARATION (so an import alias and
+   * the original type collapse to one id, but two genuinely different types
+   * named `Logger` get distinct ids). `typeIds` caches symbol → id; `declIds`
+   * maps a declaration key → id; `idOwner` maps an assigned id → the declaration
+   * key that owns it. The first declaration to claim a bare name keeps it (no
+   * churn for the common case); later distinct declarations with the same name
+   * get a package-scoped id. Both ref emission and registration read these.
+   */
+  typeIds: Map<ts.Symbol, string>;
+  declIds: Map<string, string>;
+  idOwner: Map<string, string>;
+  /** Workspace package name → dir, used to package-scope colliding type ids. */
+  workspacePackages: ReadonlyMap<string, string>;
 }
 
 export interface CreateContextOptions {
@@ -43,6 +57,7 @@ export interface CreateContextOptions {
   maxProperties?: number;
   onTruncation?: (typeName: string, actual: number, limit: number) => void;
   shouldExpandExternal?: (symbol: ts.Symbol) => boolean;
+  workspacePackages?: ReadonlyMap<string, string>;
 }
 
 export function createContext(
@@ -66,6 +81,10 @@ export function createContext(
     maxProperties: options.maxProperties ?? 500,
     onTruncation: options.onTruncation,
     shouldExpandExternal: options.shouldExpandExternal,
+    typeIds: new Map<ts.Symbol, string>(),
+    declIds: new Map<string, string>(),
+    idOwner: new Map<string, string>(),
+    workspacePackages: options.workspacePackages ?? new Map<string, string>(),
   };
 }
 

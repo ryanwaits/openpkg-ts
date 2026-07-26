@@ -244,6 +244,8 @@ export async function extract(options: ExtractOptions): Promise<ExtractResult> {
         followExternal: options.followExternal,
         workspacePackages: result.workspacePackages ?? new Map(),
       }),
+      // Used to package-scope the ids of same-named types across packages.
+      workspacePackages: result.workspacePackages ?? new Map(),
     });
     ctx.exportedIds = exportedIds;
 

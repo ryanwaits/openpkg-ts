@@ -9,8 +9,10 @@ export function resolveRef(schema: SpecSchema, spec: OpenPkg): SpecType | null {
   if (!isRefSchema(schema)) return null;
   const prefix = '#/types/';
   if (!schema.$ref.startsWith(prefix)) return null;
-  const name = schema.$ref.slice(prefix.length);
-  return spec.types?.find((t) => t.name === name) ?? null;
+  const ref = schema.$ref.slice(prefix.length);
+  // Refs target a type's `id`. Match by id first (the id is a collision-scoped
+  // value when two types share a name), then fall back to name for older specs.
+  return spec.types?.find((t) => t.id === ref) ?? spec.types?.find((t) => t.name === ref) ?? null;
 }
 
 /**

@@ -1,5 +1,6 @@
 import type { SpecSchema, SpecSignature } from '@openpkg-ts/spec';
 import ts from 'typescript';
+import { resolveTypeId, typeRefId } from '../ast/type-identity';
 import { isSymbolDeprecated } from '../ast/utils';
 import { BUILTIN_TYPE_SCHEMAS, type BuiltinSchema } from '../schema/builtins';
 import type { SerializerContext } from '../serializers/context';
@@ -28,6 +29,13 @@ function buildTemplatePattern(type: ts.TemplateLiteralType): string {
     pattern += slotPattern(slot) + escapeRegex(type.texts[i + 1] ?? '');
   });
   return `${pattern}$`;
+}
+
+/** `#/types/…` target id for a named type — collision-scoped when a context is
+ * available (matches how the registry keys the type), bare name otherwise. */
+function namedRefId(type: ts.Type, name: string, ctx?: SerializerContext): string {
+  if (!ctx) return name;
+  return typeRefId(type, ctx) || name;
 }
 
 /** Structural schema for a built-in lib type reference (never $ref — lib types
@@ -564,7 +572,7 @@ function buildSchemaInternal(
       if (BUILTIN_TYPES.has(name) || isBuiltinGeneric(name)) {
         return builtinSchema(name);
       }
-      return { $ref: `#/types/${name}` };
+      return { $ref: `#/types/${namedRefId(type, name, ctx)}` };
     }
     // Anonymous types → fallback
     return { type: checker.typeToString(type) };
@@ -597,7 +605,7 @@ function buildSchemaInternal(
       const symbol = constraint?.getSymbol() ?? type.getSymbol();
       if (symbol && !isAnonymous(type)) {
         return {
-          $ref: `#/types/${symbol.getName()}`,
+          $ref: `#/types/${ctx ? resolveTypeId(symbol, ctx) : symbol.getName()}`,
           'x-ts-type': 'this',
         } as SpecSchema;
       }
@@ -634,7 +642,7 @@ function buildSchemaInternal(
       const aliasName = type.aliasSymbol.getName();
       if (!aliasName.startsWith('__') && !isPrimitiveName(aliasName)) {
         const packageOrigin = getTypeOrigin(type, checker);
-        const schema: SpecSchema = { $ref: `#/types/${aliasName}` };
+        const schema: SpecSchema = { $ref: `#/types/${namedRefId(type, aliasName, ctx)}` };
         if (packageOrigin) {
           setSchemaExtension(schema, 'x-ts-package', packageOrigin);
         }
@@ -820,7 +828,7 @@ function buildSchemaInternal(
         if (ctx) {
           return withDepth(ctx, () => {
             const schema: SpecSchema = {
-              $ref: `#/types/${name}`,
+              $ref: `#/types/${namedRefId(typeRef.target, name, ctx)}`,
               typeArguments: typeArgs.map((t) => buildSchema(t, checker, ctx)),
             };
             if (packageOrigin) {
@@ -881,7 +889,7 @@ function buildSchemaInternal(
         if (ctx) {
           return withDepth(ctx, () => {
             const schema: SpecSchema = {
-              $ref: `#/types/${name}`,
+              $ref: `#/types/${namedRefId(type, name, ctx)}`,
               typeArguments: aliasTypeArgs.map((t) => buildSchema(t, checker, ctx)),
             };
             if (packageOrigin) {
@@ -933,7 +941,7 @@ function buildSchemaInternal(
       // Named type → $ref
       if (!name.startsWith('__')) {
         const packageOrigin = getTypeOrigin(type, checker);
-        const schema: SpecSchema = { $ref: `#/types/${name}` };
+        const schema: SpecSchema = { $ref: `#/types/${namedRefId(type, name, ctx)}` };
         if (packageOrigin) {
           setSchemaExtension(schema, 'x-ts-package', packageOrigin);
         }

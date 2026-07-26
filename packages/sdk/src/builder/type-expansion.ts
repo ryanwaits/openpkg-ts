@@ -1,6 +1,5 @@
-import * as fs from 'node:fs';
-import * as path from 'node:path';
 import ts from 'typescript';
+import { resolveTypeId } from '../ast/type-identity';
 import type { SerializerContext } from '../serializers/context';
 import { buildSchema, ensureNonEmptySchema } from '../types/schema-builder';
 
@@ -27,17 +26,6 @@ export interface ExpansionOptions {
   workspacePackages: ReadonlyMap<string, string>;
   /** Entry file — used to scope name collisions to the entry package. */
   entryFile: string;
-}
-
-/** Nearest package.json directory above a file. */
-function findPackageDir(fromFile: string): string | undefined {
-  let dir = path.dirname(path.resolve(fromFile));
-  while (true) {
-    if (fs.existsSync(path.join(dir, 'package.json'))) return dir;
-    const parent = path.dirname(dir);
-    if (parent === dir) return undefined;
-    dir = parent;
-  }
 }
 
 const NODE_MODULES_PKG = /node_modules\/(@[^/]+\/[^/]+|[^/]+)/;
@@ -95,23 +83,6 @@ export function expandReachableTypes(
   const checker = ctx.typeChecker;
   const visited = new Set<ts.Type>();
   const MAX_DEPTH = 30;
-
-  const entryPackageDir = findPackageDir(opts.entryFile);
-
-  /** Package label for a declaration file, for collision-scoped ids. */
-  const packageLabel = (fileName: string): string => {
-    const match = fileName.match(NODE_MODULES_PKG);
-    let pkg = match?.[1];
-    if (!pkg) {
-      for (const [name, dir] of opts.workspacePackages) {
-        if (fileName.startsWith(`${path.resolve(dir)}${path.sep}`)) {
-          pkg = name;
-          break;
-        }
-      }
-    }
-    return (pkg ?? 'local').replace(/^@/, '').replace(/\//g, '-');
-  };
 
   const symbolAllowed = createExternalExpansionPredicate(opts);
 
@@ -227,53 +198,22 @@ export function expandReachableTypes(
       return;
     }
 
-    if (ctx.typeRegistry.has(name)) {
-      const prior = symbolByName.get(name);
-      if (prior !== symbol) {
-        const declFile = symbol.declarations?.[0]?.getSourceFile().fileName ?? '';
-        const foreign = !!entryPackageDir && !declFile.startsWith(`${entryPackageDir}${path.sep}`);
-        // A tracked different symbol always collides; an untracked name only
-        // when the new symbol lives outside the entry package.
-        if (prior !== undefined || foreign) {
-          // Same name, different type: register under a package-scoped id
-          // (deterministic, no api-extractor-style `_2` suffixes).
-          const scopedId = `${packageLabel(declFile)}.${name}`;
-          if (!ctx.typeRegistry.has(scopedId)) {
-            const declared = checker.getDeclaredTypeOfSymbol(symbol);
-            const schema = ensureNonEmptySchema(
-              buildSchema(declared, checker, ctx),
-              declared,
-              checker,
-            );
-            // Same type reached twice through registration paths that skip
-            // symbol tracking: structurally identical, or collapsed to a bare
-            // $ref back at the clean-name entry.
-            const selfRef = JSON.stringify(schema) === JSON.stringify({ $ref: `#/types/${name}` });
-            if (
-              !selfRef &&
-              JSON.stringify(ctx.typeRegistry.get(name)?.schema) !== JSON.stringify(schema)
-            ) {
-              ctx.typeRegistry.add({
-                id: scopedId,
-                name,
-                kind: symbolKind(symbol),
-                schema,
-              });
-              visit(declared, 0);
-            }
-          }
-        }
-      }
+    // Collision-safe id (single authority): the first symbol to claim a bare
+    // name keeps it; a distinct same-named symbol gets a package-scoped id.
+    // This is the same machinery registerType uses, so no shadowing.
+    const id = resolveTypeId(symbol, ctx);
+    if (ctx.typeRegistry.has(id)) {
       walkDeclarations(symbol);
       return;
     }
 
     const declared = checker.getDeclaredTypeOfSymbol(symbol);
     ctx.typeRegistry.registerType(declared, ctx);
-    if (!ctx.typeRegistry.has(name)) {
-      // Alias identity erased by the checker — register from the symbol.
+    if (!ctx.typeRegistry.has(id)) {
+      // Alias identity erased by the checker — register from the symbol under
+      // its collision-safe id.
       ctx.typeRegistry.add({
-        id: name,
+        id,
         name,
         kind: symbolKind(symbol),
         schema: ensureNonEmptySchema(buildSchema(declared, checker, ctx), declared, checker),

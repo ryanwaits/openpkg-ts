@@ -16,6 +16,7 @@ import {
   withDeprecated,
   withDescription,
 } from '../types/schema-builder';
+import { resolveTypeId } from './type-identity';
 import { extractTypeParameters, isSymbolDeprecated } from './utils';
 
 /** Built-in types that shouldn't be registered */
@@ -148,7 +149,11 @@ export class TypeRegistry {
     if (symbol.flags & ts.SymbolFlags.Method) return undefined;
     if (symbol.flags & ts.SymbolFlags.Function) return undefined;
     if (isGenericTypeParameter(name)) return undefined;
-    if (this.has(name)) return name;
+
+    // Collision-safe id: two different `Logger`s get distinct ids instead of
+    // one shadowing the other. Unique names keep their bare id (no churn).
+    const id = resolveTypeId(symbol, ctx);
+    if (this.has(id)) return id;
 
     // Ambient/external types outside the expansion scope (lib.dom, bun-types,
     // non-workspace node_modules) get an opaque stub: the $ref stays
@@ -164,27 +169,27 @@ export class TypeRegistry {
       };
       if (origin) schema['x-ts-package'] = origin;
       this.add({
-        id: name,
+        id,
         name,
         kind: 'external',
         external: true,
         schema: schema as SpecType['schema'],
       } as SpecType);
-      return name;
+      return id;
     }
 
     // Prevent infinite recursion
-    if (this.processing.has(name)) return name;
-    this.processing.add(name);
+    if (this.processing.has(id)) return id;
+    this.processing.add(id);
 
     try {
-      const specType = this.buildSpecType(type, symbol, ctx);
+      const specType = this.buildSpecType(type, symbol, id, ctx);
       if (specType) {
         this.add(specType);
         return specType.id;
       }
     } finally {
-      this.processing.delete(name);
+      this.processing.delete(id);
     }
 
     return undefined;
@@ -196,6 +201,7 @@ export class TypeRegistry {
   private buildSpecType(
     type: ts.Type,
     symbol: ts.Symbol,
+    id: string,
     ctx: SerializerContext,
   ): SpecType | undefined {
     const name = symbol.getName();
@@ -218,8 +224,9 @@ export class TypeRegistry {
     // Build structured schema - but avoid self-referential $ref
     let schema = buildSchema(type, checker, ctx);
 
-    // If schema is just a self-ref, resolve the actual type structure
-    if (this.isSelfRef(schema, name)) {
+    // If schema is just a self-ref, resolve the actual type structure.
+    // Compare against the assigned id (a collision-scoped type self-refs by id).
+    if (this.isSelfRef(schema, id)) {
       schema = this.resolveSelRefSchema(type, checker, ctx);
     }
 
@@ -263,7 +270,7 @@ export class TypeRegistry {
     }
 
     return {
-      id: name,
+      id,
       name,
       kind,
       ...(typeParameters && typeParameters.length > 0 ? { typeParameters } : {}),
