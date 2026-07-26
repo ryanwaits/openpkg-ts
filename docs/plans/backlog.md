@@ -3,24 +3,15 @@
 Deferred work from the Standard Schema compatibility round (spec/sdk/cli). Each
 item is scoped but intentionally left for a later release. Ordered by priority.
 
-## CLI: expose extraction knobs (`--follow-external`, `--only`, `--ignore`)
-
-The CLI `spec` command only takes an entry file and `-o`. All of
-`ExtractOptions` — `followExternal`, `only`, `ignore`, `maxTypeDepth` — is
-SDK-only, so a CLI user can't expand external types or scope the surface.
-Add flags to `specCommand` (`packages/cli/src/index.ts`), e.g.
-`--follow-external <pkg,...>` / `--follow-external-all`, `--only`, `--ignore`.
-Surfaced while testing real @secondlayer packages.
-
 ## followExternal: match the import specifier, not just the declaring package
 
-`followExternal: ['ai']` did NOT expand `Schema` because `Schema` is *declared*
-in `@ai-sdk/provider`, not the `ai` package the code imports from. The predicate
-in `type-expansion.ts` (`createExternalExpansionPredicate`) matches the
-declaration file's `node_modules/<pkg>` path. Consider also matching the import
-specifier a type was reached through, so `followExternal: ['ai']` expands
-everything reachable via `import ... from 'ai'`. Document the current behavior
-either way — it's a real UX gotcha.
+DONE (partial) in sdk 0.48.0 / cli 0.11.0 — external stubs now record the
+declaring package as `x-ts-package`, the CLI prints "stubbed from: <pkg>" so
+users know what to follow, and `followExternal` accepts globs (`@ai-sdk/*`).
+Remaining (optional): also match the *import specifier* a type was reached
+through, so `followExternal: ['ai']` expands types reachable via
+`import ... from 'ai'` even when they're declared in `@ai-sdk/provider`. Lower
+priority now that the declaring package is surfaced.
 
 ## toToolSchema v2 — class & variable exports
 
