@@ -122,7 +122,12 @@ describe('round 6 over-capture guards', () => {
     const doThing = spec.exports.find((e) => e.name === 'doThing');
 
     // The paragraph is not tag-only, so it is the param's — not the comment's.
+    // Round 6 only stopped it being hoisted; round 7 stopped it being deleted,
+    // so the param now actually holds it.
     expect(doThing).not.toHaveProperty('inlineTags');
+    expect(doThing?.tags?.find((t) => t.name === 'param')?.param?.description).toBe(
+      'The mode.\n\nSee {@link Other} for the rest.',
+    );
   });
 
   test('a tag that is the whole body of a block tag stays on that tag', async () => {
