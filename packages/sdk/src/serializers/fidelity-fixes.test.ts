@@ -109,6 +109,23 @@ describe('conditional alias containment', () => {
     expect(String(schema['x-ts-type'] ?? cond?.type ?? '')).toContain('extends');
   });
 
+  test('generic indexed-access resolving to string does not leak String.prototype', async () => {
+    // `Extract<…>["name"]` with a generic param is a deferred IndexedAccess
+    // type whose base constraint is string — its apparent properties are the
+    // String prototype. When registered in types[] it must stay a primitive.
+    const code = `
+export interface Contract { functions: { name: string; access: "a" | "b" }[]; }
+export type Names<C extends Contract> = Extract<C["functions"][number], { access: "a" }>["name"];
+export function pick<C extends Contract>(c: C, n: Names<C>): void {}
+`;
+    const { spec } = await extract({ entryFile: 'test.ts', content: code });
+    const names = spec.types?.find((t) => t.name === 'Names');
+    const schema = schemaOf(names?.schema);
+    expect(schema.type).toBe('string');
+    expect(schema.properties).toBeUndefined();
+    expect(JSON.stringify(spec)).not.toContain('charAt');
+  });
+
   test('resolved non-generic conditional alias still flattens', async () => {
     const code = `export type C = 'a' extends string ? { x: number } : never;`;
     const { spec } = await extract({ entryFile: 'test.ts', content: code });

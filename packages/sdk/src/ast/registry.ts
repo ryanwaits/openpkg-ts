@@ -345,6 +345,23 @@ export class TypeRegistry {
       return { 'x-ts-type': renderTypeText(type, checker) };
     }
 
+    // Types that resolve to a primitive (e.g. a generic indexed-access
+    // `Extract<…>["name"]` whose base constraint is `string`) expose the
+    // primitive's prototype as apparent properties — flattening them yields
+    // ~50 bogus members (charAt, toFixed, …). Emit the primitive + text.
+    const constraint = checker.getBaseConstraintOfType(type);
+    const primitive =
+      constraint && constraint.flags & ts.TypeFlags.StringLike
+        ? 'string'
+        : constraint && constraint.flags & ts.TypeFlags.NumberLike
+          ? 'number'
+          : constraint && constraint.flags & ts.TypeFlags.BooleanLike
+            ? 'boolean'
+            : undefined;
+    if (primitive) {
+      return { type: primitive, 'x-ts-type': renderTypeText(type, checker) };
+    }
+
     // Fallback: build object schema from properties
     return this.buildObjectSchemaFromProperties(type, checker, ctx);
   }
