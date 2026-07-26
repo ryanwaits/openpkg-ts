@@ -1,6 +1,6 @@
 import type { SpecExport, SpecMember, SpecSchema } from '@openpkg-ts/spec';
 import type ts from 'typescript';
-import { getJSDocComment } from '../ast/utils';
+import { getJSDocComment, isSymbolDeprecated } from '../ast/utils';
 import type { SerializerContext } from './context';
 import { extractExportMetadata } from './shared';
 
@@ -31,7 +31,11 @@ export function serializeEnum(node: ts.EnumDeclaration, ctx: SerializerContext):
       schema = { type: member.initializer.getText() };
     }
 
-    const { description: memberDesc } = getJSDocComment(member);
+    // Enum members carry the same doc metadata as any other member: a
+    // description, tags, and — most importantly — deprecation. The
+    // @deprecated tag is the one signal telling a reader to stop using a value.
+    const { description: memberDesc, tags: memberTags } = getJSDocComment(member);
+    const { deprecated, reason: deprecationReason } = isSymbolDeprecated(memberSymbol);
 
     return {
       id: memberName,
@@ -39,6 +43,8 @@ export function serializeEnum(node: ts.EnumDeclaration, ctx: SerializerContext):
       kind: 'enum-member',
       ...(schema ? { schema } : {}),
       ...(memberDesc ? { description: memberDesc } : {}),
+      ...(memberTags.length > 0 ? { tags: memberTags } : {}),
+      ...(deprecated ? { deprecated: true, deprecationReason } : {}),
     };
   });
 
