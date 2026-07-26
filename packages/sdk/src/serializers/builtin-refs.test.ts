@@ -32,7 +32,7 @@ const collectRefs = (value: unknown, refs: string[] = []): string[] => {
 
 describe('builtin and type-parameter references', () => {
   test('no dangling $refs — every ref resolves to a types[] entry', async () => {
-    const { spec } = await extract({ entryFile: "test.ts", content: FIXTURE });
+    const { spec } = await extract({ entryFile: 'test.ts', content: FIXTURE });
     const registered = new Set((spec.types ?? []).map((t) => t.name));
     const refs = collectRefs(spec);
     const dangling = refs
@@ -42,7 +42,7 @@ describe('builtin and type-parameter references', () => {
   });
 
   test('Date property gets structural schema with x-ts-type', async () => {
-    const { spec } = await extract({ entryFile: "test.ts", content: FIXTURE });
+    const { spec } = await extract({ entryFile: 'test.ts', content: FIXTURE });
     const user = spec.types?.find((t) => t.name === 'User');
     const props = (user?.schema as Record<string, unknown>)?.properties as Record<
       string,
@@ -56,7 +56,7 @@ describe('builtin and type-parameter references', () => {
   });
 
   test('Map<string, number> gets structural schema with type arguments', async () => {
-    const { spec } = await extract({ entryFile: "test.ts", content: FIXTURE });
+    const { spec } = await extract({ entryFile: 'test.ts', content: FIXTURE });
     const user = spec.types?.find((t) => t.name === 'User');
     const props = (user?.schema as Record<string, unknown>)?.properties as Record<
       string,
@@ -67,7 +67,7 @@ describe('builtin and type-parameter references', () => {
   });
 
   test('Promise<User> return gets structural schema, keeps User ref in type arguments', async () => {
-    const { spec } = await extract({ entryFile: "test.ts", content: FIXTURE });
+    const { spec } = await extract({ entryFile: 'test.ts', content: FIXTURE });
     const load = spec.exports.find((e) => e.name === 'load');
     const returns = load?.signatures?.[0]?.returns?.schema as Record<string, unknown>;
     expect(returns).toMatchObject({ type: 'object', 'x-ts-type': 'Promise' });
@@ -75,7 +75,7 @@ describe('builtin and type-parameter references', () => {
   });
 
   test('generic type parameter emits x-ts-type text, not a $ref', async () => {
-    const { spec } = await extract({ entryFile: "test.ts", content: FIXTURE });
+    const { spec } = await extract({ entryFile: 'test.ts', content: FIXTURE });
     const pick = spec.exports.find((e) => e.name === 'pick');
     const returns = pick?.signatures?.[0]?.returns?.schema as Record<string, unknown>;
     expect(returns).toEqual({ 'x-ts-type': 'T' });

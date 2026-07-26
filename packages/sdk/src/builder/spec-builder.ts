@@ -534,9 +534,7 @@ export async function extract(options: ExtractOptions): Promise<ExtractResult> {
 
     // Normalize exports and types to JSON Schema 2020-12 format
     // This happens after all extraction (static + runtime schema merging) is complete
-    const normalizedExports = exports.map((exp) =>
-      normalizeExport(exp),
-    );
+    const normalizedExports = exports.map((exp) => normalizeExport(exp));
     const normalizedTypes = types.map((t) => normalizeType(t));
 
     const spec: OpenPkg = {

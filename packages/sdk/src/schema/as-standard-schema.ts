@@ -112,8 +112,8 @@ export function asStandardSchema(
 ): StandardJSONSchemaV1 {
   const resolved =
     typeof subject === 'string'
-      ? spec.exports.find((e) => e.name === subject) ??
-        (spec.types ?? []).find((t) => t.name === subject)
+      ? (spec.exports.find((e) => e.name === subject) ??
+        (spec.types ?? []).find((t) => t.name === subject))
       : subject;
   if (!resolved) {
     throw new Error(`asStandardSchema: no export or type named "${subject as string}"`);

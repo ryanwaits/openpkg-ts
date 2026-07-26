@@ -481,7 +481,6 @@ describe('normalizeSchema', () => {
       const result = normalizeSchema(input, { includeSchemaField: true });
       expect(result.$schema).toBe('https://json-schema.org/draft/2020-12/schema');
     });
-
   });
 
   describe('deeply nested structures', () => {
@@ -1911,7 +1910,6 @@ describe('AJV validation - normalized output is valid JSON Schema', () => {
         'x-ts-type': 'bigint',
       });
     });
-
   });
 });
 

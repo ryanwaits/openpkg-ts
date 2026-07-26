@@ -19,8 +19,8 @@
  * | { type: 'tuple', items }      | { "type": "array", "prefixItems": [...] }         |
  */
 
-import { JSON_SCHEMA_DRAFT } from '@openpkg-ts/spec';
 import type { SpecExport, SpecMember, SpecSchema, SpecSignature, SpecType } from '@openpkg-ts/spec';
+import { JSON_SCHEMA_DRAFT } from '@openpkg-ts/spec';
 
 // ============================================================================
 // Types

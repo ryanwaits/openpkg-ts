@@ -127,7 +127,15 @@ describe('toToolSchema — openai-strict', () => {
   test('strips x-ts-* keywords', () => {
     const exp = fnExport({
       signatures: [
-        { parameters: [{ name: 'q', required: true, schema: { type: 'string', 'x-ts-type': 'Query' } as never }] },
+        {
+          parameters: [
+            {
+              name: 'q',
+              required: true,
+              schema: { type: 'string', 'x-ts-type': 'Query' } as never,
+            },
+          ],
+        },
       ],
     });
     const result = toToolSchema(exp, spec(exp), { provider: 'openai-strict' });
@@ -151,13 +159,20 @@ describe('toToolSchema — anthropic', () => {
       ],
     });
     const s = spec(exp, [
-      { id: 'User', name: 'User', kind: 'interface', schema: { type: 'object', 'x-ts-type': 'User' } as never },
+      {
+        id: 'User',
+        name: 'User',
+        kind: 'interface',
+        schema: { type: 'object', 'x-ts-type': 'User' } as never,
+      },
     ]);
     const result = toToolSchema(exp, s, { provider: 'anthropic' });
     const u = (result.parameters.properties as Record<string, Record<string, unknown>>).u;
     // ref bundled into $defs
     expect(u.$ref).toBe('#/$defs/User');
-    expect((result.parameters.$defs as Record<string, Record<string, unknown>>).User['x-ts-type']).toBeUndefined();
+    expect(
+      (result.parameters.$defs as Record<string, Record<string, unknown>>).User['x-ts-type'],
+    ).toBeUndefined();
   });
 
   test('prunes function-typed props', () => {

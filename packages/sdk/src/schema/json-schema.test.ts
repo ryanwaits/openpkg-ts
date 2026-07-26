@@ -13,9 +13,7 @@ const ajv = () => {
 const CYCLIC_SPEC: OpenPkg = {
   openpkg: '0.4.0',
   meta: { name: 'test' },
-  exports: [
-    { id: 'load', name: 'load', kind: 'function', schema: { $ref: '#/types/User' } },
-  ],
+  exports: [{ id: 'load', name: 'load', kind: 'function', schema: { $ref: '#/types/User' } }],
   types: [
     {
       id: 'User',

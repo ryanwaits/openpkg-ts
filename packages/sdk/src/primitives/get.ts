@@ -87,9 +87,7 @@ export async function getExport(options: GetExportOptions): Promise<GetExportRes
 
     if (isNamespaceExportDecl) {
       const spec = serializeNamespaceForGet(targetSymbol, exportName, ctx);
-      const types = ctx.typeRegistry
-        .getAll()
-        .map((t) => normalizeType(t));
+      const types = ctx.typeRegistry.getAll().map((t) => normalizeType(t));
       return {
         export: normalizeExport(spec) as SpecExport,
         types,
@@ -142,9 +140,7 @@ export async function getExport(options: GetExportOptions): Promise<GetExportRes
     spec = normalizeExport(spec) as SpecExport;
 
     // Get types referenced
-    const types = ctx.typeRegistry
-      .getAll()
-      .map((t) => normalizeType(t));
+    const types = ctx.typeRegistry.getAll().map((t) => normalizeType(t));
 
     return { export: spec, types, errors };
   } catch (err) {

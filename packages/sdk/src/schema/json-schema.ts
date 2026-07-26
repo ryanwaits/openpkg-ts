@@ -6,8 +6,9 @@
  * The result is directly consumable by ajv, $RefParser, and OpenAPI toolchains
  * that OpenPkg's native `#/types/` convention would otherwise break.
  */
-import { JSON_SCHEMA_DRAFT } from '@openpkg-ts/spec';
+
 import type { OpenPkg, SpecExport, SpecType } from '@openpkg-ts/spec';
+import { JSON_SCHEMA_DRAFT } from '@openpkg-ts/spec';
 import { type JSONSchema, normalizeMembers, normalizeSchema } from '../types/schema-normalizer';
 import { bundleRefs } from './ref-walker';
 
@@ -86,14 +87,20 @@ export function toJsonSchema(spec: OpenPkg, options: ToJsonSchemaOptions = {}): 
   for (const type of spec.types ?? []) {
     mergeInto(
       type.name,
-      bundleRefs(subjectSchema(type), spec, { keepExtensions, typeParameterNames: typeParamNames(type) }),
+      bundleRefs(subjectSchema(type), spec, {
+        keepExtensions,
+        typeParameterNames: typeParamNames(type),
+      }),
     );
   }
   for (const exp of spec.exports) {
     if (!exp.schema && !(exp.members && exp.members.length > 0)) continue;
     mergeInto(
       exp.name,
-      bundleRefs(subjectSchema(exp), spec, { keepExtensions, typeParameterNames: typeParamNames(exp) }),
+      bundleRefs(subjectSchema(exp), spec, {
+        keepExtensions,
+        typeParameterNames: typeParamNames(exp),
+      }),
     );
   }
 

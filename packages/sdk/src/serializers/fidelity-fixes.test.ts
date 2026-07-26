@@ -13,6 +13,7 @@ describe('template literal lowering', () => {
     );
     expect(param.type).toBe('string');
     expect(param.pattern).toBe('^on.*$');
+    // biome-ignore lint/suspicious/noTemplateCurlyInString: asserting the rendered TS template-literal type name
     expect(param['x-ts-type']).toBe('`on${string}`');
   });
 

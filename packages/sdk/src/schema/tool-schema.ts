@@ -113,11 +113,7 @@ function openAiStrict(node: unknown, warnings: string[]): unknown {
       );
       continue;
     }
-    if (
-      !OPENAI_ALLOWED_KEYWORDS.has(key) &&
-      key !== 'anyOf' &&
-      !key.startsWith('$')
-    ) {
+    if (!OPENAI_ALLOWED_KEYWORDS.has(key) && key !== 'anyOf' && !key.startsWith('$')) {
       warnings.push(`openai-strict: dropped unsupported keyword "${key}"`);
       continue;
     }
@@ -131,7 +127,9 @@ function openAiStrict(node: unknown, warnings: string[]): unknown {
     // strict mode requires additionalProperties:false everywhere — an
     // open-ended Record<K,V> value schema cannot be represented
     if (out.additionalProperties !== undefined && out.additionalProperties !== false) {
-      warnings.push('openai-strict: open-ended additionalProperties dropped (record types unsupported)');
+      warnings.push(
+        'openai-strict: open-ended additionalProperties dropped (record types unsupported)',
+      );
     }
     out.additionalProperties = false;
   }

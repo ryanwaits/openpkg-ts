@@ -66,7 +66,11 @@ export interface BundleResult {
  * `x-ts-type` marker (type parameters), or a `#/$defs/<key>` ref whose target
  * is collected (transitively, cycle-safe) into `defs`.
  */
-export function bundleRefs(root: SpecSchema, spec: OpenPkg, options: BundleOptions = {}): BundleResult {
+export function bundleRefs(
+  root: SpecSchema,
+  spec: OpenPkg,
+  options: BundleOptions = {},
+): BundleResult {
   const { keepExtensions = false, typeParameterNames = [], onUnresolved = 'permissive' } = options;
   const typeParams = new Set(typeParameterNames);
   const warnings: string[] = [];
@@ -85,7 +89,10 @@ export function bundleRefs(root: SpecSchema, spec: OpenPkg, options: BundleOptio
     let key = escapePointerToken(name);
     if (Object.hasOwn(defs, key) || Object.values(defKeyByName).includes(key)) {
       let n = 2;
-      while (Object.hasOwn(defs, `${key}_${n}`) || Object.values(defKeyByName).includes(`${key}_${n}`)) {
+      while (
+        Object.hasOwn(defs, `${key}_${n}`) ||
+        Object.values(defKeyByName).includes(`${key}_${n}`)
+      ) {
         n++;
       }
       warnings.push(`def key collision for "${name}" — using "${key}_${n}"`);
