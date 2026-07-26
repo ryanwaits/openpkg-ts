@@ -1,6 +1,11 @@
 import type { SpecExport, SpecMember, SpecSchema } from '@openpkg-ts/spec';
 import ts from 'typescript';
-import { extractTypeParameters, getJSDocComment, isSymbolDeprecated } from '../ast/utils';
+import {
+  extractTypeParameters,
+  getJSDocComment,
+  isSymbolDeprecated,
+  parseInlineTags,
+} from '../ast/utils';
 import { registerReferencedTypes } from '../types/parameters';
 import {
   buildFunctionSchema,
@@ -56,7 +61,7 @@ export function serializeTypeAlias(
   const name = symbol?.getName() ?? node.name?.getText();
   if (!name) return null;
 
-  const { description, tags, examples, source, deprecated, deprecationReason } =
+  const { description, tags, examples, source, deprecated, deprecationReason, inlineTags } =
     extractExportMetadata(node, symbol, ctx.typeChecker);
 
   // Extract type parameters like <T, K extends Base>
@@ -147,6 +152,7 @@ export function serializeTypeAlias(
     ...(members && members.length > 0 ? { members } : {}),
     ...(deprecated ? { deprecated: true, deprecationReason } : {}),
     ...(examples.length > 0 ? { examples } : {}),
+    ...(inlineTags ? { inlineTags } : {}),
   };
 }
 
@@ -304,6 +310,10 @@ function serializeResolvedMembers(
         ? decoratePropertySchema(buildSchema(propType, checker, ctx), prop, propType, checker)
         : decoratePropertySchema({ 'x-ts-function': true }, prop, propType, checker);
 
+    // Parsed from the final description — the arm-alias fallback above can
+    // replace the one getJSDocComment saw.
+    const inlineTags = parseInlineTags(description);
+
     members.push({
       name: prop.getName(),
       kind,
@@ -312,6 +322,7 @@ function serializeResolvedMembers(
       schema,
       signatures: kind === 'method' ? buildSignatures(callSigs, checker, ctx) : undefined,
       flags: Object.keys(flags).length > 0 ? flags : undefined,
+      ...(inlineTags ? { inlineTags } : {}),
       ...(deprecated ? { deprecated: true, deprecationReason } : {}),
     });
   }

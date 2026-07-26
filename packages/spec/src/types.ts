@@ -12,6 +12,19 @@ export type SpecTagParam = {
   optional?: boolean;
 };
 
+/**
+ * An inline TSDoc tag (`{@link Foo}`, `{@label Transport}`) found in a text field.
+ *
+ * Additive and side-car: the tag is left in place in the text it came from, so
+ * `{@link}` still reads naturally in prose and existing consumers are unaffected.
+ */
+export type SpecInlineTag = {
+  /** Tag name without the `@` (e.g., "link", "label") */
+  name: string;
+  /** Tag content as written, trimmed (e.g., "sendBatch", "Transport") */
+  text: string;
+};
+
 export type SpecTag = {
   /** Tag name (e.g., "param", "returns", "example") */
   name: string;
@@ -19,6 +32,8 @@ export type SpecTag = {
   text: string;
   /** Structured data for @param tags */
   param?: SpecTagParam;
+  /** Inline TSDoc tags found in `text` */
+  inlineTags?: SpecInlineTag[];
 };
 
 // Priority 2: Type alias structural representation
@@ -127,6 +142,8 @@ export type SpecExample = {
   title?: string;
   description?: string;
   language?: SpecExampleLanguage;
+  /** Inline TSDoc tags found in this example's text */
+  inlineTags?: SpecInlineTag[];
 };
 
 export type SpecExtension = Record<string, unknown>;
@@ -164,6 +181,8 @@ export type SpecSignatureParameter = {
   default?: unknown;
   rest?: boolean;
   decorators?: SpecDecorator[];
+  /** Inline TSDoc tags found in `description` */
+  inlineTags?: SpecInlineTag[];
 };
 
 export type SpecSignatureReturn = {
@@ -183,6 +202,8 @@ export type SpecSignature = {
   throws?: SpecThrows[];
   /** Name of the base class this signature was inherited from (e.g. a subclass constructor declared only on its base) */
   inheritedFrom?: string;
+  /** Inline TSDoc tags found in `description` */
+  inlineTags?: SpecInlineTag[];
 };
 
 // ============================================================================
@@ -284,6 +305,8 @@ export type SpecMember = {
   decorators?: SpecDecorator[];
   deprecated?: boolean;
   deprecationReason?: string;
+  /** Inline TSDoc tags found in `description` */
+  inlineTags?: SpecInlineTag[];
 };
 
 export type SpecInheritedMember = SpecMember & {
@@ -327,6 +350,8 @@ export type SpecExport = {
   conditionalType?: SpecConditionalType;
   mappedType?: SpecMappedType;
   decorators?: SpecDecorator[];
+  /** Inline TSDoc tags found in `description` */
+  inlineTags?: SpecInlineTag[];
 };
 
 export type SpecType = {
@@ -348,6 +373,8 @@ export type SpecType = {
   mappedType?: SpecMappedType;
   /** Whether this type is from an external package (node_modules) */
   external?: boolean;
+  /** Inline TSDoc tags found in `description` */
+  inlineTags?: SpecInlineTag[];
 };
 
 export type OpenPkgMeta = {

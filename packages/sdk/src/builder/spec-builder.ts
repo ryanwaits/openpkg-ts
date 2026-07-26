@@ -1,10 +1,17 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import type { OpenPkg, SpecExport, SpecMember, SpecSchema, SpecSignature } from '@openpkg-ts/spec';
+import type {
+  OpenPkg,
+  SpecExport,
+  SpecInlineTag,
+  SpecMember,
+  SpecSchema,
+  SpecSignature,
+} from '@openpkg-ts/spec';
 import { SCHEMA_URL, SCHEMA_VERSION } from '@openpkg-ts/spec';
 import ts from 'typescript';
 import { resolveExportTarget } from '../ast/resolve';
-import { isSymbolDeprecated } from '../ast/utils';
+import { isSymbolDeprecated, parseInlineTags } from '../ast/utils';
 import { createProgram } from '../compiler/program';
 import { extractStandardSchemasFromProject } from '../schema/standard-schema';
 import { serializeClass } from '../serializers/classes';
@@ -684,6 +691,7 @@ function serializeNamespaceExport(
   ctx: SerializerContext,
 ): SpecExport {
   const { description, tags, examples } = getJSDocFromExportSymbol(symbol);
+  const inlineTags = parseInlineTags(description);
 
   // Extract namespace members
   const members: SpecMember[] = [];
@@ -717,6 +725,7 @@ function serializeNamespaceExport(
     tags,
     ...(examples.length > 0 ? { examples } : {}),
     ...(members.length > 0 ? { members } : {}),
+    ...(inlineTags ? { inlineTags } : {}),
   };
 }
 
@@ -784,22 +793,37 @@ function serializeNamespaceMember(
     schema = buildSchema(type, ctx.typeChecker, ctx);
   }
 
+  const inlineTags = parseInlineTags(description);
+
   return {
     name: memberName,
     kind,
     ...(description ? { description } : {}),
     ...(signatures ? { signatures } : {}),
     ...(schema ? { schema } : {}),
+    ...(inlineTags ? { inlineTags } : {}),
     ...(deprecated ? { flags: { deprecated: true } } : {}),
   };
 }
 
+/**
+ * Flatten a JSDoc comment or tag body to text.
+ *
+ * Uses TypeScript's own serializer rather than mapping over `.text`: a JSDocLink
+ * node's `.text` holds only what follows the entity name, so the naive map drops
+ * the link target entirely (`{@link Foo}` collapses to an empty string).
+ */
+function flattenJSDocComment(comment: string | ts.NodeArray<ts.JSDocComment> | undefined): string {
+  if (comment === undefined) return '';
+  return typeof comment === 'string' ? comment : (ts.getTextOfJSDocComment(comment) ?? '');
+}
+
 function getJSDocFromExportSymbol(symbol: ts.Symbol): {
   description?: string;
-  tags: Array<{ name: string; text: string }>;
+  tags: Array<{ name: string; text: string; inlineTags?: SpecInlineTag[] }>;
   examples: string[];
 } {
-  const tags: Array<{ name: string; text: string }> = [];
+  const tags: Array<{ name: string; text: string; inlineTags?: SpecInlineTag[] }> = [];
   const examples: string[] = [];
 
   const decl = symbol.declarations?.[0];
@@ -809,10 +833,7 @@ function getJSDocFromExportSymbol(symbol: ts.Symbol): {
       const jsDocs = ts.getJSDocCommentsAndTags(exportDecl);
       for (const doc of jsDocs) {
         if (ts.isJSDoc(doc) && doc.comment) {
-          const commentText =
-            typeof doc.comment === 'string'
-              ? doc.comment
-              : doc.comment.map((c) => ('text' in c ? c.text : '')).join('');
+          const commentText = flattenJSDocComment(doc.comment);
           if (commentText) {
             return {
               description: commentText,
@@ -841,15 +862,15 @@ function getJSDocFromExportSymbol(symbol: ts.Symbol): {
   return { description, tags, examples };
 }
 
-function extractJSDocTags(doc: ts.JSDoc): Array<{ name: string; text: string }> {
-  const tags: Array<{ name: string; text: string }> = [];
+function extractJSDocTags(
+  doc: ts.JSDoc,
+): Array<{ name: string; text: string; inlineTags?: SpecInlineTag[] }> {
+  const tags: Array<{ name: string; text: string; inlineTags?: SpecInlineTag[] }> = [];
   for (const tag of doc.tags ?? []) {
     if (tag.tagName.text !== 'example') {
-      const text =
-        typeof tag.comment === 'string'
-          ? tag.comment
-          : (tag.comment?.map((c) => ('text' in c ? c.text : '')).join('') ?? '');
-      tags.push({ name: tag.tagName.text, text });
+      const text = flattenJSDocComment(tag.comment);
+      const inlineTags = parseInlineTags(text);
+      tags.push({ name: tag.tagName.text, text, ...(inlineTags ? { inlineTags } : {}) });
     }
   }
   return tags;
@@ -859,10 +880,7 @@ function extractExamples(doc: ts.JSDoc): string[] {
   const examples: string[] = [];
   for (const tag of doc.tags ?? []) {
     if (tag.tagName.text === 'example') {
-      const text =
-        typeof tag.comment === 'string'
-          ? tag.comment
-          : (tag.comment?.map((c) => ('text' in c ? c.text : '')).join('') ?? '');
+      const text = flattenJSDocComment(tag.comment);
       if (text) examples.push(text);
     }
   }

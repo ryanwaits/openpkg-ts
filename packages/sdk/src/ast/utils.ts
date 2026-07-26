@@ -3,12 +3,58 @@ import type {
   SpecExample,
   SpecExampleLanguage,
   SpecExportKind,
+  SpecInlineTag,
   SpecSource,
   SpecTag,
   SpecTagParam,
   SpecTypeParameter,
 } from '@openpkg-ts/spec';
 import ts from 'typescript';
+
+/**
+ * Matches a TSDoc inline tag: `{@name content}`.
+ * The name is TSDoc's tag-name grammar (letter, then alphanumerics); the content
+ * runs to the first unescaped `}`, which TSDoc requires authors to escape inside
+ * a tag. A preceding backslash escapes the brace, so `\{@link}` is literal text.
+ */
+const INLINE_TAG_RE = /(^|[^\\])\{@([a-zA-Z][a-zA-Z0-9]*)((?:[^}\\]|\\.)*)\}/g;
+
+/**
+ * Extract inline TSDoc tags (`{@link Foo}`, `{@label Transport}`) from a text field.
+ *
+ * The tags are left in place in the source text — this is a side list, not a
+ * replacement. TypeScript re-serializes `{@link}` back into the flattened comment
+ * text and never parses `{@label}` at all, so scanning the emitted text catches
+ * both forms uniformly, including at sites where only a string is in hand.
+ *
+ * Returns undefined when there are none, so the field is omitted rather than
+ * emitted as an empty array.
+ */
+export function parseInlineTags(...texts: Array<string | undefined>): SpecInlineTag[] | undefined {
+  const inlineTags: SpecInlineTag[] = [];
+
+  for (const text of texts) {
+    if (!text || !text.includes('{@')) continue;
+    INLINE_TAG_RE.lastIndex = 0;
+    let match = INLINE_TAG_RE.exec(text);
+    while (match) {
+      inlineTags.push({ name: match[2], text: match[3].trim() });
+      // The leading group consumed a character; step back so adjacent tags match
+      INLINE_TAG_RE.lastIndex -= 1;
+      match = INLINE_TAG_RE.exec(text);
+    }
+  }
+
+  return inlineTags.length > 0 ? inlineTags : undefined;
+}
+
+/**
+ * Attach inline tags to a doc-carrying node, omitting the field when there are none.
+ */
+export function withInlineTags<T extends object>(node: T, ...texts: Array<string | undefined>): T {
+  const inlineTags = parseInlineTags(...texts);
+  return inlineTags ? { ...node, inlineTags } : node;
+}
 
 /**
  * Parse @example tags into SpecExample objects.
@@ -31,10 +77,10 @@ function parseExamplesFromTags(tags: SpecTag[]): SpecExample[] {
       if (lang && ['ts', 'js', 'tsx', 'jsx', 'shell', 'json'].includes(lang)) {
         example.language = lang as SpecExampleLanguage;
       }
-      examples.push(example);
+      examples.push(withInlineTags(example, example.code));
     } else if (text) {
       // No code fence, use raw text
-      examples.push({ code: text });
+      examples.push(withInlineTags({ code: text }, text));
     }
   }
 
@@ -152,9 +198,10 @@ export function getJSDocComment(
   description?: string;
   tags: SpecTag[];
   examples: SpecExample[];
+  inlineTags?: SpecInlineTag[];
 } {
   const jsDocTags = ts.getJSDocTags(node);
-  const tags: SpecTag[] = jsDocTags.map((tag) => {
+  const tags: SpecTag[] = jsDocTags.map((tag): SpecTag => {
     const rawText =
       typeof tag.comment === 'string' ? tag.comment : (ts.getTextOfJSDocComment(tag.comment) ?? '');
 
@@ -187,22 +234,22 @@ export function getJSDocComment(
       if (description) param.description = description;
       if (paramTag.isBracketed) param.optional = true;
 
-      return { name: tag.tagName.text, text, param };
+      return withInlineTags({ name: tag.tagName.text, text, param }, text);
     }
 
     // For @typeParam, just strip the separator (name already in text)
     if (tag.tagName.text === 'typeParam') {
       const text = stripTypeParamSeparator(rawText) ?? '';
-      return { name: tag.tagName.text, text };
+      return withInlineTags({ name: tag.tagName.text, text }, text);
     }
 
     // For @see tags, use special extraction to preserve URLs
     if (tag.tagName.text === 'see') {
       const text = extractSeeTagText(tag);
-      return { name: tag.tagName.text, text };
+      return withInlineTags({ name: tag.tagName.text, text }, text);
     }
 
-    return { name: tag.tagName.text, text: rawText };
+    return withInlineTags({ name: tag.tagName.text, text: rawText }, rawText);
   });
 
   // Get description from first JSDoc comment
@@ -230,7 +277,7 @@ export function getJSDocComment(
   // Parse @example tags into examples array
   const examples = parseExamplesFromTags(tags);
 
-  return { description, tags, examples };
+  return { description, tags, examples, inlineTags: parseInlineTags(description) };
 }
 
 export function getSourceLocation(node: ts.Node, sourceFile: ts.SourceFile): SpecSource {
@@ -419,6 +466,7 @@ export function getJSDocForSignature(
   description?: string;
   tags: SpecTag[];
   examples: SpecExample[];
+  inlineTags?: SpecInlineTag[];
 } {
   const decl = signature.getDeclaration();
   if (!decl) {

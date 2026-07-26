@@ -1,4 +1,10 @@
-import type { SpecExample, SpecSignature, SpecSource, SpecTag } from '@openpkg-ts/spec';
+import type {
+  SpecExample,
+  SpecInlineTag,
+  SpecSignature,
+  SpecSource,
+  SpecTag,
+} from '@openpkg-ts/spec';
 import type ts from 'typescript';
 import {
   extractTypeParametersFromSignature,
@@ -18,6 +24,7 @@ export interface ExportMetadata {
   source: SpecSource;
   deprecated: boolean;
   deprecationReason?: string;
+  inlineTags?: SpecInlineTag[];
 }
 
 /**
@@ -31,9 +38,13 @@ export function extractExportMetadata(
   jsdocNode?: ts.Node,
 ): ExportMetadata {
   const { deprecated, reason: deprecationReason } = isSymbolDeprecated(symbol);
-  const { description, tags, examples } = getJSDocComment(jsdocNode ?? node, symbol, checker);
+  const { description, tags, examples, inlineTags } = getJSDocComment(
+    jsdocNode ?? node,
+    symbol,
+    checker,
+  );
   const source = getSourceLocation(node, node.getSourceFile());
-  return { description, tags, examples, source, deprecated, deprecationReason };
+  return { description, tags, examples, source, deprecated, deprecationReason, inlineTags };
 }
 
 /**
@@ -59,6 +70,7 @@ export function buildSignatures(
       ...(sigDoc.description ? { description: sigDoc.description } : {}),
       ...(sigDoc.tags.length > 0 ? { tags: sigDoc.tags } : {}),
       ...(sigDoc.examples.length > 0 ? { examples: sigDoc.examples } : {}),
+      ...(sigDoc.inlineTags ? { inlineTags: sigDoc.inlineTags } : {}),
       ...(sigTypeParams ? { typeParameters: sigTypeParams } : {}),
       ...(callSignatures.length > 1 ? { overloadIndex: index } : {}),
     };

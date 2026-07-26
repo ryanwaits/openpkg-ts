@@ -17,7 +17,7 @@ export function serializeVariable(
   const name = symbol?.getName() ?? node.name.getText();
   if (!name) return null;
 
-  const { description, tags, examples, source, deprecated, deprecationReason } =
+  const { description, tags, examples, source, deprecated, deprecationReason, inlineTags } =
     extractExportMetadata(node, symbol, ctx.typeChecker, statement);
   const type = ctx.typeChecker.getTypeAtLocation(node);
 
@@ -53,5 +53,6 @@ export function serializeVariable(
     ...(flags ? { flags } : {}),
     ...(deprecated ? { deprecated: true, deprecationReason } : {}),
     ...(examples.length > 0 ? { examples } : {}),
+    ...(inlineTags ? { inlineTags } : {}),
   };
 }

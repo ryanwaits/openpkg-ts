@@ -19,7 +19,7 @@ export function serializeClass(
   const name = symbol?.getName() ?? node.name?.getText();
   if (!name) return null;
 
-  const { description, tags, examples, source, deprecated, deprecationReason } =
+  const { description, tags, examples, source, deprecated, deprecationReason, inlineTags } =
     extractExportMetadata(node, symbol, checker);
 
   // Extract type parameters like <T, K extends Base>
@@ -118,6 +118,7 @@ export function serializeClass(
     implements: implementsClause?.length ? implementsClause : undefined,
     ...(deprecated ? { deprecated: true, deprecationReason } : {}),
     ...(examples.length > 0 ? { examples } : {}),
+    ...(inlineTags ? { inlineTags } : {}),
     ...(Object.keys(classFlags).length > 0 ? { flags: classFlags } : {}),
   };
 }
@@ -160,7 +161,7 @@ function serializeProperty(
   const name = getMemberName(node);
   if (!name) return null;
 
-  const { description, tags } = getJSDocComment(node);
+  const { description, tags, inlineTags } = getJSDocComment(node);
   const visibility = getVisibility(node);
 
   // Skip private/protected members unless includePrivate is set
@@ -198,6 +199,7 @@ function serializeProperty(
     visibility,
     schema,
     flags: Object.keys(flags).length > 0 ? flags : undefined,
+    ...(inlineTags ? { inlineTags } : {}),
     ...(deprecated ? { deprecated: true, deprecationReason } : {}),
   };
 }
@@ -207,7 +209,7 @@ function serializeMethod(node: ts.MethodDeclaration, ctx: SerializerContext): Sp
   const name = getMemberName(node);
   if (!name) return null;
 
-  const { description, tags } = getJSDocComment(node);
+  const { description, tags, inlineTags } = getJSDocComment(node);
   const visibility = getVisibility(node);
 
   // Skip private/protected members unless includePrivate is set
@@ -254,6 +256,7 @@ function serializeMethod(node: ts.MethodDeclaration, ctx: SerializerContext): Sp
     schema,
     signatures: signatures.length > 0 ? signatures : undefined,
     flags: Object.keys(flags).length > 0 ? flags : undefined,
+    ...(inlineTags ? { inlineTags } : {}),
     ...(deprecated ? { deprecated: true, deprecationReason } : {}),
   };
 }
@@ -275,7 +278,7 @@ function serializeConstructorSignature(
   sig: ts.Signature,
   ctx: SerializerContext,
 ): SpecSignature {
-  const { description, tags, examples } = getJSDocComment(node);
+  const { description, tags, examples, inlineTags } = getJSDocComment(node);
   const params = extractParameters(sig, ctx);
 
   return {
@@ -283,6 +286,7 @@ function serializeConstructorSignature(
     parameters: params.length > 0 ? params : undefined,
     ...(tags.length > 0 ? { tags } : {}),
     ...(examples.length > 0 ? { examples } : {}),
+    ...(inlineTags ? { inlineTags } : {}),
   };
 }
 
@@ -329,7 +333,7 @@ function serializeAccessor(
   const name = getMemberName(node);
   if (!name) return null;
 
-  const { description, tags } = getJSDocComment(node);
+  const { description, tags, inlineTags } = getJSDocComment(node);
   const visibility = getVisibility(node);
 
   // Skip private/protected members unless includePrivate is set
@@ -376,6 +380,7 @@ function serializeAccessor(
     schema,
     signatures,
     flags: Object.keys(flags).length > 0 ? flags : undefined,
+    ...(inlineTags ? { inlineTags } : {}),
   };
 }
 

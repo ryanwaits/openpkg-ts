@@ -10,7 +10,7 @@ export function serializeEnum(node: ts.EnumDeclaration, ctx: SerializerContext):
   const name = symbol?.getName() ?? node.name?.getText();
   if (!name) return null;
 
-  const { description, tags, examples, source, deprecated, deprecationReason } =
+  const { description, tags, examples, source, deprecated, deprecationReason, inlineTags } =
     extractExportMetadata(node, symbol, checker);
 
   const members: SpecMember[] = node.members.map((member) => {
@@ -34,7 +34,11 @@ export function serializeEnum(node: ts.EnumDeclaration, ctx: SerializerContext):
     // Enum members carry the same doc metadata as any other member: a
     // description, tags, and — most importantly — deprecation. The
     // @deprecated tag is the one signal telling a reader to stop using a value.
-    const { description: memberDesc, tags: memberTags } = getJSDocComment(member);
+    const {
+      description: memberDesc,
+      tags: memberTags,
+      inlineTags: memberInlineTags,
+    } = getJSDocComment(member);
     const { deprecated, reason: deprecationReason } = isSymbolDeprecated(memberSymbol);
 
     return {
@@ -44,6 +48,7 @@ export function serializeEnum(node: ts.EnumDeclaration, ctx: SerializerContext):
       ...(schema ? { schema } : {}),
       ...(memberDesc ? { description: memberDesc } : {}),
       ...(memberTags.length > 0 ? { tags: memberTags } : {}),
+      ...(memberInlineTags ? { inlineTags: memberInlineTags } : {}),
       ...(deprecated ? { deprecated: true, deprecationReason } : {}),
     };
   });
@@ -58,5 +63,6 @@ export function serializeEnum(node: ts.EnumDeclaration, ctx: SerializerContext):
     members,
     ...(deprecated ? { deprecated: true, deprecationReason } : {}),
     ...(examples.length > 0 ? { examples } : {}),
+    ...(inlineTags ? { inlineTags } : {}),
   };
 }

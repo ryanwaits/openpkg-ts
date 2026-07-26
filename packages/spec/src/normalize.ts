@@ -97,6 +97,9 @@ function normalizeTag(tag: SpecTag & Record<string, unknown>): SpecTag {
   if (tag.param) {
     result.param = tag.param;
   }
+  if (tag.inlineTags && tag.inlineTags.length > 0) {
+    result.inlineTags = tag.inlineTags;
+  }
   return result;
 }
 

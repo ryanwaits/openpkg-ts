@@ -144,6 +144,10 @@
         "decorators": {
           "type": "array",
           "items": { "$ref": "#/$defs/decorator" }
+        },
+        "inlineTags": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/inlineTag" }
         }
       }
     },
@@ -179,6 +183,10 @@
         "conditionalType": { "$ref": "#/$defs/conditionalType" },
         "mappedType": { "$ref": "#/$defs/mappedType" },
         "external": { "type": "boolean" },
+        "inlineTags": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/inlineTag" }
+        },
         "typeParameters": {
           "type": "array",
           "items": { "$ref": "#/$defs/typeParameter" }
@@ -191,7 +199,20 @@
       "properties": {
         "name": { "type": "string" },
         "text": { "type": "string" },
-        "param": { "$ref": "#/$defs/tagParam" }
+        "param": { "$ref": "#/$defs/tagParam" },
+        "inlineTags": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/inlineTag" }
+        }
+      },
+      "additionalProperties": false
+    },
+    "inlineTag": {
+      "type": "object",
+      "required": ["name", "text"],
+      "properties": {
+        "name": { "type": "string" },
+        "text": { "type": "string" }
       },
       "additionalProperties": false
     },
@@ -233,6 +254,10 @@
         "throws": {
           "type": "array",
           "items": { "$ref": "#/$defs/throwsInfo" }
+        },
+        "inlineTags": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/inlineTag" }
         }
       }
     },
@@ -258,6 +283,10 @@
         "decorators": {
           "type": "array",
           "items": { "$ref": "#/$defs/decorator" }
+        },
+        "inlineTags": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/inlineTag" }
         }
       }
     },
@@ -438,7 +467,11 @@
             "code": { "type": "string" },
             "title": { "type": "string" },
             "description": { "type": "string" },
-            "language": { "$ref": "#/$defs/exampleLanguage" }
+            "language": { "$ref": "#/$defs/exampleLanguage" },
+            "inlineTags": {
+              "type": "array",
+              "items": { "$ref": "#/$defs/inlineTag" }
+            }
           },
           "additionalProperties": false
         }
@@ -460,7 +493,8 @@
         "flags": { "type": "object", "additionalProperties": true },
         "schema": { "$ref": "#/$defs/schema" },
         "signatures": { "type": "array", "items": { "$ref": "#/$defs/signature" } },
-        "decorators": { "type": "array", "items": { "$ref": "#/$defs/decorator" } }
+        "decorators": { "type": "array", "items": { "$ref": "#/$defs/decorator" } },
+        "inlineTags": { "type": "array", "items": { "$ref": "#/$defs/inlineTag" } }
       }
     }
   }

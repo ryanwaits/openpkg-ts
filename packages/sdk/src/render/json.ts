@@ -3,6 +3,7 @@ import type {
   SpecExample,
   SpecExport,
   SpecExportKind,
+  SpecInlineTag,
   SpecMember,
   SpecSignature,
 } from '@openpkg-ts/spec';
@@ -73,7 +74,7 @@ export interface SimplifiedExport {
   signature: string;
   description?: string;
   deprecated: boolean;
-  tags: Array<{ name: string; text: string }>;
+  tags: Array<{ name: string; text: string; inlineTags?: SpecInlineTag[] }>;
   parameters?: SimplifiedParameter[];
   returns?: SimplifiedReturn;
   members?: SimplifiedMember[];
@@ -164,7 +165,11 @@ function simplifyExport(exp: SpecExport): SimplifiedExport {
     signature: buildSignatureString(exp),
     description: exp.description,
     deprecated: exp.deprecated === true,
-    tags: (exp.tags || []).map((t) => ({ name: t.name, text: t.text })),
+    tags: (exp.tags || []).map((t) => ({
+      name: t.name,
+      text: t.text,
+      ...(t.inlineTags ? { inlineTags: t.inlineTags } : {}),
+    })),
     extends: exp.extends,
     implements: exp.implements,
     sourceFile: exp.source?.file,

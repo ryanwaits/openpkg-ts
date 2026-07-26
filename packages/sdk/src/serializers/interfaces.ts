@@ -19,7 +19,7 @@ export function serializeInterface(
   const name = symbol?.getName() ?? node.name?.getText();
   if (!name) return null;
 
-  const { description, tags, examples, source, deprecated, deprecationReason } =
+  const { description, tags, examples, source, deprecated, deprecationReason, inlineTags } =
     extractExportMetadata(node, symbol, checker);
 
   // Extract type parameters like <T, K extends Base>
@@ -131,6 +131,7 @@ export function serializeInterface(
     extends: extendsClause,
     ...(deprecated ? { deprecated: true, deprecationReason } : {}),
     ...(examples.length > 0 ? { examples } : {}),
+    ...(inlineTags ? { inlineTags } : {}),
   };
 }
 
@@ -141,7 +142,7 @@ function serializePropertySignature(
   const { typeChecker: checker } = ctx;
   const name = node.name.getText();
 
-  const { description, tags } = getJSDocComment(node);
+  const { description, tags, inlineTags } = getJSDocComment(node);
 
   const rawType = checker.getTypeAtLocation(node);
   // Optional members express optionality via flags.optional / required
@@ -169,6 +170,7 @@ function serializePropertySignature(
     tags: tags.length > 0 ? tags : undefined,
     schema,
     flags: Object.keys(flags).length > 0 ? flags : undefined,
+    ...(inlineTags ? { inlineTags } : {}),
     ...(deprecated ? { deprecated: true, deprecationReason } : {}),
   };
 }
@@ -180,7 +182,7 @@ function serializeMethodSignature(
   const { typeChecker: checker } = ctx;
   const name = node.name.getText();
 
-  const { description, tags } = getJSDocComment(node);
+  const { description, tags, inlineTags } = getJSDocComment(node);
 
   const type = checker.getTypeAtLocation(node);
   const callSignatures = type.getCallSignatures();
@@ -210,6 +212,7 @@ function serializeMethodSignature(
     schema,
     signatures: signatures.length > 0 ? signatures : undefined,
     flags: Object.keys(flags).length > 0 ? flags : undefined,
+    ...(inlineTags ? { inlineTags } : {}),
     ...(deprecated ? { deprecated: true, deprecationReason } : {}),
   };
 }
@@ -219,7 +222,7 @@ function serializeCallSignature(
   ctx: SerializerContext,
 ): SpecMember | null {
   const { typeChecker: checker } = ctx;
-  const { description, tags } = getJSDocComment(node);
+  const { description, tags, inlineTags } = getJSDocComment(node);
 
   const sig = checker.getSignatureFromDeclaration(node);
   if (!sig) return null;
@@ -233,6 +236,7 @@ function serializeCallSignature(
     kind: 'call-signature',
     description,
     tags: tags.length > 0 ? tags : undefined,
+    ...(inlineTags ? { inlineTags } : {}),
     signatures: [
       {
         parameters: params.length > 0 ? params : undefined,
@@ -249,7 +253,7 @@ function serializeIndexSignature(
   ctx: SerializerContext,
 ): SpecMember | null {
   const { typeChecker: checker } = ctx;
-  const { description, tags } = getJSDocComment(node);
+  const { description, tags, inlineTags } = getJSDocComment(node);
 
   // Get the value type
   const valueType = node.type ? checker.getTypeAtLocation(node.type) : checker.getAnyType();
@@ -271,6 +275,7 @@ function serializeIndexSignature(
     description,
     tags: tags.length > 0 ? tags : undefined,
     schema: valueSchema,
+    ...(inlineTags ? { inlineTags } : {}),
   };
 }
 

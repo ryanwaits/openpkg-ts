@@ -221,7 +221,7 @@ function serializeInheritedMember(
   // Skip private members
   if (visibility === 'private') return null;
 
-  const { description, tags } = getJSDocComment(decl);
+  const { description, tags, inlineTags } = getJSDocComment(decl);
 
   // Determine kind
   let kind: string = 'property';
@@ -261,6 +261,7 @@ function serializeInheritedMember(
         },
         ...(sigDoc.description ? { description: sigDoc.description } : {}),
         ...(sigDoc.tags.length > 0 ? { tags: sigDoc.tags } : {}),
+        ...(sigDoc.inlineTags ? { inlineTags: sigDoc.inlineTags } : {}),
         ...(callSigs.length > 1 ? { overloadIndex: index } : {}),
       };
     });
@@ -279,5 +280,6 @@ function serializeInheritedMember(
         : decoratePropertySchema({ 'x-ts-function': true }, symbol, type, checker),
     signatures,
     flags: Object.keys(flags).length > 0 ? flags : undefined,
+    ...(inlineTags ? { inlineTags } : {}),
   };
 }

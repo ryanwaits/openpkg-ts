@@ -69,7 +69,7 @@ export function serializeFunctionExport(
   const name = nameOverride ?? symbol?.getName() ?? node.name?.getText();
   if (!name) return null;
 
-  const { description, tags, examples, source, deprecated, deprecationReason } =
+  const { description, tags, examples, source, deprecated, deprecationReason, inlineTags } =
     extractExportMetadata(node, symbol, ctx.typeChecker);
 
   // Extract type parameters like <T, K extends Base>
@@ -120,5 +120,6 @@ export function serializeFunctionExport(
     ...(Object.keys(flags).length > 0 ? { flags } : {}),
     ...(deprecated ? { deprecated: true, deprecationReason } : {}),
     ...(examples.length > 0 ? { examples } : {}),
+    ...(inlineTags ? { inlineTags } : {}),
   };
 }

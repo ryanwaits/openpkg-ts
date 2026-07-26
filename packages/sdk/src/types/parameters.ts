@@ -1,6 +1,6 @@
 import type { SpecSignatureParameter } from '@openpkg-ts/spec';
 import ts from 'typescript';
-import { getParamDescription } from '../ast/utils';
+import { getParamDescription, parseInlineTags } from '../ast/utils';
 import type { SerializerContext } from '../serializers/context';
 import { buildSchema, stripUndefinedFromType } from './schema-builder';
 
@@ -44,6 +44,8 @@ export function extractParameters(
 
       if (description) {
         paramResult.description = description;
+        const inlineTags = parseInlineTags(description);
+        if (inlineTags) paramResult.inlineTags = inlineTags;
       }
 
       if (decl.initializer) {
@@ -113,6 +115,8 @@ function expandBindingPattern(
 
     if (description) {
       param.description = description;
+      const inlineTags = parseInlineTags(description);
+      if (inlineTags) param.inlineTags = inlineTags;
     }
 
     // Extract default value if present
