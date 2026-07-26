@@ -56,6 +56,37 @@ export function withInlineTags<T extends object>(node: T, ...texts: Array<string
   return inlineTags ? { ...node, inlineTags } : node;
 }
 
+/** A paragraph made up of nothing but inline tags and whitespace. */
+const INLINE_TAGS_ONLY_RE = /^\s*(?:\{@[a-zA-Z][a-zA-Z0-9]*(?:[^}\\]|\\.)*\}\s*)+$/;
+
+/**
+ * Separate whole-comment annotations from a block tag's own text.
+ *
+ * TSDoc has no syntax for "this tag belongs to the comment", so authors write it
+ * on its own line after the block tags — and TypeScript attaches that line to
+ * whichever tag happens to precede it. A trailing paragraph consisting only of
+ * inline tags annotates the comment, not that tag: `{@label Transport}` written
+ * under `@param options` is not part of the parameter's documentation.
+ *
+ * This is the split `stripParamSeparator` already makes when it drops everything
+ * after a blank line as "not part of the param" — the content is hoisted here
+ * rather than discarded.
+ */
+function splitCommentLevelTags(text: string): { retained: string; hoisted: SpecInlineTag[] } {
+  if (!text.includes('{@')) return { retained: text, hoisted: [] };
+
+  const paragraphs = text.split(/\n\s*\n/);
+  const hoisted: SpecInlineTag[] = [];
+
+  // Only a *trailing* paragraph qualifies, and never the sole one — a tag that
+  // is the entire body of `@remarks` is that tag's content, not the comment's.
+  while (paragraphs.length > 1 && INLINE_TAGS_ONLY_RE.test(paragraphs[paragraphs.length - 1])) {
+    hoisted.unshift(...(parseInlineTags(paragraphs.pop()) ?? []));
+  }
+
+  return { retained: paragraphs.join('\n\n'), hoisted };
+}
+
 /**
  * Parse @example tags into SpecExample objects.
  * Handles markdown code fences and extracts language.
@@ -201,9 +232,19 @@ export function getJSDocComment(
   inlineTags?: SpecInlineTag[];
 } {
   const jsDocTags = ts.getJSDocTags(node);
+  // Whole-comment annotations that TypeScript parked on a preceding block tag.
+  const commentLevelTags: SpecInlineTag[] = [];
+
   const tags: SpecTag[] = jsDocTags.map((tag): SpecTag => {
     const rawText =
       typeof tag.comment === 'string' ? tag.comment : (ts.getTextOfJSDocComment(tag.comment) ?? '');
+
+    // @see runs its own URL-preserving extraction, so leave its text intact.
+    const { retained, hoisted } =
+      tag.tagName.text === 'see'
+        ? { retained: rawText, hoisted: [] }
+        : splitCommentLevelTags(rawText);
+    commentLevelTags.push(...hoisted);
 
     // For @param tags, populate structured param field
     if (tag.tagName.text === 'param') {
@@ -249,7 +290,9 @@ export function getJSDocComment(
       return withInlineTags({ name: tag.tagName.text, text }, text);
     }
 
-    return withInlineTags({ name: tag.tagName.text, text: rawText }, rawText);
+    // Text stays the full raw comment; only the tag's *claim* on the hoisted
+    // paragraph is dropped, so existing text fields are unchanged.
+    return withInlineTags({ name: tag.tagName.text, text: rawText }, retained);
   });
 
   // Get description from first JSDoc comment
@@ -277,7 +320,15 @@ export function getJSDocComment(
   // Parse @example tags into examples array
   const examples = parseExamplesFromTags(tags);
 
-  return { description, tags, examples, inlineTags: parseInlineTags(description) };
+  // Summary tags first, then the whole-comment ones — document order.
+  const inlineTags = [...(parseInlineTags(description) ?? []), ...commentLevelTags];
+
+  return {
+    description,
+    tags,
+    examples,
+    inlineTags: inlineTags.length > 0 ? inlineTags : undefined,
+  };
 }
 
 export function getSourceLocation(node: ts.Node, sourceFile: ts.SourceFile): SpecSource {
