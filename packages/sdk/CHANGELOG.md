@@ -1,5 +1,16 @@
 # @openpkg-ts/extract
 
+## 0.47.2
+
+### Patch Changes
+
+- Fix generic indexed-access types that resolve to a primitive (e.g.
+  `Extract<Union, {...}>["name"]`, whose base constraint is `string`) leaking ~50
+  `String.prototype`/`Number.prototype` methods into their `types[]` schema.
+  Registered types now emit `{ "type": "string", "x-ts-type": "…" }` instead of a
+  bogus object of `charAt`/`toFixed`/etc. Surfaced by extracting a real ABI helper
+  library built on conditional/indexed-access type machinery.
+
 ## 0.47.1
 
 ### Patch Changes
