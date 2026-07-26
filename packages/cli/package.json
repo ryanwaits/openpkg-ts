@@ -1,6 +1,6 @@
 {
   "name": "@openpkg-ts/cli",
-  "version": "0.9.3",
+  "version": "0.10.0",
   "description": "CLI for OpenPkg - extract TypeScript API specs and generate docs",
   "keywords": [
     "openpkg",
@@ -35,7 +35,7 @@
     "test": "bun test"
   },
   "dependencies": {
-    "@openpkg-ts/sdk": "^0.46.0"
+    "@openpkg-ts/sdk": "^0.47.0"
   },
   "devDependencies": {
     "@types/bun": "latest",

@@ -1,5 +1,20 @@
 # @openpkg-ts/cli
 
+## 0.10.0
+
+### Minor Changes
+
+- Add `openpkg validate <spec.json>` to check a spec against the OpenPkg
+  meta-schema, harden `openpkg diff` to reject structurally invalid inputs
+  instead of crashing, and add `openpkg diff --json` for machine-readable
+  CI output (breaking/non-breaking/docs-only changes, categorized breaking
+  changes, semver recommendation, and next version).
+
+### Patch Changes
+
+- Updated dependencies
+  - @openpkg-ts/sdk@0.47.0
+
 ## 0.9.3
 
 ### Patch Changes
