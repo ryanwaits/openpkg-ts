@@ -61,3 +61,16 @@ to `x-ts-type` verbatim text instead of exploding into prototype methods. A
 richer lowering: when neither the true-branch nor false-branch references a type
 parameter, emit `anyOf: [<trueType>, <falseType>]` instead of the text bail.
 See the conditional gate in `packages/sdk/src/serializers/type-aliases.ts`.
+
+## Structural-dedup for dual-resolution type collisions
+
+The name-collision fix (collision-scoped type ids) correctly splits two genuinely
+different same-named types. But a build that resolves ONE type through two
+declaration files (e.g. a monorepo seeing a workspace package as both `src`
+source and built `dist/*.d.ts`) produces two structurally-identical entries
+(`Logger` + `pkg.Logger`) where one would do. Harmless (no member loss) and does
+not occur for normal single-resolution `openpkg spec` runs (verified: zero
+scoped ids on stacks/accounts, clarity, x402), but adds a redundant entry for
+dual-resolution monorepos. A post-extraction pass could merge structurally
+identical same-named types (keep one id, rewrite refs to the survivor). Requires
+a ref-rewrite over exports[]+types[]; can reuse the ref-walker traversal.
