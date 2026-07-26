@@ -1,5 +1,16 @@
 # @openpkg-ts/extract
 
+## 0.47.1
+
+### Patch Changes
+
+- Fix optional properties on `type` aliases (e.g. `type Opts = { x?: T }`) emitting
+  a spurious `null` branch. The interface/class serializers already stripped the
+  `undefined` branch for optional members; the type-alias path
+  (`serializeResolvedMembers`) now does too, so `{ "x": null }` is no longer
+  accepted where TypeScript would reject it. Surfaced by extracting a real library
+  whose option types are type aliases rather than interfaces.
+
 ## 0.47.0
 
 ### Minor Changes
