@@ -677,7 +677,7 @@
       "count": 1
     },
     {
-      "union": "x-ts-type (type: TS.Type, checker: TS.TypeChecker) => TS.Type | null",
+      "union": "x-ts-type (type: ts.Type, checker: ts.TypeChecker) => ts.Type | null",
       "count": 4
     },
     {
