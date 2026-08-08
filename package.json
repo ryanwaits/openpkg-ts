@@ -17,6 +17,10 @@
     "typecheck:spec": "cd packages/spec && bun run typecheck",
     "typecheck:sdk": "cd packages/sdk && bun run typecheck",
     "typecheck:cli": "cd packages/cli && bun run typecheck",
+    "typecheck:native": "bun run typecheck:native:spec && bun run typecheck:native:sdk && bun run typecheck:native:cli",
+    "typecheck:native:spec": "cd packages/spec && ../../node_modules/typescript-native/bin/tsc --noEmit --types bun -p .",
+    "typecheck:native:sdk": "cd packages/sdk && ../../node_modules/typescript-native/bin/tsc --noEmit --types bun -p .",
+    "typecheck:native:cli": "cd packages/cli && ../../node_modules/typescript-native/bin/tsc --noEmit --types bun -p .",
     "format": "bunx biome format --write packages/",
     "site:sync-schemas": "rm -rf site/schemas && cp -r packages/spec/schemas site/schemas",
     "changeset": "changeset",
@@ -28,6 +32,7 @@
     "@changesets/cli": "^2.29.8",
     "@types/bun": "latest",
     "bunup": "^0.11.30",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "typescript-native": "npm:typescript@7.0.2"
   }
 }
