@@ -44,3 +44,6 @@ repo.json
 tmp/
 .git-lore/
 .npmrc
+
+# bb visual artifacts (generated views, not source)
+.bb-artifacts/
