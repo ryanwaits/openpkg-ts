@@ -472,6 +472,23 @@ export function isAnonymous(type: ts.Type): boolean {
 }
 
 /**
+ * Detect the polymorphic `this` type using only public API.
+ * A `this` type is a TypeParameter whose symbol is declared by the enclosing
+ * class or interface; a regular type parameter's symbol is declared by a
+ * TypeParameterDeclaration. Replaces a read of the internal is-this-type flag,
+ * which is not in the public typings and does not survive TS7.
+ */
+function isFluentThisType(type: ts.Type): boolean {
+  if (!(type.flags & ts.TypeFlags.TypeParameter)) return false;
+  const declarations = type.getSymbol()?.declarations;
+  if (!declarations || declarations.length === 0) return false;
+  return declarations.some(
+    (decl) =>
+      ts.isClassDeclaration(decl) || ts.isClassExpression(decl) || ts.isInterfaceDeclaration(decl),
+  );
+}
+
+/**
  * Execute a function with incremented depth, automatically decrementing after.
  */
 function withDepth<T>(ctx: SerializerContext, fn: () => T): T {
@@ -541,10 +558,7 @@ export function buildSchema(
 function buildMaxDepthSchema(type: ts.Type, checker: ts.TypeChecker): SpecSchema {
   // Type parameters are not addressable spec types — never $ref them.
   // (`this` types also carry TypeParameter flags but legitimately ref their class.)
-  if (
-    type.flags & ts.TypeFlags.TypeParameter &&
-    (type as unknown as { isThisType?: boolean }).isThisType !== true
-  ) {
+  if (type.flags & ts.TypeFlags.TypeParameter && !isFluentThisType(type)) {
     return { 'x-ts-type': checker.typeToString(type) } as SpecSchema;
   }
 
@@ -651,7 +665,7 @@ function buildSchemaInternal(
     if (type.flags & ts.TypeFlags.ESSymbol) return { type: 'symbol' };
 
     // Handle 'this' type - mark with x-ts-type for fluent patterns
-    if ((type as unknown as { isThisType?: boolean }).isThisType === true) {
+    if (isFluentThisType(type)) {
       // Get the constraint (the class type) and create a $ref with this marker
       const constraint = type.getConstraint?.();
       const symbol = constraint?.getSymbol() ?? type.getSymbol();
