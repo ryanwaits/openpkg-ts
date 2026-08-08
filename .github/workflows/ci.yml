@@ -23,3 +23,21 @@ jobs:
       - run: bun run lint
       - run: bun run typecheck
       - run: bun run test
+
+  typecheck-native:
+    name: Typecheck (TS7 native, non-blocking)
+    runs-on: ubuntu-latest
+    # Non-blocking while the TS7 lane bakes; see plans/002 maintenance notes
+    # for the flip-to-required date. A red run here must not block merges yet.
+    continue-on-error: true
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - run: bun install
+      - run: node_modules/typescript-native/bin/tsc --version
+      - run: bun run typecheck:native
