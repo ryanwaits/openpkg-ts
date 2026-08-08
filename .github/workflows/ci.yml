@@ -23,6 +23,7 @@ jobs:
       - run: bun run lint
       - run: bun run typecheck
       - run: bun run test
+      - run: bun scripts/union-order-audit.ts --check
 
   typecheck-native:
     name: Typecheck (TS7 native, non-blocking)
