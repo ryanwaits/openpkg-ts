@@ -21,10 +21,10 @@ function getScriptKind(file: string): ts.ScriptKind {
 
 const DEFAULT_COMPILER_OPTIONS: ts.CompilerOptions = {
   target: ts.ScriptTarget.Latest,
-  module: ts.ModuleKind.CommonJS,
+  module: ts.ModuleKind.NodeNext,
   lib: ['lib.es2021.d.ts'],
   declaration: true,
-  moduleResolution: ts.ModuleResolutionKind.NodeJs,
+  moduleResolution: ts.ModuleResolutionKind.NodeNext,
   // Without strictNullChecks the checker collapses `T | undefined` to `T`
   // before extraction sees the union — extracted types must reflect the source.
   strict: true,
