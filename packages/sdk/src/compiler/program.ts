@@ -234,6 +234,43 @@ function buildWorkspaceMap(baseDir: string): WorkspaceMap | undefined {
   return packages.size > 0 ? { packages, rootDir } : undefined;
 }
 
+/**
+ * Collect `@types/*` package names from every `node_modules/@types` directory
+ * up-tree, nearest first.
+ *
+ * TypeScript 6 stopped auto-including `node_modules/@types/*`. Without an
+ * explicit `types` list, ambient globals (DOM, Node, Bun) resolve to nothing
+ * and members typed with them extract as empty schemas. Discovering them here
+ * restores the TypeScript 5 behaviour; under TS5 it reproduces the same set,
+ * so it is a no-op there.
+ */
+function discoverAmbientTypePackages(baseDir: string): string[] {
+  const found: string[] = [];
+  const seen = new Set<string>();
+  let currentDir = baseDir;
+
+  for (let i = 0; i < 10; i++) {
+    const typesDir = path.join(currentDir, 'node_modules', '@types');
+    try {
+      if (fs.existsSync(typesDir) && fs.statSync(typesDir).isDirectory()) {
+        for (const entry of fs.readdirSync(typesDir, { withFileTypes: true })) {
+          if (!entry.isDirectory() || entry.name.startsWith('.')) continue;
+          if (seen.has(entry.name)) continue;
+          seen.add(entry.name);
+          found.push(entry.name);
+        }
+      }
+    } catch {
+      // Unreadable node_modules — skip this level.
+    }
+    const parent = path.dirname(currentDir);
+    if (parent === currentDir) break;
+    currentDir = parent;
+  }
+
+  return found;
+}
+
 export function createProgram(options: ProgramOptions): ProgramResult {
   const { content } = options;
   // Absolutize before any upward walk: a relative entry makes buildWorkspaceMap
@@ -303,6 +340,18 @@ export function createProgram(options: ProgramOptions): ProgramResult {
     const allowJsVal = (compilerOptions as Record<string, unknown>).allowJs;
     if (typeof allowJsVal === 'boolean' && allowJsVal) {
       compilerOptions = { ...compilerOptions, allowJs: false, checkJs: false };
+    }
+  }
+
+  // Restore ambient @types inclusion. TypeScript 6 no longer auto-includes
+  // node_modules/@types/*, so without this, globals like AbortSignal resolve
+  // to nothing and extract as empty schemas. Only applied when the resolved
+  // config pins neither `types` nor `typeRoots` — if the user configured
+  // either, their choice wins.
+  if (compilerOptions.types === undefined && compilerOptions.typeRoots === undefined) {
+    const ambientTypes = discoverAmbientTypePackages(baseDir);
+    if (ambientTypes.length > 0) {
+      compilerOptions = { ...compilerOptions, types: ambientTypes };
     }
   }
 
