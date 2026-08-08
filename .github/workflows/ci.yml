@@ -42,3 +42,33 @@ jobs:
       - run: bun install
       - run: node_modules/typescript-native/bin/tsc --version
       - run: bun run typecheck:native
+
+  test-ts-matrix:
+    name: Test (typescript ${{ matrix.ts }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        ts: ["5.9.3", "6.0.3"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      # Pin the workspace-wide typescript resolution for this lane only.
+      # Plain version override — not the @typescript/typescript6 alias, which
+      # is a stub package that cycles into an empty module under an override.
+      - name: Pin typescript ${{ matrix.ts }}
+        run: bun -e "const f='package.json';const j=JSON.parse(await Bun.file(f).text());j.overrides={...(j.overrides||{}),typescript:'${{ matrix.ts }}'};await Bun.write(f,JSON.stringify(j,null,2))"
+
+      - run: bun install
+
+      - name: Assert resolved typescript version
+        run: bun -e "import ts from 'typescript';console.log('typescript',ts.version);if(!ts.version.startsWith('${{ matrix.ts }}'))process.exit(1)"
+
+      - run: bun run build
+      - run: bun run typecheck
+      - run: bun run test
