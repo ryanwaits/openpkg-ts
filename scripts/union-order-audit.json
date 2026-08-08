@@ -1,5 +1,5 @@
 {
-  "generatedWith": "typescript 5.9.3",
+  "generatedWith": "typescript 6.0.3",
   "targets": [
     "packages/sdk/src/index.ts",
     "packages/cli/test-fixtures/sample.ts",
