@@ -31,7 +31,7 @@
     "lint": "biome check src/",
     "lint:fix": "biome check --write src/",
     "format": "biome format --write src/",
-    "typecheck": "tsc --noEmit -p .",
+    "typecheck": "tsc --noEmit --types bun -p .",
     "test": "bun test"
   },
   "dependencies": {
