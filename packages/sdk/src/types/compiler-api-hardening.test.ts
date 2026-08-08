@@ -106,9 +106,7 @@ export interface TextIface {
     const members = iface?.members ?? [];
     const byName = (name: string) => members.find((m) => m.name === name);
 
-    expect((byName('a')?.schema as Record<string, unknown>)?.['x-ts-type']).toBe(
-      'string | number',
-    );
+    expect((byName('a')?.schema as Record<string, unknown>)?.['x-ts-type']).toBe('string | number');
     expect((byName('b')?.schema as Record<string, unknown>)?.['x-ts-type']).toBe('string | null');
     expect((byName('c')?.schema as Record<string, unknown>)?.['x-ts-type']).toBe(
       'string | number | null',
