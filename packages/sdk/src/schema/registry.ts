@@ -4,7 +4,7 @@
  * Manages adapters for extracting output types from schema validation
  * libraries (Zod, Valibot, TypeBox, ArkType) using TypeScript's compiler API.
  */
-import type * as TS from 'typescript';
+import ts from 'typescript';
 
 /**
  * A schema adapter can detect and extract output types from a specific
@@ -21,19 +21,19 @@ export interface SchemaAdapter {
    * Check if a type matches this adapter's schema library.
    * Should be fast - called for every export.
    */
-  matches(type: TS.Type, checker: TS.TypeChecker): boolean;
+  matches(type: ts.Type, checker: ts.TypeChecker): boolean;
 
   /**
    * Extract the output type from a schema type.
    * Returns null if extraction fails.
    */
-  extractOutputType(type: TS.Type, checker: TS.TypeChecker): TS.Type | null;
+  extractOutputType(type: ts.Type, checker: ts.TypeChecker): ts.Type | null;
 
   /**
    * Extract the input type from a schema type (optional).
    * Useful for transforms where input differs from output.
    */
-  extractInputType?(type: TS.Type, checker: TS.TypeChecker): TS.Type | null;
+  extractInputType?(type: ts.Type, checker: ts.TypeChecker): ts.Type | null;
 }
 
 /**
@@ -44,34 +44,30 @@ export interface SchemaExtractionResult {
   adapter: SchemaAdapter;
 
   /** The extracted output type */
-  outputType: TS.Type;
+  outputType: ts.Type;
 
   /** The extracted input type (if different from output) */
-  inputType?: TS.Type;
+  inputType?: ts.Type;
 }
 
 /**
  * Utility: Check if type is an object type reference (has type arguments)
  */
-export function isTypeReference(type: TS.Type): type is TS.TypeReference {
+export function isTypeReference(type: ts.Type): type is ts.TypeReference {
   return !!(
-    (
-      type.flags & 524288 && // TypeFlags.Object
-      (type as TS.ObjectType).objectFlags &&
-      (type as TS.ObjectType).objectFlags & 4
-    ) // ObjectFlags.Reference
+    type.flags & ts.TypeFlags.Object &&
+    (type as ts.ObjectType).objectFlags &&
+    (type as ts.ObjectType).objectFlags & ts.ObjectFlags.Reference
   );
 }
 
 /**
  * Utility: Remove undefined/null from a union type
  */
-export function getNonNullableType(type: TS.Type): TS.Type {
+export function getNonNullableType(type: ts.Type): ts.Type {
   if (type.isUnion()) {
     const nonNullable = type.types.filter(
-      (t) =>
-        !(t.flags & 32768) && // TypeFlags.Undefined
-        !(t.flags & 65536), // TypeFlags.Null
+      (t) => !(t.flags & ts.TypeFlags.Undefined) && !(t.flags & ts.TypeFlags.Null),
     );
     if (nonNullable.length === 1) {
       return nonNullable[0];
@@ -86,17 +82,17 @@ export function registerAdapter(adapter: SchemaAdapter): void {
   adapters.push(adapter);
 }
 
-export function findAdapter(type: TS.Type, checker: TS.TypeChecker): SchemaAdapter | undefined {
+export function findAdapter(type: ts.Type, checker: ts.TypeChecker): SchemaAdapter | undefined {
   return adapters.find((a) => a.matches(type, checker));
 }
 
-export function isSchemaType(type: TS.Type, checker: TS.TypeChecker): boolean {
+export function isSchemaType(type: ts.Type, checker: ts.TypeChecker): boolean {
   return adapters.some((a) => a.matches(type, checker));
 }
 
 export function extractSchemaType(
-  type: TS.Type,
-  checker: TS.TypeChecker,
+  type: ts.Type,
+  checker: ts.TypeChecker,
 ): SchemaExtractionResult | null {
   const adapter = findAdapter(type, checker);
   if (!adapter) return null;
