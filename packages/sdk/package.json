@@ -39,13 +39,13 @@
     "lint": "biome check src/",
     "lint:fix": "biome check --write src/",
     "format": "biome format --write src/",
-    "typecheck": "tsc --noEmit -p .",
+    "typecheck": "tsc --noEmit --types bun -p .",
     "test": "bun test"
   },
   "dependencies": {
     "@openpkg-ts/spec": "^0.50.0",
     "picomatch": "4.0.3",
-    "typescript": "^5.0.0"
+    "typescript": "^5.0.0 || ^6.0.0"
   },
   "peerDependencies": {
     "shiki": "^1.0.0"

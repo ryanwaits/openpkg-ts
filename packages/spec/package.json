@@ -37,7 +37,7 @@
     "lint": "biome check src/",
     "lint:fix": "biome check --write src/",
     "format": "biome format --write src/",
-    "typecheck": "tsc --noEmit -p ."
+    "typecheck": "tsc --noEmit --types bun -p ."
   },
   "dependencies": {
     "ajv": "^8.17.1",
@@ -47,7 +47,7 @@
     "@types/bun": "latest",
     "@types/node": "^20.0.0",
     "bunup": "^0.16.20",
-    "typescript": "^5.0.0"
+    "typescript": "^5.0.0 || ^6.0.0"
   },
   "publishConfig": {
     "access": "public"
