@@ -8,6 +8,21 @@ Extract [OpenPkg](https://openpkg.dev) documents from TypeScript source and gene
 npm install @openpkg-ts/sdk
 ```
 
+## TypeScript version support
+
+The sdk drives the TypeScript **JS compiler API** and declares
+`typescript@^5.0.0 || ^6.0.0` as a regular dependency, so your package manager
+installs a compatible copy for the sdk automatically — extraction works even if
+your own project uses a different TypeScript version.
+
+**On a TypeScript 7 toolchain?** That's fine: TS7's `tsc` is a native binary and
+does not conflict with the sdk's nested TS5/6 copy. One caveat: do **not** force
+a workspace-wide `typescript@7` via `overrides`/`resolutions`. The extraction
+engine needs the JS compiler API, which TypeScript 7 removed — its main export
+is a version stub with no `createProgram`. Native TS7-backed extraction is
+planned as a separate opt-in package; the JS backend remains the default and is
+fully supported.
+
 ## Entry Points
 
 ```typescript
