@@ -7,8 +7,6 @@ export interface ExternalsConfig {
   include?: string[];
   /** Package patterns to never resolve */
   exclude?: string[];
-  /** Max transitive depth for resolution (default: 1) */
-  depth?: number;
 }
 
 export interface ExtractOptions {
@@ -18,8 +16,6 @@ export interface ExtractOptions {
   baseDir?: string;
   content?: string; // For in-memory analysis
   maxTypeDepth?: number;
-  maxExternalTypeDepth?: number;
-  resolveExternalTypes?: boolean;
   schemaExtraction?: 'static' | 'hybrid';
   /** Include $schema URL in output */
   includeSchema?: boolean;
@@ -78,15 +74,6 @@ export interface ExtractResult {
     warnings: Array<{ code: string; message: string; exportName?: string }>;
     /** Extraction method used: 'compiled' or 'direct-ts (runtime)' */
     method?: string;
-  };
-  /** Degraded mode info when extracting from .d.ts files */
-  degradedMode?: {
-    reason: 'dts-source';
-    stats: {
-      exportsWithoutDescription: number;
-      paramsWithoutDocs: number;
-      missingExamples: number;
-    };
   };
   /** Export verification comparing discovered vs extracted */
   verification?: ExportVerification;

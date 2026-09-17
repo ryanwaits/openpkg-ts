@@ -10,9 +10,7 @@ export interface SerializerContext {
   program: ts.Program;
   sourceFile: ts.SourceFile;
   maxTypeDepth: number;
-  maxExternalTypeDepth: number;
   currentDepth: number;
-  resolveExternalTypes: boolean;
   typeRegistry: TypeRegistry;
   exportedIds: Set<string>;
   /** Stack-style recursion guard for buildSchemaInternal (add before recurse, delete after) */
@@ -51,8 +49,6 @@ export interface SerializerContext {
 
 export interface CreateContextOptions {
   maxTypeDepth?: number;
-  maxExternalTypeDepth?: number;
-  resolveExternalTypes?: boolean;
   includePrivate?: boolean;
   maxProperties?: number;
   onTruncation?: (typeName: string, actual: number, limit: number) => void;
@@ -70,9 +66,7 @@ export function createContext(
     program,
     sourceFile,
     maxTypeDepth: options.maxTypeDepth ?? 5,
-    maxExternalTypeDepth: options.maxExternalTypeDepth ?? 2,
     currentDepth: 0,
-    resolveExternalTypes: options.resolveExternalTypes ?? true,
     typeRegistry: new TypeRegistry(),
     exportedIds: new Set<string>(),
     visitedTypes: new Set<ts.Type>(),

@@ -26,7 +26,6 @@ describe('config', () => {
         externals: {
           include: ['react', 'lodash'],
           exclude: ['internal-*'],
-          depth: 2,
         },
       };
       fs.writeFileSync(path.join(tmpDir, CONFIG_FILENAME), JSON.stringify(config));
@@ -109,7 +108,6 @@ describe('config', () => {
         externals: {
           include: ['file-pkg'],
           exclude: ['file-exclude'],
-          depth: 1,
         },
       };
       const cliOptions = {
@@ -119,20 +117,17 @@ describe('config', () => {
       const result = mergeConfig(fileConfig, cliOptions);
       expect(result.externals?.include).toEqual(['cli-pkg']);
       expect(result.externals?.exclude).toEqual(['file-exclude']);
-      expect(result.externals?.depth).toBe(1);
     });
 
     test('file config used when CLI option not provided', () => {
       const fileConfig = {
         externals: {
           include: ['file-pkg'],
-          depth: 3,
         },
       };
 
       const result = mergeConfig(fileConfig, {});
       expect(result.externals?.include).toEqual(['file-pkg']);
-      expect(result.externals?.depth).toBe(3);
     });
   });
 });

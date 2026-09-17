@@ -14,15 +14,6 @@ export {
   JEV_CONFIDENCE,
   JEV_MODEL,
 } from './decisions';
-// Diagnostics utilities
-export {
-  analyzeSpec,
-  type DiagnosticItem,
-  findMissingParamDocs,
-  getDeprecationMessage,
-  hasDeprecatedTag,
-  type SpecDiagnostics,
-} from './diagnostics';
 // Format utilities
 export { formatBadges, getMemberBadges } from './format';
 // Loader utilities

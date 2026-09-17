@@ -61,36 +61,6 @@ export { isExternalType } from './verification';
 /** Yield to event loop every N exports to allow spinner animation */
 const YIELD_BATCH_SIZE = 5;
 
-/** Compute degraded mode stats from exports */
-function computeDegradedStats(exports: SpecExport[]): {
-  exportsWithoutDescription: number;
-  paramsWithoutDocs: number;
-  missingExamples: number;
-} {
-  let exportsWithoutDescription = 0;
-  let paramsWithoutDocs = 0;
-  let missingExamples = 0;
-
-  for (const exp of exports) {
-    if (!exp.description) exportsWithoutDescription++;
-    if (!exp.examples || exp.examples.length === 0) missingExamples++;
-
-    // Count params without docs across all signatures
-    const signatures = (
-      exp as { signatures?: Array<{ parameters?: Array<{ description?: string }> }> }
-    ).signatures;
-    if (signatures) {
-      for (const sig of signatures) {
-        for (const param of sig.parameters ?? []) {
-          if (!param.description) paramsWithoutDocs++;
-        }
-      }
-    }
-  }
-
-  return { exportsWithoutDescription, paramsWithoutDocs, missingExamples };
-}
-
 /**
  * Match export name against pattern (supports * wildcards)
  */
@@ -131,7 +101,7 @@ function shouldIncludeExport(name: string, only?: string[], ignore?: string[]): 
  * @param options.only - Glob patterns to include (e.g., ["get*", "create*"])
  * @param options.ignore - Glob patterns to exclude (e.g., ["*Internal", "_*"])
  * @param options.onProgress - Callback fired for each export: (current, total, name) => void
- * @param options.isDtsSource - Set true when extracting from .d.ts (enables degraded mode)
+ * @param options.isDtsSource - Set true when extracting from .d.ts (declaration-only generation metadata)
  * @param options.externals - Config for resolving re-exports from external packages
  *
  * @returns Promise resolving to extraction result
@@ -165,8 +135,6 @@ export async function extract(options: ExtractOptions): Promise<ExtractResult> {
       baseDir,
       content,
       maxTypeDepth,
-      maxExternalTypeDepth,
-      resolveExternalTypes,
       includeSchema,
       only,
       ignore,
@@ -292,8 +260,6 @@ export async function extract(options: ExtractOptions): Promise<ExtractResult> {
 
     const ctx = createContext(program, sourceFile, {
       maxTypeDepth,
-      maxExternalTypeDepth,
-      resolveExternalTypes,
       includePrivate,
       maxProperties,
       onTruncation,
@@ -623,11 +589,6 @@ export async function extract(options: ExtractOptions): Promise<ExtractResult> {
     // Filter to only internal forgotten exports (for fix generation)
     const internalForgotten = forgottenExports.filter((f) => !f.isExternal);
 
-    // Compute degraded mode stats when extracting from .d.ts
-    const degradedMode = isDtsSource
-      ? { reason: 'dts-source' as const, stats: computeDegradedStats(normalizedExports) }
-      : undefined;
-
     // Add diagnostic if any exports failed verification
     if (verification.failed > 0) {
       const failedNames = verification.details.failed.map((f) => f.name).join(', ');
@@ -649,7 +610,6 @@ export async function extract(options: ExtractOptions): Promise<ExtractResult> {
       verification,
       ...(internalForgotten.length > 0 ? { forgottenExports: internalForgotten } : {}),
       ...(runtimeMetadata ? { runtimeSchemas: runtimeMetadata } : {}),
-      ...(degradedMode ? { degradedMode } : {}),
     };
   } finally {
     // Clear caches after extraction to prevent memory leaks

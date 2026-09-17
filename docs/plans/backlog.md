@@ -31,13 +31,6 @@ Open design questions:
 
 Do NOT start until v1 function support is on npm and validated end-to-end.
 
-## Remove dead `resolveExternalTypes` option
-
-`ExtractOptions.resolveExternalTypes` (`packages/sdk/src/types.ts`) is stored on
-the serializer context (`context.ts`) but consumed nowhere — it was superseded
-by the `followExternal` predicate + external-stub behavior added in this round.
-Remove the option and its context field; check for external callers first.
-
 ## Rest-element tuple `maxItems`
 
 Tuples with a rest element (`[string, ...number[]]`) get a wrong `maxItems`

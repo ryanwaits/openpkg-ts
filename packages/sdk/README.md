@@ -87,7 +87,6 @@ Generate full OpenPkg spec (all exports + types).
 const { spec, diagnostics, verification } = await extractSpec({
   entryFile: './src/index.ts',
   maxTypeDepth: 4,
-  resolveExternalTypes: true,
   only: ['use*'],           // filter by pattern
   ignore: ['*Internal'],    // exclude by pattern
   followExternal: ['@ai-sdk/*'], // or true, or 'auto' with decisions: 'jev'
@@ -158,20 +157,6 @@ filterSpec(spec, {
   hasDescription: true,
   deprecated: false,
 });
-```
-
-### analyzeSpec
-
-Analyze spec for quality issues.
-
-```typescript
-import { analyzeSpec } from '@openpkg-ts/sdk';
-
-const diagnostics = analyzeSpec(spec);
-
-console.log(`Missing descriptions: ${diagnostics.missingDescriptions.length}`);
-console.log(`Deprecated without reason: ${diagnostics.deprecatedNoReason.length}`);
-console.log(`Missing param docs: ${diagnostics.missingParamDocs.length}`);
 ```
 
 ## Documentation Generation
@@ -293,7 +278,6 @@ import type {
   SimplifiedSpec,
   FilterCriteria,
   FilterResult,
-  SpecDiagnostics,
   DiffOptions,
   QueryBuilder,
 } from '@openpkg-ts/sdk';

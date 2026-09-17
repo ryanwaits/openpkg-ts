@@ -4,15 +4,6 @@
  * Does NOT include extraction, file I/O, or Node.js-dependent code.
  */
 
-// Diagnostics (analysis only, no file I/O)
-export {
-  analyzeSpec,
-  type DiagnosticItem,
-  findMissingParamDocs,
-  getDeprecationMessage,
-  hasDeprecatedTag,
-  type SpecDiagnostics,
-} from './core/diagnostics';
 // Format utilities
 export { formatBadges, getMemberBadges } from './core/format';
 // Types only (no runtime code)

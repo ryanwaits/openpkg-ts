@@ -86,11 +86,10 @@ export function mergeConfig(
   const externals = {
     include: cliOptions.externals?.include ?? fileConfig.externals?.include,
     exclude: cliOptions.externals?.exclude ?? fileConfig.externals?.exclude,
-    depth: cliOptions.externals?.depth ?? fileConfig.externals?.depth,
   };
 
   // Only include externals if at least one field is defined
-  const hasExternals = externals.include || externals.exclude || externals.depth !== undefined;
+  const hasExternals = externals.include || externals.exclude;
 
   return {
     ...(hasExternals ? { externals } : {}),
