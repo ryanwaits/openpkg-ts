@@ -7,11 +7,15 @@
     "packages/sdk/src/compiler/fixtures/unresolved-deps/index.ts"
   ],
   "totals": {
-    "anyOf": 195,
-    "enum": 81,
-    "x-ts-type": 361
+    "anyOf": 201,
+    "enum": 96,
+    "x-ts-type": 379
   },
   "uniqueUnions": [
+    {
+      "union": "anyOf #/types/ChoiceQuestion , #/types/ScoreQuestion",
+      "count": 1
+    },
     {
       "union": "anyOf #/types/EnumMember , #/types/PropertyAccessExpression , #/types/ElementAccessExpression",
       "count": 1
@@ -37,6 +41,10 @@
       "count": 1
     },
     {
+      "union": "anyOf #/types/ResolveAmbiguous , #/types/ResolveEmpty , #/types/ResolveExplicit , #/types/ResolveNeedsBuild , #/types/ResolveOk , #/types/ResolveUnavailable",
+      "count": 1
+    },
+    {
       "union": "anyOf #/types/SimplifiedSpec , #/types/SimplifiedExport",
       "count": 4
     },
@@ -49,7 +57,7 @@
       "count": 1
     },
     {
-      "union": "anyOf boolean , h:681004346c",
+      "union": "anyOf boolean , h:681004346c , h:b79e928ec2",
       "count": 7
     },
     {
@@ -59,6 +67,10 @@
     {
       "union": "anyOf boolean , h:f699d4b31c , h:207716dea2",
       "count": 6
+    },
+    {
+      "union": "anyOf h:38bcc555c8 , h:e29f6ca9b5 , h:f509aa8fa8 , h:e9e88ecace , h:798e27ba02 , h:13e54f9f58",
+      "count": 1
     },
     {
       "union": "anyOf h:79e076fc9b , h:53bd62f39a",
@@ -185,7 +197,15 @@
       "count": 8
     },
     {
+      "union": "anyOf null , h:7d155c019c",
+      "count": 1
+    },
+    {
       "union": "anyOf null , h:8eb177a2ce",
+      "count": 1
+    },
+    {
+      "union": "anyOf null , h:b288c51cd9",
       "count": 1
     },
     {
@@ -194,7 +214,7 @@
     },
     {
       "union": "anyOf null , string",
-      "count": 10
+      "count": 11
     },
     {
       "union": "anyOf null , string , h:ec2e1c6035 , h:abd0d14bb2 , h:f77432a18b , h:7d589cadd3 , h:e3ef754bc4 , h:b669559432 , h:3d5361bcb8 , h:602c1b06c7 , h:e843711b68 , h:b1534d4b00 , h:1138cae9f4 , h:116d8b6a25 , h:85a4583127 , h:e5ad3d52b2 , h:99754ec087 , h:93a5bdccce , h:50e08e3c7f , #/types/SpecSchemaRef , #/types/SpecSchemaFallback , #/types/SpecSchemaGeneric",
@@ -309,6 +329,10 @@
       "count": 4
     },
     {
+      "union": "enum [\"explicit\",\"ambiguous\",\"empty\",\"needs-build\",\"ok\",\"unavailable\"]",
+      "count": 1
+    },
+    {
       "union": "enum [\"filtered\",\"no-declaration\",\"internal\",\"external-unresolved\"]",
       "count": 5
     },
@@ -317,16 +341,20 @@
       "count": 4
     },
     {
-      "union": "enum [\"function\",\"class\",\"variable\",\"interface\",\"type\",\"enum\",\"module\",\"namespace\",\"reference\",\"external\"]",
-      "count": 1
-    },
-    {
       "union": "enum [\"function\",\"class\",\"variable\",\"interface\",\"type\",\"enum\",\"namespace\",\"external\"]",
       "count": 3
     },
     {
       "union": "enum [\"function\",\"class\",\"variable\",\"interface\",\"type\",\"enum\",\"namespace\"]",
       "count": 1
+    },
+    {
+      "union": "enum [\"function\",\"module\",\"class\",\"variable\",\"interface\",\"type\",\"enum\",\"namespace\",\"reference\",\"external\"]",
+      "count": 1
+    },
+    {
+      "union": "enum [\"heuristic\",\"jev\"]",
+      "count": 10
     },
     {
       "union": "enum [\"high\",\"medium\",\"low\"]",
@@ -347,10 +375,6 @@
     {
       "union": "enum [\"module\",\"none\",\"kind\",\"tag\"]",
       "count": 6
-    },
-    {
-      "union": "enum [\"module\",\"types\",\"exports\",\"main\",\"fallback\",\"explicit\",\"llm\"]",
-      "count": 1
     },
     {
       "union": "enum [\"No JSDoc descriptions\",\"No @example tags\",\"No @param descriptions\"]",
@@ -395,6 +419,10 @@
     {
       "union": "enum [\"ts\",\"js\",\"tsx\",\"jsx\",\"shell\",\"json\"]",
       "count": 2
+    },
+    {
+      "union": "enum [\"types\",\"exports\",\"main\",\"module\",\"fallback\",\"explicit\",\"llm\"]",
+      "count": 5
     },
     {
       "union": "enum [0,1,2,4,8,16,32,64,128,256,512,1024,2048,4096,8192,16384,32768,65536,131072,262144,524288,1048576,2097152,4194304,8388608,16777216,33554432,67108864,134217728,-1,384,3,111551,788968,1920,1536,98304,111550,900095,110991,899503,788872,899327,899967,110735,103359,46015,78783,13247,526824,2623475,944,418,98308,106500]",
@@ -453,6 +481,10 @@
       "count": 4
     },
     {
+      "union": "x-ts-type \"explicit\" | \"ambiguous\" | \"empty\" | \"needs-build\" | \"ok\" | \"unavailable\"",
+      "count": 1
+    },
+    {
       "union": "x-ts-type \"filtered\" | \"no-declaration\" | \"internal\" | \"external-unresolved\"",
       "count": 5
     },
@@ -461,12 +493,16 @@
       "count": 5
     },
     {
-      "union": "x-ts-type \"function\" | \"class\" | \"variable\" | \"interface\" | \"type\" | \"enum\" | \"module\" | \"namespace\" | \"reference\" | \"external\"",
+      "union": "x-ts-type \"function\" | \"class\" | \"variable\" | \"interface\" | \"type\" | \"enum\" | \"namespace\" | \"external\"",
+      "count": 3
+    },
+    {
+      "union": "x-ts-type \"function\" | \"module\" | \"class\" | \"variable\" | \"interface\" | \"type\" | \"enum\" | \"namespace\" | \"reference\" | \"external\"",
       "count": 1
     },
     {
-      "union": "x-ts-type \"function\" | \"class\" | \"variable\" | \"interface\" | \"type\" | \"enum\" | \"namespace\" | \"external\"",
-      "count": 3
+      "union": "x-ts-type \"heuristic\" | \"jev\"",
+      "count": 10
     },
     {
       "union": "x-ts-type \"high\" | \"medium\" | \"low\"",
@@ -487,10 +523,6 @@
     {
       "union": "x-ts-type \"module\" | \"none\" | \"kind\" | \"tag\"",
       "count": 7
-    },
-    {
-      "union": "x-ts-type \"module\" | \"types\" | \"exports\" | \"main\" | \"fallback\" | \"explicit\" | \"llm\"",
-      "count": 1
     },
     {
       "union": "x-ts-type \"No JSDoc descriptions\" | \"No @example tags\" | \"No @param descriptions\"",
@@ -535,6 +567,10 @@
     {
       "union": "x-ts-type \"ts\" | \"js\" | \"tsx\" | \"jsx\" | \"shell\" | \"json\"",
       "count": 2
+    },
+    {
+      "union": "x-ts-type \"types\" | \"exports\" | \"main\" | \"module\" | \"fallback\" | \"explicit\" | \"llm\"",
+      "count": 5
     },
     {
       "union": "x-ts-type () => SpecExport | undefined",
@@ -631,6 +667,10 @@
     {
       "union": "x-ts-type (pattern: string | RegExp) => this",
       "count": 3
+    },
+    {
+      "union": "x-ts-type (ResolveAmbiguous | ResolveEmpty | ResolveExplicit | ResolveNeedsBuild | ResolveOk | ResolveUnavailable) & { cleanup?: () => void; }",
+      "count": 2
     },
     {
       "union": "x-ts-type (signature: Signature, kind: SyntaxKind, enclosingDeclaration: Node | undefined, flags: NodeBuilderFlags | undefined) => (SignatureDeclaration & { typeArguments?: NodeArray<TypeNode>; }) | undefined",
@@ -777,8 +817,12 @@
       "count": 6
     },
     {
-      "union": "x-ts-type boolean | string[]",
+      "union": "x-ts-type boolean | string[] | \"auto\"",
       "count": 7
+    },
+    {
+      "union": "x-ts-type ChoiceQuestion | ScoreQuestion",
+      "count": 1
     },
     {
       "union": "x-ts-type ConcreteSchemaVersion | \"latest\"",
