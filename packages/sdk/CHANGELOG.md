@@ -1,5 +1,27 @@
 # @openpkg-ts/extract
 
+## 0.52.0
+
+### Minor Changes
+
+- f7a1bfe: `--follow-external auto` scores referenced externals with Jev and expands the load-bearing ones. `--jev` also calibrates ambiguous diagnostic severity.
+- efb6822: Route ambiguous packages and entries with `--jev` (Vercel AI Gateway, fail-loud without a key). Clone git/GitHub URLs before resolving.
+- 82783ed: Resolve a TypeScript package and entry from a directory, cwd, or intent instead of requiring an explicit entry file. Specs now record `generation.entryPoint` and `generation.entryPointSource`.
+- a6b1a10: Support TypeScript 6 at runtime: the `typescript` dependency range is now `^5.0.0 || ^6.0.0`. TypeScript 6 is the final release line that ships the JS compiler API this package is built on. CI now runs a 5.9/6.0 test matrix.
+
+  Ambient `@types` packages are now discovered and passed to the compiler explicitly when a project pins neither `types` nor `typeRoots`. TypeScript 6 stopped auto-including `node_modules/@types/*`, which caused globals such as `AbortSignal` to extract as empty schemas.
+
+  Extracted output can differ slightly for packages that re-export TypeScript's own compiler types, because those declaration files differ between the 5.x and 6.x releases.
+
+### Patch Changes
+
+- b63983a: Replace removed and internal TypeScript compiler APIs with public equivalents. Default compiler options (used only when no tsconfig is found) now use NodeNext module and resolution instead of the CommonJS and node10 pair, which TypeScript 7 removes. The polymorphic `this` type is detected via public API instead of an internal type flag. Numeric type-flag literals are replaced with the named `TypeFlags` and `ObjectFlags` enums. No intended change to extracted output.
+
+  Note for packages with no tsconfig anywhere up-tree that set `"type": "module"` and use extensionless relative imports: NodeNext resolution does not resolve those specifiers, so affected exports are omitted from the spec. They are reported in the extraction result under `verification.skipped`. Adding explicit `.js` extensions to relative imports resolves it.
+
+- Updated dependencies [82783ed]
+  - @openpkg-ts/spec@0.52.0
+
 ## 0.51.0
 
 ### Minor Changes

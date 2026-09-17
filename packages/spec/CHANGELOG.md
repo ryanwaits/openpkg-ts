@@ -1,5 +1,11 @@
 # @openpkg-ts/spec
 
+## 0.52.0
+
+### Minor Changes
+
+- 82783ed: Resolve a TypeScript package and entry from a directory, cwd, or intent instead of requiring an explicit entry file. Specs now record `generation.entryPoint` and `generation.entryPointSource`.
+
 ## 0.50.0
 
 ### Minor Changes

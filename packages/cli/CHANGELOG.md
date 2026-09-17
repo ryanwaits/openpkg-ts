@@ -1,5 +1,22 @@
 # @openpkg-ts/cli
 
+## 0.12.0
+
+### Minor Changes
+
+- f7a1bfe: `--follow-external auto` scores referenced externals with Jev and expands the load-bearing ones. `--jev` also calibrates ambiguous diagnostic severity.
+- efb6822: Route ambiguous packages and entries with `--jev` (Vercel AI Gateway, fail-loud without a key). Clone git/GitHub URLs before resolving.
+- 82783ed: Resolve a TypeScript package and entry from a directory, cwd, or intent instead of requiring an explicit entry file. Specs now record `generation.entryPoint` and `generation.entryPointSource`.
+
+### Patch Changes
+
+- Updated dependencies [b63983a]
+- Updated dependencies [f7a1bfe]
+- Updated dependencies [efb6822]
+- Updated dependencies [82783ed]
+- Updated dependencies [a6b1a10]
+  - @openpkg-ts/sdk@0.52.0
+
 ## 0.11.3
 
 ### Patch Changes
