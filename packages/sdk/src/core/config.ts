@@ -19,6 +19,8 @@ export interface OpenpkgConfig {
   only?: string[];
   /** Ignore these exports (supports * wildcards). */
   ignore?: string[];
+  /** Use Jev for package/entry routing. Requires AI_GATEWAY_API_KEY. */
+  decisions?: 'heuristic' | 'jev';
 }
 
 /** Default config filename */
@@ -95,5 +97,6 @@ export function mergeConfig(
     followExternal: cliOptions.followExternal ?? fileConfig.followExternal,
     only: cliOptions.only ?? fileConfig.only,
     ignore: cliOptions.ignore ?? fileConfig.ignore,
+    decisions: cliOptions.decisions ?? fileConfig.decisions,
   };
 }

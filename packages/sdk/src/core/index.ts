@@ -7,6 +7,13 @@ export {
   mergeConfig,
   type OpenpkgConfig,
 } from './config';
+export {
+  type EvaluateFn,
+  type EvaluateRequest,
+  type EvaluateResult,
+  JEV_CONFIDENCE,
+  JEV_MODEL,
+} from './decisions';
 // Diagnostics utilities
 export {
   analyzeSpec,
@@ -47,11 +54,14 @@ export {
 // Query builder
 export { QueryBuilder, query } from './query-builder';
 export {
+  type CloneFn,
   catalogPackages,
+  cloneRemote,
   findWorkspaceRoot,
   isEntryFilePath,
   isRemoteInput,
   type PackageRecord,
+  parseGithubRepo,
   pickEntry,
   type ResolveAmbiguous,
   type ResolveEmpty,
@@ -61,6 +71,7 @@ export {
   type ResolveRemote,
   type ResolveTargetOptions,
   type ResolveTargetResult,
+  type ResolveUnavailable,
   resolveTarget,
 } from './resolve-target';
 // Search utilities

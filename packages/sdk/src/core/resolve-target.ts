@@ -1,6 +1,9 @@
+import { spawn, spawnSync } from 'node:child_process';
 import * as fs from 'node:fs';
+import * as os from 'node:os';
 import * as path from 'node:path';
 import type { EntryPointDetectionMethod } from '@openpkg-ts/spec';
+import { type EvaluateFn, JEV_CONFIDENCE, jevChoice, loadEvaluate } from './decisions';
 
 export type PackageRecord = {
   name: string;
@@ -16,10 +19,15 @@ export type PackageRecord = {
   scripts: string[];
 };
 
+export type CloneFn = (input: string) => Promise<string>;
+
 export type ResolveTargetOptions = {
   input?: string;
   intent?: string;
   cwd?: string;
+  decisions?: 'heuristic' | 'jev';
+  evaluate?: EvaluateFn;
+  clone?: CloneFn;
 };
 
 export type ResolveOk = {
@@ -57,13 +65,19 @@ export type ResolveExplicit = {
   entryPointSource: 'explicit';
 };
 
+export type ResolveUnavailable = {
+  kind: 'unavailable';
+  reason: string;
+};
+
 export type ResolveTargetResult =
   | ResolveOk
   | ResolveAmbiguous
   | ResolveNeedsBuild
   | ResolveEmpty
   | ResolveRemote
-  | ResolveExplicit;
+  | ResolveExplicit
+  | ResolveUnavailable;
 
 const SKIP_DIRS = new Set(['node_modules', 'dist', '.git', 'target', 'coverage', '.next', 'out']);
 const CONV = ['src/index.ts', 'src/index.tsx', 'src/index.mts', 'index.ts', 'index.tsx'];
@@ -76,6 +90,58 @@ export function isRemoteInput(input: string): boolean {
 
 export function isEntryFilePath(input: string): boolean {
   return ENTRY_EXT.test(input) || /\.d\.(ts|mts|cts)$/.test(input);
+}
+
+export function parseGithubRepo(input: string): { owner: string; repo: string } | null {
+  const trimmed = input.trim().replace(/\.git$/, '');
+  const https = trimmed.match(/github\.com[/:]([^/]+)\/([^/#?]+)/i);
+  if (!https) return null;
+  return { owner: https[1], repo: https[2] };
+}
+
+function runCmd(cmd: string, args: string[]): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const child = spawn(cmd, args, { stdio: ['ignore', 'pipe', 'pipe'] });
+    let stderr = '';
+    child.stderr.on('data', (chunk) => {
+      stderr += String(chunk);
+    });
+    child.on('error', reject);
+    child.on('close', (code) => {
+      if (code === 0) resolve();
+      else reject(new Error(`${cmd} ${args.join(' ')} failed: ${stderr.trim() || code}`));
+    });
+  });
+}
+
+function whichCmd(cmd: string): boolean {
+  const checker = process.platform === 'win32' ? 'where' : 'which';
+  return spawnSync(checker, [cmd], { stdio: 'ignore' }).status === 0;
+}
+
+export async function cloneRemote(input: string): Promise<string> {
+  const dest = fs.mkdtempSync(path.join(os.tmpdir(), 'openpkg-'));
+  const github = parseGithubRepo(input);
+  try {
+    if (github && whichCmd('gh')) {
+      await runCmd('gh', [
+        'repo',
+        'clone',
+        `${github.owner}/${github.repo}`,
+        dest,
+        '--',
+        '--depth',
+        '1',
+      ]);
+    } else {
+      const url = input.startsWith('github.com/') ? `https://${input}` : input;
+      await runCmd('git', ['clone', '--depth', '1', url, dest]);
+    }
+  } catch (err) {
+    fs.rmSync(dest, { recursive: true, force: true });
+    throw err;
+  }
+  return dest;
 }
 
 type Candidate = {
@@ -340,6 +406,11 @@ export function pickEntry(
   return { entryFile: best.abs, entryPointSource: methodFor(best) };
 }
 
+function listEntryCandidates(pkgDir: string): Candidate[] {
+  const pkg = readJson(path.join(pkgDir, 'package.json')) ?? {};
+  return collectCandidates(pkgDir, pkg);
+}
+
 function isIgnoredPath(dir: string): boolean {
   const norm = dir.split(path.sep).join('/');
   return /\/(examples|fixtures|__tests__|test-fixtures)(\/|$)/.test(norm);
@@ -385,9 +456,86 @@ function buildCommand(pkg: PackageRecord): string | undefined {
   return undefined;
 }
 
-function finishPackage(pkg: PackageRecord): ResolveTargetResult {
-  const picked = pickEntry(pkg.dir);
-  if (!picked) {
+type ResolveCtx = {
+  decisions: 'heuristic' | 'jev';
+  evaluate?: EvaluateFn;
+  intent?: string;
+};
+
+function head(abs: string, maxChars = 1200): string {
+  try {
+    return fs.readFileSync(abs, 'utf8').slice(0, maxChars);
+  } catch {
+    return '';
+  }
+}
+
+async function jevPickPackage(
+  candidates: PackageRecord[],
+  ctx: ResolveCtx,
+): Promise<PackageRecord | null> {
+  if (!ctx.evaluate || candidates.length < 2) return null;
+  const criteria: Record<string, string> = {};
+  const byId = new Map<string, PackageRecord>();
+  for (const [i, pkg] of candidates.entries()) {
+    const id = `p${i}`;
+    byId.set(id, pkg);
+    criteria[id] = `${pkg.name} — ${pkg.description ?? pkg.dir}${pkg.hasSrc ? ' (src)' : ''}`;
+  }
+  const picked = await jevChoice({
+    evaluate: ctx.evaluate,
+    instructions:
+      'Which package is the public TypeScript SDK to extract? Prefer the named product, not examples, wasm glue, or private packages.',
+    criteria,
+    state: {
+      intent: ctx.intent ?? null,
+      catalog: candidates.map((p, i) => ({
+        id: `p${i}`,
+        name: p.name,
+        description: p.description ?? null,
+        hasSrc: p.hasSrc,
+        hasDist: p.hasDist,
+        types: p.types ?? p.typings ?? null,
+        private: p.private,
+      })),
+    },
+    id: 'package',
+  });
+  if (!picked || picked.confidence < JEV_CONFIDENCE) return null;
+  return byId.get(picked.choice) ?? null;
+}
+
+async function jevPickEntry(cands: Candidate[], ctx: ResolveCtx): Promise<Candidate | null> {
+  if (!ctx.evaluate || cands.length < 2) return null;
+  const criteria: Record<string, string> = {};
+  const byId = new Map<string, Candidate>();
+  for (const [i, c] of cands.entries()) {
+    const id = `c${i}`;
+    byId.set(id, c);
+    criteria[id] = `${c.rel} (${c.source})`;
+  }
+  const picked = await jevChoice({
+    evaluate: ctx.evaluate,
+    instructions:
+      'Which file is the best OpenPkg entry point? Prefer TypeScript source over .d.ts/.js. Prefer the package root public API.',
+    criteria,
+    state: {
+      candidates: cands.map((c, i) => ({
+        id: `c${i}`,
+        path: c.rel,
+        source: c.source,
+        head: head(c.abs),
+      })),
+    },
+    id: 'entry',
+  });
+  if (!picked || picked.confidence < JEV_CONFIDENCE) return null;
+  return byId.get(picked.choice) ?? null;
+}
+
+async function finishPackage(pkg: PackageRecord, ctx: ResolveCtx): Promise<ResolveTargetResult> {
+  const cands = listEntryCandidates(pkg.dir);
+  if (!cands.length) {
     return {
       kind: 'needs-build',
       package: pkg,
@@ -395,27 +543,29 @@ function finishPackage(pkg: PackageRecord): ResolveTargetResult {
       ...(buildCommand(pkg) ? { command: buildCommand(pkg) } : {}),
     };
   }
+  const heuristic = [...cands].sort((a, b) => scoreCandidate(b) - scoreCandidate(a))[0];
+  let chosen = heuristic;
+  let source = methodFor(heuristic);
+  if (ctx.decisions === 'jev' && cands.length >= 2) {
+    const jev = await jevPickEntry(cands, ctx);
+    if (jev) {
+      chosen = jev;
+      source = 'llm';
+    }
+  }
   return {
     kind: 'ok',
     package: pkg,
-    entryFile: picked.entryFile,
-    entryPointSource: picked.entryPointSource,
+    entryFile: chosen.abs,
+    entryPointSource: source,
   };
 }
 
-export function resolveTarget(options: ResolveTargetOptions = {}): ResolveTargetResult {
-  const cwd = path.resolve(options.cwd ?? process.cwd());
-  const raw = options.input?.trim() || cwd;
-
-  if (isRemoteInput(raw)) return { kind: 'remote', input: raw };
-
-  const abs = path.resolve(cwd, raw);
-
-  if (existsFile(abs) && isEntryFilePath(abs)) {
-    return { kind: 'explicit', entryFile: abs, entryPointSource: 'explicit' };
-  }
-
-  const startDir = existsDir(abs) ? abs : cwd;
+async function resolveLocal(
+  abs: string,
+  startDir: string,
+  ctx: ResolveCtx,
+): Promise<ResolveTargetResult> {
   const catalog = catalogPackages(startDir);
   if (!catalog.length) {
     return { kind: 'empty', reason: 'no JS/TS packages found' };
@@ -424,10 +574,10 @@ export function resolveTarget(options: ResolveTargetOptions = {}): ResolveTarget
   const root = findWorkspaceRoot(startDir);
   const pointed = catalog.find((p) => p.dir === abs);
   if (pointed && (isExtractable(pointed) || pointed.dir !== root)) {
-    return finishPackage(pointed);
+    return finishPackage(pointed, ctx);
   }
 
-  const intent = options.intent?.trim();
+  const intent = ctx.intent;
   if (intent) {
     const scored = catalog
       .map((p) => ({ p, n: intentScore(p, intent) }))
@@ -437,16 +587,76 @@ export function resolveTarget(options: ResolveTargetOptions = {}): ResolveTarget
       return { kind: 'empty', reason: `no package matched intent "${intent}"` };
     }
     const top = scored.filter((x) => x.n === scored[0].n).map((x) => x.p);
-    if (top.length === 1) return finishPackage(top[0]);
+    if (top.length === 1) return finishPackage(top[0], ctx);
+    if (ctx.decisions === 'jev') {
+      const jev = await jevPickPackage(top, ctx);
+      if (jev) return finishPackage(jev, ctx);
+    }
     return { kind: 'ambiguous', candidates: top };
   }
 
   const enclosed = enclosingPackage(startDir, catalog);
-  if (enclosed && enclosed.dir !== root) return finishPackage(enclosed);
+  if (enclosed && enclosed.dir !== root) return finishPackage(enclosed, ctx);
 
   const extractable = catalog.filter(isExtractable);
-  if (extractable.length === 1) return finishPackage(extractable[0]);
-  if (extractable.length > 1) return { kind: 'ambiguous', candidates: extractable };
-  if (catalog.length === 1) return finishPackage(catalog[0]);
+  if (extractable.length === 1) return finishPackage(extractable[0], ctx);
+  if (extractable.length > 1) {
+    if (ctx.decisions === 'jev') {
+      const jev = await jevPickPackage(extractable, ctx);
+      if (jev) return finishPackage(jev, ctx);
+    }
+    return { kind: 'ambiguous', candidates: extractable };
+  }
+  if (catalog.length === 1) return finishPackage(catalog[0], ctx);
   return { kind: 'empty', reason: 'no extractable JS/TS packages found' };
+}
+
+export async function resolveTarget(
+  options: ResolveTargetOptions = {},
+): Promise<ResolveTargetResult> {
+  const cwd = path.resolve(options.cwd ?? process.cwd());
+  const raw = options.input?.trim() || cwd;
+  const decisions = options.decisions ?? 'heuristic';
+  const ctx: ResolveCtx = {
+    decisions,
+    evaluate: options.evaluate,
+    intent: options.intent?.trim() || undefined,
+  };
+
+  if (decisions === 'jev' && !ctx.evaluate) {
+    if (!process.env.AI_GATEWAY_API_KEY) {
+      return {
+        kind: 'unavailable',
+        reason:
+          '--jev requires AI_GATEWAY_API_KEY\n  https://vercel.com/docs/ai-gateway\n  omit --jev to stay local',
+      };
+    }
+    try {
+      ctx.evaluate = await loadEvaluate();
+    } catch (err) {
+      return { kind: 'unavailable', reason: err instanceof Error ? err.message : String(err) };
+    }
+  }
+
+  if (isRemoteInput(raw)) {
+    try {
+      const cloned = await (options.clone ?? cloneRemote)(raw);
+      const startDir = cloned;
+      return resolveLocal(startDir, startDir, ctx);
+    } catch (err) {
+      return {
+        kind: 'empty',
+        reason: `failed to clone ${raw}: ${err instanceof Error ? err.message : String(err)}`,
+      };
+    }
+  }
+
+  const abs = path.resolve(cwd, raw);
+
+  if (existsFile(abs) && isEntryFilePath(abs)) {
+    return { kind: 'explicit', entryFile: abs, entryPointSource: 'explicit' };
+  }
+
+  const startDir = existsDir(abs) ? abs : cwd;
+  return resolveLocal(abs, startDir, ctx);
 }

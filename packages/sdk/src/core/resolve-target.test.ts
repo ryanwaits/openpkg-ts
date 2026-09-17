@@ -1,8 +1,16 @@
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
+import { spawnSync } from 'node:child_process';
 import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
-import { catalogPackages, pickEntry, resolveTarget } from './resolve-target';
+import type { EvaluateFn } from './decisions';
+import {
+  catalogPackages,
+  cloneRemote,
+  parseGithubRepo,
+  pickEntry,
+  resolveTarget,
+} from './resolve-target';
 
 function write(file: string, content: string) {
   fs.mkdirSync(path.dirname(file), { recursive: true });
@@ -20,7 +28,7 @@ describe('resolveTarget', () => {
     fs.rmSync(tmp, { recursive: true, force: true });
   });
 
-  test('single package prefers src over dist types', () => {
+  test('single package prefers src over dist types', async () => {
     write(
       path.join(tmp, 'package.json'),
       JSON.stringify({
@@ -32,14 +40,14 @@ describe('resolveTarget', () => {
     write(path.join(tmp, 'src/index.ts'), 'export const ok = 1;\n');
     write(path.join(tmp, 'dist/index.d.ts'), 'export declare const ok: number;\n');
 
-    const result = resolveTarget({ input: tmp, cwd: tmp });
+    const result = await resolveTarget({ input: tmp, cwd: tmp });
     expect(result.kind).toBe('ok');
     if (result.kind !== 'ok') return;
     expect(result.entryFile).toBe(path.join(tmp, 'src/index.ts'));
     expect(result.entryPointSource).toBe('fallback');
   });
 
-  test('falls back to types field when src is absent', () => {
+  test('falls back to types field when src is absent', async () => {
     write(
       path.join(tmp, 'package.json'),
       JSON.stringify({
@@ -49,25 +57,25 @@ describe('resolveTarget', () => {
     );
     write(path.join(tmp, 'index.d.ts'), 'export declare const x: number;\n');
 
-    const result = resolveTarget({ input: tmp, cwd: tmp });
+    const result = await resolveTarget({ input: tmp, cwd: tmp });
     expect(result.kind).toBe('ok');
     if (result.kind !== 'ok') return;
     expect(result.entryFile).toBe(path.join(tmp, 'index.d.ts'));
     expect(result.entryPointSource).toBe('types');
   });
 
-  test('explicit file skips funnel', () => {
+  test('explicit file skips funnel', async () => {
     write(path.join(tmp, 'package.json'), JSON.stringify({ name: 'solo' }));
     write(path.join(tmp, 'src/index.ts'), 'export const a = 1;\n');
     write(path.join(tmp, 'src/other.ts'), 'export const b = 2;\n');
 
-    const result = resolveTarget({ input: path.join(tmp, 'src/other.ts'), cwd: tmp });
+    const result = await resolveTarget({ input: path.join(tmp, 'src/other.ts'), cwd: tmp });
     expect(result.kind).toBe('explicit');
     if (result.kind !== 'explicit') return;
     expect(result.entryFile).toBe(path.join(tmp, 'src/other.ts'));
   });
 
-  test('workspace without intent is ambiguous', () => {
+  test('workspace without intent is ambiguous', async () => {
     write(
       path.join(tmp, 'package.json'),
       JSON.stringify({
@@ -81,13 +89,13 @@ describe('resolveTarget', () => {
     write(path.join(tmp, 'packages/cli/package.json'), JSON.stringify({ name: '@acme/cli' }));
     write(path.join(tmp, 'packages/cli/src/index.ts'), 'export const cli = 1;\n');
 
-    const result = resolveTarget({ input: tmp, cwd: tmp });
+    const result = await resolveTarget({ input: tmp, cwd: tmp });
     expect(result.kind).toBe('ambiguous');
     if (result.kind !== 'ambiguous') return;
     expect(result.candidates.map((c) => c.name).sort()).toEqual(['@acme/cli', '@acme/sdk']);
   });
 
-  test('intent picks the matching package', () => {
+  test('intent picks the matching package', async () => {
     write(
       path.join(tmp, 'package.json'),
       JSON.stringify({
@@ -107,14 +115,14 @@ describe('resolveTarget', () => {
     );
     write(path.join(tmp, 'packages/stacks/src/index.ts'), 'export const stacks = 1;\n');
 
-    const result = resolveTarget({ input: tmp, intent: 'stacks', cwd: tmp });
+    const result = await resolveTarget({ input: tmp, intent: 'stacks', cwd: tmp });
     expect(result.kind).toBe('ok');
     if (result.kind !== 'ok') return;
     expect(result.package.name).toBe('@secondlayer/stacks');
     expect(result.entryPointSource).toBe('fallback');
   });
 
-  test('pointing at a package dir wins', () => {
+  test('pointing at a package dir wins', async () => {
     write(
       path.join(tmp, 'package.json'),
       JSON.stringify({
@@ -128,13 +136,13 @@ describe('resolveTarget', () => {
     write(path.join(tmp, 'packages/cli/package.json'), JSON.stringify({ name: '@acme/cli' }));
     write(path.join(tmp, 'packages/cli/src/index.ts'), 'export const cli = 1;\n');
 
-    const result = resolveTarget({ input: path.join(tmp, 'packages/cli'), cwd: tmp });
+    const result = await resolveTarget({ input: path.join(tmp, 'packages/cli'), cwd: tmp });
     expect(result.kind).toBe('ok');
     if (result.kind !== 'ok') return;
     expect(result.package.name).toBe('@acme/cli');
   });
 
-  test('cwd inside a package picks that package', () => {
+  test('cwd inside a package picks that package', async () => {
     write(
       path.join(tmp, 'package.json'),
       JSON.stringify({
@@ -148,13 +156,13 @@ describe('resolveTarget', () => {
     write(path.join(tmp, 'packages/cli/package.json'), JSON.stringify({ name: '@acme/cli' }));
     write(path.join(tmp, 'packages/cli/src/index.ts'), 'export const cli = 1;\n');
 
-    const result = resolveTarget({ cwd: path.join(tmp, 'packages/sdk') });
+    const result = await resolveTarget({ cwd: path.join(tmp, 'packages/sdk') });
     expect(result.kind).toBe('ok');
     if (result.kind !== 'ok') return;
     expect(result.package.name).toBe('@acme/sdk');
   });
 
-  test('skips private and examples packages', () => {
+  test('skips private and examples packages', async () => {
     write(
       path.join(tmp, 'package.json'),
       JSON.stringify({
@@ -176,13 +184,13 @@ describe('resolveTarget', () => {
     write(path.join(tmp, 'examples/demo/package.json'), JSON.stringify({ name: '@acme/demo' }));
     write(path.join(tmp, 'examples/demo/src/index.ts'), 'export const demo = 1;\n');
 
-    const result = resolveTarget({ input: tmp, cwd: tmp });
+    const result = await resolveTarget({ input: tmp, cwd: tmp });
     expect(result.kind).toBe('ok');
     if (result.kind !== 'ok') return;
     expect(result.package.name).toBe('@acme/sdk');
   });
 
-  test('needs-build when no entry files exist', () => {
+  test('needs-build when no entry files exist', async () => {
     write(
       path.join(tmp, 'package.json'),
       JSON.stringify({
@@ -192,18 +200,151 @@ describe('resolveTarget', () => {
       }),
     );
 
-    const result = resolveTarget({ input: tmp, cwd: tmp });
+    const result = await resolveTarget({ input: tmp, cwd: tmp });
     expect(result.kind).toBe('needs-build');
     if (result.kind !== 'needs-build') return;
     expect(result.command).toBe('bun run build');
   });
 
-  test('remote input is classified, not cloned', () => {
-    const result = resolveTarget({ input: 'https://github.com/stx-labs/clarinet', cwd: tmp });
-    expect(result.kind).toBe('remote');
+  test('remote input clones then resolves', async () => {
+    const repo = path.join(tmp, 'upstream');
+    write(path.join(repo, 'package.json'), JSON.stringify({ name: 'cloned' }));
+    write(path.join(repo, 'src/index.ts'), 'export const cloned = 1;\n');
+    const result = await resolveTarget({
+      input: 'https://github.com/example/cloned',
+      cwd: tmp,
+      clone: async () => repo,
+    });
+    expect(result.kind).toBe('ok');
+    if (result.kind !== 'ok') return;
+    expect(result.package.name).toBe('cloned');
   });
 
-  test('catalog walks pnpm-workspace.yaml', () => {
+  test('jev picks among ambiguous packages', async () => {
+    write(
+      path.join(tmp, 'package.json'),
+      JSON.stringify({ name: 'root', private: true, workspaces: ['packages/*'] }),
+    );
+    write(path.join(tmp, 'packages/sdk/package.json'), JSON.stringify({ name: '@acme/sdk' }));
+    write(path.join(tmp, 'packages/sdk/src/index.ts'), 'export const sdk = 1;\n');
+    write(path.join(tmp, 'packages/cli/package.json'), JSON.stringify({ name: '@acme/cli' }));
+    write(path.join(tmp, 'packages/cli/src/index.ts'), 'export const cli = 1;\n');
+
+    const evaluate: EvaluateFn = async (req) => {
+      const criteria = req.questions.package.criteria;
+      const id = Object.entries(criteria).find(([, v]) => v.includes('@acme/cli'))?.[0] ?? 'p0';
+      return {
+        answers: { package: { choice: id, probabilities: { [id]: 0.9 } } },
+        providerMetadata: { typesafe: { confidence: { package: 0.9 } } },
+      };
+    };
+
+    const result = await resolveTarget({
+      input: tmp,
+      cwd: tmp,
+      decisions: 'jev',
+      evaluate,
+    });
+    expect(result.kind).toBe('ok');
+    if (result.kind !== 'ok') return;
+    expect(result.package.name).toBe('@acme/cli');
+  });
+
+  test('jev low confidence stays ambiguous', async () => {
+    write(
+      path.join(tmp, 'package.json'),
+      JSON.stringify({ name: 'root', private: true, workspaces: ['packages/*'] }),
+    );
+    write(path.join(tmp, 'packages/sdk/package.json'), JSON.stringify({ name: '@acme/sdk' }));
+    write(path.join(tmp, 'packages/sdk/src/index.ts'), 'export const sdk = 1;\n');
+    write(path.join(tmp, 'packages/cli/package.json'), JSON.stringify({ name: '@acme/cli' }));
+    write(path.join(tmp, 'packages/cli/src/index.ts'), 'export const cli = 1;\n');
+
+    const evaluate: EvaluateFn = async () => ({
+      answers: { package: { choice: 'p0', probabilities: { p0: 0.55, p1: 0.45 } } },
+      providerMetadata: { typesafe: { confidence: { package: 0.2 } } },
+    });
+
+    const result = await resolveTarget({
+      input: tmp,
+      cwd: tmp,
+      decisions: 'jev',
+      evaluate,
+    });
+    expect(result.kind).toBe('ambiguous');
+  });
+
+  test('jev without a key is unavailable', async () => {
+    const prev = process.env.AI_GATEWAY_API_KEY;
+    delete process.env.AI_GATEWAY_API_KEY;
+    try {
+      const result = await resolveTarget({ input: tmp, cwd: tmp, decisions: 'jev' });
+      expect(result.kind).toBe('unavailable');
+    } finally {
+      if (prev !== undefined) process.env.AI_GATEWAY_API_KEY = prev;
+    }
+  });
+
+  test('jev marks entryPointSource llm when it overrides heuristic', async () => {
+    write(
+      path.join(tmp, 'package.json'),
+      JSON.stringify({
+        name: 'solo',
+        types: './dist/index.d.ts',
+      }),
+    );
+    write(path.join(tmp, 'src/index.ts'), 'export const src = 1;\n');
+    write(path.join(tmp, 'dist/index.d.ts'), 'export declare const src: number;\n');
+
+    const evaluate: EvaluateFn = async () => ({
+      answers: { entry: { choice: 'c0', probabilities: { c0: 1, c1: 0 } } },
+      providerMetadata: { typesafe: { confidence: { entry: 1 } } },
+    });
+
+    const result = await resolveTarget({
+      input: tmp,
+      cwd: tmp,
+      decisions: 'jev',
+      evaluate,
+    });
+    expect(result.kind).toBe('ok');
+    if (result.kind !== 'ok') return;
+    expect(result.entryPointSource).toBe('llm');
+  });
+
+  test('cloneRemote clones a local git repo', async () => {
+    const repo = path.join(tmp, 'src-repo');
+    write(path.join(repo, 'package.json'), JSON.stringify({ name: 'from-git' }));
+    write(path.join(repo, 'src/index.ts'), 'export const fromGit = 1;\n');
+    const git = (args: string[]) =>
+      spawnSync('git', args, { cwd: repo, encoding: 'utf8', stdio: 'pipe' });
+    git(['init']);
+    git(['add', '.']);
+    const commit = git(['-c', 'user.email=t@t', '-c', 'user.name=t', 'commit', '-m', 'init']);
+    if (commit.status !== 0) return;
+    const dest = await cloneRemote(repo);
+    try {
+      expect(fs.existsSync(path.join(dest, 'package.json'))).toBe(true);
+      const result = await resolveTarget({ input: dest, cwd: dest });
+      expect(result.kind).toBe('ok');
+      if (result.kind === 'ok') expect(result.package.name).toBe('from-git');
+    } finally {
+      fs.rmSync(dest, { recursive: true, force: true });
+    }
+  });
+
+  test('parseGithubRepo reads owner/repo', () => {
+    expect(parseGithubRepo('https://github.com/stx-labs/clarinet')).toEqual({
+      owner: 'stx-labs',
+      repo: 'clarinet',
+    });
+    expect(parseGithubRepo('git@github.com:stx-labs/clarinet.git')).toEqual({
+      owner: 'stx-labs',
+      repo: 'clarinet',
+    });
+  });
+
+  test('catalog walks pnpm-workspace.yaml', async () => {
     write(path.join(tmp, 'pnpm-workspace.yaml'), "packages:\n  - 'packages/*'\n");
     write(path.join(tmp, 'package.json'), JSON.stringify({ name: 'root', private: true }));
     write(path.join(tmp, 'packages/a/package.json'), JSON.stringify({ name: 'a' }));
@@ -216,7 +357,7 @@ describe('resolveTarget', () => {
     expect(names).toContain('b');
   });
 
-  test('pickEntry scores source above d.ts', () => {
+  test('pickEntry scores source above d.ts', async () => {
     write(
       path.join(tmp, 'package.json'),
       JSON.stringify({
