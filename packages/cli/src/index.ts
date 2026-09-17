@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import fs from 'node:fs';
 import path from 'node:path';
+import readline from 'node:readline/promises';
 import { parseArgs } from 'node:util';
 import {
   calculateNextVersion,
@@ -14,7 +15,10 @@ import {
   loadConfig,
   mergeConfig,
   type OpenpkgConfig,
+  type PackageRecord,
+  pickEntry,
   recommendSemverBump,
+  resolveTarget,
   type SchemaVersion,
 } from '@openpkg-ts/sdk';
 
@@ -24,15 +28,15 @@ type ParsedSpec = { openpkg?: string; meta?: { version?: string } };
 const HELP = `openpkg - extract TypeScript API specs and generate docs
 
 Usage:
-  openpkg spec <entry.ts> [-o spec.json] [--follow-external <pkg,...>]
-  openpkg docs <entry.ts | spec.json> [-f md|html|json] [-o out]
-  openpkg list <entry.ts> [--json]
+  openpkg spec [path | entry.ts] [intent...] [-o spec.json] [--follow-external <pkg,...>]
+  openpkg docs [path | entry.ts | spec.json] [intent...] [-f md|html|json] [-o out]
+  openpkg list [path | entry.ts] [intent...] [--json]
   openpkg validate <spec.json>
   openpkg diff <old.json> <new.json> [--json]
 
 Commands:
-  spec      Extract an OpenPkg spec from a TypeScript entry point
-  docs      Generate docs from an entry point or an existing spec file
+  spec      Extract an OpenPkg spec (dir, cwd, or entry file)
+  docs      Generate docs from a package, entry point, or spec file
   list      List exports (name, kind, location)
   validate  Validate a spec file against the OpenPkg meta-schema
   diff      Compare two spec files and recommend a semver bump
@@ -87,7 +91,72 @@ function reportDiagnostics(diagnostics: Array<{ severity: string; message: strin
   }
 }
 
-/** Split a comma/space-separated flag value into a trimmed list. */
+function parseTargetArgs(positionals: string[], cwd: string): { input: string; intent?: string } {
+  if (!positionals.length) return { input: cwd };
+  const first = positionals[0];
+  const rest = positionals.slice(1).join(' ').trim();
+  const abs = path.resolve(cwd, first);
+  if (first.startsWith('https://') || first.startsWith('http://') || first.startsWith('git@')) {
+    return { input: first, ...(rest ? { intent: rest } : {}) };
+  }
+  if (fs.existsSync(abs)) {
+    return { input: abs, ...(rest ? { intent: rest } : {}) };
+  }
+  return { input: cwd, intent: positionals.join(' ') };
+}
+
+function formatPackages(candidates: PackageRecord[], cwd: string): string {
+  return candidates
+    .map((c, i) => {
+      const rel = path.relative(cwd, c.dir) || '.';
+      return `  ${i + 1}. ${c.name}  ${rel}`;
+    })
+    .join('\n');
+}
+
+async function choosePackage(candidates: PackageRecord[], cwd: string): Promise<PackageRecord> {
+  const body = `multiple packages — pick one:\n${formatPackages(candidates, cwd)}`;
+  if (!process.stdin.isTTY || !process.stderr.isTTY) {
+    const hint = candidates[0]?.name.split('/').pop() ?? 'sdk';
+    fail(`${body}\nre-run with a path or intent, e.g. openpkg spec . ${hint}`);
+  }
+  console.error(body);
+  const rl = readline.createInterface({ input: process.stdin, output: process.stderr });
+  try {
+    const answer = await rl.question(`Package [1-${candidates.length}]: `);
+    const i = Number(answer.trim());
+    if (!Number.isInteger(i) || i < 1 || i > candidates.length) fail('invalid selection');
+    return candidates[i - 1];
+  } finally {
+    rl.close();
+  }
+}
+
+async function resolveCliTarget(positionals: string[]) {
+  const cwd = process.cwd();
+  const { input, intent } = parseTargetArgs(positionals, cwd);
+  const resolved = resolveTarget({ input, intent, cwd });
+  if (resolved.kind === 'remote') {
+    fail('remote repos are not supported yet');
+  }
+  if (resolved.kind === 'empty') fail(resolved.reason);
+  if (resolved.kind === 'needs-build') {
+    console.error(`error: ${resolved.reason}`);
+    if (resolved.command) console.error(`  → ${resolved.command}`);
+    process.exit(2);
+  }
+  if (resolved.kind === 'explicit') {
+    return { entryFile: resolved.entryFile, entryPointSource: resolved.entryPointSource };
+  }
+  if (resolved.kind === 'ok') {
+    return { entryFile: resolved.entryFile, entryPointSource: resolved.entryPointSource };
+  }
+  const chosen = await choosePackage(resolved.candidates, cwd);
+  const picked = pickEntry(chosen.dir);
+  if (!picked) fail(`no TypeScript entry found in ${chosen.name}`);
+  return picked;
+}
+
 function toList(value: string | undefined): string[] | undefined {
   if (!value) return undefined;
   const items = value
@@ -130,10 +199,8 @@ async function specCommand(args: string[]): Promise<void> {
     },
     allowPositionals: true,
   });
-  const entryFile = positionals[0];
-  if (!entryFile) fail('spec requires an entry file (openpkg spec src/index.ts)');
+  const { entryFile, entryPointSource } = await resolveCliTarget(positionals);
 
-  // Config file (openpkg.config.json or package.json "openpkg"), overridden by flags.
   const fileConfig = loadConfig(process.cwd());
   const cliConfig: Partial<OpenpkgConfig> = {
     followExternal: values['follow-external-all']
@@ -146,6 +213,7 @@ async function specCommand(args: string[]): Promise<void> {
 
   const { spec, diagnostics } = await extractSpec({
     entryFile,
+    entryPointSource,
     followExternal: config.followExternal,
     only: config.only,
     ignore: config.ignore,
@@ -165,16 +233,15 @@ async function docsCommand(args: string[]): Promise<void> {
     },
     allowPositionals: true,
   });
-  const input = positionals[0];
-  if (!input) fail('docs requires an entry file or spec file (openpkg docs src/index.ts)');
   const format = values.format ?? 'md';
   if (!['md', 'html', 'json'].includes(format)) fail(`unknown format "${format}" (md|html|json)`);
 
   let docs: ReturnType<typeof createDocs>;
-  if (input.endsWith('.json')) {
-    docs = createDocs(input);
+  if (positionals[0]?.endsWith('.json')) {
+    docs = createDocs(positionals[0]);
   } else {
-    const { spec, diagnostics } = await extractSpec({ entryFile: input });
+    const { entryFile, entryPointSource } = await resolveCliTarget(positionals);
+    const { spec, diagnostics } = await extractSpec({ entryFile, entryPointSource });
     reportDiagnostics(diagnostics);
     docs = createDocs(spec);
   }
@@ -194,8 +261,7 @@ async function listCommand(args: string[]): Promise<void> {
     options: { json: { type: 'boolean' } },
     allowPositionals: true,
   });
-  const entryFile = positionals[0];
-  if (!entryFile) fail('list requires an entry file (openpkg list src/index.ts)');
+  const { entryFile } = await resolveCliTarget(positionals);
 
   const { exports, errors } = await listExports({ entryFile });
   for (const err of errors) {

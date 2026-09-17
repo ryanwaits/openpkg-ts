@@ -6,8 +6,11 @@ import path from 'node:path';
 const CLI = path.join(import.meta.dir, 'index.ts');
 const FIXTURE = path.join(import.meta.dir, '..', 'test-fixtures', 'sample.ts');
 
-async function run(args: string[]): Promise<{ stdout: string; stderr: string; code: number }> {
-  const proc = Bun.spawn(['bun', CLI, ...args], { stdout: 'pipe', stderr: 'pipe' });
+async function run(
+  args: string[],
+  cwd?: string,
+): Promise<{ stdout: string; stderr: string; code: number }> {
+  const proc = Bun.spawn(['bun', CLI, ...args], { cwd, stdout: 'pipe', stderr: 'pipe' });
   const [stdout, stderr, code] = await Promise.all([
     new Response(proc.stdout).text(),
     new Response(proc.stderr).text(),
@@ -222,6 +225,75 @@ describe('openpkg cli', () => {
       expect(payload.recommendation.bump).toBe('major');
       expect(payload.breaking.length).toBeGreaterThan(0);
       expect(payload.nextVersion).toBe('2.0.0');
+    });
+  });
+
+  describe('target resolution', () => {
+    let dir: string;
+
+    beforeAll(() => {
+      dir = fs.mkdtempSync(path.join(os.tmpdir(), 'openpkg-cli-resolve-'));
+      fs.writeFileSync(
+        path.join(dir, 'package.json'),
+        JSON.stringify({
+          name: 'root',
+          private: true,
+          workspaces: ['packages/*'],
+        }),
+      );
+      const sdk = path.join(dir, 'packages/sdk');
+      fs.mkdirSync(path.join(sdk, 'src'), { recursive: true });
+      fs.writeFileSync(path.join(sdk, 'package.json'), JSON.stringify({ name: '@acme/sdk' }));
+      fs.writeFileSync(path.join(sdk, 'src/index.ts'), 'export const sdk = 1;\n');
+      const stacks = path.join(dir, 'packages/stacks');
+      fs.mkdirSync(path.join(stacks, 'src'), { recursive: true });
+      fs.writeFileSync(
+        path.join(stacks, 'package.json'),
+        JSON.stringify({ name: '@secondlayer/stacks', description: 'Typed Stacks client' }),
+      );
+      fs.writeFileSync(path.join(stacks, 'src/index.ts'), 'export const stacks = 1;\n');
+    });
+
+    afterAll(() => {
+      fs.rmSync(dir, { recursive: true, force: true });
+    });
+
+    it('spec with no args from a package dir extracts', async () => {
+      const pkg = path.join(dir, 'packages/sdk');
+      const { stdout, code } = await run(['spec'], pkg);
+      expect(code).toBe(0);
+      const spec = JSON.parse(stdout);
+      expect(spec.exports.map((e: { name: string }) => e.name)).toContain('sdk');
+      expect(spec.generation.entryPointSource).toBe('fallback');
+    });
+
+    it('spec with intent picks the matching package', async () => {
+      const { stdout, code } = await run(['spec', '.', 'stacks'], dir);
+      expect(code).toBe(0);
+      const spec = JSON.parse(stdout);
+      expect(spec.exports.map((e: { name: string }) => e.name)).toContain('stacks');
+      expect(spec.meta.name).toBe('@secondlayer/stacks');
+    });
+
+    it('spec at workspace root without intent lists packages', async () => {
+      const { stderr, code } = await run(['spec'], dir);
+      expect(code).toBe(1);
+      expect(stderr).toContain('multiple packages');
+      expect(stderr).toContain('@acme/sdk');
+      expect(stderr).toContain('@secondlayer/stacks');
+    });
+
+    it('spec records explicit entryPointSource for a file', async () => {
+      const { stdout, code } = await run(['spec', FIXTURE]);
+      expect(code).toBe(0);
+      const spec = JSON.parse(stdout);
+      expect(spec.generation.entryPointSource).toBe('explicit');
+    });
+
+    it('spec rejects remote urls', async () => {
+      const { stderr, code } = await run(['spec', 'https://github.com/stx-labs/clarinet']);
+      expect(code).toBe(1);
+      expect(stderr).toContain('remote repos');
     });
   });
 });
