@@ -94,6 +94,33 @@ describe('ambient/external type stubs', () => {
       const props = ((widget?.schema ?? {}) as Record<string, Record<string, unknown>>).properties;
       expect(props?.id).toEqual({ type: 'string' });
     });
+
+    test('followExternal auto expands when Jev scores essential', async () => {
+      const { spec } = await extract({
+        entryFile: entry,
+        followExternal: 'auto',
+        evaluate: async () => ({
+          answers: { t0: { score: 2 } },
+          providerMetadata: { typesafe: { confidence: { t0: 1 } } },
+        }),
+      });
+      const widget = spec.types?.find((t) => t.name === 'Widget');
+      const props = ((widget?.schema ?? {}) as Record<string, Record<string, unknown>>).properties;
+      expect(props?.id).toEqual({ type: 'string' });
+    });
+
+    test('followExternal auto stubs when Jev scores opaque', async () => {
+      const { spec } = await extract({
+        entryFile: entry,
+        followExternal: 'auto',
+        evaluate: async () => ({
+          answers: { t0: { score: 0 } },
+          providerMetadata: { typesafe: { confidence: { t0: 1 } } },
+        }),
+      });
+      const widget = spec.types?.find((t) => t.name === 'Widget');
+      expect(widget?.external).toBe(true);
+    });
   });
 
   test('project-local types still expand fully by default', async () => {

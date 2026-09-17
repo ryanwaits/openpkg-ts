@@ -14,7 +14,7 @@ export interface OpenpkgConfig {
    * them as opaque stubs. `true` follows every dependency; a string[] follows
    * only the named packages (by declaring package name). Default: stub.
    */
-  followExternal?: boolean | string[];
+  followExternal?: boolean | string[] | 'auto';
   /** Only extract these exports (supports * wildcards). */
   only?: string[];
   /** Ignore these exports (supports * wildcards). */

@@ -21,7 +21,7 @@ export interface ExpansionOptions {
    * packages (in addition to workspace siblings); false → skip the expansion
    * pass entirely; undefined → workspace siblings only.
    */
-  followExternal?: boolean | string[];
+  followExternal?: boolean | string[] | 'auto';
   /** Workspace sibling packages from the workspace map (name → dir). */
   workspacePackages: ReadonlyMap<string, string>;
   /** Entry file — used to scope name collisions to the entry package. */
@@ -41,7 +41,7 @@ function isLibFile(fileName: string): boolean {
  * always expand.
  */
 export function createExternalExpansionPredicate(opts: {
-  followExternal?: boolean | string[];
+  followExternal?: boolean | string[] | 'auto';
   workspacePackages: ReadonlyMap<string, string>;
 }): (symbol: ts.Symbol) => boolean {
   // Match a package name against a followExternal entry. Supports exact names
@@ -56,8 +56,12 @@ export function createExternalExpansionPredicate(opts: {
   const packageAllowed = (pkg: string): boolean => {
     if (pkg === 'typescript') return false;
     if (opts.followExternal === true) return true;
-    if (Array.isArray(opts.followExternal) && opts.followExternal.some((e) => matchesEntry(e, pkg)))
+    if (
+      Array.isArray(opts.followExternal) &&
+      opts.followExternal.some((e) => matchesEntry(e, pkg))
+    ) {
       return true;
+    }
     return opts.workspacePackages.has(pkg);
   };
 
@@ -71,6 +75,62 @@ export function createExternalExpansionPredicate(opts: {
     // Project or workspace-resolved source file
     return true;
   };
+}
+
+export function collectReferencedExternals(
+  exportedSymbols: readonly ts.Symbol[],
+  checker: ts.TypeChecker,
+  workspacePackages: ReadonlyMap<string, string>,
+): { typeName: string; package: string }[] {
+  const out: { typeName: string; package: string }[] = [];
+  const seen = new Set<string>();
+  const visited = new Set<ts.Type>();
+
+  const consider = (symbol: ts.Symbol | undefined) => {
+    if (!symbol) return;
+    const decl = symbol.declarations?.[0];
+    if (!decl) return;
+    const fileName = decl.getSourceFile().fileName;
+    if (isLibFile(fileName)) return;
+    const match = fileName.match(NODE_MODULES_PKG);
+    if (!match) return;
+    const pkg = match[1];
+    if (pkg === 'typescript' || workspacePackages.has(pkg)) return;
+    const typeName = symbol.getName();
+    if (typeName.startsWith('__')) return;
+    const key = `${pkg}:${typeName}`;
+    if (seen.has(key)) return;
+    seen.add(key);
+    out.push({ typeName, package: pkg });
+  };
+
+  const visit = (type: ts.Type, depth: number): void => {
+    if (!type || depth > 20 || visited.has(type)) return;
+    visited.add(type);
+    const symbol = type.aliasSymbol ?? type.getSymbol();
+    consider(symbol);
+    const match = symbol?.declarations?.[0]?.getSourceFile().fileName.match(NODE_MODULES_PKG);
+    if (match && !workspacePackages.has(match[1])) return;
+
+    for (const arg of type.aliasTypeArguments ?? []) visit(arg, depth + 1);
+    const typeRef = type as ts.TypeReference;
+    if (typeRef.target) {
+      for (const arg of checker.getTypeArguments(typeRef) ?? []) visit(arg, depth + 1);
+    }
+    if (type.isUnion() || type.isIntersection()) {
+      for (const t of type.types) visit(t, depth + 1);
+    }
+    for (const sig of [...type.getCallSignatures(), ...type.getConstructSignatures()]) {
+      for (const param of sig.getParameters()) visit(checker.getTypeOfSymbol(param), depth + 1);
+      visit(sig.getReturnType(), depth + 1);
+    }
+  };
+
+  for (const symbol of exportedSymbols) {
+    visit(checker.getTypeOfSymbol(symbol), 0);
+    visit(checker.getDeclaredTypeOfSymbol(symbol), 0);
+  }
+  return out;
 }
 
 export function expandReachableTypes(

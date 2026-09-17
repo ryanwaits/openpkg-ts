@@ -14,6 +14,7 @@ import ts from 'typescript';
 import { resolveExportTarget } from '../ast/resolve';
 import { isSymbolDeprecated, parseInlineTags } from '../ast/utils';
 import { createProgram } from '../compiler/program';
+import { loadEvaluate } from '../core/decisions';
 import { extractStandardSchemasFromProject } from '../schema/standard-schema';
 import { serializeClass } from '../serializers/classes';
 import { createContext, type SerializerContext } from '../serializers/context';
@@ -38,9 +39,14 @@ import {
   matchesExternalPattern,
   resolveExternalModule,
 } from './external-resolver';
+import { calibrateDiagnostics, selectFollowExternal } from './jev-extract';
 import { mergeRuntimeSchemas } from './schema-merger';
 import { clearTypeDefinitionCache, getRegexCache } from './type-cache';
-import { createExternalExpansionPredicate, expandReachableTypes } from './type-expansion';
+import {
+  collectReferencedExternals,
+  createExternalExpansionPredicate,
+  expandReachableTypes,
+} from './type-expansion';
 import {
   BUILTIN_TYPES as BUILTIN_TYPES_SET,
   buildVerificationSummary,
@@ -239,6 +245,41 @@ export async function extract(options: ExtractOptions): Promise<ExtractResult> {
       });
     }
 
+    let followExternal = options.followExternal;
+    let evaluate = options.evaluate;
+    const wantsJev = options.decisions === 'jev' || followExternal === 'auto';
+    if (wantsJev && !evaluate) {
+      if (process.env.AI_GATEWAY_API_KEY) {
+        try {
+          evaluate = await loadEvaluate();
+        } catch (err) {
+          diagnostics.push({
+            message: err instanceof Error ? err.message : String(err),
+            severity: 'error',
+            code: 'JEV_UNAVAILABLE',
+          });
+        }
+      } else if (followExternal === 'auto') {
+        diagnostics.push({
+          message: 'followExternal auto requires --jev and AI_GATEWAY_API_KEY',
+          severity: 'error',
+          code: 'JEV_UNAVAILABLE',
+        });
+      }
+    }
+    if (followExternal === 'auto') {
+      if (!evaluate) {
+        followExternal = undefined;
+      } else {
+        const refs = collectReferencedExternals(
+          exportedSymbols,
+          typeChecker,
+          result.workspacePackages ?? new Map(),
+        );
+        followExternal = await selectFollowExternal(refs, evaluate);
+      }
+    }
+
     const ctx = createContext(program, sourceFile, {
       maxTypeDepth,
       maxExternalTypeDepth,
@@ -249,7 +290,7 @@ export async function extract(options: ExtractOptions): Promise<ExtractResult> {
       // Ambient/external types outside this scope register as opaque stubs.
       // followExternal: true (or listing a package) restores full expansion.
       shouldExpandExternal: createExternalExpansionPredicate({
-        followExternal: options.followExternal,
+        followExternal,
         workspacePackages: result.workspacePackages ?? new Map(),
       }),
       // Used to package-scope the ids of same-named types across packages.
@@ -396,7 +437,7 @@ export async function extract(options: ExtractOptions): Promise<ExtractResult> {
     // references but flattening erased (Omit targets, heritage bases,
     // inherited signature types). Workspace deps by default; see followExternal.
     expandReachableTypes(filteredSymbols, ctx, {
-      followExternal: options.followExternal,
+      followExternal,
       workspacePackages: result.workspacePackages ?? new Map(),
       entryFile,
     });
@@ -586,6 +627,10 @@ export async function extract(options: ExtractOptions): Promise<ExtractResult> {
         code: 'EXPORT_VERIFICATION_FAILED',
         suggestion: 'Check serialization errors for these exports',
       });
+    }
+
+    if (evaluate) {
+      await calibrateDiagnostics(diagnostics, evaluate);
     }
 
     return {
