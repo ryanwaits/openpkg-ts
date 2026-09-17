@@ -511,6 +511,10 @@ export type SpecGenerationMeta = {
   schemaExtraction?: 'hybrid';
   /** Exports that were skipped during extraction */
   skipped?: SpecSkippedExport[];
+  /** Entry file that was analyzed */
+  entryPoint?: string;
+  /** How the entry point was detected */
+  entryPointSource?: EntryPointDetectionMethod;
 };
 
 export type OpenPkg = {

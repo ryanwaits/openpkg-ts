@@ -72,6 +72,11 @@
               "reason": { "type": "string" }
             }
           }
+        },
+        "entryPoint": { "type": "string" },
+        "entryPointSource": {
+          "type": "string",
+          "enum": ["types", "exports", "main", "module", "fallback", "explicit", "llm"]
         }
       }
     },
