@@ -47,7 +47,8 @@ Options:
   -f, --format            docs output format: md (default), html, json
       --json              list/diff output as JSON
       --follow-external   Expand types from these packages (comma-separated,
-                          globs ok: "@ai-sdk/*"). Default: stub externals.
+                          globs ok: "@ai-sdk/*", or "auto" with --jev).
+                          Default: stub externals.
       --follow-external-all   Expand every external package (use with care)
       --only              Only extract these exports (comma-separated, * ok)
       --ignore            Ignore these exports (comma-separated, * ok)
@@ -184,6 +185,16 @@ function toList(value: string | undefined): string[] | undefined {
   return items.length > 0 ? items : undefined;
 }
 
+function parseFollowExternal(
+  value: string | undefined,
+  all?: boolean,
+): boolean | string[] | 'auto' | undefined {
+  if (all) return true;
+  if (!value) return undefined;
+  if (value.trim() === 'auto') return 'auto';
+  return toList(value);
+}
+
 /** Print the external packages that were stubbed, with the exact names to
  * follow — so users never have to guess the declaring package. */
 function reportStubbedExternals(spec: { types?: Array<Record<string, unknown>> }): void {
@@ -221,9 +232,10 @@ async function specCommand(args: string[]): Promise<void> {
 
   const fileConfig = loadConfig(process.cwd());
   const cliConfig: Partial<OpenpkgConfig> = {
-    followExternal: values['follow-external-all']
-      ? true
-      : toList(values['follow-external'] as string | undefined),
+    followExternal: parseFollowExternal(
+      values['follow-external'] as string | undefined,
+      values['follow-external-all'],
+    ),
     only: toList(values.only as string | undefined),
     ignore: toList(values.ignore as string | undefined),
     ...(values.jev ? { decisions: 'jev' as const } : {}),
@@ -233,6 +245,9 @@ async function specCommand(args: string[]): Promise<void> {
     cliConfig.decisions ?? fileConfig?.decisions,
   );
   const config = mergeConfig(fileConfig, cliConfig);
+  if (config.followExternal === 'auto' && config.decisions !== 'jev') {
+    fail('followExternal auto requires --jev');
+  }
 
   const { spec, diagnostics } = await extractSpec({
     entryFile,
@@ -241,6 +256,7 @@ async function specCommand(args: string[]): Promise<void> {
     only: config.only,
     ignore: config.ignore,
     externals: config.externals,
+    decisions: config.decisions,
   });
   reportDiagnostics(diagnostics);
   if (!config.followExternal) reportStubbedExternals(spec);

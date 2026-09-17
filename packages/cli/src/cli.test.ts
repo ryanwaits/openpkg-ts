@@ -309,5 +309,14 @@ describe('openpkg cli', () => {
       expect(code).toBe(0);
       expect(stdout).toContain('--jev');
     });
+
+    it('follow-external auto without --jev fails', async () => {
+      const { stderr, code } = await run(
+        ['spec', path.join(dir, 'packages/sdk'), '--follow-external', 'auto'],
+        dir,
+      );
+      expect(code).toBe(1);
+      expect(stderr).toContain('auto requires --jev');
+    });
   });
 });
