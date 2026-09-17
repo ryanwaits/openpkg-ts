@@ -85,6 +85,32 @@ function resolveWorkspaceEntry(pkgDir: string): string | undefined {
   return candidates.find((c) => fs.existsSync(c));
 }
 
+/** True for real directories and directory symlinks (pnpm). Dirent.isDirectory() is false for the latter. */
+function isDirentDir(parent: string, entry: fs.Dirent): boolean {
+  if (entry.isDirectory()) return true;
+  if (!entry.isSymbolicLink()) return false;
+  try {
+    return fs.statSync(path.join(parent, entry.name)).isDirectory();
+  } catch {
+    return false;
+  }
+}
+
+function extensionOf(file: string): ts.Extension {
+  if (file.endsWith('.d.mts')) return ts.Extension.Dmts;
+  if (file.endsWith('.d.cts')) return ts.Extension.Dcts;
+  if (file.endsWith('.d.ts')) return ts.Extension.Dts;
+  if (file.endsWith('.mts')) return ts.Extension.Mts;
+  if (file.endsWith('.cts')) return ts.Extension.Cts;
+  if (file.endsWith('.tsx')) return ts.Extension.Tsx;
+  if (file.endsWith('.ts')) return ts.Extension.Ts;
+  if (file.endsWith('.mjs')) return ts.Extension.Mjs;
+  if (file.endsWith('.cjs')) return ts.Extension.Cjs;
+  if (file.endsWith('.jsx')) return ts.Extension.Jsx;
+  if (file.endsWith('.js')) return ts.Extension.Js;
+  return ts.Extension.Ts;
+}
+
 /**
  * Resolve project references from tsconfig.json.
  * Returns entry files from each referenced project.
@@ -215,7 +241,7 @@ function buildWorkspaceMap(baseDir: string): WorkspaceMap | undefined {
 
     const entries = fs.readdirSync(globDir, { withFileTypes: true });
     for (const entry of entries) {
-      if (!entry.isDirectory()) continue;
+      if (!isDirentDir(globDir, entry)) continue;
       const pkgDir = path.join(globDir, entry.name);
       const pkgJsonPath = path.join(pkgDir, 'package.json');
       if (!fs.existsSync(pkgJsonPath)) continue;
@@ -254,7 +280,7 @@ function discoverAmbientTypePackages(baseDir: string): string[] {
     try {
       if (fs.existsSync(typesDir) && fs.statSync(typesDir).isDirectory()) {
         for (const entry of fs.readdirSync(typesDir, { withFileTypes: true })) {
-          if (!entry.isDirectory() || entry.name.startsWith('.')) continue;
+          if (entry.name.startsWith('.') || !isDirentDir(typesDir, entry)) continue;
           if (seen.has(entry.name)) continue;
           seen.add(entry.name);
           found.push(entry.name);
@@ -361,43 +387,43 @@ export function createProgram(options: ProgramOptions): ProgramResult {
   const compilerHost = ts.createCompilerHost(compilerOptions, true);
   let inMemorySource: ts.SourceFile | undefined;
 
-  // Wrap module resolution to handle workspace packages
+  // Wrap module resolution to handle workspace packages. Must use
+  // resolveModuleNameLiterals so NodeNext keeps each import's resolution mode
+  // (import vs require export conditions). The deprecated resolveModuleNames
+  // hook drops that mode and TypeScript then picks require.
   if (workspaceMap) {
-    const originalResolveModuleNames = compilerHost.resolveModuleNames?.bind(compilerHost);
-    compilerHost.resolveModuleNames = (
-      moduleNames: string[],
-      containingFile: string,
-      _reusedNames: string[] | undefined,
-      redirectedReference: ts.ResolvedProjectReference | undefined,
-      options: ts.CompilerOptions,
-    ): (ts.ResolvedModule | undefined)[] => {
-      return moduleNames.map((moduleName) => {
-        // Check if this is a workspace package
-        const pkgDir = workspaceMap.packages.get(moduleName);
+    compilerHost.resolveModuleNameLiterals = (
+      moduleLiterals,
+      containingFile,
+      redirectedReference,
+      options,
+      containingSourceFile,
+    ) =>
+      moduleLiterals.map((literal) => {
+        const pkgDir = workspaceMap.packages.get(literal.text);
         if (pkgDir) {
           const entryPath = resolveWorkspaceEntry(pkgDir);
           if (entryPath) {
-            return { resolvedFileName: entryPath, isExternalLibraryImport: false };
+            return {
+              resolvedModule: {
+                resolvedFileName: entryPath,
+                isExternalLibraryImport: false,
+                extension: extensionOf(entryPath),
+              },
+            };
           }
         }
-
-        // Fall back to standard resolution
-        if (originalResolveModuleNames) {
-          const result = originalResolveModuleNames(
-            [moduleName],
-            containingFile,
-            _reusedNames,
-            redirectedReference,
-            options,
-          );
-          return result[0];
-        }
-
-        // Use TypeScript's built-in resolution
-        const resolved = ts.resolveModuleName(moduleName, containingFile, options, compilerHost);
-        return resolved.resolvedModule;
+        const mode = ts.getModeForUsageLocation(containingSourceFile, literal, options);
+        return ts.resolveModuleName(
+          literal.text,
+          containingFile,
+          options,
+          compilerHost,
+          undefined,
+          redirectedReference,
+          mode,
+        );
       });
-    };
   }
 
   if (content !== undefined) {
