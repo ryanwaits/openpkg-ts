@@ -9,8 +9,14 @@ const FIXTURE = path.join(import.meta.dir, '..', 'test-fixtures', 'sample.ts');
 async function run(
   args: string[],
   cwd?: string,
+  env?: Record<string, string | undefined>,
 ): Promise<{ stdout: string; stderr: string; code: number }> {
-  const proc = Bun.spawn(['bun', CLI, ...args], { cwd, stdout: 'pipe', stderr: 'pipe' });
+  const proc = Bun.spawn(['bun', CLI, ...args], {
+    cwd,
+    env: env as Record<string, string> | undefined,
+    stdout: 'pipe',
+    stderr: 'pipe',
+  });
   const [stdout, stderr, code] = await Promise.all([
     new Response(proc.stdout).text(),
     new Response(proc.stderr).text(),
@@ -290,10 +296,18 @@ describe('openpkg cli', () => {
       expect(spec.generation.entryPointSource).toBe('explicit');
     });
 
-    it('spec rejects remote urls', async () => {
-      const { stderr, code } = await run(['spec', 'https://github.com/stx-labs/clarinet']);
+    it('--jev without a key fails loud', async () => {
+      const env = { ...process.env };
+      delete env.AI_GATEWAY_API_KEY;
+      const { stderr, code } = await run(['spec', '--jev'], dir, env);
       expect(code).toBe(1);
-      expect(stderr).toContain('remote repos');
+      expect(stderr).toContain('AI_GATEWAY_API_KEY');
+    });
+
+    it('help mentions --jev', async () => {
+      const { stdout, code } = await run(['--help']);
+      expect(code).toBe(0);
+      expect(stdout).toContain('--jev');
     });
   });
 });

@@ -11,6 +11,7 @@ import {
   extractSpec,
   getAvailableVersions,
   getValidationErrors,
+  isRemoteInput,
   listExports,
   loadConfig,
   mergeConfig,
@@ -50,6 +51,7 @@ Options:
       --follow-external-all   Expand every external package (use with care)
       --only              Only extract these exports (comma-separated, * ok)
       --ignore            Ignore these exports (comma-separated, * ok)
+      --jev               Route package/entry with Jev (needs AI_GATEWAY_API_KEY)
   -h, --help              Show this help
   -v, --version           Show version
 
@@ -96,7 +98,7 @@ function parseTargetArgs(positionals: string[], cwd: string): { input: string; i
   const first = positionals[0];
   const rest = positionals.slice(1).join(' ').trim();
   const abs = path.resolve(cwd, first);
-  if (first.startsWith('https://') || first.startsWith('http://') || first.startsWith('git@')) {
+  if (isRemoteInput(first)) {
     return { input: first, ...(rest ? { intent: rest } : {}) };
   }
   if (fs.existsSync(abs)) {
@@ -132,13 +134,29 @@ async function choosePackage(candidates: PackageRecord[], cwd: string): Promise<
   }
 }
 
-async function resolveCliTarget(positionals: string[]) {
+function loadCwdEnv() {
+  for (const name of ['.env.local', '.env']) {
+    const file = path.join(process.cwd(), name);
+    if (!fs.existsSync(file)) continue;
+    for (const line of fs.readFileSync(file, 'utf8').split('\n')) {
+      const t = line.trim();
+      if (!t || t.startsWith('#')) continue;
+      const i = t.indexOf('=');
+      if (i === -1) continue;
+      const k = t.slice(0, i).trim();
+      const v = t.slice(i + 1).trim();
+      if (k && process.env[k] === undefined) process.env[k] = v;
+    }
+  }
+}
+
+async function resolveCliTarget(positionals: string[], decisions?: 'heuristic' | 'jev') {
+  loadCwdEnv();
   const cwd = process.cwd();
   const { input, intent } = parseTargetArgs(positionals, cwd);
-  const resolved = resolveTarget({ input, intent, cwd });
-  if (resolved.kind === 'remote') {
-    fail('remote repos are not supported yet');
-  }
+  const resolved = await resolveTarget({ input, intent, cwd, decisions });
+  if (resolved.kind === 'unavailable') fail(resolved.reason);
+  if (resolved.kind === 'remote') fail('failed to clone remote repo');
   if (resolved.kind === 'empty') fail(resolved.reason);
   if (resolved.kind === 'needs-build') {
     console.error(`error: ${resolved.reason}`);
@@ -196,10 +214,10 @@ async function specCommand(args: string[]): Promise<void> {
       'follow-external-all': { type: 'boolean' },
       only: { type: 'string' },
       ignore: { type: 'string' },
+      jev: { type: 'boolean' },
     },
     allowPositionals: true,
   });
-  const { entryFile, entryPointSource } = await resolveCliTarget(positionals);
 
   const fileConfig = loadConfig(process.cwd());
   const cliConfig: Partial<OpenpkgConfig> = {
@@ -208,7 +226,12 @@ async function specCommand(args: string[]): Promise<void> {
       : toList(values['follow-external'] as string | undefined),
     only: toList(values.only as string | undefined),
     ignore: toList(values.ignore as string | undefined),
+    ...(values.jev ? { decisions: 'jev' as const } : {}),
   };
+  const { entryFile, entryPointSource } = await resolveCliTarget(
+    positionals,
+    cliConfig.decisions ?? fileConfig?.decisions,
+  );
   const config = mergeConfig(fileConfig, cliConfig);
 
   const { spec, diagnostics } = await extractSpec({
@@ -230,6 +253,7 @@ async function docsCommand(args: string[]): Promise<void> {
     options: {
       output: { type: 'string', short: 'o' },
       format: { type: 'string', short: 'f' },
+      jev: { type: 'boolean' },
     },
     allowPositionals: true,
   });
@@ -240,7 +264,8 @@ async function docsCommand(args: string[]): Promise<void> {
   if (positionals[0]?.endsWith('.json')) {
     docs = createDocs(positionals[0]);
   } else {
-    const { entryFile, entryPointSource } = await resolveCliTarget(positionals);
+    const decisions = values.jev ? 'jev' : loadConfig(process.cwd())?.decisions;
+    const { entryFile, entryPointSource } = await resolveCliTarget(positionals, decisions);
     const { spec, diagnostics } = await extractSpec({ entryFile, entryPointSource });
     reportDiagnostics(diagnostics);
     docs = createDocs(spec);
@@ -258,10 +283,11 @@ async function docsCommand(args: string[]): Promise<void> {
 async function listCommand(args: string[]): Promise<void> {
   const { values, positionals } = parseArgs({
     args,
-    options: { json: { type: 'boolean' } },
+    options: { json: { type: 'boolean' }, jev: { type: 'boolean' } },
     allowPositionals: true,
   });
-  const { entryFile } = await resolveCliTarget(positionals);
+  const decisions = values.jev ? 'jev' : loadConfig(process.cwd())?.decisions;
+  const { entryFile } = await resolveCliTarget(positionals, decisions);
 
   const { exports, errors } = await listExports({ entryFile });
   for (const err of errors) {
