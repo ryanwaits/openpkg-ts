@@ -1,5 +1,11 @@
 # @openpkg-ts/extract
 
+## 0.52.1
+
+### Patch Changes
+
+- Republish of 0.52.0 (npm staged that version and blocked republish).
+
 ## 0.52.0
 
 ### Minor Changes
