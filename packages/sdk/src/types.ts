@@ -1,4 +1,4 @@
-import type { OpenPkg } from '@openpkg-ts/spec';
+import type { EntryPointDetectionMethod, OpenPkg } from '@openpkg-ts/spec';
 
 /** Configuration for resolving external package re-exports */
 export interface ExternalsConfig {
@@ -12,6 +12,8 @@ export interface ExternalsConfig {
 
 export interface ExtractOptions {
   entryFile: string;
+  /** How the entry file was chosen. Default: explicit. */
+  entryPointSource?: EntryPointDetectionMethod;
   baseDir?: string;
   content?: string; // For in-memory analysis
   maxTypeDepth?: number;

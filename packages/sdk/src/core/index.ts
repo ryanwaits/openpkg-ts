@@ -46,6 +46,23 @@ export {
 } from './query';
 // Query builder
 export { QueryBuilder, query } from './query-builder';
+export {
+  catalogPackages,
+  findWorkspaceRoot,
+  isEntryFilePath,
+  isRemoteInput,
+  type PackageRecord,
+  pickEntry,
+  type ResolveAmbiguous,
+  type ResolveEmpty,
+  type ResolveExplicit,
+  type ResolveNeedsBuild,
+  type ResolveOk,
+  type ResolveRemote,
+  type ResolveTargetOptions,
+  type ResolveTargetResult,
+  resolveTarget,
+} from './resolve-target';
 // Search utilities
 export {
   type AlgoliaRecord,

@@ -1,6 +1,7 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import type {
+  EntryPointDetectionMethod,
   OpenPkg,
   SpecExport,
   SpecInlineTag,
@@ -179,7 +180,7 @@ export async function extract(options: ExtractOptions): Promise<ExtractResult> {
 
     if (!sourceFile) {
       return {
-        spec: createEmptySpec(entryFile, includeSchema, isDtsSource),
+        spec: createEmptySpec(entryFile, includeSchema, isDtsSource, options.entryPointSource),
         diagnostics: [
           {
             message: `Entry file not found: ${entryFile}. Specify with: drift list src/index.ts`,
@@ -195,7 +196,7 @@ export async function extract(options: ExtractOptions): Promise<ExtractResult> {
     const moduleSymbol = typeChecker.getSymbolAtLocation(sourceFile);
     if (!moduleSymbol) {
       return {
-        spec: createEmptySpec(entryFile, includeSchema, isDtsSource),
+        spec: createEmptySpec(entryFile, includeSchema, isDtsSource, options.entryPointSource),
         diagnostics: [
           {
             message: `No exports found in ${entryFile}. Is this the right entry point?`,
@@ -209,7 +210,7 @@ export async function extract(options: ExtractOptions): Promise<ExtractResult> {
 
     if (exportedSymbols.length === 0) {
       return {
-        spec: createEmptySpec(entryFile, includeSchema, isDtsSource),
+        spec: createEmptySpec(entryFile, includeSchema, isDtsSource, options.entryPointSource),
         diagnostics: [
           {
             message: `No exports found in ${entryFile}. Is this the right entry point?`,
@@ -556,6 +557,7 @@ export async function extract(options: ExtractOptions): Promise<ExtractResult> {
         generator: '@openpkg-ts/sdk',
         timestamp: new Date().toISOString(),
         mode: isDtsSource ? 'declaration-only' : 'source',
+        ...generationEntry(entryFile, options.entryPointSource),
         ...(options.schemaExtraction === 'hybrid' ? { schemaExtraction: 'hybrid' } : {}),
         ...(isDtsSource && {
           limitations: ['No JSDoc descriptions', 'No @example tags', 'No @param descriptions'],
@@ -898,10 +900,19 @@ function withExportName(entry: SpecExport, exportName: string): SpecExport {
   };
 }
 
+function generationEntry(entryFile: string, source?: EntryPointDetectionMethod) {
+  const rel = path.relative(process.cwd(), entryFile).split(path.sep).join('/');
+  return {
+    entryPoint: rel || entryFile,
+    entryPointSource: source ?? ('explicit' as const),
+  };
+}
+
 function createEmptySpec(
   entryFile: string,
   includeSchema?: boolean,
   isDtsSource?: boolean,
+  entryPointSource?: EntryPointDetectionMethod,
 ): OpenPkg {
   return {
     ...(includeSchema ? { $schema: SCHEMA_URL } : {}),
@@ -912,6 +923,7 @@ function createEmptySpec(
       generator: '@openpkg-ts/sdk',
       timestamp: new Date().toISOString(),
       mode: isDtsSource ? 'declaration-only' : 'source',
+      ...generationEntry(entryFile, entryPointSource),
       ...(isDtsSource && {
         limitations: ['No JSDoc descriptions', 'No @example tags', 'No @param descriptions'],
       }),
