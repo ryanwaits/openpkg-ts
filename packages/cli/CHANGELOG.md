@@ -1,5 +1,13 @@
 # @openpkg-ts/cli
 
+## 0.12.1
+
+### Patch Changes
+
+- 5d347c8: Fix NodeNext ESM resolution, package targeting, auto-follow coverage, and CLI .env/clone cleanup.
+- Updated dependencies [5d347c8]
+  - @openpkg-ts/sdk@0.52.2
+
 ## 0.12.0
 
 ### Minor Changes

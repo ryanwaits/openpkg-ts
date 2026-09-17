@@ -1,5 +1,11 @@
 # @openpkg-ts/extract
 
+## 0.52.2
+
+### Patch Changes
+
+- 5d347c8: Fix NodeNext ESM resolution, package targeting, auto-follow coverage, and CLI .env/clone cleanup.
+
 ## 0.52.1
 
 ### Patch Changes
