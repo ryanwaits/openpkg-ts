@@ -11,6 +11,7 @@ import {
   extractSpec,
   getAvailableVersions,
   getValidationErrors,
+  isPathLikeInput,
   isRemoteInput,
   listExports,
   loadConfig,
@@ -22,6 +23,7 @@ import {
   resolveTarget,
   type SchemaVersion,
 } from '@openpkg-ts/sdk';
+import { loadCwdEnv } from './env';
 
 /** Minimal shape we read off a parsed spec file. */
 type ParsedSpec = { openpkg?: string; meta?: { version?: string } };
@@ -62,9 +64,19 @@ cwd. Flags override the file. Example:
   { "followExternal": "auto", "decisions": "jev" }
 `;
 
-function fail(message: string): never {
-  console.error(`error: ${message}`);
-  process.exit(1);
+class CliError extends Error {
+  constructor(
+    message: string,
+    readonly exitCode = 1,
+    readonly printed = false,
+  ) {
+    super(message);
+    this.name = 'CliError';
+  }
+}
+
+function fail(message: string, exitCode = 1): never {
+  throw new CliError(message, exitCode);
 }
 
 function write(content: string, output?: string): void {
@@ -91,7 +103,7 @@ function reportDiagnostics(diagnostics: Array<{ severity: string; message: strin
     }
   }
   if (diagnostics.some((d) => d.severity === 'error')) {
-    process.exit(1);
+    throw new CliError('', 1, true);
   }
 }
 
@@ -99,11 +111,11 @@ function parseTargetArgs(positionals: string[], cwd: string): { input: string; i
   if (!positionals.length) return { input: cwd };
   const first = positionals[0];
   const rest = positionals.slice(1).join(' ').trim();
-  const abs = path.resolve(cwd, first);
   if (isRemoteInput(first)) {
     return { input: first, ...(rest ? { intent: rest } : {}) };
   }
-  if (fs.existsSync(abs)) {
+  const abs = path.resolve(cwd, first);
+  if (fs.existsSync(abs) || isPathLikeInput(first)) {
     return { input: abs, ...(rest ? { intent: rest } : {}) };
   }
   return { input: cwd, intent: positionals.join(' ') };
@@ -136,45 +148,40 @@ async function choosePackage(candidates: PackageRecord[], cwd: string): Promise<
   }
 }
 
-function loadCwdEnv() {
-  for (const name of ['.env.local', '.env']) {
-    const file = path.join(process.cwd(), name);
-    if (!fs.existsSync(file)) continue;
-    for (const line of fs.readFileSync(file, 'utf8').split('\n')) {
-      const t = line.trim();
-      if (!t || t.startsWith('#')) continue;
-      const i = t.indexOf('=');
-      if (i === -1) continue;
-      const k = t.slice(0, i).trim();
-      const v = t.slice(i + 1).trim();
-      if (k && process.env[k] === undefined) process.env[k] = v;
-    }
-  }
-}
-
 async function resolveCliTarget(positionals: string[], decisions?: 'heuristic' | 'jev') {
   loadCwdEnv();
   const cwd = process.cwd();
   const { input, intent } = parseTargetArgs(positionals, cwd);
   const resolved = await resolveTarget({ input, intent, cwd, decisions });
-  if (resolved.kind === 'unavailable') fail(resolved.reason);
-  if (resolved.kind === 'remote') fail('failed to clone remote repo');
-  if (resolved.kind === 'empty') fail(resolved.reason);
-  if (resolved.kind === 'needs-build') {
-    console.error(`error: ${resolved.reason}`);
-    if (resolved.command) console.error(`  → ${resolved.command}`);
-    process.exit(2);
+  const cleanup = resolved.cleanup;
+  try {
+    if (resolved.kind === 'unavailable') fail(resolved.reason);
+    if (resolved.kind === 'empty') fail(resolved.reason);
+    if (resolved.kind === 'needs-build') {
+      fail(resolved.command ? `${resolved.reason}\n  → ${resolved.command}` : resolved.reason, 2);
+    }
+    if (resolved.kind === 'explicit') {
+      return {
+        entryFile: resolved.entryFile,
+        entryPointSource: resolved.entryPointSource,
+        cleanup,
+      };
+    }
+    if (resolved.kind === 'ok') {
+      return {
+        entryFile: resolved.entryFile,
+        entryPointSource: resolved.entryPointSource,
+        cleanup,
+      };
+    }
+    const chosen = await choosePackage(resolved.candidates, cwd);
+    const picked = pickEntry(chosen.dir);
+    if (!picked) fail(`no TypeScript entry found in ${chosen.name}`);
+    return { ...picked, cleanup };
+  } catch (err) {
+    cleanup?.();
+    throw err;
   }
-  if (resolved.kind === 'explicit') {
-    return { entryFile: resolved.entryFile, entryPointSource: resolved.entryPointSource };
-  }
-  if (resolved.kind === 'ok') {
-    return { entryFile: resolved.entryFile, entryPointSource: resolved.entryPointSource };
-  }
-  const chosen = await choosePackage(resolved.candidates, cwd);
-  const picked = pickEntry(chosen.dir);
-  if (!picked) fail(`no TypeScript entry found in ${chosen.name}`);
-  return picked;
 }
 
 function toList(value: string | undefined): string[] | undefined {
@@ -241,27 +248,34 @@ async function specCommand(args: string[]): Promise<void> {
     ignore: toList(values.ignore as string | undefined),
     ...(values.jev ? { decisions: 'jev' as const } : {}),
   };
-  const { entryFile, entryPointSource } = await resolveCliTarget(
-    positionals,
-    cliConfig.decisions ?? fileConfig?.decisions,
-  );
-  const config = mergeConfig(fileConfig, cliConfig);
-  if (config.followExternal === 'auto' && config.decisions !== 'jev') {
-    fail('followExternal auto requires --jev');
-  }
+  let cleanup: (() => void) | undefined;
+  try {
+    const resolved = await resolveCliTarget(
+      positionals,
+      cliConfig.decisions ?? fileConfig?.decisions,
+    );
+    cleanup = resolved.cleanup;
+    const { entryFile, entryPointSource } = resolved;
+    const config = mergeConfig(fileConfig, cliConfig);
+    if (config.followExternal === 'auto' && config.decisions !== 'jev') {
+      fail('followExternal auto requires --jev');
+    }
 
-  const { spec, diagnostics } = await extractSpec({
-    entryFile,
-    entryPointSource,
-    followExternal: config.followExternal,
-    only: config.only,
-    ignore: config.ignore,
-    externals: config.externals,
-    decisions: config.decisions,
-  });
-  reportDiagnostics(diagnostics);
-  if (!config.followExternal) reportStubbedExternals(spec);
-  write(JSON.stringify(spec, null, 2), values.output);
+    const { spec, diagnostics } = await extractSpec({
+      entryFile,
+      entryPointSource,
+      followExternal: config.followExternal,
+      only: config.only,
+      ignore: config.ignore,
+      externals: config.externals,
+      decisions: config.decisions,
+    });
+    reportDiagnostics(diagnostics);
+    if (!config.followExternal) reportStubbedExternals(spec);
+    write(JSON.stringify(spec, null, 2), values.output);
+  } finally {
+    cleanup?.();
+  }
 }
 
 async function docsCommand(args: string[]): Promise<void> {
@@ -278,23 +292,32 @@ async function docsCommand(args: string[]): Promise<void> {
   if (!['md', 'html', 'json'].includes(format)) fail(`unknown format "${format}" (md|html|json)`);
 
   let docs: ReturnType<typeof createDocs>;
-  if (positionals[0]?.endsWith('.json')) {
-    docs = createDocs(positionals[0]);
-  } else {
-    const decisions = values.jev ? 'jev' : loadConfig(process.cwd())?.decisions;
-    const { entryFile, entryPointSource } = await resolveCliTarget(positionals, decisions);
-    const { spec, diagnostics } = await extractSpec({ entryFile, entryPointSource });
-    reportDiagnostics(diagnostics);
-    docs = createDocs(spec);
-  }
+  let cleanup: (() => void) | undefined;
+  try {
+    if (positionals[0]?.endsWith('.json')) {
+      docs = createDocs(positionals[0]);
+    } else {
+      const decisions = values.jev ? 'jev' : loadConfig(process.cwd())?.decisions;
+      const resolved = await resolveCliTarget(positionals, decisions);
+      cleanup = resolved.cleanup;
+      const { spec, diagnostics } = await extractSpec({
+        entryFile: resolved.entryFile,
+        entryPointSource: resolved.entryPointSource,
+      });
+      reportDiagnostics(diagnostics);
+      docs = createDocs(spec);
+    }
 
-  const content =
-    format === 'md'
-      ? docs.toMarkdown()
-      : format === 'html'
-        ? docs.toHTML()
-        : JSON.stringify(docs.toJSON(), null, 2);
-  write(content, values.output);
+    const content =
+      format === 'md'
+        ? docs.toMarkdown()
+        : format === 'html'
+          ? docs.toHTML()
+          : JSON.stringify(docs.toJSON(), null, 2);
+    write(content, values.output);
+  } finally {
+    cleanup?.();
+  }
 }
 
 async function listCommand(args: string[]): Promise<void> {
@@ -304,22 +327,27 @@ async function listCommand(args: string[]): Promise<void> {
     allowPositionals: true,
   });
   const decisions = values.jev ? 'jev' : loadConfig(process.cwd())?.decisions;
-  const { entryFile } = await resolveCliTarget(positionals, decisions);
-
-  const { exports, errors } = await listExports({ entryFile });
-  for (const err of errors) {
-    console.error(`error: ${err}`);
-  }
-  if (errors.length > 0 && exports.length === 0) {
-    process.exit(1);
-  }
-  if (values.json) {
-    console.log(JSON.stringify(exports, null, 2));
-    return;
-  }
-  for (const exp of exports) {
-    const location = exp.file ? ` (${exp.file}:${exp.line})` : '';
-    console.log(`${exp.kind.padEnd(10)}${exp.name}${location}`);
+  let cleanup: (() => void) | undefined;
+  try {
+    const resolved = await resolveCliTarget(positionals, decisions);
+    cleanup = resolved.cleanup;
+    const { exports, errors } = await listExports({ entryFile: resolved.entryFile });
+    for (const err of errors) {
+      console.error(`error: ${err}`);
+    }
+    if (errors.length > 0 && exports.length === 0) {
+      throw new CliError('', 1, true);
+    }
+    if (values.json) {
+      console.log(JSON.stringify(exports, null, 2));
+      return;
+    }
+    for (const exp of exports) {
+      const location = exp.file ? ` (${exp.file}:${exp.line})` : '';
+      console.log(`${exp.kind.padEnd(10)}${exp.name}${location}`);
+    }
+  } finally {
+    cleanup?.();
   }
 }
 
@@ -364,7 +392,7 @@ function validateCommand(args: string[]): void {
   for (const e of errors) {
     console.error(`${e.instancePath || '/'} ${e.message}`);
   }
-  process.exit(1);
+  throw new CliError('', 1, true);
 }
 
 function diffCommand(args: string[]): void {
@@ -454,5 +482,10 @@ async function main(): Promise<void> {
 }
 
 main().catch((err: unknown) => {
-  fail(err instanceof Error ? err.message : String(err));
+  if (err instanceof CliError) {
+    if (!err.printed && err.message) console.error(`error: ${err.message}`);
+    process.exit(err.exitCode);
+  }
+  console.error(`error: ${err instanceof Error ? err.message : String(err)}`);
+  process.exit(1);
 });

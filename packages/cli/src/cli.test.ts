@@ -318,5 +318,13 @@ describe('openpkg cli', () => {
       expect(code).toBe(1);
       expect(stderr).toContain('auto requires --jev');
     });
+
+    it('missing file path fails instead of extracting cwd', async () => {
+      const pkg = path.join(dir, 'packages/sdk');
+      const { stderr, code, stdout } = await run(['spec', 'missing.ts'], pkg);
+      expect(code).toBe(1);
+      expect(stderr).toContain('does not exist');
+      expect(stdout).toBe('');
+    });
   });
 });
