@@ -1,5 +1,11 @@
 # @openpkg-ts/extract
 
+## 0.53.0
+
+### Minor Changes
+
+- b9d2d92: Remove unused extract options (`resolveExternalTypes`, `maxExternalTypeDepth`, `externals.depth`) and the `analyzeSpec` JSDoc-quality diagnostics.
+
 ## 0.52.2
 
 ### Patch Changes
