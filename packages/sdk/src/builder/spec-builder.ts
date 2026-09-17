@@ -247,7 +247,17 @@ export async function extract(options: ExtractOptions): Promise<ExtractResult> {
 
     let followExternal = options.followExternal;
     let evaluate = options.evaluate;
-    const wantsJev = options.decisions === 'jev' || followExternal === 'auto';
+    // Injected `evaluate` may drive auto-follow without decisions: 'jev'.
+    // Gateway load is only for explicit jev — heuristic + auto must not call it.
+    if (followExternal === 'auto' && !evaluate && options.decisions !== 'jev') {
+      diagnostics.push({
+        message: "followExternal auto requires decisions: 'jev' (or an injected evaluate)",
+        severity: 'error',
+        code: 'JEV_UNAVAILABLE',
+      });
+      followExternal = undefined;
+    }
+    const wantsJev = options.decisions === 'jev';
     if (wantsJev && !evaluate) {
       if (process.env.AI_GATEWAY_API_KEY) {
         try {

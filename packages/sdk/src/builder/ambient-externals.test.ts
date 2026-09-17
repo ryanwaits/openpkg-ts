@@ -2,7 +2,9 @@ import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { createProgram } from '../compiler/program';
 import { extract } from './spec-builder';
+import { collectReferencedExternals } from './type-expansion';
 
 const FIXTURE = `
 export function doThing(opts: { signal?: AbortSignal }): void {}
@@ -120,6 +122,84 @@ describe('ambient/external type stubs', () => {
       });
       const widget = spec.types?.find((t) => t.name === 'Widget');
       expect(widget?.external).toBe(true);
+    });
+
+    test('followExternal auto + heuristic does not load the gateway', async () => {
+      const prev = process.env.AI_GATEWAY_API_KEY;
+      process.env.AI_GATEWAY_API_KEY = 'audit-placeholder';
+      const fetches: string[] = [];
+      const originalFetch = globalThis.fetch;
+      globalThis.fetch = (async (...args: Parameters<typeof fetch>) => {
+        fetches.push(String(args[0]));
+        return originalFetch(...args);
+      }) as typeof fetch;
+      try {
+        const { spec, diagnostics } = await extract({
+          entryFile: entry,
+          followExternal: 'auto',
+          decisions: 'heuristic',
+        });
+        expect(fetches).toEqual([]);
+        expect(diagnostics.some((d) => d.code === 'JEV_UNAVAILABLE')).toBe(true);
+        expect(diagnostics.some((d) => d.message.includes("decisions: 'jev'"))).toBe(true);
+        const widget = spec.types?.find((t) => t.name === 'Widget');
+        expect(widget?.external).toBe(true);
+      } finally {
+        globalThis.fetch = originalFetch;
+        if (prev === undefined) delete process.env.AI_GATEWAY_API_KEY;
+        else process.env.AI_GATEWAY_API_KEY = prev;
+      }
+    });
+
+    function refsNamed(file: string, source: string): string[] {
+      const entryFile = path.join(dir, file);
+      fs.writeFileSync(entryFile, source);
+      const { program, sourceFile, workspacePackages } = createProgram({ entryFile });
+      const checker = program.getTypeChecker();
+      if (!sourceFile) throw new Error('sourceFile');
+      const moduleSymbol = checker.getSymbolAtLocation(sourceFile);
+      if (!moduleSymbol) throw new Error('moduleSymbol');
+      return collectReferencedExternals(
+        checker.getExportsOfModule(moduleSymbol),
+        checker,
+        workspacePackages ?? new Map(),
+      ).map((r) => `${r.package}:${r.typeName}`);
+    }
+
+    test('auto-follow collector finds Widget on interface properties', () => {
+      expect(
+        refsNamed(
+          'iface.ts',
+          `import type { Widget } from 'tiny-ext';\nexport interface Config { widget: Widget }\n`,
+        ),
+      ).toContain('tiny-ext:Widget');
+    });
+
+    test('auto-follow collector finds Widget on inline object params', () => {
+      expect(
+        refsNamed(
+          'inline.ts',
+          `import type { Widget } from 'tiny-ext';\nexport function use(c: { widget: Widget }): void {}\n`,
+        ),
+      ).toContain('tiny-ext:Widget');
+    });
+
+    test('auto-follow collector finds Widget on class methods', () => {
+      expect(
+        refsNamed(
+          'class.ts',
+          `import type { Widget } from 'tiny-ext';\nexport class Client { use(w: Widget): void {} }\n`,
+        ),
+      ).toContain('tiny-ext:Widget');
+    });
+
+    test('auto-follow collector finds Widget inside Promise type arguments', () => {
+      expect(
+        refsNamed(
+          'promise.ts',
+          `import type { Widget } from 'tiny-ext';\nexport function load(): Promise<Widget> { throw 0 }\n`,
+        ),
+      ).toContain('tiny-ext:Widget');
     });
   });
 

@@ -109,9 +109,9 @@ export function collectReferencedExternals(
     visited.add(type);
     const symbol = type.aliasSymbol ?? type.getSymbol();
     consider(symbol);
-    const match = symbol?.declarations?.[0]?.getSourceFile().fileName.match(NODE_MODULES_PKG);
-    if (match && !workspacePackages.has(match[1])) return;
 
+    // Type arguments always recurse — Promise<Widget> / Omit<Widget, K> must
+    // still collect Widget even when the container is lib or node_modules.
     for (const arg of type.aliasTypeArguments ?? []) visit(arg, depth + 1);
     const typeRef = type as ts.TypeReference;
     if (typeRef.target) {
@@ -120,9 +120,30 @@ export function collectReferencedExternals(
     if (type.isUnion() || type.isIntersection()) {
       for (const t of type.types) visit(t, depth + 1);
     }
+
+    // Members only for in-scope types: walking into DOM/react internals would
+    // pull their whole graphs.
+    const fileName = symbol?.declarations?.[0]?.getSourceFile().fileName;
+    if (fileName) {
+      if (isLibFile(fileName)) return;
+      const match = fileName.match(NODE_MODULES_PKG);
+      if (match && !workspacePackages.has(match[1])) return;
+    }
+    if (!(type.flags & ts.TypeFlags.Object || type.isClassOrInterface())) return;
+
+    if (type.isClassOrInterface()) {
+      for (const base of checker.getBaseTypes(type) ?? []) visit(base, depth + 1);
+    }
+    for (const prop of type.getProperties()) {
+      if (prop.getName().startsWith('__@')) continue;
+      visit(checker.getTypeOfSymbol(prop), depth + 1);
+    }
     for (const sig of [...type.getCallSignatures(), ...type.getConstructSignatures()]) {
       for (const param of sig.getParameters()) visit(checker.getTypeOfSymbol(param), depth + 1);
       visit(sig.getReturnType(), depth + 1);
+    }
+    for (const info of checker.getIndexInfosOfType(type)) {
+      visit(info.type, depth + 1);
     }
   };
 
