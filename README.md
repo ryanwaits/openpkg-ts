@@ -16,6 +16,7 @@ Extract complete OpenPkg documents from TypeScript source, then generate docs fo
 ```bash
 # CLI: extract a spec and generate markdown docs
 bunx @openpkg-ts/cli spec src/index.ts -o openpkg.json
+bunx @openpkg-ts/cli spec . sdk
 bunx @openpkg-ts/cli docs src/index.ts -o docs/api.md
 ```
 

@@ -57,8 +57,9 @@ Options:
   -v, --version           Show version
 
 Config: reads openpkg.config.json (or package.json "openpkg" field) from the
-cwd. Flags override the file. Example openpkg.config.json:
-  { "followExternal": ["@acme/payment-kit", "@ai-sdk/*"] }
+cwd. Flags override the file. Example:
+  { "followExternal": ["@ai-sdk/*"] }
+  { "followExternal": "auto", "decisions": "jev" }
 `;
 
 function fail(message: string): never {

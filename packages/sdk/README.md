@@ -90,8 +90,29 @@ const { spec, diagnostics, verification } = await extractSpec({
   resolveExternalTypes: true,
   only: ['use*'],           // filter by pattern
   ignore: ['*Internal'],    // exclude by pattern
+  followExternal: ['@ai-sdk/*'], // or true, or 'auto' with decisions: 'jev'
 });
 ```
+
+`followExternal: 'auto'` scores referenced externals with Jev and expands the load-bearing ones. Requires `decisions: 'jev'`, `AI_GATEWAY_API_KEY`, and optional peer `ai` (≥7.0.105). Specs record `generation.entryPoint` and `generation.entryPointSource` (`types` / `exports` / `fallback` / `explicit` / `llm`).
+
+### resolveTarget
+
+Resolve a package and entry from a directory, cwd, intent, or git URL before extracting:
+
+```typescript
+import { resolveTarget, extractSpec } from '@openpkg-ts/sdk';
+
+const resolved = await resolveTarget({ input: '.', intent: 'sdk' });
+if (resolved.kind === 'ok') {
+  const { spec } = await extractSpec({
+    entryFile: resolved.entryFile,
+    entryPointSource: resolved.entryPointSource,
+  });
+}
+```
+
+`decisions: 'jev'` uses Jev when the heuristic is ambiguous. GitHub URLs clone via `gh` if present, else `git clone --depth 1`.
 
 ### diffSpecs
 

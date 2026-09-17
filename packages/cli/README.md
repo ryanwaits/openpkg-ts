@@ -5,8 +5,14 @@ Extract [OpenPkg](https://openpkg.dev) documents and generate docs from the comm
 ## Usage
 
 ```bash
-# Extract an OpenPkg spec
+# Extract from an entry file
 bunx @openpkg-ts/cli spec src/index.ts -o openpkg.json
+
+# Or resolve the package/entry from a dir, cwd, intent, or git URL
+bunx @openpkg-ts/cli spec
+bunx @openpkg-ts/cli spec .
+bunx @openpkg-ts/cli spec . sdk
+bunx @openpkg-ts/cli spec https://github.com/org/repo
 
 # Generate markdown docs (from source or an existing spec)
 bunx @openpkg-ts/cli docs src/index.ts -o docs/api.md
@@ -19,16 +25,31 @@ bunx @openpkg-ts/cli list src/index.ts
 bunx @openpkg-ts/cli diff old.json new.json
 ```
 
+Prefers TypeScript source (`src/index.ts`) over `dist/*.d.ts`. Several packages and no intent → prompt (or a list if not a TTY).
+
+Opt-in Jev routing (needs `AI_GATEWAY_API_KEY` and the `ai` package). Sends package.json + file heads to Vercel AI Gateway with zero data retention:
+
+```bash
+bunx @openpkg-ts/cli spec . --jev
+bunx @openpkg-ts/cli spec . --jev --follow-external auto
+```
+
+`followExternal: "auto"` (config or flag) requires `--jev`. Config: `openpkg.config.json` or `package.json#openpkg`.
+
+```json
+{ "followExternal": "auto", "decisions": "jev" }
+```
+
 ## Commands
 
 | Command | Description |
 |---------|-------------|
-| `spec <entry.ts>` | Extract an OpenPkg spec from a TypeScript entry point |
-| `docs <entry.ts \| spec.json>` | Generate docs (`-f md\|html\|json`) |
-| `list <entry.ts>` | List exports with kind and location (`--json`) |
+| `spec [path \| entry.ts] [intent...]` | Extract a spec from a file, package dir, cwd, or git URL |
+| `docs [path \| entry.ts \| spec.json] [intent...]` | Generate docs (`-f md\|html\|json`) |
+| `list [path \| entry.ts] [intent...]` | List exports with kind and location (`--json`) |
 | `diff <old.json> <new.json>` | Compare specs; exits 2 if breaking changes |
 
-`-o, --output` writes to a file instead of stdout.
+`-o, --output` writes to a file instead of stdout. `--jev` routes package/entry with Jev. `--follow-external auto` expands load-bearing externals (requires `--jev`).
 
 For programmatic use, richer options, and framework integrations (search indexes, nav trees), use `@openpkg-ts/sdk` directly.
 
