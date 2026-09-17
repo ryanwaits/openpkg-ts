@@ -3,6 +3,7 @@ import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
 import type { EntryPointDetectionMethod } from '@openpkg-ts/spec';
+import picomatch from 'picomatch';
 import { type EvaluateFn, JEV_CONFIDENCE, jevChoice, loadEvaluate } from './decisions';
 
 export type PackageRecord = {
@@ -54,11 +55,6 @@ export type ResolveEmpty = {
   reason: string;
 };
 
-export type ResolveRemote = {
-  kind: 'remote';
-  input: string;
-};
-
 export type ResolveExplicit = {
   kind: 'explicit';
   entryFile: string;
@@ -70,14 +66,17 @@ export type ResolveUnavailable = {
   reason: string;
 };
 
-export type ResolveTargetResult =
+export type ResolveTargetResult = (
   | ResolveOk
   | ResolveAmbiguous
   | ResolveNeedsBuild
   | ResolveEmpty
-  | ResolveRemote
   | ResolveExplicit
-  | ResolveUnavailable;
+  | ResolveUnavailable
+) & {
+  /** Present when this resolution owns a temp clone. Call after extraction. */
+  cleanup?: () => void;
+};
 
 const SKIP_DIRS = new Set(['node_modules', 'dist', '.git', 'target', 'coverage', '.next', 'out']);
 const CONV = ['src/index.ts', 'src/index.tsx', 'src/index.mts', 'index.ts', 'index.tsx'];
@@ -90,6 +89,15 @@ export function isRemoteInput(input: string): boolean {
 
 export function isEntryFilePath(input: string): boolean {
   return ENTRY_EXT.test(input) || /\.d\.(ts|mts|cts)$/.test(input);
+}
+
+/** Absolute, explicit relative, slash-containing, or entry-file paths — not bare intent words. */
+export function isPathLikeInput(input: string): boolean {
+  if (!input) return false;
+  if (path.isAbsolute(input)) return true;
+  if (input.startsWith('./') || input.startsWith('../')) return true;
+  if (input.includes('/') || input.includes('\\')) return true;
+  return isEntryFilePath(input);
 }
 
 export function parseGithubRepo(input: string): { owner: string; repo: string } | null {
@@ -166,6 +174,17 @@ function existsDir(p: string): boolean {
   }
 }
 
+/** True for real directories and directory symlinks (pnpm). Dirent.isDirectory() is false for the latter. */
+function isDirentDir(parent: string, entry: fs.Dirent): boolean {
+  if (entry.isDirectory()) return true;
+  if (!entry.isSymbolicLink()) return false;
+  try {
+    return fs.statSync(path.join(parent, entry.name)).isDirectory();
+  } catch {
+    return false;
+  }
+}
+
 function readJson(file: string): Record<string, unknown> | null {
   try {
     return JSON.parse(fs.readFileSync(file, 'utf-8')) as Record<string, unknown>;
@@ -195,48 +214,39 @@ function parsePnpmWorkspace(yaml: string): string[] {
   return globs;
 }
 
-function expandGlob(root: string, pattern: string): string[] {
-  const parts = pattern.split('/').filter(Boolean);
-  const out: string[] = [];
-  const walk = (dir: string, i: number) => {
-    if (out.length >= MAX_PACKAGES) return;
-    if (i === parts.length) {
-      if (existsFile(path.join(dir, 'package.json'))) out.push(dir);
+function expandWorkspaceGlobs(root: string, globs: string[]): string[] {
+  const include: string[] = [];
+  const exclude: string[] = [];
+  for (const g of globs) {
+    if (g.startsWith('!')) exclude.push(g.slice(1));
+    else include.push(g);
+  }
+  if (!include.length) return [];
+
+  const dirs: string[] = [];
+  const walk = (dir: string, depth: number) => {
+    if (dirs.length >= MAX_PACKAGES || depth > 12) return;
+    if (existsFile(path.join(dir, 'package.json'))) dirs.push(dir);
+    let entries: fs.Dirent[] = [];
+    try {
+      entries = fs.readdirSync(dir, { withFileTypes: true });
+    } catch {
       return;
     }
-    const part = parts[i];
-    if (!existsDir(dir)) return;
-    if (part === '**') {
-      walk(dir, i + 1);
-      let entries: fs.Dirent[] = [];
-      try {
-        entries = fs.readdirSync(dir, { withFileTypes: true });
-      } catch {
-        return;
-      }
-      for (const ent of entries) {
-        if (!ent.isDirectory() || SKIP_DIRS.has(ent.name)) continue;
-        walk(path.join(dir, ent.name), i);
-      }
-      return;
+    for (const ent of entries) {
+      if (SKIP_DIRS.has(ent.name) || ent.name.startsWith('.')) continue;
+      if (!isDirentDir(dir, ent)) continue;
+      walk(path.join(dir, ent.name), depth + 1);
     }
-    if (part === '*') {
-      let entries: fs.Dirent[] = [];
-      try {
-        entries = fs.readdirSync(dir, { withFileTypes: true });
-      } catch {
-        return;
-      }
-      for (const ent of entries) {
-        if (!ent.isDirectory() || SKIP_DIRS.has(ent.name)) continue;
-        walk(path.join(dir, ent.name), i + 1);
-      }
-      return;
-    }
-    walk(path.join(dir, part), i + 1);
   };
   walk(root, 0);
-  return out;
+
+  const isMatch = picomatch(include, { ignore: exclude, dot: false, nocase: false });
+  return dirs.filter((dir) => {
+    const rel = path.relative(root, dir).split(path.sep).join('/');
+    if (!rel || rel === '.') return include.includes('.');
+    return isMatch(rel);
+  });
 }
 
 function workspaceGlobs(dir: string): string[] | null {
@@ -306,9 +316,7 @@ export function catalogPackages(start: string): PackageRecord[] {
 
   const globs = workspaceGlobs(root);
   if (globs?.length) {
-    for (const glob of globs) {
-      for (const dir of expandGlob(root, glob)) add(dir);
-    }
+    for (const dir of expandWorkspaceGlobs(root, globs)) add(dir);
   }
 
   let dir = abs;
@@ -355,9 +363,12 @@ function collectCandidates(pkgDir: string, pkg: Record<string, unknown>): Candid
   };
   if (typeof pkg.types === 'string') add(pkg.types, 'types');
   if (typeof pkg.typings === 'string') add(pkg.typings, 'typings');
-  if (pkg.exports && typeof pkg.exports === 'object') {
-    const exp = pkg.exports as Record<string, unknown>;
-    const root = '.' in exp ? exp['.'] : exp;
+  if (pkg.exports != null) {
+    const exp = pkg.exports;
+    const root =
+      typeof exp === 'object' && exp !== null && !Array.isArray(exp) && '.' in exp
+        ? (exp as Record<string, unknown>)['.']
+        : exp;
     const paths: string[] = [];
     collectFromExports(root, paths);
     for (const p of paths) add(p, 'exports');
@@ -419,7 +430,7 @@ function isIgnoredPath(dir: string): boolean {
 function isExtractable(pkg: PackageRecord): boolean {
   if (pkg.private) return false;
   if (isIgnoredPath(pkg.dir)) return false;
-  return pkg.hasSrc || Boolean(pkg.types || pkg.typings);
+  return pickEntry(pkg.dir) !== null;
 }
 
 function intentScore(pkg: PackageRecord, intent: string): number {
@@ -639,10 +650,15 @@ export async function resolveTarget(
   }
 
   if (isRemoteInput(raw)) {
+    const owned = !options.clone;
     try {
       const cloned = await (options.clone ?? cloneRemote)(raw);
-      const startDir = cloned;
-      return resolveLocal(startDir, startDir, ctx);
+      const result = await resolveLocal(cloned, cloned, ctx);
+      if (!owned) return result;
+      return {
+        ...result,
+        cleanup: () => fs.rmSync(cloned, { recursive: true, force: true }),
+      };
     } catch (err) {
       return {
         kind: 'empty',
@@ -655,6 +671,10 @@ export async function resolveTarget(
 
   if (existsFile(abs) && isEntryFilePath(abs)) {
     return { kind: 'explicit', entryFile: abs, entryPointSource: 'explicit' };
+  }
+
+  if (!existsFile(abs) && !existsDir(abs) && isPathLikeInput(options.input?.trim() || raw)) {
+    return { kind: 'empty', reason: `input does not exist: ${options.input?.trim() || raw}` };
   }
 
   const startDir = existsDir(abs) ? abs : cwd;

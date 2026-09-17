@@ -40,6 +40,10 @@ jobs:
           bun-version: latest
 
       - run: bun install
+      # spec/sdk dist is gitignored; native tsc resolves workspace pkgs via
+      # package.json exports (types: ./dist/*.d.ts). Without a build this lane
+      # reports hundreds of TS2307/TS7006 errors that are not real.
+      - run: bun run build
       - run: node_modules/typescript-native/bin/tsc --version
       - run: bun run typecheck:native
 

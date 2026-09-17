@@ -374,4 +374,157 @@ describe('resolveTarget', () => {
     expect(picked?.entryFile).toBe(path.join(tmp, 'src/index.ts'));
     expect(picked?.entryPointSource).toBe('fallback');
   });
+
+  test('pickEntry accepts a string-form exports field', async () => {
+    write(
+      path.join(tmp, 'package.json'),
+      JSON.stringify({ name: 'str-exp', exports: './lib/api.ts' }),
+    );
+    write(path.join(tmp, 'lib/api.ts'), 'export const api = 1;\n');
+    const picked = pickEntry(tmp);
+    expect(picked?.entryFile).toBe(path.join(tmp, 'lib/api.ts'));
+    expect(picked?.entryPointSource).toBe('exports');
+  });
+
+  test('pickEntry walks fallback arrays in exports', async () => {
+    write(
+      path.join(tmp, 'package.json'),
+      JSON.stringify({
+        name: 'arr-exp',
+        exports: { '.': [{ types: './missing.d.ts' }, './lib/api.ts'] },
+      }),
+    );
+    write(path.join(tmp, 'lib/api.ts'), 'export const api = 1;\n');
+    const picked = pickEntry(tmp);
+    expect(picked?.entryFile).toBe(path.join(tmp, 'lib/api.ts'));
+  });
+
+  test('workspace root resolves a package that only exposes exports', async () => {
+    write(
+      path.join(tmp, 'package.json'),
+      JSON.stringify({ name: 'root', private: true, workspaces: ['packages/*'] }),
+    );
+    write(
+      path.join(tmp, 'packages/pub/package.json'),
+      JSON.stringify({ name: '@acme/pub', exports: { '.': './lib/api.ts' } }),
+    );
+    write(path.join(tmp, 'packages/pub/lib/api.ts'), 'export const api = 1;\n');
+
+    const result = await resolveTarget({ input: tmp, cwd: tmp });
+    expect(result.kind).toBe('ok');
+    if (result.kind !== 'ok') return;
+    expect(result.package.name).toBe('@acme/pub');
+    expect(result.entryFile).toBe(path.join(tmp, 'packages/pub/lib/api.ts'));
+  });
+
+  test('workspace globs honor exclusions and partial wildcards', async () => {
+    write(
+      path.join(tmp, 'package.json'),
+      JSON.stringify({
+        name: 'root',
+        private: true,
+        workspaces: ['packages/*', '!packages/excluded'],
+      }),
+    );
+    write(path.join(tmp, 'packages/keep/package.json'), JSON.stringify({ name: 'keep' }));
+    write(path.join(tmp, 'packages/keep/src/index.ts'), 'export const keep = 1;\n');
+    write(path.join(tmp, 'packages/excluded/package.json'), JSON.stringify({ name: 'excluded' }));
+    write(path.join(tmp, 'packages/excluded/src/index.ts'), 'export const excluded = 1;\n');
+
+    const names = catalogPackages(tmp).map((p) => p.name);
+    expect(names).toContain('keep');
+    expect(names).not.toContain('excluded');
+  });
+
+  test('workspace globs match partial wildcards', async () => {
+    write(
+      path.join(tmp, 'package.json'),
+      JSON.stringify({ name: 'root', private: true, workspaces: ['packages/sdk-*'] }),
+    );
+    write(path.join(tmp, 'packages/sdk-core/package.json'), JSON.stringify({ name: 'sdk-core' }));
+    write(path.join(tmp, 'packages/sdk-core/src/index.ts'), 'export const core = 1;\n');
+    write(path.join(tmp, 'packages/cli/package.json'), JSON.stringify({ name: 'cli' }));
+    write(path.join(tmp, 'packages/cli/src/index.ts'), 'export const cli = 1;\n');
+
+    const names = catalogPackages(tmp).map((p) => p.name);
+    expect(names).toContain('sdk-core');
+    expect(names).not.toContain('cli');
+  });
+
+  test('pnpm workspace yaml exclusions are applied', async () => {
+    write(
+      path.join(tmp, 'pnpm-workspace.yaml'),
+      "packages:\n  - 'packages/*'\n  - '!packages/excluded'\n",
+    );
+    write(path.join(tmp, 'package.json'), JSON.stringify({ name: 'root', private: true }));
+    write(path.join(tmp, 'packages/keep/package.json'), JSON.stringify({ name: 'keep' }));
+    write(path.join(tmp, 'packages/excluded/package.json'), JSON.stringify({ name: 'excluded' }));
+
+    const names = catalogPackages(tmp).map((p) => p.name);
+    expect(names).toContain('keep');
+    expect(names).not.toContain('excluded');
+  });
+
+  test('missing path-like input does not fall back to cwd', async () => {
+    write(path.join(tmp, 'package.json'), JSON.stringify({ name: 'solo' }));
+    write(path.join(tmp, 'src/index.ts'), 'export const ok = 1;\n');
+
+    const missing = await resolveTarget({ input: 'missing.ts', cwd: tmp });
+    expect(missing.kind).toBe('empty');
+    if (missing.kind === 'empty') expect(missing.reason).toContain('does not exist');
+
+    const rel = await resolveTarget({ input: './nope', cwd: tmp });
+    expect(rel.kind).toBe('empty');
+
+    const abs = await resolveTarget({ input: path.join(tmp, 'gone.ts'), cwd: tmp });
+    expect(abs.kind).toBe('empty');
+  });
+
+  test('injected clone is caller-owned and has no cleanup', async () => {
+    const repo = path.join(tmp, 'upstream');
+    write(path.join(repo, 'package.json'), JSON.stringify({ name: 'cloned' }));
+    write(path.join(repo, 'src/index.ts'), 'export const cloned = 1;\n');
+    const result = await resolveTarget({
+      input: 'https://github.com/example/cloned',
+      cwd: tmp,
+      clone: async () => repo,
+    });
+    expect(result.kind).toBe('ok');
+    expect(result.cleanup).toBeUndefined();
+    expect(fs.existsSync(repo)).toBe(true);
+  });
+
+  test('resolver-owned clone attaches cleanup', async () => {
+    const repo = path.join(tmp, 'upstream');
+    write(path.join(repo, 'package.json'), JSON.stringify({ name: 'cloned' }));
+    write(path.join(repo, 'src/index.ts'), 'export const cloned = 1;\n');
+    const bin = path.join(tmp, 'bin');
+    fs.mkdirSync(bin);
+    write(
+      path.join(bin, 'gh'),
+      `#!/bin/sh\ndest="$4"\nmkdir -p "$dest"\ncp -R '${repo}/.' "$dest"/\n`,
+    );
+    fs.chmodSync(path.join(bin, 'gh'), 0o755);
+    const prevPath = process.env.PATH;
+    process.env.PATH = `${bin}${path.delimiter}${prevPath ?? ''}`;
+    const before = new Set(fs.readdirSync(os.tmpdir()).filter((n) => n.startsWith('openpkg-')));
+    try {
+      const result = await resolveTarget({
+        input: 'https://github.com/example/cloned',
+        cwd: tmp,
+      });
+      expect(result.kind).toBe('ok');
+      expect(typeof result.cleanup).toBe('function');
+      const created = fs
+        .readdirSync(os.tmpdir())
+        .filter((n) => n.startsWith('openpkg-') && !before.has(n));
+      expect(created.length).toBeGreaterThan(0);
+      const dest = path.join(os.tmpdir(), created[0]);
+      expect(fs.existsSync(path.join(dest, 'package.json'))).toBe(true);
+      result.cleanup?.();
+      expect(fs.existsSync(dest)).toBe(false);
+    } finally {
+      process.env.PATH = prevPath;
+    }
+  });
 });
