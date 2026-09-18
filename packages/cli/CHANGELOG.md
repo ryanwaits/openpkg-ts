@@ -1,5 +1,13 @@
 # @openpkg-ts/cli
 
+## 0.13.1
+
+### Patch Changes
+
+- 3243921: Stubbed types from the `typescript` package now record `x-ts-package: "typescript"` and expand when named in `followExternal`; only the bundled platform libs (lib.dom / lib.es) are excluded, not the whole package. The CLI's stubbed-externals report lists followable packages only: platform globals no longer appear as "(unknown origin)" under a hint that could never apply to them.
+- Updated dependencies [3243921]
+  - @openpkg-ts/sdk@0.54.1
+
 ## 0.13.0
 
 ### Minor Changes
