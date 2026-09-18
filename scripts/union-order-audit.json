@@ -7,15 +7,11 @@
     "packages/sdk/src/compiler/fixtures/unresolved-deps/index.ts"
   ],
   "totals": {
-    "anyOf": 200,
-    "enum": 96,
-    "x-ts-type": 379
+    "anyOf": 199,
+    "enum": 86,
+    "x-ts-type": 368
   },
   "uniqueUnions": [
-    {
-      "union": "anyOf #/types/ChoiceQuestion , #/types/ScoreQuestion",
-      "count": 1
-    },
     {
       "union": "anyOf #/types/EnumMember , #/types/PropertyAccessExpression , #/types/ElementAccessExpression",
       "count": 1
@@ -41,7 +37,7 @@
       "count": 1
     },
     {
-      "union": "anyOf #/types/ResolveAmbiguous , #/types/ResolveEmpty , #/types/ResolveExplicit , #/types/ResolveNeedsBuild , #/types/ResolveOk , #/types/ResolveUnavailable",
+      "union": "anyOf #/types/ResolveAmbiguous , #/types/ResolveEmpty , #/types/ResolveExplicit , #/types/ResolveNeedsBuild , #/types/ResolveOk",
       "count": 1
     },
     {
@@ -57,7 +53,7 @@
       "count": 1
     },
     {
-      "union": "anyOf boolean , h:681004346c , h:b79e928ec2",
+      "union": "anyOf boolean , h:681004346c",
       "count": 7
     },
     {
@@ -69,7 +65,7 @@
       "count": 6
     },
     {
-      "union": "anyOf h:38bcc555c8 , h:e29f6ca9b5 , h:f509aa8fa8 , h:e9e88ecace , h:798e27ba02 , h:13e54f9f58",
+      "union": "anyOf h:38bcc555c8 , h:e29f6ca9b5 , h:f509aa8fa8 , h:e9e88ecace , h:798e27ba02",
       "count": 1
     },
     {
@@ -329,7 +325,7 @@
       "count": 4
     },
     {
-      "union": "enum [\"explicit\",\"ambiguous\",\"empty\",\"needs-build\",\"ok\",\"unavailable\"]",
+      "union": "enum [\"explicit\",\"ambiguous\",\"empty\",\"needs-build\",\"ok\"]",
       "count": 1
     },
     {
@@ -351,10 +347,6 @@
     {
       "union": "enum [\"function\",\"module\",\"class\",\"variable\",\"interface\",\"type\",\"enum\",\"namespace\",\"reference\",\"external\"]",
       "count": 1
-    },
-    {
-      "union": "enum [\"heuristic\",\"jev\"]",
-      "count": 10
     },
     {
       "union": "enum [\"high\",\"medium\",\"low\"]",
@@ -481,7 +473,7 @@
       "count": 4
     },
     {
-      "union": "x-ts-type \"explicit\" | \"ambiguous\" | \"empty\" | \"needs-build\" | \"ok\" | \"unavailable\"",
+      "union": "x-ts-type \"explicit\" | \"ambiguous\" | \"empty\" | \"needs-build\" | \"ok\"",
       "count": 1
     },
     {
@@ -499,10 +491,6 @@
     {
       "union": "x-ts-type \"function\" | \"module\" | \"class\" | \"variable\" | \"interface\" | \"type\" | \"enum\" | \"namespace\" | \"reference\" | \"external\"",
       "count": 1
-    },
-    {
-      "union": "x-ts-type \"heuristic\" | \"jev\"",
-      "count": 10
     },
     {
       "union": "x-ts-type \"high\" | \"medium\" | \"low\"",
@@ -669,7 +657,7 @@
       "count": 3
     },
     {
-      "union": "x-ts-type (ResolveAmbiguous | ResolveEmpty | ResolveExplicit | ResolveNeedsBuild | ResolveOk | ResolveUnavailable) & { cleanup?: () => void; }",
+      "union": "x-ts-type (ResolveAmbiguous | ResolveEmpty | ResolveExplicit | ResolveNeedsBuild | ResolveOk) & { cleanup?: () => void; }",
       "count": 2
     },
     {
@@ -817,12 +805,8 @@
       "count": 6
     },
     {
-      "union": "x-ts-type boolean | string[] | \"auto\"",
+      "union": "x-ts-type boolean | string[]",
       "count": 7
-    },
-    {
-      "union": "x-ts-type ChoiceQuestion | ScoreQuestion",
-      "count": 1
     },
     {
       "union": "x-ts-type ConcreteSchemaVersion | \"latest\"",
