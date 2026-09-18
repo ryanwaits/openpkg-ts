@@ -1,6 +1,6 @@
 import type { SpecSchema, SpecSignature } from '@openpkg-ts/spec';
 import ts from 'typescript';
-import { isLibFile, packageNameFromPath, resolveTypeId, typeRefId } from '../ast/type-identity';
+import { isLibSymbol, packageNameFromPath, resolveTypeId, typeRefId } from '../ast/type-identity';
 import { isSymbolDeprecated } from '../ast/utils';
 import { BUILTIN_TYPE_SCHEMAS, type BuiltinSchema } from '../schema/builtins';
 import type { SerializerContext } from '../serializers/context';
@@ -417,10 +417,7 @@ export function isPrimitiveName(name: string): boolean {
  * Used to detect Array, Object, and other built-in types.
  */
 export function isBuiltinSymbol(symbol: ts.Symbol | undefined): boolean {
-  if (!symbol) return false;
-  const declarations = symbol.getDeclarations();
-  if (!declarations || declarations.length === 0) return false;
-  return isLibFile(declarations[0].getSourceFile().fileName);
+  return isLibSymbol(symbol);
 }
 
 /**
@@ -438,12 +435,10 @@ export function getTypeOrigin(type: ts.Type, _checker: ts.TypeChecker): string |
   const declarations = symbol.getDeclarations();
   if (!declarations || declarations.length === 0) return undefined;
 
-  const fileName = declarations[0].getSourceFile().fileName;
-
   // Platform globals (lib.dom / lib.es) have no followable package. The
   // `typescript` package's own API does — only its lib files are excluded.
-  if (isLibFile(fileName)) return undefined;
-  return packageNameFromPath(fileName);
+  if (isLibSymbol(symbol)) return undefined;
+  return packageNameFromPath(declarations[0].getSourceFile().fileName);
 }
 
 /**

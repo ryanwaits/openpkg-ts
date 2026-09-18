@@ -1,5 +1,5 @@
 import ts from 'typescript';
-import { isLibFile, packageNameFromPath, resolveTypeId } from '../ast/type-identity';
+import { isLibSymbol, packageNameFromPath, resolveTypeId } from '../ast/type-identity';
 import type { SerializerContext } from '../serializers/context';
 import { buildSchema, ensureNonEmptySchema } from '../types/schema-builder';
 
@@ -61,9 +61,8 @@ export function createExternalExpansionPredicate(opts: {
   return (symbol: ts.Symbol): boolean => {
     const decl = symbol.declarations?.[0];
     if (!decl) return false;
-    const fileName = decl.getSourceFile().fileName;
-    if (isLibFile(fileName)) return false;
-    const pkg = packageNameFromPath(fileName);
+    if (isLibSymbol(symbol)) return false;
+    const pkg = packageNameFromPath(decl.getSourceFile().fileName);
     if (pkg) return packageAllowed(pkg);
     // Project or workspace-resolved source file
     return true;

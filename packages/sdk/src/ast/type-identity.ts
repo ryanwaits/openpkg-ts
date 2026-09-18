@@ -24,6 +24,16 @@ export function isLibFile(fileName: string): boolean {
 }
 
 /**
+ * A platform global, judged over ALL declarations. Globals merge: `AbortSignal`
+ * is declared by lib.dom and again by bun-types / @types/node, and which one
+ * comes first depends on the TypeScript version. Reading only the first makes
+ * the spec differ by compiler.
+ */
+export function isLibSymbol(symbol: ts.Symbol | undefined): boolean {
+  return symbol?.declarations?.some((d) => isLibFile(d.getSourceFile().fileName)) ?? false;
+}
+
+/**
  * Package name for a file under node_modules, else undefined. Takes the LAST
  * node_modules segment: store layouts (`.pnpm/zod@3/node_modules/zod`,
  * `.bun/…`) and nested deps put the real package there, and the first
