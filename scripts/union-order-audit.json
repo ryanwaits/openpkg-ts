@@ -7,7 +7,7 @@
     "packages/sdk/src/compiler/fixtures/unresolved-deps/index.ts"
   ],
   "totals": {
-    "anyOf": 201,
+    "anyOf": 200,
     "enum": 96,
     "x-ts-type": 379
   },
@@ -214,7 +214,7 @@
     },
     {
       "union": "anyOf null , string",
-      "count": 11
+      "count": 10
     },
     {
       "union": "anyOf null , string , h:ec2e1c6035 , h:abd0d14bb2 , h:f77432a18b , h:7d589cadd3 , h:e3ef754bc4 , h:b669559432 , h:3d5361bcb8 , h:602c1b06c7 , h:e843711b68 , h:b1534d4b00 , h:1138cae9f4 , h:116d8b6a25 , h:85a4583127 , h:e5ad3d52b2 , h:99754ec087 , h:93a5bdccce , h:50e08e3c7f , #/types/SpecSchemaRef , #/types/SpecSchemaFallback , #/types/SpecSchemaGeneric",
