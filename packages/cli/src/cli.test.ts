@@ -142,7 +142,15 @@ describe('openpkg cli', () => {
     // Platform globals (lib.dom / lib.es) are stubbed by design and can never
     // be followed, so they stay out of the "add to followExternal" report.
     it('stub report lists followable packages only, never platform globals', async () => {
-      const mixed = path.join(dir, 'mixed.ts');
+      // Own tsconfig pins the environment (DOM from the bundled lib, no ambient
+      // @types) so the result does not depend on what the process cwd has installed.
+      const sub = path.join(dir, 'globals');
+      fs.mkdirSync(sub, { recursive: true });
+      fs.writeFileSync(
+        path.join(sub, 'tsconfig.json'),
+        JSON.stringify({ compilerOptions: { lib: ['es2021', 'dom'], types: [], strict: true } }),
+      );
+      const mixed = path.join(sub, 'mixed.ts');
       fs.writeFileSync(
         mixed,
         `import type { Widget } from 'ext-lib';\nexport function use(w: Widget, s: AbortSignal): void {}\n`,
@@ -152,7 +160,7 @@ describe('openpkg cli', () => {
       expect(a.stderr).toContain('stubbed from: ext-lib (1)');
       expect(a.stderr).not.toContain('unknown origin');
 
-      const globalsOnly = path.join(dir, 'globals.ts');
+      const globalsOnly = path.join(sub, 'only.ts');
       fs.writeFileSync(globalsOnly, 'export function stop(s: AbortSignal): void {}\n');
       const b = await run(['spec', globalsOnly]);
       expect(b.code).toBe(0);

@@ -24,10 +24,30 @@ beforeAll(() => {
     path.join(pkg, 'lib/typescript.d.ts'),
     'export interface Node { kind: number }\n',
   );
+  // A package that re-declares a platform global, the way bun-types and
+  // @types/node do. Which declaration TypeScript lists first varies by version.
+  const aug = path.join(dir, 'node_modules/aug');
+  fs.mkdirSync(aug, { recursive: true });
+  fs.writeFileSync(
+    path.join(aug, 'package.json'),
+    JSON.stringify({ name: 'aug', types: 'index.d.ts' }),
+  );
+  fs.writeFileSync(
+    path.join(aug, 'index.d.ts'),
+    'export {};\ndeclare global {\n  interface AbortSignal {\n    extra: string;\n  }\n}\n',
+  );
   fs.writeFileSync(path.join(dir, 'package.json'), JSON.stringify({ name: 'origins' }));
+  // Pin the environment: DOM from the bundled lib, no ambient @types. Otherwise
+  // TS 5 auto-includes whatever @types the process cwd has (bun-types declares
+  // AbortSignal too) and the global's origin changes with the compiler version.
+  fs.writeFileSync(
+    path.join(dir, 'tsconfig.json'),
+    JSON.stringify({ compilerOptions: { lib: ['es2021', 'dom'], types: [], strict: true } }),
+  );
   fs.writeFileSync(
     path.join(dir, 'index.ts'),
     [
+      "import 'aug';",
       "import type { Node } from 'typescript';",
       'export function visit(node: Node, signal: AbortSignal): void {}',
     ].join('\n'),
