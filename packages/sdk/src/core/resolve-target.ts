@@ -481,6 +481,9 @@ function head(abs: string, maxChars = 1200): string {
   }
 }
 
+/** Abstain key: a peer-library monorepo has no single product to pick. */
+const PACKAGE_NONE = 'none';
+
 async function jevPickPackage(
   candidates: PackageRecord[],
   ctx: ResolveCtx,
@@ -493,6 +496,7 @@ async function jevPickPackage(
     byId.set(id, pkg);
     criteria[id] = `${pkg.name} — ${pkg.description ?? pkg.dir}${pkg.hasSrc ? ' (src)' : ''}`;
   }
+  criteria[PACKAGE_NONE] = 'No single package is the product — these are peer libraries';
   const picked = await jevChoice({
     evaluate: ctx.evaluate,
     instructions:
@@ -512,7 +516,8 @@ async function jevPickPackage(
     },
     id: 'package',
   });
-  if (!picked || picked.confidence < JEV_CONFIDENCE) return null;
+  if (!picked || picked.choice === PACKAGE_NONE) return null;
+  if (picked.confidence < JEV_CONFIDENCE) return null;
   return byId.get(picked.choice) ?? null;
 }
 

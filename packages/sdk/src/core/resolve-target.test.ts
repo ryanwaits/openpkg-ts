@@ -274,6 +274,38 @@ describe('resolveTarget', () => {
     expect(result.kind).toBe('ambiguous');
   });
 
+  test('jev can abstain: confident "none" on peer libraries stays ambiguous', async () => {
+    write(
+      path.join(tmp, 'package.json'),
+      JSON.stringify({ name: 'root', private: true, workspaces: ['packages/*'] }),
+    );
+    write(path.join(tmp, 'packages/auth/package.json'), JSON.stringify({ name: '@acme/auth' }));
+    write(path.join(tmp, 'packages/auth/src/index.ts'), 'export const auth = 1;\n');
+    write(
+      path.join(tmp, 'packages/storage/package.json'),
+      JSON.stringify({ name: '@acme/storage' }),
+    );
+    write(path.join(tmp, 'packages/storage/src/index.ts'), 'export const storage = 1;\n');
+
+    let offered: string[] = [];
+    const evaluate: EvaluateFn = async (req) => {
+      offered = Object.keys(req.questions.package.criteria);
+      return {
+        answers: { package: { choice: 'none', probabilities: { none: 0.9 } } },
+        providerMetadata: { typesafe: { confidence: { package: 0.9 } } },
+      };
+    };
+
+    const result = await resolveTarget({
+      input: tmp,
+      cwd: tmp,
+      decisions: 'jev',
+      evaluate,
+    });
+    expect(offered).toEqual(['p0', 'p1', 'none']);
+    expect(result.kind).toBe('ambiguous');
+  });
+
   test('jev without a key is unavailable', async () => {
     const prev = process.env.AI_GATEWAY_API_KEY;
     delete process.env.AI_GATEWAY_API_KEY;
