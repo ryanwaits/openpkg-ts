@@ -1,6 +1,6 @@
 {
   "name": "@openpkg-ts/sdk",
-  "version": "0.53.1",
+  "version": "0.54.0",
   "description": "TypeScript API extraction SDK - programmatic primitives for OpenPkg specs",
   "keywords": [
     "openpkg",

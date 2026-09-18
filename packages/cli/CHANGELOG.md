@@ -1,5 +1,17 @@
 # @openpkg-ts/cli
 
+## 0.13.0
+
+### Minor Changes
+
+- b5705e1: Remove Jev. Extraction and target resolution are deterministic-only again: dropped `decisions`, `evaluate`, `followExternal: 'auto'`, the `unavailable` resolve result, the `EvaluateFn`/`EvaluateRequest`/`EvaluateResult`/`JEV_CONFIDENCE`/`JEV_MODEL` exports, the optional `ai` peer dependency, and the CLI's `--jev` flag and `.env` loading. Ambiguous monorepos return the candidate list; pass a path or intent word (`openpkg spec . sdk`).
+
+### Patch Changes
+
+- Updated dependencies [b5705e1]
+- Updated dependencies [b5705e1]
+  - @openpkg-ts/sdk@0.54.0
+
 ## 0.12.2
 
 ### Patch Changes
