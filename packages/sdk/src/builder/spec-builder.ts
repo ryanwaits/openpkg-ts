@@ -12,7 +12,7 @@ import type {
 import { SCHEMA_URL, SCHEMA_VERSION } from '@openpkg-ts/spec';
 import ts from 'typescript';
 import { resolveExportTarget } from '../ast/resolve';
-import { packageNameFromPath } from '../ast/type-identity';
+import { isLibFile, packageNameFromPath } from '../ast/type-identity';
 import { isSymbolDeprecated, parseInlineTags } from '../ast/utils';
 import { createProgram } from '../compiler/program';
 import { extractStandardSchemasFromProject } from '../schema/standard-schema';
@@ -917,7 +917,7 @@ function findTypeInProgram(
   for (const sf of program.getSourceFiles()) {
     const fn = sf.fileName;
     // Skip ambient globals
-    if (fn.includes('/typescript/lib/lib.') || fn.includes('\\typescript\\lib\\lib.')) continue;
+    if (isLibFile(fn)) continue;
     if (fn.includes('/@types/node/') || fn.includes('\\@types\\node\\')) continue;
     // Skip entry file's own package (already searched via entry scope)
     if (fn.startsWith(entryDir)) continue;

@@ -1,6 +1,6 @@
 import type { SpecSchema, SpecSignature } from '@openpkg-ts/spec';
 import ts from 'typescript';
-import { packageNameFromPath, resolveTypeId, typeRefId } from '../ast/type-identity';
+import { isLibFile, packageNameFromPath, resolveTypeId, typeRefId } from '../ast/type-identity';
 import { isSymbolDeprecated } from '../ast/utils';
 import { BUILTIN_TYPE_SCHEMAS, type BuiltinSchema } from '../schema/builtins';
 import type { SerializerContext } from '../serializers/context';
@@ -420,10 +420,7 @@ export function isBuiltinSymbol(symbol: ts.Symbol | undefined): boolean {
   if (!symbol) return false;
   const declarations = symbol.getDeclarations();
   if (!declarations || declarations.length === 0) return false;
-  const sourceFile = declarations[0].getSourceFile();
-  const fileName = sourceFile.fileName;
-  // TypeScript lib files are in node_modules/typescript/lib/lib.*.d.ts
-  return fileName.includes('/typescript/lib/lib.') || fileName.includes('\\typescript\\lib\\lib.');
+  return isLibFile(declarations[0].getSourceFile().fileName);
 }
 
 /**
@@ -443,11 +440,10 @@ export function getTypeOrigin(type: ts.Type, _checker: ts.TypeChecker): string |
 
   const fileName = declarations[0].getSourceFile().fileName;
 
-  const pkg = packageNameFromPath(fileName);
-  // Exclude TypeScript's built-in lib files
-  if (pkg === 'typescript') return undefined;
-
-  return pkg;
+  // Platform globals (lib.dom / lib.es) have no followable package. The
+  // `typescript` package's own API does — only its lib files are excluded.
+  if (isLibFile(fileName)) return undefined;
+  return packageNameFromPath(fileName);
 }
 
 /**

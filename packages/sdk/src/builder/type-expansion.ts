@@ -1,5 +1,5 @@
 import ts from 'typescript';
-import { packageNameFromPath, resolveTypeId } from '../ast/type-identity';
+import { isLibFile, packageNameFromPath, resolveTypeId } from '../ast/type-identity';
 import type { SerializerContext } from '../serializers/context';
 import { buildSchema, ensureNonEmptySchema } from '../types/schema-builder';
 
@@ -28,10 +28,6 @@ export interface ExpansionOptions {
   entryFile: string;
 }
 
-function isLibFile(fileName: string): boolean {
-  return fileName.includes('/typescript/lib/lib.') || fileName.includes('\\typescript\\lib\\lib.');
-}
-
 /**
  * Location predicate shared by reachability expansion and structural type
  * registration: TS lib files never expand; node_modules packages expand only
@@ -52,7 +48,6 @@ export function createExternalExpansionPredicate(opts: {
   };
 
   const packageAllowed = (pkg: string): boolean => {
-    if (pkg === 'typescript') return false;
     if (opts.followExternal === true) return true;
     if (
       Array.isArray(opts.followExternal) &&

@@ -18,7 +18,7 @@ import {
   withDescription,
   writtenTypeText,
 } from '../types/schema-builder';
-import { resolveTypeId } from './type-identity';
+import { isLibFile, resolveTypeId } from './type-identity';
 import { extractTypeParameters, isSymbolDeprecated } from './utils';
 
 /** Built-in types that shouldn't be registered */
@@ -451,10 +451,7 @@ export class TypeRegistry {
       checker.isArrayType(type) ||
       checker.isTupleType(type) ||
       (type.symbol?.getName() === 'Array' &&
-        type.symbol
-          ?.getDeclarations()?.[0]
-          ?.getSourceFile()
-          ?.fileName?.includes('/typescript/lib/lib.'));
+        isLibFile(type.symbol?.getDeclarations()?.[0]?.getSourceFile()?.fileName ?? ''));
     const isStringLike = type.flags & ts.TypeFlags.StringLike;
     const isNumberLike = type.flags & ts.TypeFlags.NumberLike;
 

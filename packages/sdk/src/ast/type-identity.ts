@@ -16,6 +16,14 @@ import type { SerializerContext } from '../serializers/context';
 const NODE_MODULES_PKG = /node_modules\/(@[^/]+\/[^/]+|[^/]+)/g;
 
 /**
+ * TypeScript's bundled platform libs (lib.dom, lib.es*). They sit inside the
+ * `typescript` package dir but are globals, not that package's API.
+ */
+export function isLibFile(fileName: string): boolean {
+  return fileName.includes('/typescript/lib/lib.') || fileName.includes('\\typescript\\lib\\lib.');
+}
+
+/**
  * Package name for a file under node_modules, else undefined. Takes the LAST
  * node_modules segment: store layouts (`.pnpm/zod@3/node_modules/zod`,
  * `.bun/…`) and nested deps put the real package there, and the first
