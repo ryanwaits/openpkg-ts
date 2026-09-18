@@ -139,6 +139,27 @@ describe('openpkg cli', () => {
       expect(widget.schema['x-ts-package']).toBe('ext-lib');
     });
 
+    // Platform globals (lib.dom / lib.es) are stubbed by design and can never
+    // be followed, so they stay out of the "add to followExternal" report.
+    it('stub report lists followable packages only, never platform globals', async () => {
+      const mixed = path.join(dir, 'mixed.ts');
+      fs.writeFileSync(
+        mixed,
+        `import type { Widget } from 'ext-lib';\nexport function use(w: Widget, s: AbortSignal): void {}\n`,
+      );
+      const a = await run(['spec', mixed]);
+      expect(a.code).toBe(0);
+      expect(a.stderr).toContain('stubbed from: ext-lib (1)');
+      expect(a.stderr).not.toContain('unknown origin');
+
+      const globalsOnly = path.join(dir, 'globals.ts');
+      fs.writeFileSync(globalsOnly, 'export function stop(s: AbortSignal): void {}\n');
+      const b = await run(['spec', globalsOnly]);
+      expect(b.code).toBe(0);
+      expect(b.stderr).not.toContain('stubbed');
+      expect(b.stderr).not.toContain('followExternal');
+    });
+
     it('--follow-external expands the named package', async () => {
       const { stdout, code } = await run(['spec', entry, '--follow-external', 'ext-lib']);
       expect(code).toBe(0);

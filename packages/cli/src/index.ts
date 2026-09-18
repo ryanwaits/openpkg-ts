@@ -204,8 +204,9 @@ function reportStubbedExternals(spec: { types?: Array<Record<string, unknown>> }
   for (const t of spec.types ?? []) {
     if (!t.external) continue;
     const pkg = (t.schema as Record<string, unknown> | undefined)?.['x-ts-package'];
-    const key = typeof pkg === 'string' ? pkg : '(unknown origin)';
-    counts.set(key, (counts.get(key) ?? 0) + 1);
+    // No package = platform global (lib.dom / lib.es): stubbed by design, never followable.
+    if (typeof pkg !== 'string') continue;
+    counts.set(pkg, (counts.get(pkg) ?? 0) + 1);
   }
   if (counts.size === 0) return;
   const summary = [...counts.entries()]
