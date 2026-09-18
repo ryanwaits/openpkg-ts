@@ -27,17 +27,10 @@ bunx @openpkg-ts/cli diff old.json new.json
 
 Prefers TypeScript source (`src/index.ts`) over `dist/*.d.ts`. Several packages and no intent → prompt (or a list if not a TTY).
 
-Opt-in Jev routing (needs `AI_GATEWAY_API_KEY` and the `ai` package). Sends package.json + file heads to Vercel AI Gateway with zero data retention:
-
-```bash
-bunx @openpkg-ts/cli spec . --jev
-bunx @openpkg-ts/cli spec . --jev --follow-external auto
-```
-
-`followExternal: "auto"` (config or flag) requires `--jev`. Config: `openpkg.config.json` or `package.json#openpkg`.
+Config: `openpkg.config.json` or `package.json#openpkg`.
 
 ```json
-{ "followExternal": "auto", "decisions": "jev" }
+{ "followExternal": ["@ai-sdk/*"] }
 ```
 
 ## Commands
@@ -49,7 +42,7 @@ bunx @openpkg-ts/cli spec . --jev --follow-external auto
 | `list [path \| entry.ts] [intent...]` | List exports with kind and location (`--json`) |
 | `diff <old.json> <new.json>` | Compare specs; exits 2 if breaking changes |
 
-`-o, --output` writes to a file instead of stdout. `--jev` routes package/entry with Jev. `--follow-external auto` expands load-bearing externals (requires `--jev`).
+`-o, --output` writes to a file instead of stdout.
 
 For programmatic use, richer options, and framework integrations (search indexes, nav trees), use `@openpkg-ts/sdk` directly.
 

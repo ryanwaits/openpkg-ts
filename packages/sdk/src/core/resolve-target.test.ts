@@ -3,7 +3,6 @@ import { spawnSync } from 'node:child_process';
 import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
-import type { EvaluateFn } from './decisions';
 import {
   catalogPackages,
   cloneRemote,
@@ -218,130 +217,6 @@ describe('resolveTarget', () => {
     expect(result.kind).toBe('ok');
     if (result.kind !== 'ok') return;
     expect(result.package.name).toBe('cloned');
-  });
-
-  test('jev picks among ambiguous packages', async () => {
-    write(
-      path.join(tmp, 'package.json'),
-      JSON.stringify({ name: 'root', private: true, workspaces: ['packages/*'] }),
-    );
-    write(path.join(tmp, 'packages/sdk/package.json'), JSON.stringify({ name: '@acme/sdk' }));
-    write(path.join(tmp, 'packages/sdk/src/index.ts'), 'export const sdk = 1;\n');
-    write(path.join(tmp, 'packages/cli/package.json'), JSON.stringify({ name: '@acme/cli' }));
-    write(path.join(tmp, 'packages/cli/src/index.ts'), 'export const cli = 1;\n');
-
-    const evaluate: EvaluateFn = async (req) => {
-      const criteria = req.questions.package.criteria;
-      const id = Object.entries(criteria).find(([, v]) => v.includes('@acme/cli'))?.[0] ?? 'p0';
-      return {
-        answers: { package: { choice: id, probabilities: { [id]: 0.9 } } },
-        providerMetadata: { typesafe: { confidence: { package: 0.9 } } },
-      };
-    };
-
-    const result = await resolveTarget({
-      input: tmp,
-      cwd: tmp,
-      decisions: 'jev',
-      evaluate,
-    });
-    expect(result.kind).toBe('ok');
-    if (result.kind !== 'ok') return;
-    expect(result.package.name).toBe('@acme/cli');
-  });
-
-  test('jev low confidence stays ambiguous', async () => {
-    write(
-      path.join(tmp, 'package.json'),
-      JSON.stringify({ name: 'root', private: true, workspaces: ['packages/*'] }),
-    );
-    write(path.join(tmp, 'packages/sdk/package.json'), JSON.stringify({ name: '@acme/sdk' }));
-    write(path.join(tmp, 'packages/sdk/src/index.ts'), 'export const sdk = 1;\n');
-    write(path.join(tmp, 'packages/cli/package.json'), JSON.stringify({ name: '@acme/cli' }));
-    write(path.join(tmp, 'packages/cli/src/index.ts'), 'export const cli = 1;\n');
-
-    const evaluate: EvaluateFn = async () => ({
-      answers: { package: { choice: 'p0', probabilities: { p0: 0.55, p1: 0.45 } } },
-      providerMetadata: { typesafe: { confidence: { package: 0.2 } } },
-    });
-
-    const result = await resolveTarget({
-      input: tmp,
-      cwd: tmp,
-      decisions: 'jev',
-      evaluate,
-    });
-    expect(result.kind).toBe('ambiguous');
-  });
-
-  test('jev can abstain: confident "none" on peer libraries stays ambiguous', async () => {
-    write(
-      path.join(tmp, 'package.json'),
-      JSON.stringify({ name: 'root', private: true, workspaces: ['packages/*'] }),
-    );
-    write(path.join(tmp, 'packages/auth/package.json'), JSON.stringify({ name: '@acme/auth' }));
-    write(path.join(tmp, 'packages/auth/src/index.ts'), 'export const auth = 1;\n');
-    write(
-      path.join(tmp, 'packages/storage/package.json'),
-      JSON.stringify({ name: '@acme/storage' }),
-    );
-    write(path.join(tmp, 'packages/storage/src/index.ts'), 'export const storage = 1;\n');
-
-    let offered: string[] = [];
-    const evaluate: EvaluateFn = async (req) => {
-      offered = Object.keys(req.questions.package.criteria);
-      return {
-        answers: { package: { choice: 'none', probabilities: { none: 0.9 } } },
-        providerMetadata: { typesafe: { confidence: { package: 0.9 } } },
-      };
-    };
-
-    const result = await resolveTarget({
-      input: tmp,
-      cwd: tmp,
-      decisions: 'jev',
-      evaluate,
-    });
-    expect(offered).toEqual(['p0', 'p1', 'none']);
-    expect(result.kind).toBe('ambiguous');
-  });
-
-  test('jev without a key is unavailable', async () => {
-    const prev = process.env.AI_GATEWAY_API_KEY;
-    delete process.env.AI_GATEWAY_API_KEY;
-    try {
-      const result = await resolveTarget({ input: tmp, cwd: tmp, decisions: 'jev' });
-      expect(result.kind).toBe('unavailable');
-    } finally {
-      if (prev !== undefined) process.env.AI_GATEWAY_API_KEY = prev;
-    }
-  });
-
-  test('jev marks entryPointSource llm when it overrides heuristic', async () => {
-    write(
-      path.join(tmp, 'package.json'),
-      JSON.stringify({
-        name: 'solo',
-        types: './dist/index.d.ts',
-      }),
-    );
-    write(path.join(tmp, 'src/index.ts'), 'export const src = 1;\n');
-    write(path.join(tmp, 'dist/index.d.ts'), 'export declare const src: number;\n');
-
-    const evaluate: EvaluateFn = async () => ({
-      answers: { entry: { choice: 'c0', probabilities: { c0: 1, c1: 0 } } },
-      providerMetadata: { typesafe: { confidence: { entry: 1 } } },
-    });
-
-    const result = await resolveTarget({
-      input: tmp,
-      cwd: tmp,
-      decisions: 'jev',
-      evaluate,
-    });
-    expect(result.kind).toBe('ok');
-    if (result.kind !== 'ok') return;
-    expect(result.entryPointSource).toBe('llm');
   });
 
   test('cloneRemote clones a local git repo', async () => {

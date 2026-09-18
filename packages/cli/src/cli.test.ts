@@ -296,29 +296,6 @@ describe('openpkg cli', () => {
       expect(spec.generation.entryPointSource).toBe('explicit');
     });
 
-    it('--jev without a key fails loud', async () => {
-      const env = { ...process.env };
-      delete env.AI_GATEWAY_API_KEY;
-      const { stderr, code } = await run(['spec', '--jev'], dir, env);
-      expect(code).toBe(1);
-      expect(stderr).toContain('AI_GATEWAY_API_KEY');
-    });
-
-    it('help mentions --jev', async () => {
-      const { stdout, code } = await run(['--help']);
-      expect(code).toBe(0);
-      expect(stdout).toContain('--jev');
-    });
-
-    it('follow-external auto without --jev fails', async () => {
-      const { stderr, code } = await run(
-        ['spec', path.join(dir, 'packages/sdk'), '--follow-external', 'auto'],
-        dir,
-      );
-      expect(code).toBe(1);
-      expect(stderr).toContain('auto requires --jev');
-    });
-
     it('missing file path fails instead of extracting cwd', async () => {
       const pkg = path.join(dir, 'packages/sdk');
       const { stderr, code, stdout } = await run(['spec', 'missing.ts'], pkg);

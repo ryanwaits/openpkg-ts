@@ -7,13 +7,6 @@ export {
   mergeConfig,
   type OpenpkgConfig,
 } from './config';
-export {
-  type EvaluateFn,
-  type EvaluateRequest,
-  type EvaluateResult,
-  JEV_CONFIDENCE,
-  JEV_MODEL,
-} from './decisions';
 // Format utilities
 export { formatBadges, getMemberBadges } from './format';
 // Loader utilities
@@ -62,7 +55,6 @@ export {
   type ResolveOk,
   type ResolveTargetOptions,
   type ResolveTargetResult,
-  type ResolveUnavailable,
   resolveTarget,
 } from './resolve-target';
 // Search utilities

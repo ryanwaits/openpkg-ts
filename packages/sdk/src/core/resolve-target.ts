@@ -4,7 +4,6 @@ import * as os from 'node:os';
 import * as path from 'node:path';
 import type { EntryPointDetectionMethod } from '@openpkg-ts/spec';
 import picomatch from 'picomatch';
-import { type EvaluateFn, JEV_CONFIDENCE, jevChoice, loadEvaluate } from './decisions';
 
 export type PackageRecord = {
   name: string;
@@ -26,8 +25,6 @@ export type ResolveTargetOptions = {
   input?: string;
   intent?: string;
   cwd?: string;
-  decisions?: 'heuristic' | 'jev';
-  evaluate?: EvaluateFn;
   clone?: CloneFn;
 };
 
@@ -61,18 +58,12 @@ export type ResolveExplicit = {
   entryPointSource: 'explicit';
 };
 
-export type ResolveUnavailable = {
-  kind: 'unavailable';
-  reason: string;
-};
-
 export type ResolveTargetResult = (
   | ResolveOk
   | ResolveAmbiguous
   | ResolveNeedsBuild
   | ResolveEmpty
   | ResolveExplicit
-  | ResolveUnavailable
 ) & {
   /** Present when this resolution owns a temp clone. Call after extraction. */
   cleanup?: () => void;
@@ -417,11 +408,6 @@ export function pickEntry(
   return { entryFile: best.abs, entryPointSource: methodFor(best) };
 }
 
-function listEntryCandidates(pkgDir: string): Candidate[] {
-  const pkg = readJson(path.join(pkgDir, 'package.json')) ?? {};
-  return collectCandidates(pkgDir, pkg);
-}
-
 function isIgnoredPath(dir: string): boolean {
   const norm = dir.split(path.sep).join('/');
   return /\/(examples|fixtures|__tests__|test-fixtures)(\/|$)/.test(norm);
@@ -467,91 +453,9 @@ function buildCommand(pkg: PackageRecord): string | undefined {
   return undefined;
 }
 
-type ResolveCtx = {
-  decisions: 'heuristic' | 'jev';
-  evaluate?: EvaluateFn;
-  intent?: string;
-};
-
-function head(abs: string, maxChars = 1200): string {
-  try {
-    return fs.readFileSync(abs, 'utf8').slice(0, maxChars);
-  } catch {
-    return '';
-  }
-}
-
-/** Abstain key: a peer-library monorepo has no single product to pick. */
-const PACKAGE_NONE = 'none';
-
-async function jevPickPackage(
-  candidates: PackageRecord[],
-  ctx: ResolveCtx,
-): Promise<PackageRecord | null> {
-  if (!ctx.evaluate || candidates.length < 2) return null;
-  const criteria: Record<string, string> = {};
-  const byId = new Map<string, PackageRecord>();
-  for (const [i, pkg] of candidates.entries()) {
-    const id = `p${i}`;
-    byId.set(id, pkg);
-    criteria[id] = `${pkg.name} — ${pkg.description ?? pkg.dir}${pkg.hasSrc ? ' (src)' : ''}`;
-  }
-  criteria[PACKAGE_NONE] = 'No single package is the product — these are peer libraries';
-  const picked = await jevChoice({
-    evaluate: ctx.evaluate,
-    instructions:
-      'Which package is the public TypeScript SDK to extract? Prefer the named product, not examples, wasm glue, or private packages.',
-    criteria,
-    state: {
-      intent: ctx.intent ?? null,
-      catalog: candidates.map((p, i) => ({
-        id: `p${i}`,
-        name: p.name,
-        description: p.description ?? null,
-        hasSrc: p.hasSrc,
-        hasDist: p.hasDist,
-        types: p.types ?? p.typings ?? null,
-        private: p.private,
-      })),
-    },
-    id: 'package',
-  });
-  if (!picked || picked.choice === PACKAGE_NONE) return null;
-  if (picked.confidence < JEV_CONFIDENCE) return null;
-  return byId.get(picked.choice) ?? null;
-}
-
-async function jevPickEntry(cands: Candidate[], ctx: ResolveCtx): Promise<Candidate | null> {
-  if (!ctx.evaluate || cands.length < 2) return null;
-  const criteria: Record<string, string> = {};
-  const byId = new Map<string, Candidate>();
-  for (const [i, c] of cands.entries()) {
-    const id = `c${i}`;
-    byId.set(id, c);
-    criteria[id] = `${c.rel} (${c.source})`;
-  }
-  const picked = await jevChoice({
-    evaluate: ctx.evaluate,
-    instructions:
-      'Which file is the best OpenPkg entry point? Prefer TypeScript source over .d.ts/.js. Prefer the package root public API.',
-    criteria,
-    state: {
-      candidates: cands.map((c, i) => ({
-        id: `c${i}`,
-        path: c.rel,
-        source: c.source,
-        head: head(c.abs),
-      })),
-    },
-    id: 'entry',
-  });
-  if (!picked || picked.confidence < JEV_CONFIDENCE) return null;
-  return byId.get(picked.choice) ?? null;
-}
-
-async function finishPackage(pkg: PackageRecord, ctx: ResolveCtx): Promise<ResolveTargetResult> {
-  const cands = listEntryCandidates(pkg.dir);
-  if (!cands.length) {
+function finishPackage(pkg: PackageRecord): ResolveTargetResult {
+  const picked = pickEntry(pkg.dir);
+  if (!picked) {
     return {
       kind: 'needs-build',
       package: pkg,
@@ -559,29 +463,10 @@ async function finishPackage(pkg: PackageRecord, ctx: ResolveCtx): Promise<Resol
       ...(buildCommand(pkg) ? { command: buildCommand(pkg) } : {}),
     };
   }
-  const heuristic = [...cands].sort((a, b) => scoreCandidate(b) - scoreCandidate(a))[0];
-  let chosen = heuristic;
-  let source = methodFor(heuristic);
-  if (ctx.decisions === 'jev' && cands.length >= 2) {
-    const jev = await jevPickEntry(cands, ctx);
-    if (jev) {
-      chosen = jev;
-      source = 'llm';
-    }
-  }
-  return {
-    kind: 'ok',
-    package: pkg,
-    entryFile: chosen.abs,
-    entryPointSource: source,
-  };
+  return { kind: 'ok', package: pkg, ...picked };
 }
 
-async function resolveLocal(
-  abs: string,
-  startDir: string,
-  ctx: ResolveCtx,
-): Promise<ResolveTargetResult> {
+function resolveLocal(abs: string, startDir: string, intent?: string): ResolveTargetResult {
   const catalog = catalogPackages(startDir);
   if (!catalog.length) {
     return { kind: 'empty', reason: 'no JS/TS packages found' };
@@ -590,10 +475,9 @@ async function resolveLocal(
   const root = findWorkspaceRoot(startDir);
   const pointed = catalog.find((p) => p.dir === abs);
   if (pointed && (isExtractable(pointed) || pointed.dir !== root)) {
-    return finishPackage(pointed, ctx);
+    return finishPackage(pointed);
   }
 
-  const intent = ctx.intent;
   if (intent) {
     const scored = catalog
       .map((p) => ({ p, n: intentScore(p, intent) }))
@@ -603,27 +487,17 @@ async function resolveLocal(
       return { kind: 'empty', reason: `no package matched intent "${intent}"` };
     }
     const top = scored.filter((x) => x.n === scored[0].n).map((x) => x.p);
-    if (top.length === 1) return finishPackage(top[0], ctx);
-    if (ctx.decisions === 'jev') {
-      const jev = await jevPickPackage(top, ctx);
-      if (jev) return finishPackage(jev, ctx);
-    }
+    if (top.length === 1) return finishPackage(top[0]);
     return { kind: 'ambiguous', candidates: top };
   }
 
   const enclosed = enclosingPackage(startDir, catalog);
-  if (enclosed && enclosed.dir !== root) return finishPackage(enclosed, ctx);
+  if (enclosed && enclosed.dir !== root) return finishPackage(enclosed);
 
   const extractable = catalog.filter(isExtractable);
-  if (extractable.length === 1) return finishPackage(extractable[0], ctx);
-  if (extractable.length > 1) {
-    if (ctx.decisions === 'jev') {
-      const jev = await jevPickPackage(extractable, ctx);
-      if (jev) return finishPackage(jev, ctx);
-    }
-    return { kind: 'ambiguous', candidates: extractable };
-  }
-  if (catalog.length === 1) return finishPackage(catalog[0], ctx);
+  if (extractable.length === 1) return finishPackage(extractable[0]);
+  if (extractable.length > 1) return { kind: 'ambiguous', candidates: extractable };
+  if (catalog.length === 1) return finishPackage(catalog[0]);
   return { kind: 'empty', reason: 'no extractable JS/TS packages found' };
 }
 
@@ -632,33 +506,13 @@ export async function resolveTarget(
 ): Promise<ResolveTargetResult> {
   const cwd = path.resolve(options.cwd ?? process.cwd());
   const raw = options.input?.trim() || cwd;
-  const decisions = options.decisions ?? 'heuristic';
-  const ctx: ResolveCtx = {
-    decisions,
-    evaluate: options.evaluate,
-    intent: options.intent?.trim() || undefined,
-  };
-
-  if (decisions === 'jev' && !ctx.evaluate) {
-    if (!process.env.AI_GATEWAY_API_KEY) {
-      return {
-        kind: 'unavailable',
-        reason:
-          '--jev requires AI_GATEWAY_API_KEY\n  https://vercel.com/docs/ai-gateway\n  omit --jev to stay local',
-      };
-    }
-    try {
-      ctx.evaluate = await loadEvaluate();
-    } catch (err) {
-      return { kind: 'unavailable', reason: err instanceof Error ? err.message : String(err) };
-    }
-  }
+  const intent = options.intent?.trim() || undefined;
 
   if (isRemoteInput(raw)) {
     const owned = !options.clone;
     try {
       const cloned = await (options.clone ?? cloneRemote)(raw);
-      const result = await resolveLocal(cloned, cloned, ctx);
+      const result = resolveLocal(cloned, cloned, intent);
       if (!owned) return result;
       return {
         ...result,
@@ -683,5 +537,5 @@ export async function resolveTarget(
   }
 
   const startDir = existsDir(abs) ? abs : cwd;
-  return resolveLocal(abs, startDir, ctx);
+  return resolveLocal(abs, startDir, intent);
 }

@@ -1,5 +1,4 @@
 import type { EntryPointDetectionMethod, OpenPkg } from '@openpkg-ts/spec';
-import type { EvaluateFn } from './core/decisions';
 
 /** Configuration for resolving external package re-exports */
 export interface ExternalsConfig {
@@ -49,9 +48,7 @@ export interface ExtractOptions {
    * - `false` → disable the reachability-expansion pass entirely
    * - default → workspace siblings only; everything else stubbed
    */
-  followExternal?: boolean | string[] | 'auto';
-  evaluate?: EvaluateFn;
-  decisions?: 'heuristic' | 'jev';
+  followExternal?: boolean | string[];
   /** Callback when properties are truncated */
   onTruncation?: (typeName: string, actual: number, limit: number) => void;
 }

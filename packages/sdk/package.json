@@ -48,13 +48,9 @@
     "typescript": "^5.0.0 || ^6.0.0"
   },
   "peerDependencies": {
-    "ai": "^7.0.105",
     "shiki": "^1.0.0"
   },
   "peerDependenciesMeta": {
-    "ai": {
-      "optional": true
-    },
     "shiki": {
       "optional": true
     }

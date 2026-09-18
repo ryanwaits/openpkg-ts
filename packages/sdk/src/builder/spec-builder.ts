@@ -12,9 +12,9 @@ import type {
 import { SCHEMA_URL, SCHEMA_VERSION } from '@openpkg-ts/spec';
 import ts from 'typescript';
 import { resolveExportTarget } from '../ast/resolve';
+import { packageNameFromPath } from '../ast/type-identity';
 import { isSymbolDeprecated, parseInlineTags } from '../ast/utils';
 import { createProgram } from '../compiler/program';
-import { loadEvaluate } from '../core/decisions';
 import { extractStandardSchemasFromProject } from '../schema/standard-schema';
 import { serializeClass } from '../serializers/classes';
 import { createContext, type SerializerContext } from '../serializers/context';
@@ -39,14 +39,9 @@ import {
   matchesExternalPattern,
   resolveExternalModule,
 } from './external-resolver';
-import { calibrateDiagnostics, selectFollowExternal } from './jev-extract';
 import { mergeRuntimeSchemas } from './schema-merger';
 import { clearTypeDefinitionCache, getRegexCache } from './type-cache';
-import {
-  collectReferencedExternals,
-  createExternalExpansionPredicate,
-  expandReachableTypes,
-} from './type-expansion';
+import { createExternalExpansionPredicate, expandReachableTypes } from './type-expansion';
 import {
   BUILTIN_TYPES as BUILTIN_TYPES_SET,
   buildVerificationSummary,
@@ -213,50 +208,7 @@ export async function extract(options: ExtractOptions): Promise<ExtractResult> {
       });
     }
 
-    let followExternal = options.followExternal;
-    let evaluate = options.evaluate;
-    // Injected `evaluate` may drive auto-follow without decisions: 'jev'.
-    // Gateway load is only for explicit jev — heuristic + auto must not call it.
-    if (followExternal === 'auto' && !evaluate && options.decisions !== 'jev') {
-      diagnostics.push({
-        message: "followExternal auto requires decisions: 'jev' (or an injected evaluate)",
-        severity: 'error',
-        code: 'JEV_UNAVAILABLE',
-      });
-      followExternal = undefined;
-    }
-    const wantsJev = options.decisions === 'jev';
-    if (wantsJev && !evaluate) {
-      if (process.env.AI_GATEWAY_API_KEY) {
-        try {
-          evaluate = await loadEvaluate();
-        } catch (err) {
-          diagnostics.push({
-            message: err instanceof Error ? err.message : String(err),
-            severity: 'error',
-            code: 'JEV_UNAVAILABLE',
-          });
-        }
-      } else if (followExternal === 'auto') {
-        diagnostics.push({
-          message: 'followExternal auto requires --jev and AI_GATEWAY_API_KEY',
-          severity: 'error',
-          code: 'JEV_UNAVAILABLE',
-        });
-      }
-    }
-    if (followExternal === 'auto') {
-      if (!evaluate) {
-        followExternal = undefined;
-      } else {
-        const refs = collectReferencedExternals(
-          exportedSymbols,
-          typeChecker,
-          result.workspacePackages ?? new Map(),
-        );
-        followExternal = await selectFollowExternal(refs, evaluate);
-      }
-    }
+    const followExternal = options.followExternal;
 
     const ctx = createContext(program, sourceFile, {
       maxTypeDepth,
@@ -302,12 +254,10 @@ export async function extract(options: ExtractOptions): Promise<ExtractResult> {
           const allDecls = [...(targetSymbol.declarations ?? []), ...(symbol.declarations ?? [])];
           for (const decl of allDecls) {
             const sf = decl.getSourceFile();
-            if (sf?.fileName.includes('node_modules')) {
-              const match = sf.fileName.match(/node_modules\/(@[^/]+\/[^/]+|[^/]+)/);
-              if (match) {
-                externalPackage = match[1];
-                break;
-              }
+            const pkg = sf && packageNameFromPath(sf.fileName);
+            if (pkg) {
+              externalPackage = pkg;
+              break;
             }
             // Method 2: Check if this is an export specifier with a module specifier
             if (ts.isExportSpecifier(decl)) {
@@ -598,10 +548,6 @@ export async function extract(options: ExtractOptions): Promise<ExtractResult> {
         code: 'EXPORT_VERIFICATION_FAILED',
         suggestion: 'Check serialization errors for these exports',
       });
-    }
-
-    if (evaluate) {
-      await calibrateDiagnostics(diagnostics, evaluate);
     }
 
     return {

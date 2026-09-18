@@ -23,7 +23,6 @@ import {
   resolveTarget,
   type SchemaVersion,
 } from '@openpkg-ts/sdk';
-import { loadCwdEnv } from './env';
 
 /** Minimal shape we read off a parsed spec file. */
 type ParsedSpec = { openpkg?: string; meta?: { version?: string } };
@@ -49,19 +48,17 @@ Options:
   -f, --format            docs output format: md (default), html, json
       --json              list/diff output as JSON
       --follow-external   Expand types from these packages (comma-separated,
-                          globs ok: "@ai-sdk/*", or "auto" with --jev).
+                          globs ok: "@ai-sdk/*").
                           Default: stub externals.
       --follow-external-all   Expand every external package (use with care)
       --only              Only extract these exports (comma-separated, * ok)
       --ignore            Ignore these exports (comma-separated, * ok)
-      --jev               Route package/entry with Jev (needs AI_GATEWAY_API_KEY)
   -h, --help              Show this help
   -v, --version           Show version
 
 Config: reads openpkg.config.json (or package.json "openpkg" field) from the
 cwd. Flags override the file. Example:
   { "followExternal": ["@ai-sdk/*"] }
-  { "followExternal": "auto", "decisions": "jev" }
 `;
 
 class CliError extends Error {
@@ -148,14 +145,12 @@ async function choosePackage(candidates: PackageRecord[], cwd: string): Promise<
   }
 }
 
-async function resolveCliTarget(positionals: string[], decisions?: 'heuristic' | 'jev') {
-  loadCwdEnv();
+async function resolveCliTarget(positionals: string[]) {
   const cwd = process.cwd();
   const { input, intent } = parseTargetArgs(positionals, cwd);
-  const resolved = await resolveTarget({ input, intent, cwd, decisions });
+  const resolved = await resolveTarget({ input, intent, cwd });
   const cleanup = resolved.cleanup;
   try {
-    if (resolved.kind === 'unavailable') fail(resolved.reason);
     if (resolved.kind === 'empty') fail(resolved.reason);
     if (resolved.kind === 'needs-build') {
       fail(resolved.command ? `${resolved.reason}\n  → ${resolved.command}` : resolved.reason, 2);
@@ -196,10 +191,9 @@ function toList(value: string | undefined): string[] | undefined {
 function parseFollowExternal(
   value: string | undefined,
   all?: boolean,
-): boolean | string[] | 'auto' | undefined {
+): boolean | string[] | undefined {
   if (all) return true;
   if (!value) return undefined;
-  if (value.trim() === 'auto') return 'auto';
   return toList(value);
 }
 
@@ -233,7 +227,6 @@ async function specCommand(args: string[]): Promise<void> {
       'follow-external-all': { type: 'boolean' },
       only: { type: 'string' },
       ignore: { type: 'string' },
-      jev: { type: 'boolean' },
     },
     allowPositionals: true,
   });
@@ -246,21 +239,13 @@ async function specCommand(args: string[]): Promise<void> {
     ),
     only: toList(values.only as string | undefined),
     ignore: toList(values.ignore as string | undefined),
-    ...(values.jev ? { decisions: 'jev' as const } : {}),
   };
   let cleanup: (() => void) | undefined;
   try {
-    const resolved = await resolveCliTarget(
-      positionals,
-      cliConfig.decisions ?? fileConfig?.decisions,
-    );
+    const resolved = await resolveCliTarget(positionals);
     cleanup = resolved.cleanup;
     const { entryFile, entryPointSource } = resolved;
     const config = mergeConfig(fileConfig, cliConfig);
-    if (config.followExternal === 'auto' && config.decisions !== 'jev') {
-      fail('followExternal auto requires --jev');
-    }
-
     const { spec, diagnostics } = await extractSpec({
       entryFile,
       entryPointSource,
@@ -268,7 +253,6 @@ async function specCommand(args: string[]): Promise<void> {
       only: config.only,
       ignore: config.ignore,
       externals: config.externals,
-      decisions: config.decisions,
     });
     reportDiagnostics(diagnostics);
     if (!config.followExternal) reportStubbedExternals(spec);
@@ -284,7 +268,6 @@ async function docsCommand(args: string[]): Promise<void> {
     options: {
       output: { type: 'string', short: 'o' },
       format: { type: 'string', short: 'f' },
-      jev: { type: 'boolean' },
     },
     allowPositionals: true,
   });
@@ -297,8 +280,7 @@ async function docsCommand(args: string[]): Promise<void> {
     if (positionals[0]?.endsWith('.json')) {
       docs = createDocs(positionals[0]);
     } else {
-      const decisions = values.jev ? 'jev' : loadConfig(process.cwd())?.decisions;
-      const resolved = await resolveCliTarget(positionals, decisions);
+      const resolved = await resolveCliTarget(positionals);
       cleanup = resolved.cleanup;
       const { spec, diagnostics } = await extractSpec({
         entryFile: resolved.entryFile,
@@ -323,13 +305,12 @@ async function docsCommand(args: string[]): Promise<void> {
 async function listCommand(args: string[]): Promise<void> {
   const { values, positionals } = parseArgs({
     args,
-    options: { json: { type: 'boolean' }, jev: { type: 'boolean' } },
+    options: { json: { type: 'boolean' } },
     allowPositionals: true,
   });
-  const decisions = values.jev ? 'jev' : loadConfig(process.cwd())?.decisions;
   let cleanup: (() => void) | undefined;
   try {
-    const resolved = await resolveCliTarget(positionals, decisions);
+    const resolved = await resolveCliTarget(positionals);
     cleanup = resolved.cleanup;
     const { exports, errors } = await listExports({ entryFile: resolved.entryFile });
     for (const err of errors) {

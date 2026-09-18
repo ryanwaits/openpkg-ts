@@ -1,5 +1,5 @@
 import ts from 'typescript';
-import { resolveTypeId } from '../ast/type-identity';
+import { packageNameFromPath, resolveTypeId } from '../ast/type-identity';
 import type { SerializerContext } from '../serializers/context';
 import { buildSchema, ensureNonEmptySchema } from '../types/schema-builder';
 
@@ -21,14 +21,12 @@ export interface ExpansionOptions {
    * packages (in addition to workspace siblings); false → skip the expansion
    * pass entirely; undefined → workspace siblings only.
    */
-  followExternal?: boolean | string[] | 'auto';
+  followExternal?: boolean | string[];
   /** Workspace sibling packages from the workspace map (name → dir). */
   workspacePackages: ReadonlyMap<string, string>;
   /** Entry file — used to scope name collisions to the entry package. */
   entryFile: string;
 }
-
-const NODE_MODULES_PKG = /node_modules\/(@[^/]+\/[^/]+|[^/]+)/;
 
 function isLibFile(fileName: string): boolean {
   return fileName.includes('/typescript/lib/lib.') || fileName.includes('\\typescript\\lib\\lib.');
@@ -41,7 +39,7 @@ function isLibFile(fileName: string): boolean {
  * always expand.
  */
 export function createExternalExpansionPredicate(opts: {
-  followExternal?: boolean | string[] | 'auto';
+  followExternal?: boolean | string[];
   workspacePackages: ReadonlyMap<string, string>;
 }): (symbol: ts.Symbol) => boolean {
   // Match a package name against a followExternal entry. Supports exact names
@@ -70,88 +68,11 @@ export function createExternalExpansionPredicate(opts: {
     if (!decl) return false;
     const fileName = decl.getSourceFile().fileName;
     if (isLibFile(fileName)) return false;
-    const match = fileName.match(NODE_MODULES_PKG);
-    if (match) return packageAllowed(match[1]);
+    const pkg = packageNameFromPath(fileName);
+    if (pkg) return packageAllowed(pkg);
     // Project or workspace-resolved source file
     return true;
   };
-}
-
-export function collectReferencedExternals(
-  exportedSymbols: readonly ts.Symbol[],
-  checker: ts.TypeChecker,
-  workspacePackages: ReadonlyMap<string, string>,
-): { typeName: string; package: string }[] {
-  const out: { typeName: string; package: string }[] = [];
-  const seen = new Set<string>();
-  const visited = new Set<ts.Type>();
-
-  const consider = (symbol: ts.Symbol | undefined) => {
-    if (!symbol) return;
-    const decl = symbol.declarations?.[0];
-    if (!decl) return;
-    const fileName = decl.getSourceFile().fileName;
-    if (isLibFile(fileName)) return;
-    const match = fileName.match(NODE_MODULES_PKG);
-    if (!match) return;
-    const pkg = match[1];
-    if (pkg === 'typescript' || workspacePackages.has(pkg)) return;
-    const typeName = symbol.getName();
-    if (typeName.startsWith('__')) return;
-    const key = `${pkg}:${typeName}`;
-    if (seen.has(key)) return;
-    seen.add(key);
-    out.push({ typeName, package: pkg });
-  };
-
-  const visit = (type: ts.Type, depth: number): void => {
-    if (!type || depth > 20 || visited.has(type)) return;
-    visited.add(type);
-    const symbol = type.aliasSymbol ?? type.getSymbol();
-    consider(symbol);
-
-    // Type arguments always recurse — Promise<Widget> / Omit<Widget, K> must
-    // still collect Widget even when the container is lib or node_modules.
-    for (const arg of type.aliasTypeArguments ?? []) visit(arg, depth + 1);
-    const typeRef = type as ts.TypeReference;
-    if (typeRef.target) {
-      for (const arg of checker.getTypeArguments(typeRef) ?? []) visit(arg, depth + 1);
-    }
-    if (type.isUnion() || type.isIntersection()) {
-      for (const t of type.types) visit(t, depth + 1);
-    }
-
-    // Members only for in-scope types: walking into DOM/react internals would
-    // pull their whole graphs.
-    const fileName = symbol?.declarations?.[0]?.getSourceFile().fileName;
-    if (fileName) {
-      if (isLibFile(fileName)) return;
-      const match = fileName.match(NODE_MODULES_PKG);
-      if (match && !workspacePackages.has(match[1])) return;
-    }
-    if (!(type.flags & ts.TypeFlags.Object || type.isClassOrInterface())) return;
-
-    if (type.isClassOrInterface()) {
-      for (const base of checker.getBaseTypes(type) ?? []) visit(base, depth + 1);
-    }
-    for (const prop of type.getProperties()) {
-      if (prop.getName().startsWith('__@')) continue;
-      visit(checker.getTypeOfSymbol(prop), depth + 1);
-    }
-    for (const sig of [...type.getCallSignatures(), ...type.getConstructSignatures()]) {
-      for (const param of sig.getParameters()) visit(checker.getTypeOfSymbol(param), depth + 1);
-      visit(sig.getReturnType(), depth + 1);
-    }
-    for (const info of checker.getIndexInfosOfType(type)) {
-      visit(info.type, depth + 1);
-    }
-  };
-
-  for (const symbol of exportedSymbols) {
-    visit(checker.getTypeOfSymbol(symbol), 0);
-    visit(checker.getDeclaredTypeOfSymbol(symbol), 0);
-  }
-  return out;
 }
 
 export function expandReachableTypes(

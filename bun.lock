@@ -15,7 +15,7 @@
     },
     "packages/cli": {
       "name": "@openpkg-ts/cli",
-      "version": "0.12.0",
+      "version": "0.12.2",
       "bin": {
         "openpkg": "./dist/index.js",
       },
@@ -30,7 +30,7 @@
     },
     "packages/sdk": {
       "name": "@openpkg-ts/sdk",
-      "version": "0.52.0",
+      "version": "0.53.1",
       "dependencies": {
         "@openpkg-ts/spec": "^0.52.0",
         "picomatch": "4.0.3",
@@ -46,11 +46,9 @@
         "zod": "^4.3.6",
       },
       "peerDependencies": {
-        "ai": "^7.0.105",
         "shiki": "^1.0.0",
       },
       "optionalPeers": [
-        "ai",
         "shiki",
       ],
     },

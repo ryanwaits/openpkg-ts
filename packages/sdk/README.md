@@ -89,11 +89,11 @@ const { spec, diagnostics, verification } = await extractSpec({
   maxTypeDepth: 4,
   only: ['use*'],           // filter by pattern
   ignore: ['*Internal'],    // exclude by pattern
-  followExternal: ['@ai-sdk/*'], // or true, or 'auto' with decisions: 'jev'
+  followExternal: ['@ai-sdk/*'], // or true
 });
 ```
 
-`followExternal: 'auto'` scores referenced externals with Jev and expands the load-bearing ones. Requires `decisions: 'jev'`, `AI_GATEWAY_API_KEY`, and optional peer `ai` (≥7.0.105). Specs record `generation.entryPoint` and `generation.entryPointSource` (`types` / `exports` / `fallback` / `explicit` / `llm`).
+Specs record `generation.entryPoint` and `generation.entryPointSource` (`types` / `exports` / `fallback` / `explicit` / `llm`).
 
 ### resolveTarget
 
@@ -111,7 +111,7 @@ if (resolved.kind === 'ok') {
 }
 ```
 
-`decisions: 'jev'` uses Jev when the heuristic is ambiguous. GitHub URLs clone via `gh` if present, else `git clone --depth 1`.
+GitHub URLs clone via `gh` if present, else `git clone --depth 1`.
 
 ### diffSpecs
 
