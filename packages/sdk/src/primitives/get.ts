@@ -1,5 +1,6 @@
 import type { SpecExport, SpecType } from '@openpkg-ts/spec';
 import ts from 'typescript';
+import { packageNameFromPath } from '../ast/type-identity';
 import { getExportKind } from '../ast/utils';
 import { createProgram } from '../compiler/program';
 import { serializeClass } from '../serializers/classes';
@@ -311,10 +312,8 @@ function detectExternalPackage(symbol: ts.Symbol, checker: ts.TypeChecker): stri
   const allDecls = [...(targetSymbol.declarations ?? []), ...(symbol.declarations ?? [])];
   for (const decl of allDecls) {
     const sf = decl.getSourceFile();
-    if (sf?.fileName.includes('node_modules')) {
-      const match = sf.fileName.match(/node_modules\/(@[^/]+\/[^/]+|[^/]+)/);
-      if (match) return match[1];
-    }
+    const pkg = sf && packageNameFromPath(sf.fileName);
+    if (pkg) return pkg;
     // Check export specifier with module specifier
     if (ts.isExportSpecifier(decl)) {
       const exportDecl = decl.parent?.parent;

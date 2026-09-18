@@ -13,7 +13,17 @@ import * as path from 'node:path';
 import ts from 'typescript';
 import type { SerializerContext } from '../serializers/context';
 
-const NODE_MODULES_PKG = /node_modules\/(@[^/]+\/[^/]+|[^/]+)/;
+const NODE_MODULES_PKG = /node_modules\/(@[^/]+\/[^/]+|[^/]+)/g;
+
+/**
+ * Package name for a file under node_modules, else undefined. Takes the LAST
+ * node_modules segment: store layouts (`.pnpm/zod@3/node_modules/zod`,
+ * `.bun/…`) and nested deps put the real package there, and the first
+ * segment is the store dir.
+ */
+export function packageNameFromPath(fileName: string): string | undefined {
+  return [...fileName.matchAll(NODE_MODULES_PKG)].at(-1)?.[1];
+}
 
 /**
  * A stable, filesystem-derived label for the package a declaration lives in.
@@ -25,8 +35,7 @@ export function packageLabel(
   fileName: string,
   workspacePackages: ReadonlyMap<string, string>,
 ): string {
-  const match = fileName.match(NODE_MODULES_PKG);
-  let pkg = match?.[1];
+  let pkg = packageNameFromPath(fileName);
   if (!pkg) {
     for (const [name, dir] of workspacePackages) {
       if (fileName.startsWith(`${path.resolve(dir)}${path.sep}`)) {

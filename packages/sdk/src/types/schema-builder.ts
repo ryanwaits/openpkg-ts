@@ -1,6 +1,6 @@
 import type { SpecSchema, SpecSignature } from '@openpkg-ts/spec';
 import ts from 'typescript';
-import { resolveTypeId, typeRefId } from '../ast/type-identity';
+import { packageNameFromPath, resolveTypeId, typeRefId } from '../ast/type-identity';
 import { isSymbolDeprecated } from '../ast/utils';
 import { BUILTIN_TYPE_SCHEMAS, type BuiltinSchema } from '../schema/builtins';
 import type { SerializerContext } from '../serializers/context';
@@ -443,15 +443,11 @@ export function getTypeOrigin(type: ts.Type, _checker: ts.TypeChecker): string |
 
   const fileName = declarations[0].getSourceFile().fileName;
 
-  // Match node_modules package pattern
-  // Handles: node_modules/@scope/package/... or node_modules/package/...
-  const match = fileName.match(/node_modules\/(@[^/]+\/[^/]+|[^/]+)/);
-  if (!match) return undefined;
-
+  const pkg = packageNameFromPath(fileName);
   // Exclude TypeScript's built-in lib files
-  if (match[1] === 'typescript') return undefined;
+  if (pkg === 'typescript') return undefined;
 
-  return match[1];
+  return pkg;
 }
 
 /**
