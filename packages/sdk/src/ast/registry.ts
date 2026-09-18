@@ -145,6 +145,9 @@ export class TypeRegistry {
     if (PRIMITIVES.has(name)) return undefined;
     if (BUILTINS.has(name)) return undefined;
     if (name.startsWith('__')) return undefined;
+    // Source-file module symbol (`export * as Ns from './file'`): its name is
+    // the quoted absolute path — never a type, and it leaks the local path.
+    if (name.startsWith('"')) return undefined;
     if (symbol.flags & ts.SymbolFlags.EnumMember) return undefined;
     if (symbol.flags & ts.SymbolFlags.TypeParameter) return undefined;
     // Skip methods/functions - they're not types
