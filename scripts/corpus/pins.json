@@ -1,0 +1,103 @@
+{
+  "always": [
+    {
+      "name": "zustand",
+      "repo": "https://github.com/pmndrs/zustand",
+      "tag": "v5.0.15",
+      "entry": "src/index.ts",
+      "minExports": 5,
+      "timeoutMs": 60000
+    },
+    {
+      "name": "jotai",
+      "repo": "https://github.com/pmndrs/jotai",
+      "tag": "v3.0.0",
+      "entry": "src/index.ts",
+      "minExports": 5,
+      "timeoutMs": 60000
+    },
+    {
+      "name": "valtio",
+      "repo": "https://github.com/pmndrs/valtio",
+      "tag": "v2.3.2",
+      "entry": "src/index.ts",
+      "minExports": 3,
+      "timeoutMs": 60000
+    },
+    {
+      "name": "immer",
+      "repo": "https://github.com/immerjs/immer",
+      "tag": "v11.1.18",
+      "entry": "src/immer.ts",
+      "minExports": 15,
+      "timeoutMs": 60000
+    },
+    {
+      "name": "valibot",
+      "repo": "https://github.com/fabian-hiller/valibot",
+      "tag": "v1.5.0",
+      "entry": "library/src/index.ts",
+      "minExports": 50,
+      "timeoutMs": 90000
+    },
+    {
+      "name": "valibot-partialCheck",
+      "repo": "https://github.com/fabian-hiller/valibot",
+      "tag": "v1.5.0",
+      "entry": "library/src/index.ts",
+      "only": ["partialCheck"],
+      "minExports": 1,
+      "timeoutMs": 60000
+    },
+    {
+      "name": "zod",
+      "repo": "https://github.com/colinhacks/zod",
+      "tag": "v4.6.5",
+      "entry": "packages/zod/src/index.ts",
+      "minExports": 10,
+      "timeoutMs": 90000
+    },
+    {
+      "name": "hono",
+      "repo": "https://github.com/honojs/hono",
+      "tag": "v4.13.8",
+      "entry": "src/index.ts",
+      "minExports": 10,
+      "timeoutMs": 90000
+    }
+  ],
+  "rotate": [
+    {
+      "name": "rxjs",
+      "repo": "https://github.com/ReactiveX/rxjs",
+      "tag": "7.8.2",
+      "entry": "src/index.ts",
+      "minExports": 20,
+      "timeoutMs": 120000
+    },
+    {
+      "name": "date-fns",
+      "repo": "https://github.com/date-fns/date-fns",
+      "tag": "v4.4.0",
+      "entry": "src/index.ts",
+      "minExports": 50,
+      "timeoutMs": 120000
+    },
+    {
+      "name": "xstate",
+      "repo": "https://github.com/statelyai/xstate",
+      "tag": "v5.33.2",
+      "entry": "packages/core/src/index.ts",
+      "minExports": 5,
+      "timeoutMs": 120000
+    },
+    {
+      "name": "effect",
+      "repo": "https://github.com/Effect-TS/effect",
+      "tag": "v3.22.2",
+      "entry": "packages/effect/src/index.ts",
+      "minExports": 20,
+      "timeoutMs": 180000
+    }
+  ]
+}

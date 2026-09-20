@@ -1,0 +1,19 @@
+{
+  "generatedAt": "seed",
+  "totals": {
+    "overall": 0,
+    "axes": {
+      "robustness": 0,
+      "coverage": 0,
+      "kind": 0,
+      "signatures": 0,
+      "resolution": 0,
+      "roundtrip": 0,
+      "defaults": 0,
+      "members": 0,
+      "jsdoc": 0
+    }
+  },
+  "packages": {},
+  "fingerprints": {}
+}

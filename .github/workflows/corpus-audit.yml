@@ -1,0 +1,52 @@
+name: Corpus fidelity audit
+
+on:
+  schedule:
+    - cron: '0 13 * * *'
+  workflow_dispatch:
+    inputs:
+      rotate:
+        description: Include rotating construct sample
+        type: boolean
+        default: true
+      file_issues:
+        description: File/comment GitHub issues (cap 3 new)
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  audit:
+    name: Checker-vs-spec audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - run: bun install
+      - run: bun run build
+      - name: Audit pinned packages
+        env:
+          NODE_OPTIONS: --max-old-space-size=2048
+        run: |
+          flags=(--audit --check)
+          if [ "${{ github.event_name }}" = "schedule" ] || [ "${{ inputs.rotate }}" = "true" ]; then
+            flags+=(--rotate)
+          fi
+          if [ "${{ inputs.file_issues }}" = "true" ]; then
+            flags+=(--file)
+          fi
+          bun --max-heap-size=2048 scripts/corpus-extract.ts "${flags[@]}"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: corpus-findings
+          path: |
+            scripts/corpus/findings.json
+            scripts/corpus/scoreboard.json
+          if-no-files-found: ignore

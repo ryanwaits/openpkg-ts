@@ -37,6 +37,9 @@ report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 
 repo.json
 
+# corpus audit run artifact (scoreboard.json is committed)
+scripts/corpus/findings.json
+
 # Next.js build output
 .next
 
