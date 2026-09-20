@@ -1,5 +1,11 @@
 # @openpkg-ts/extract
 
+## 0.54.3
+
+### Patch Changes
+
+- fe7a8f4: Bound `followExternal` expansion: register the named foreign type, do not walk its method graph (zod OOMs), and cap `types[]` at 10k.
+
 ## 0.54.2
 
 ### Patch Changes
