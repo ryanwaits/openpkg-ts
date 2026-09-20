@@ -1,5 +1,12 @@
 # @openpkg-ts/extract
 
+## 0.54.6
+
+### Patch Changes
+
+- 97b1643: Populate `parameter.default` (literal value or expression source text). `x-ts-default` on the schema stays for expression text.
+- 97b1643: Keep lib utilities over type params as written `x-ts-type` (`Readonly<T>`), not an expanded empty object. Named generic refs stay `$ref` + `x-ts-type-arguments` (ReadonlyMap). `readonly T[]` gets `x-ts-readonly: true`.
+
 ## 0.54.5
 
 ### Patch Changes
