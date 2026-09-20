@@ -1,5 +1,13 @@
 # @openpkg-ts/extract
 
+## 0.54.4
+
+### Patch Changes
+
+- db3b845: Distinguish TypeScript `undefined` from `null` in extracted schemas.
+- Updated dependencies [db3b845]
+  - @openpkg-ts/spec@0.54.4
+
 ## 0.54.3
 
 ### Patch Changes
