@@ -1,5 +1,12 @@
 # @openpkg-ts/extract
 
+## 0.54.5
+
+### Patch Changes
+
+- fa6c219: Bound extract on recursive types and keep named re-exports through export \* barrels.
+- fa6c219: Recover written types when the checker yields any.
+
 ## 0.54.4
 
 ### Patch Changes
