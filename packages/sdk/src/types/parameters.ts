@@ -221,8 +221,8 @@ function inferParamAlias(jsdocTags: readonly ts.JSDocTag[]): string | undefined 
 
 /**
  * Extract a default from an initializer expression.
- * Literals produce a JSON value; anything else (identifiers, calls) is
- * source text only — a spec must never present it as a runtime value.
+ * Literals produce a JSON value; anything else (identifiers, calls, `as`)
+ * is source text. `parameter.default` is the documented home for both.
  */
 function extractLiteralDefault(
   initializer: ts.Expression,
@@ -252,7 +252,12 @@ function extractLiteralDefault(
   return { literal: false, text: initializer.getText() };
 }
 
-/** Apply an initializer to a parameter: literal → default, non-literal → x-ts-default. */
+/**
+ * Apply an initializer to a parameter.
+ * `parameter.default` is the documented home: JSON value for literals,
+ * source text for expressions. `schema.default` stays JSON Schema (literals).
+ * `x-ts-default` stays on the schema for expression text (compat).
+ */
 function applyDefault(param: SpecSignatureParameter, initializer: ts.Expression): void {
   const extracted = extractLiteralDefault(initializer);
   if (extracted.literal) {
@@ -260,8 +265,11 @@ function applyDefault(param: SpecSignatureParameter, initializer: ts.Expression)
     if (param.schema && typeof param.schema === 'object' && !Array.isArray(param.schema)) {
       (param.schema as Record<string, unknown>).default = extracted.value;
     }
-  } else if (param.schema && typeof param.schema === 'object' && !Array.isArray(param.schema)) {
-    (param.schema as Record<string, unknown>)['x-ts-default'] = extracted.text;
+  } else {
+    param.default = extracted.text;
+    if (param.schema && typeof param.schema === 'object' && !Array.isArray(param.schema)) {
+      (param.schema as Record<string, unknown>)['x-ts-default'] = extracted.text;
+    }
   }
 }
 

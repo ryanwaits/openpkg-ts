@@ -125,18 +125,30 @@ describe('parameter defaults', () => {
     expect((params[1].schema as Record<string, unknown>).default).toBe(10);
   });
 
-  test('non-literal initializers become x-ts-default text, never default', async () => {
+  test('non-literal initializers set parameter.default to source text', async () => {
     const code = `const DEFAULT_LIMIT = 25;
 export function search(query: string, limit = DEFAULT_LIMIT) {}`;
     const result = await extract({ entryFile: 'test.ts', content: code });
     const fn = result.spec.exports.find((e) => e.name === 'search');
     const params = firstSignatureParams(fn);
 
-    expect(params[1].default).toBeUndefined();
+    expect(params[1].default).toBe('DEFAULT_LIMIT');
     expect((params[1].schema as Record<string, unknown>)['x-ts-default']).toBe('DEFAULT_LIMIT');
   });
 
-  test('destructured non-literal initializers stop leaking text into default', async () => {
+  test('expression default (valtio proxy) lives on parameter.default', async () => {
+    const code = `export function proxy<T extends object>(baseObject: T = {} as T): T { return baseObject; }`;
+    const result = await extract({ entryFile: 'test.ts', content: code });
+    const fn = result.spec.exports.find((e) => e.name === 'proxy');
+    const params = firstSignatureParams(fn);
+
+    expect(params[0].name).toBe('baseObject');
+    expect(params[0].required).toBe(false);
+    expect(params[0].default).toBe('{} as T');
+    expect((params[0].schema as Record<string, unknown>)['x-ts-default']).toBe('{} as T');
+  });
+
+  test('destructured non-literal initializers set parameter.default to source text', async () => {
     const code = `const FALLBACK = 'x';
 export function run({ mode = FALLBACK, retries = 3 }: { mode?: string; retries?: number }) {}`;
     const result = await extract({ entryFile: 'test.ts', content: code });
@@ -145,7 +157,7 @@ export function run({ mode = FALLBACK, retries = 3 }: { mode?: string; retries?:
 
     const mode = params.find((p) => p.name === 'mode');
     const retries = params.find((p) => p.name === 'retries');
-    expect(mode?.default).toBeUndefined();
+    expect(mode?.default).toBe('FALLBACK');
     expect((mode?.schema as Record<string, unknown>)['x-ts-default']).toBe('FALLBACK');
     expect(retries?.default).toBe(3);
   });
