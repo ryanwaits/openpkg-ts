@@ -683,6 +683,101 @@ function isFluentThisType(type: ts.Type): boolean {
   );
 }
 
+/** True when `type` still mentions an unresolved type parameter (T, Foo<T>, T | U). */
+function containsUnresolvedTypeParameter(type: ts.Type, seen = new Set<ts.Type>()): boolean {
+  if (seen.has(type)) return false;
+  seen.add(type);
+  if (type.flags & ts.TypeFlags.TypeParameter) {
+    return !isFluentThisType(type);
+  }
+  if (type.isUnionOrIntersection()) {
+    return type.types.some((t) => containsUnresolvedTypeParameter(t, seen));
+  }
+  if (type.aliasTypeArguments) {
+    for (const arg of type.aliasTypeArguments) {
+      if (containsUnresolvedTypeParameter(arg, seen)) return true;
+    }
+  }
+  const targs = (type as ts.TypeReference).typeArguments;
+  if (targs) {
+    for (const arg of targs) {
+      if (containsUnresolvedTypeParameter(arg, seen)) return true;
+    }
+  }
+  if (type.flags & ts.TypeFlags.IndexedAccess) {
+    const ia = type as ts.IndexedAccessType;
+    return (
+      containsUnresolvedTypeParameter(ia.objectType, seen) ||
+      containsUnresolvedTypeParameter(ia.indexType, seen)
+    );
+  }
+  return false;
+}
+
+/**
+ * Lib utility (Readonly, Partial, Omit, Record, …) instantiated with an
+ * unresolved type parameter. Flattening those yields an empty object or
+ * `T[string]` index — keep the written form instead.
+ */
+function isUtilityOverTypeParameter(type: ts.Type): boolean {
+  const name = type.aliasSymbol?.getName();
+  if (!name || !RESOLVED_UTILITY_TYPES.has(name)) return false;
+  const args = type.aliasTypeArguments;
+  if (!args || args.length === 0) return false;
+  return args.some((t) => containsUnresolvedTypeParameter(t));
+}
+
+function writtenUtilityText(
+  type: ts.Type,
+  checker: ts.TypeChecker,
+  typeNode?: ts.TypeNode,
+): string {
+  let node = typeNode;
+  while (node && ts.isParenthesizedTypeNode(node)) node = node.type;
+  const fromNode = writtenTypeText(node);
+  if (fromNode) return fromNode;
+  if (node) {
+    try {
+      const text = scrubImportQualifiers(node.getText().replace(/\s+/g, ' ').trim());
+      if (text) return text;
+    } catch {
+      /* fall through */
+    }
+  }
+  const name = type.aliasSymbol?.getName();
+  const args = type.aliasTypeArguments;
+  if (name && args && args.length > 0) {
+    const inner = args.map((t) => scrubImportQualifiers(checker.typeToString(t))).join(', ');
+    return `${name}<${inner}>`;
+  }
+  return renderTypeText(type, checker);
+}
+
+function isReadonlyArrayType(type: ts.Type, typeNode?: ts.TypeNode): boolean {
+  let node = typeNode;
+  while (node && ts.isParenthesizedTypeNode(node)) node = node.type;
+  if (node && ts.isTypeOperatorNode(node) && node.operator === ts.SyntaxKind.ReadonlyKeyword) {
+    return true;
+  }
+  if (node && ts.isTypeReferenceNode(node) && typeRefName(node) === 'ReadonlyArray') {
+    return true;
+  }
+  const ref = type as ts.TypeReference;
+  const name = ref.target?.getSymbol()?.getName() ?? type.getSymbol()?.getName();
+  return name === 'ReadonlyArray';
+}
+
+function withReadonlyArrayHint(
+  schema: SpecSchema,
+  type: ts.Type,
+  typeNode?: ts.TypeNode,
+): SpecSchema {
+  if (!isReadonlyArrayType(type, typeNode)) return schema;
+  if (typeof schema !== 'object' || schema === null || Array.isArray(schema)) return schema;
+  setSchemaExtension(schema, 'x-ts-readonly', true);
+  return schema;
+}
+
 /**
  * Execute a function with incremented depth, automatically decrementing after.
  */
@@ -906,6 +1001,14 @@ function buildSchemaInternal(
       return { 'x-ts-type': checker.typeToString(type) } as SpecSchema;
     }
 
+    // Readonly<T> / Partial<T> / Omit<T, K> with T still a type parameter:
+    // do not expand. Lib utilities are not in types[], so this is written
+    // `x-ts-type` (not `$ref` + args — that form is for named types like
+    // ReadonlyMap). Flatten only when every argument is concrete.
+    if (isUtilityOverTypeParameter(type)) {
+      return { 'x-ts-type': writtenUtilityText(type, checker, typeNode) } as SpecSchema;
+    }
+
     // String literal
     if (type.flags & ts.TypeFlags.StringLiteral) {
       const literal = (type as ts.StringLiteralType).value;
@@ -1047,15 +1150,15 @@ function buildSchemaInternal(
       const arrayTypeArgs = checker.getTypeArguments(arrayTypeRef);
       const elementType = arrayTypeArgs?.[0];
       if (elementType) {
-        if (ctx) {
-          return withDepth(ctx, () => ({
-            type: 'array',
-            items: buildSchema(elementType, checker, ctx),
-          }));
-        }
-        return { type: 'array', items: buildSchema(elementType, checker, ctx) };
+        const build = (): SpecSchema =>
+          withReadonlyArrayHint(
+            { type: 'array', items: buildSchema(elementType, checker, ctx) },
+            type,
+            typeNode,
+          );
+        return ctx ? withDepth(ctx, build) : build();
       }
-      return { type: 'array' };
+      return withReadonlyArrayHint({ type: 'array' }, type, typeNode);
     }
 
     // Tuple type - uses prefixItems per JSON Schema 2020-12
@@ -1150,10 +1253,9 @@ function buildSchemaInternal(
         return builtinSchema(name);
       }
 
-      // Utility-type instantiations (Omit<Config, 'x'>, Partial<T>, Record<K, V>)
+      // Concrete utility instantiations (Omit<Config, 'x'>, Record<string, number>)
       // are already resolved by the checker — flatten to their effective members.
-      // Deferred instantiations (generic context, e.g. Omit<T, 'x'> where T is a
-      // type parameter) have no members and keep the $ref + typeArguments form.
+      // Instantiations that still mention a type parameter are handled above.
       if (RESOLVED_UTILITY_TYPES.has(name) && type.flags & ts.TypeFlags.Object) {
         const props = type.getProperties();
         const hasIndex = checker.getIndexInfosOfType(type).length > 0;
