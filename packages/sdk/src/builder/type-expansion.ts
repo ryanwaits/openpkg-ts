@@ -1,4 +1,5 @@
 import ts from 'typescript';
+import { resolveAliasSymbol } from '../ast/resolve';
 import {
   isForeignPackage,
   isLibSymbol,
@@ -7,7 +8,11 @@ import {
   resolveTypeId,
 } from '../ast/type-identity';
 import type { SerializerContext } from '../serializers/context';
-import { buildSchema, ensureNonEmptySchema } from '../types/schema-builder';
+import {
+  buildSchema,
+  ensureNonEmptySchema,
+  isDeferredMappedOrConditional,
+} from '../types/schema-builder';
 
 /**
  * Reachability expansion: register named types referenced by the exported
@@ -43,6 +48,8 @@ export interface ExpansionOptions {
 export function createExternalExpansionPredicate(opts: {
   followExternal?: boolean | string[];
   workspacePackages: ReadonlyMap<string, string>;
+  checker: ts.TypeChecker;
+  program?: ts.Program;
 }): (symbol: ts.Symbol) => boolean {
   // Match a package name against a followExternal entry. Supports exact names
   // and `*` globs (e.g. "@ai-sdk/*" expands every @ai-sdk/* package), since a
@@ -65,9 +72,10 @@ export function createExternalExpansionPredicate(opts: {
   };
 
   return (symbol: ts.Symbol): boolean => {
-    const decl = symbol.declarations?.[0];
+    const resolved = resolveAliasSymbol(symbol, opts.checker, undefined, opts.program);
+    const decl = (resolved.declarations ?? symbol.declarations)?.[0];
     if (!decl) return false;
-    if (isLibSymbol(symbol)) return false;
+    if (isLibSymbol(resolved) || isLibSymbol(symbol)) return false;
     const pkg = packageNameFromPath(decl.getSourceFile().fileName);
     if (pkg) return packageAllowed(pkg);
     // Project or workspace-resolved source file
@@ -88,7 +96,12 @@ export function expandReachableTypes(
   let visits = 0;
   const MAX_VISITS = 50_000;
 
-  const symbolAllowed = createExternalExpansionPredicate(opts);
+  const symbolAllowed = createExternalExpansionPredicate({
+    followExternal: opts.followExternal,
+    workspacePackages: opts.workspacePackages,
+    checker: ctx.typeChecker,
+    program: ctx.program,
+  });
 
   const visit = (type: ts.Type, depth: number): void => {
     if (!type || depth > MAX_DEPTH || visited.has(type)) return;
@@ -127,8 +140,13 @@ export function expandReachableTypes(
     }
 
     // Members only for in-scope types: walking into DOM/react internals would
-    // pull their whole graphs.
-    if (!allowed || !(type.flags & ts.TypeFlags.Object || type.isClassOrInterface())) {
+    // pull their whole graphs. Recursive mapped/conditional instantiations
+    // each get a new ts.Type identity, so visited cannot cut them.
+    if (
+      !allowed ||
+      isDeferredMappedOrConditional(type) ||
+      !(type.flags & ts.TypeFlags.Object || type.isClassOrInterface())
+    ) {
       return;
     }
 
@@ -186,14 +204,8 @@ export function expandReachableTypes(
   };
 
   const resolveAlias = (symbol: ts.Symbol): ts.Symbol | undefined => {
-    if (symbol.flags & ts.SymbolFlags.Alias) {
-      try {
-        return checker.getAliasedSymbol(symbol);
-      } catch {
-        return undefined;
-      }
-    }
-    return symbol;
+    const resolved = resolveAliasSymbol(symbol, checker, undefined, ctx.program);
+    return resolved;
   };
 
   const symbolByName = new Map<string, ts.Symbol>();

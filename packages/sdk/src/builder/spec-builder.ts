@@ -11,7 +11,7 @@ import type {
 } from '@openpkg-ts/spec';
 import { SCHEMA_URL, SCHEMA_VERSION } from '@openpkg-ts/spec';
 import ts from 'typescript';
-import { resolveExportTarget } from '../ast/resolve';
+import { resolveAliasSymbol, resolveExportTarget } from '../ast/resolve';
 import { isLibFile, packageNameFromPath } from '../ast/type-identity';
 import { isSymbolDeprecated, parseInlineTags } from '../ast/utils';
 import { createProgram } from '../compiler/program';
@@ -220,6 +220,8 @@ export async function extract(options: ExtractOptions): Promise<ExtractResult> {
       shouldExpandExternal: createExternalExpansionPredicate({
         followExternal,
         workspacePackages: result.workspacePackages ?? new Map(),
+        checker: typeChecker,
+        program,
       }),
       // Used to package-scope the ids of same-named types across packages.
       workspacePackages: result.workspacePackages ?? new Map(),
@@ -245,7 +247,11 @@ export async function extract(options: ExtractOptions): Promise<ExtractResult> {
       }
 
       try {
-        const { declaration, targetSymbol, isTypeOnly } = resolveExportTarget(symbol, typeChecker);
+        const { declaration, targetSymbol, isTypeOnly } = resolveExportTarget(
+          symbol,
+          typeChecker,
+          program,
+        );
         if (!declaration) {
           // Check if this is a re-export from an external package
           let externalPackage: string | undefined;
@@ -367,6 +373,14 @@ export async function extract(options: ExtractOptions): Promise<ExtractResult> {
       workspacePackages: result.workspacePackages ?? new Map(),
       entryFile,
     });
+
+    if (ctx.budgetExceeded) {
+      diagnostics.push({
+        message: 'Stopped expanding some types after hitting the schema expansion budget',
+        severity: 'warning',
+        code: 'TYPE_EXPANSION_LIMIT',
+      });
+    }
 
     // Post-process: register any $ref targets missing from the type registry.
     // Iterates until stable since newly registered types may introduce new $ref targets.
@@ -602,6 +616,15 @@ function serializeDeclaration(
           const type = ctx.typeChecker.getTypeAtLocation(declaration);
           if (type.getConstructSignatures().length > 0) {
             result = { ...result, kind: 'class' };
+          } else {
+            const callSigs = callSignaturesForVariable(declaration, ctx);
+            if (callSigs.length > 0) {
+              result = {
+                ...result,
+                kind: 'function',
+                signatures: buildSignatures(callSigs, ctx.typeChecker, ctx),
+              };
+            }
           }
         }
       }
@@ -848,6 +871,41 @@ function extractExamples(doc: ts.JSDoc): string[] {
     }
   }
   return examples;
+}
+
+function callSignaturesForVariable(
+  declaration: ts.VariableDeclaration,
+  ctx: SerializerContext,
+): readonly ts.Signature[] {
+  const checker = ctx.typeChecker;
+  if (declaration.type && ts.isTypeReferenceNode(declaration.type)) {
+    const nameNode = ts.isQualifiedName(declaration.type.typeName)
+      ? declaration.type.typeName.right
+      : declaration.type.typeName;
+    const raw = checker.getSymbolAtLocation(nameNode);
+    if (raw) {
+      const symbol = resolveAliasSymbol(raw, checker, undefined, ctx.program);
+      const iface = symbol.declarations?.find((d) => ts.isInterfaceDeclaration(d));
+      try {
+        const declared = checker.getDeclaredTypeOfSymbol(symbol);
+        const sigs = declared.getCallSignatures();
+        if (sigs.length > 0) return sigs;
+        if (iface) {
+          const fromDecl = checker.getTypeAtLocation(iface).getCallSignatures();
+          if (fromDecl.length > 0) return fromDecl;
+        }
+      } catch {
+        if (iface) {
+          try {
+            return checker.getTypeAtLocation(iface).getCallSignatures();
+          } catch {
+            /* fall through */
+          }
+        }
+      }
+    }
+  }
+  return checker.getTypeAtLocation(declaration).getCallSignatures();
 }
 
 function withExportName(entry: SpecExport, exportName: string): SpecExport {

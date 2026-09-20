@@ -50,6 +50,12 @@ export interface SerializerContext {
   idOwner: Map<string, string>;
   /** Workspace package name → dir, used to package-scope colliding type ids. */
   workspacePackages: ReadonlyMap<string, string>;
+  /** Structural schema-build steps taken this extract. */
+  schemaOps: number;
+  /** Cap on schema-build steps; past this, emit x-ts-type text. */
+  maxSchemaOps: number;
+  /** True once schemaOps exceeded maxSchemaOps. */
+  budgetExceeded: boolean;
 }
 
 export interface CreateContextOptions {
@@ -84,6 +90,9 @@ export function createContext(
     declIds: new Map<string, string>(),
     idOwner: new Map<string, string>(),
     workspacePackages: options.workspacePackages ?? new Map<string, string>(),
+    schemaOps: 0,
+    maxSchemaOps: 20_000,
+    budgetExceeded: false,
   };
 }
 

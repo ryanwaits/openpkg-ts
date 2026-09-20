@@ -5,6 +5,37 @@ import ts from 'typescript';
 /**
  * Check if file is a JavaScript file
  */
+/** Relative import/export graph from `entryFile`, excluding node_modules. */
+function collectLocalModuleFiles(
+  entryFile: string,
+  host: ts.CompilerHost,
+  options: ts.CompilerOptions,
+): string[] {
+  const seen = new Set<string>();
+  const queue = [entryFile];
+  while (queue.length > 0) {
+    const file = queue.pop() as string;
+    if (seen.has(file)) continue;
+    seen.add(file);
+    const text = host.readFile(file);
+    if (text === undefined) continue;
+    const sf = ts.createSourceFile(file, text, ts.ScriptTarget.Latest, true, getScriptKind(file));
+    for (const stmt of sf.statements) {
+      let spec: ts.Expression | undefined;
+      if (ts.isImportDeclaration(stmt)) spec = stmt.moduleSpecifier;
+      else if (ts.isExportDeclaration(stmt)) spec = stmt.moduleSpecifier;
+      if (!spec || !ts.isStringLiteral(spec)) continue;
+      if (!spec.text.startsWith('.')) continue;
+      const resolved = ts.resolveModuleName(spec.text, file, options, host);
+      const resolvedFile = resolved.resolvedModule?.resolvedFileName;
+      if (resolvedFile && !resolvedFile.includes(`${path.sep}node_modules${path.sep}`)) {
+        queue.push(resolvedFile);
+      }
+    }
+  }
+  return [...seen];
+}
+
 function isJsFile(file: string): boolean {
   return /\.(js|mjs|cjs|jsx)$/.test(file);
 }
@@ -426,6 +457,12 @@ export function createProgram(options: ProgramOptions): ProgramResult {
       });
   }
 
+  // NodeNext programs with only the entry as a root file do not always load
+  // modules reached solely via `export { x } from './local'` (no `import`).
+  // Walk local import/export specifiers and add them as roots so named
+  // re-exports through `export *` barrels stay in the graph.
+  const localRoots = collectLocalModuleFiles(entryFile, compilerHost, compilerOptions);
+
   if (content !== undefined) {
     inMemorySource = ts.createSourceFile(
       entryFile,
@@ -451,7 +488,7 @@ export function createProgram(options: ProgramOptions): ProgramResult {
   }
 
   // Include entry file plus all files from referenced projects
-  const rootFiles = [entryFile, ...additionalRootFiles];
+  const rootFiles = [...new Set([entryFile, ...localRoots, ...additionalRootFiles])];
   const program = ts.createProgram(rootFiles, compilerOptions, compilerHost);
   const sourceFile = inMemorySource ?? program.getSourceFile(entryFile);
 

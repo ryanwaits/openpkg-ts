@@ -3,7 +3,14 @@ import ts from 'typescript';
 import { isForeignPackage } from '../ast/type-identity';
 import { getParamDescription, parseInlineTags } from '../ast/utils';
 import type { SerializerContext } from '../serializers/context';
-import { buildSchema, declaredTypeNode, stripUndefinedFromType } from './schema-builder';
+import {
+  buildSchema,
+  buildSchemaFromTypeNode,
+  declaredTypeNode,
+  isDeferredMappedOrConditional,
+  stripUndefinedFromType,
+  typeNodeDefersExpansion,
+} from './schema-builder';
 
 export function extractParameters(
   signature: ts.Signature,
@@ -19,27 +26,40 @@ export function extractParameters(
   for (const param of signature.getParameters()) {
     const decl = param.valueDeclaration as ts.ParameterDeclaration | undefined;
     if (!decl) continue;
-    const type = checker.getTypeOfSymbolAtLocation(param, decl);
+    const defer = typeNodeDefersExpansion(decl.type, checker, ctx.program);
+    const type = defer ? undefined : checker.getTypeOfSymbolAtLocation(param, decl);
 
     // Check if this is a destructured parameter (ObjectBindingPattern)
     if (decl && ts.isObjectBindingPattern(decl.name)) {
-      const expandedParams = expandBindingPattern(decl, type, jsdocTags, ctx);
+      const expandedParams = expandBindingPattern(
+        decl,
+        type ?? checker.getTypeOfSymbolAtLocation(param, decl),
+        jsdocTags,
+        ctx,
+      );
       result.push(...expandedParams);
     } else {
       // Regular parameter - check questionToken or initializer for optionality
       const isOptional = !!decl?.questionToken || !!decl?.initializer;
 
-      // Strip undefined from optional params — optionality is required: false
-      const effectiveType = isOptional ? stripUndefinedFromType(type, checker) : type;
-      registerReferencedTypes(effectiveType, ctx);
-
-      // Get description from @param tag
       const paramName = param.getName();
       const description = getParamDescription(paramName, jsdocTags);
 
+      const schema = defer
+        ? buildSchemaFromTypeNode(decl.type as ts.TypeNode, checker, ctx)
+        : buildSchema(
+            isOptional ? stripUndefinedFromType(type as ts.Type, checker) : (type as ts.Type),
+            checker,
+            ctx,
+            decl.type,
+          );
+      if (!defer && type) {
+        registerReferencedTypes(isOptional ? stripUndefinedFromType(type, checker) : type, ctx);
+      }
+
       const paramResult: SpecSignatureParameter = {
         name: paramName,
-        schema: buildSchema(effectiveType, checker, ctx, decl.type),
+        schema,
         required: !isOptional,
       };
 
@@ -321,6 +341,11 @@ export function registerReferencedTypes(type: ts.Type, ctx: SerializerContext, d
   // fans out through generic instantiations and OOMs; maxTypeDepth does
   // not bound that combinatorial walk.
   if (isForeignPackage(typeSymbol, ctx.workspacePackages)) {
+    return;
+  }
+
+  // Recursive mapped/conditional types: registering the name is enough.
+  if (isDeferredMappedOrConditional(type)) {
     return;
   }
 

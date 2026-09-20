@@ -424,7 +424,7 @@ type DeclarationWithTypeParams =
  */
 export function extractTypeParameters(
   node: DeclarationWithTypeParams,
-  checker: ts.TypeChecker,
+  _checker: ts.TypeChecker,
 ): SpecTypeParameter[] | undefined {
   if (!node.typeParameters || node.typeParameters.length === 0) {
     return undefined;
@@ -433,19 +433,10 @@ export function extractTypeParameters(
   return node.typeParameters.map((tp) => {
     const name = tp.name.text;
 
-    // Get constraint (T extends SomeType)
-    let constraint: string | undefined;
-    if (tp.constraint) {
-      const constraintType = checker.getTypeAtLocation(tp.constraint);
-      constraint = checker.typeToString(constraintType);
-    }
-
-    // Get default (T = DefaultType)
-    let defaultType: string | undefined;
-    if (tp.default) {
-      const defType = checker.getTypeAtLocation(tp.default);
-      defaultType = checker.typeToString(defType);
-    }
+    // Written constraint/default text — never instantiate recursive mapped
+    // types (valibot DeepPickN) via typeToString.
+    const constraint = tp.constraint ? tp.constraint.getText() : undefined;
+    const defaultType = tp.default ? tp.default.getText() : undefined;
 
     const { variance, isConst } = extractVarianceModifiers(ts.getModifiers(tp));
 
@@ -540,7 +531,7 @@ export function getJSDocForSignature(
  */
 export function extractTypeParametersFromSignature(
   signature: ts.Signature,
-  checker: ts.TypeChecker,
+  _checker: ts.TypeChecker,
 ): SpecTypeParameter[] | undefined {
   const typeParams = signature.getTypeParameters();
   if (!typeParams || typeParams.length === 0) {
@@ -550,19 +541,8 @@ export function extractTypeParametersFromSignature(
   return typeParams.map((tp) => {
     const name = tp.getSymbol()?.getName() ?? 'T';
 
-    // Get constraint
     let constraint: string | undefined;
-    const constraintType = tp.getConstraint();
-    if (constraintType) {
-      constraint = checker.typeToString(constraintType);
-    }
-
-    // Get default
     let defaultType: string | undefined;
-    const defaultT = tp.getDefault();
-    if (defaultT) {
-      defaultType = checker.typeToString(defaultT);
-    }
 
     // Check for variance and const modifiers on the declaration
     let variance: 'in' | 'out' | 'inout' | undefined;
@@ -573,6 +553,8 @@ export function extractTypeParametersFromSignature(
     for (const decl of declarations) {
       if (ts.isTypeParameterDeclaration(decl)) {
         ({ variance, isConst } = extractVarianceModifiers(ts.getModifiers(decl)));
+        if (decl.constraint) constraint = decl.constraint.getText();
+        if (decl.default) defaultType = decl.default.getText();
         break;
       }
     }

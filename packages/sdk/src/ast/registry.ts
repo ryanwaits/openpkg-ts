@@ -18,6 +18,7 @@ import {
   withDescription,
   writtenTypeText,
 } from '../types/schema-builder';
+import { resolveAliasSymbol } from './resolve';
 import { isLibFile, MAX_REGISTERED_TYPES, resolveTypeId } from './type-identity';
 import { extractTypeParameters, isSymbolDeprecated } from './utils';
 
@@ -140,8 +141,9 @@ export class TypeRegistry {
   registerType(type: ts.Type, ctx: SerializerContext): string | undefined {
     // Prefer aliasSymbol — for `type Foo = { ... }`, getSymbol() returns __type (anonymous)
     // but aliasSymbol gives us the real name "Foo"
-    const symbol = type.aliasSymbol || type.getSymbol();
-    if (!symbol) return undefined;
+    const rawSymbol = type.aliasSymbol || type.getSymbol();
+    if (!rawSymbol) return undefined;
+    const symbol = resolveAliasSymbol(rawSymbol, ctx.typeChecker, undefined, ctx.program);
 
     const name = symbol.getName();
 
@@ -187,7 +189,10 @@ export class TypeRegistry {
     // non-workspace node_modules) get an opaque stub: the $ref stays
     // resolvable, but the spec doesn't inline a foreign package's full member
     // surface (environment-dependent, hundreds of lines per type).
-    if (ctx.shouldExpandExternal && !ctx.shouldExpandExternal(symbol)) {
+    // Only stub when the declaring file is known and out of scope. A symbol
+    // with no declarations is often an unresolved `export *` alias — expanding
+    // the type still recovers call signatures (immer IProduce).
+    if (symbol.declarations?.[0] && ctx.shouldExpandExternal && !ctx.shouldExpandExternal(symbol)) {
       return stubExternal();
     }
 

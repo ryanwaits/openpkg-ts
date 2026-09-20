@@ -1,5 +1,6 @@
 import type { SpecSchema, SpecSignature } from '@openpkg-ts/spec';
 import ts from 'typescript';
+import { resolveAliasSymbol } from '../ast/resolve';
 import { isLibSymbol, packageNameFromPath, resolveTypeId, typeRefId } from '../ast/type-identity';
 import { isSymbolDeprecated } from '../ast/utils';
 import { BUILTIN_TYPE_SCHEMAS, type BuiltinSchema } from '../schema/builtins';
@@ -136,7 +137,7 @@ function resolvedSymbol(
  * (error types from arity mismatches, unresolved names, …). Recovers
  * `LiveMap<string, V>` / `LiveMap<string, V> | null` instead of silent `{}`.
  */
-function buildSchemaFromTypeNode(
+export function buildSchemaFromTypeNode(
   node: ts.TypeNode,
   checker: ts.TypeChecker,
   ctx?: SerializerContext,
@@ -175,6 +176,9 @@ function buildSchemaFromTypeNode(
     const symbol = resolvedSymbol(raw, checker);
     const name = symbol?.getName() ?? node.typeName.getText();
     const args = node.typeArguments?.map((arg) => {
+      if (typeNodeDefersExpansion(arg, checker, ctx?.program)) {
+        return buildSchemaFromTypeNode(arg, checker, ctx);
+      }
       const argType = checker.getTypeFromTypeNode(arg);
       return buildSchema(argType, checker, ctx, arg);
     });
@@ -372,6 +376,110 @@ const RESOLVED_UTILITY_TYPES = new Set([
   'NonNullable',
   'Awaited',
 ]);
+
+/**
+ * Mapped/conditional aliases that are not lib utilities (valibot DeepPickN,
+ * ValidPaths, immer Draft). Instantiating them via getProperties /
+ * getTypeOfSymbolAtLocation does not terminate — each instantiation is a new
+ * ts.Type. Indexed-access aliases (Names) and lib utilities (Record/Pick/Omit)
+ * still flatten.
+ */
+export function isDeferredMappedOrConditional(type: ts.Type): boolean {
+  if (shouldDeferAlias(type.aliasSymbol)) return true;
+  const target = (type as ts.TypeReference).target;
+  if (target && target !== type) {
+    if (shouldDeferAlias(target.aliasSymbol ?? target.getSymbol())) return true;
+    const targetName = target.aliasSymbol?.getName() ?? target.getSymbol()?.getName();
+    if (targetName && RESOLVED_UTILITY_TYPES.has(targetName)) return false;
+  }
+  if (type.flags & ts.TypeFlags.Conditional) {
+    const name = type.aliasSymbol?.getName();
+    if (name && RESOLVED_UTILITY_TYPES.has(name)) return false;
+    return true;
+  }
+  const objectFlags = (type as ts.ObjectType).objectFlags ?? 0;
+  if (objectFlags & ts.ObjectFlags.Mapped) {
+    const name = type.aliasSymbol?.getName();
+    if (name && RESOLVED_UTILITY_TYPES.has(name)) return false;
+    if (aliasRhsIsUtility(type.aliasSymbol)) return false;
+    return true;
+  }
+  return false;
+}
+
+function typeRefName(node: ts.TypeReferenceNode): string {
+  return ts.isQualifiedName(node.typeName) ? node.typeName.right.text : node.typeName.getText();
+}
+
+function aliasRhsIsUtility(symbol: ts.Symbol | undefined): boolean {
+  const alias = symbol?.declarations?.find(ts.isTypeAliasDeclaration);
+  if (!alias || !ts.isTypeReferenceNode(alias.type)) return false;
+  return RESOLVED_UTILITY_TYPES.has(typeRefName(alias.type));
+}
+
+function isMappedOrConditionalBody(node: ts.TypeNode): boolean {
+  if (ts.isParenthesizedTypeNode(node)) return isMappedOrConditionalBody(node.type);
+  if (ts.isMappedTypeNode(node) || ts.isConditionalTypeNode(node)) return true;
+  if (ts.isUnionTypeNode(node) || ts.isIntersectionTypeNode(node)) {
+    return node.types.some(isMappedOrConditionalBody);
+  }
+  return false;
+}
+
+function shouldDeferAlias(symbol: ts.Symbol | undefined): boolean {
+  if (!symbol) return false;
+  const name = symbol.getName();
+  if (!name || name.startsWith('__') || RESOLVED_UTILITY_TYPES.has(name)) return false;
+  if (aliasRhsIsUtility(symbol)) return false;
+  const alias = symbol.declarations?.find(ts.isTypeAliasDeclaration);
+  if (!alias) return false;
+  return isMappedOrConditionalBody(alias.type);
+}
+
+/** True when instantiating this annotation would expand recursive mapped types. */
+export function typeNodeDefersExpansion(
+  node: ts.TypeNode | undefined,
+  checker: ts.TypeChecker,
+  program?: ts.Program,
+): boolean {
+  if (!node) return false;
+  if (ts.isParenthesizedTypeNode(node)) return typeNodeDefersExpansion(node.type, checker, program);
+  if (ts.isUnionTypeNode(node) || ts.isIntersectionTypeNode(node)) {
+    return node.types.some((t) => typeNodeDefersExpansion(t, checker, program));
+  }
+  if (!ts.isTypeReferenceNode(node)) return false;
+  const raw = checker.getSymbolAtLocation(
+    ts.isQualifiedName(node.typeName) ? node.typeName.right : node.typeName,
+  );
+  if (!raw) return false;
+  const symbol = resolveAliasSymbol(raw, checker, undefined, program);
+  return shouldDeferAlias(symbol);
+}
+
+/** Written alias text only — never typeToString (hangs on DeepPickN). */
+function cheapTypeText(type: ts.Type, _checker: ts.TypeChecker, typeNode?: ts.TypeNode): string {
+  if (typeNode) {
+    try {
+      const text = scrubImportQualifiers(typeNode.getText().replace(/\s+/g, ' ').trim());
+      if (text) return text;
+    } catch {
+      /* fall through */
+    }
+  }
+  const alias = type.aliasSymbol;
+  const decl = alias?.declarations?.find(ts.isTypeAliasDeclaration);
+  if (decl?.type) {
+    try {
+      const text = scrubImportQualifiers(decl.type.getText().replace(/\s+/g, ' ').trim());
+      if (text) return text;
+    } catch {
+      /* fall through */
+    }
+  }
+  const name = alias?.getName() ?? type.getSymbol()?.getName();
+  if (name && !name.startsWith('__')) return name;
+  return 'unknown';
+}
 
 // Built-in non-generic types
 const BUILTIN_TYPES = new Set([
@@ -718,6 +826,19 @@ function buildSchemaInternal(
   // Union/intersection types get decomposed into anyOf/allOf with leaf schemas
   if (isAtMaxDepth(ctx)) {
     return buildMaxDepthSchema(type, checker, typeNode);
+  }
+
+  if (ctx) {
+    ctx.schemaOps += 1;
+    if (ctx.schemaOps > ctx.maxSchemaOps) {
+      ctx.budgetExceeded = true;
+      return { 'x-ts-type': cheapTypeText(type, checker, typeNode) } as SpecSchema;
+    }
+  }
+
+  if (isDeferredMappedOrConditional(type)) {
+    if (ctx) ctx.budgetExceeded = true;
+    return { 'x-ts-type': cheapTypeText(type, checker, typeNode) } as SpecSchema;
   }
 
   // Circular reference guard — visitedTypes is stack-scoped (add before recurse, delete after)

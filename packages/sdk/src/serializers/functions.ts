@@ -1,12 +1,25 @@
-import type { SpecExport, SpecSchema, SpecSignature, SpecSignatureReturn } from '@openpkg-ts/spec';
+import type {
+  SpecExport,
+  SpecSchema,
+  SpecSignature,
+  SpecSignatureParameter,
+  SpecSignatureReturn,
+} from '@openpkg-ts/spec';
 import ts from 'typescript';
 import {
   extractTypeParameters,
   extractTypeParametersFromSignature,
+  getJSDocComment,
   getJSDocForSignature,
+  getParamDescription,
 } from '../ast/utils';
 import { extractParameters, registerReferencedTypes } from '../types/parameters';
-import { buildSchema, typeNodeOfSignature } from '../types/schema-builder';
+import {
+  buildSchema,
+  buildSchemaFromTypeNode,
+  typeNodeDefersExpansion,
+  typeNodeOfSignature,
+} from '../types/schema-builder';
 import type { SerializerContext } from './context';
 import { extractExportMetadata } from './shared';
 
@@ -59,6 +72,110 @@ function buildReturnSchema(sig: ts.Signature, ctx: SerializerContext): SpecSigna
   return { schema };
 }
 
+function functionSignatureDecls(
+  node: ts.FunctionDeclaration | ts.ArrowFunction | ts.FunctionExpression,
+  ctx: SerializerContext,
+): ts.SignatureDeclaration[] {
+  if (!ts.isFunctionDeclaration(node) || !node.name) return [node];
+  const symbol = ctx.typeChecker.getSymbolAtLocation(node.name);
+  const fns = (symbol?.declarations ?? []).filter(ts.isFunctionDeclaration);
+  const overloads = fns.filter((d) => !d.body);
+  return overloads.length > 0 ? overloads : [node];
+}
+
+function signatureDeclDefers(decl: ts.SignatureDeclaration, ctx: SerializerContext): boolean {
+  const checker = ctx.typeChecker;
+  if (decl.typeParameters) {
+    for (const tp of decl.typeParameters) {
+      if (typeNodeDefersExpansion(tp.constraint, checker, ctx.program)) return true;
+      if (typeNodeDefersExpansion(tp.default, checker, ctx.program)) return true;
+    }
+  }
+  for (const p of decl.parameters) {
+    if (typeNodeDefersExpansion(p.type, checker, ctx.program)) return true;
+  }
+  return typeNodeDefersExpansion(decl.type, checker, ctx.program);
+}
+
+function anySignatureDefers(
+  node: ts.FunctionDeclaration | ts.ArrowFunction | ts.FunctionExpression,
+  ctx: SerializerContext,
+): boolean {
+  return functionSignatureDecls(node, ctx).some((d) => signatureDeclDefers(d, ctx));
+}
+
+function schemaFromTypeNode(node: ts.TypeNode | undefined, ctx: SerializerContext): SpecSchema {
+  if (!node) return { type: 'unknown' };
+  if (typeNodeDefersExpansion(node, ctx.typeChecker, ctx.program)) {
+    return buildSchemaFromTypeNode(node, ctx.typeChecker, ctx);
+  }
+  return buildSchema(ctx.typeChecker.getTypeFromTypeNode(node), ctx.typeChecker, ctx, node);
+}
+
+function parametersFromAst(
+  decl: ts.SignatureDeclaration,
+  ctx: SerializerContext,
+): SpecSignatureParameter[] {
+  const jsdocTags = ts.getJSDocTags(decl);
+  return decl.parameters.map((p) => {
+    const name = ts.isIdentifier(p.name) ? p.name.text : p.name.getText();
+    const isOptional = !!p.questionToken || !!p.initializer;
+    const param: SpecSignatureParameter = {
+      name,
+      schema: schemaFromTypeNode(p.type, ctx),
+      required: !isOptional,
+    };
+    const description = getParamDescription(name, jsdocTags);
+    if (description) param.description = description;
+    return param;
+  });
+}
+
+function signaturesFromAst(
+  node: ts.FunctionDeclaration | ts.ArrowFunction | ts.FunctionExpression,
+  ctx: SerializerContext,
+): SpecSignature[] {
+  const decls = functionSignatureDecls(node, ctx);
+  return decls.map((decl, index) => {
+    const sigDoc = getJSDocComment(decl);
+    const sigTypeParams =
+      ts.isFunctionDeclaration(decl) || ts.isArrowFunction(decl) || ts.isFunctionExpression(decl)
+        ? extractTypeParameters(decl, ctx.typeChecker)
+        : undefined;
+    const returns: SpecSignatureReturn = { schema: schemaFromTypeNode(decl.type, ctx) };
+    return {
+      parameters: parametersFromAst(decl, ctx),
+      returns,
+      ...(sigDoc.description ? { description: sigDoc.description } : {}),
+      ...(sigDoc.tags.length > 0 ? { tags: sigDoc.tags } : {}),
+      ...(sigDoc.examples.length > 0 ? { examples: sigDoc.examples } : {}),
+      ...(sigTypeParams ? { typeParameters: sigTypeParams } : {}),
+      ...(decls.length > 1 ? { overloadIndex: index } : {}),
+    };
+  });
+}
+
+function signaturesFromChecker(
+  node: ts.FunctionDeclaration | ts.ArrowFunction | ts.FunctionExpression,
+  ctx: SerializerContext,
+): SpecSignature[] {
+  const type = ctx.typeChecker.getTypeAtLocation(node);
+  const callSignatures = type.getCallSignatures();
+  return callSignatures.map((sig, index) => {
+    const sigDoc = getJSDocForSignature(sig, ctx.typeChecker);
+    const sigTypeParams = extractTypeParametersFromSignature(sig, ctx.typeChecker);
+    return {
+      parameters: extractParameters(sig, ctx),
+      returns: buildReturnSchema(sig, ctx),
+      ...(sigDoc.description ? { description: sigDoc.description } : {}),
+      ...(sigDoc.tags.length > 0 ? { tags: sigDoc.tags } : {}),
+      ...(sigDoc.examples.length > 0 ? { examples: sigDoc.examples } : {}),
+      ...(sigTypeParams ? { typeParameters: sigTypeParams } : {}),
+      ...(callSignatures.length > 1 ? { overloadIndex: index } : {}),
+    };
+  });
+}
+
 export function serializeFunctionExport(
   node: ts.FunctionDeclaration | ts.ArrowFunction | ts.FunctionExpression,
   ctx: SerializerContext,
@@ -75,28 +192,11 @@ export function serializeFunctionExport(
   // Extract type parameters like <T, K extends Base>
   const typeParameters = extractTypeParameters(node, ctx.typeChecker);
 
-  const type = ctx.typeChecker.getTypeAtLocation(node);
-  const callSignatures = type.getCallSignatures();
-
-  const signatures: SpecSignature[] = callSignatures.map((sig, index) => {
-    const params = extractParameters(sig, ctx);
-
-    // Get per-overload JSDoc
-    const sigDoc = getJSDocForSignature(sig, ctx.typeChecker);
-
-    // Get per-overload type parameters
-    const sigTypeParams = extractTypeParametersFromSignature(sig, ctx.typeChecker);
-
-    return {
-      parameters: params,
-      returns: buildReturnSchema(sig, ctx),
-      ...(sigDoc.description ? { description: sigDoc.description } : {}),
-      ...(sigDoc.tags.length > 0 ? { tags: sigDoc.tags } : {}),
-      ...(sigDoc.examples.length > 0 ? { examples: sigDoc.examples } : {}),
-      ...(sigTypeParams ? { typeParameters: sigTypeParams } : {}),
-      ...(callSignatures.length > 1 ? { overloadIndex: index } : {}),
-    };
-  });
+  // getTypeAtLocation instantiates param/constraint types. ValidPaths / DeepPickN
+  // never come back from that call — serialize those signatures from the AST.
+  const signatures: SpecSignature[] = anySignatureDefers(node, ctx)
+    ? signaturesFromAst(node, ctx)
+    : signaturesFromChecker(node, ctx);
 
   // Detect async and generator flags
   const flags: Record<string, unknown> = {};

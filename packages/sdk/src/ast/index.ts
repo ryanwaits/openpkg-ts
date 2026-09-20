@@ -1,5 +1,5 @@
 export { TypeRegistry } from './registry';
-export { isTypeOnlyExport, resolveExportTarget } from './resolve';
+export { isTypeOnlyExport, resolveAliasSymbol, resolveExportTarget } from './resolve';
 export {
   extractTypeParameters,
   getExportKind,
