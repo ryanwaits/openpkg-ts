@@ -219,6 +219,11 @@ describe('wire-format schema constraints (v0.4.0)', () => {
     expect(validateSpec(withSchema({ type: 'function' })).ok).toBe(false);
   });
 
+  test('accepts undefined as type:null plus x-ts-type', () => {
+    expect(validateSpec(withSchema({ type: 'null', 'x-ts-type': 'undefined' })).ok).toBe(true);
+    expect(validateSpec(withSchema({ type: 'null', 'x-ts-type': 'void' })).ok).toBe(true);
+  });
+
   test('accepts the seven JSON Schema primitive types', () => {
     for (const t of ['string', 'number', 'integer', 'boolean', 'object', 'array', 'null']) {
       expect(validateSpec(withSchema({ type: t })).ok).toBe(true);

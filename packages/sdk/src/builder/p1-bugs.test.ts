@@ -62,8 +62,8 @@ describe('Bug 4: never serialized correctly', () => {
     const result = await extract({ entryFile: 'test.ts', content: code });
     const exp = result.spec.exports.find((e) => e.id === 'Foo');
     const barMember = exp?.members?.find((m) => m.name === 'bar');
-    // TS resolves `never | undefined` → `undefined` → normalized to {type: "null"}
-    expect(barMember?.schema).toEqual({ type: 'null' });
+    // TS resolves `never | undefined` → `undefined`
+    expect(barMember?.schema).toEqual({ type: 'null', 'x-ts-type': 'undefined' });
   });
 });
 

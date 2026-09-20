@@ -1044,7 +1044,7 @@ export function buildFunctionSchema(
         const paramType = checker.getTypeOfSymbolAtLocation(param, decl);
         const isOptional = !!decl?.questionToken || !!decl?.initializer;
         // Optionality is expressed via required: false — strip the undefined
-        // branch so the schema doesn't also accept null after normalization
+        // branch so the schema doesn't also encode `| undefined`
         const effectiveType = isOptional ? stripUndefinedFromType(paramType, checker) : paramType;
         return {
           name: param.getName(),
@@ -1119,7 +1119,7 @@ export function buildObjectSchema(
       const isOptionalProp = !!(prop.flags & ts.SymbolFlags.Optional);
       const rawPropType = checker.getTypeOfSymbol(prop);
       // Optional props: omission from `required` carries the optionality —
-      // strip undefined so the wire schema doesn't also admit null
+      // strip undefined so the schema doesn't also encode `| undefined`
       const propType = isOptionalProp ? stripUndefinedFromType(rawPropType, checker) : rawPropType;
       let propSchema = buildSchema(propType, checker, ctx);
 

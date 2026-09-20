@@ -93,72 +93,16 @@
       "count": 5
     },
     {
-      "union": "anyOf null , #/types/Declaration",
-      "count": 1
-    },
-    {
-      "union": "anyOf null , #/types/Expression",
-      "count": 1
-    },
-    {
-      "union": "anyOf null , #/types/Identifier , #/types/QualifiedName",
-      "count": 1
-    },
-    {
-      "union": "anyOf null , #/types/IndexInfo",
-      "count": 1
-    },
-    {
-      "union": "anyOf null , #/types/IndexSignatureDeclaration",
-      "count": 1
-    },
-    {
-      "union": "anyOf null , #/types/Node",
-      "count": 10
-    },
-    {
-      "union": "anyOf null , #/types/NodeArray",
-      "count": 1
-    },
-    {
       "union": "anyOf null , #/types/OpenpkgConfig",
       "count": 2
-    },
-    {
-      "union": "anyOf null , #/types/ParameterDeclaration",
-      "count": 1
-    },
-    {
-      "union": "anyOf null , #/types/SchemaAdapter",
-      "count": 1
     },
     {
       "union": "anyOf null , #/types/SchemaExtractionResult",
       "count": 1
     },
     {
-      "union": "anyOf null , #/types/SerializerContext",
-      "count": 2
-    },
-    {
-      "union": "anyOf null , #/types/Signature",
-      "count": 2
-    },
-    {
       "union": "anyOf null , #/types/SpecExport",
-      "count": 15
-    },
-    {
-      "union": "anyOf null , #/types/SpecType",
-      "count": 8
-    },
-    {
-      "union": "anyOf null , #/types/Symbol",
-      "count": 12
-    },
-    {
-      "union": "anyOf null , #/types/ThisTypePredicate , #/types/IdentifierTypePredicate , #/types/AssertsThisTypePredicate , #/types/AssertsIdentifierTypePredicate",
-      "count": 1
+      "count": 9
     },
     {
       "union": "anyOf null , #/types/TsRuntime",
@@ -166,38 +110,10 @@
     },
     {
       "union": "anyOf null , #/types/Type",
-      "count": 9
-    },
-    {
-      "union": "anyOf null , #/types/TypeNode",
-      "count": 3
-    },
-    {
-      "union": "anyOf null , #/types/TypeParameterDeclaration",
-      "count": 1
-    },
-    {
-      "union": "anyOf null , boolean",
-      "count": 1
-    },
-    {
-      "union": "anyOf null , h:55e3470fc3",
-      "count": 1
-    },
-    {
-      "union": "anyOf null , h:603559fc3b , h:c77c5abcb6 , h:c3ea984ace , h:c5908f0259 , h:99efaf92ee , h:94a68312fe , h:3ed68fa330 , h:b3edce9b0b , h:2b3c58ad0d , h:8ed510f7c8 , h:72fa91c39e , h:477c1e481b , h:bfccf69477 , h:510e9b5193 , h:5683d239f9 , h:d40185d372 , h:61b11e0d27 , h:470022145e , h:96f4d556a7 , h:37f52b7a68 , h:d824e72543 , h:2d097bb4da , h:257f479832 , h:ae208f9f6e , h:2df487060c , h:707fc40245 , h:48e0506690 , h:82d8a3b0eb , h:afa3b7288d , h:07515de2e8 , h:d069527f50",
-      "count": 8
+      "count": 4
     },
     {
       "union": "anyOf null , h:7d155c019c",
-      "count": 1
-    },
-    {
-      "union": "anyOf null , h:8eb177a2ce",
-      "count": 1
-    },
-    {
-      "union": "anyOf null , h:b14f90d776 , h:ac6db8bb49 , h:55318be0f4 , h:dcfc091e59 , h:17723e6201 , h:5a2f68e38a , h:9c78ceca4d , h:5c2565be7e , h:b4892cc498 , h:17ce70b9d1 , h:4bc00e01e6 , h:15c504af69 , h:7935a2a2a7 , h:39ada1e398",
       "count": 1
     },
     {
@@ -205,24 +121,8 @@
       "count": 1
     },
     {
-      "union": "anyOf null , h:f89d2b0692",
-      "count": 1
-    },
-    {
       "union": "anyOf null , string",
-      "count": 10
-    },
-    {
-      "union": "anyOf null , string , h:ec2e1c6035 , h:abd0d14bb2 , h:f77432a18b , h:7d589cadd3 , h:e3ef754bc4 , h:b669559432 , h:3d5361bcb8 , h:602c1b06c7 , h:e843711b68 , h:b1534d4b00 , h:1138cae9f4 , h:116d8b6a25 , h:85a4583127 , h:e5ad3d52b2 , h:99754ec087 , h:93a5bdccce , h:50e08e3c7f , #/types/SpecSchemaRef , #/types/SpecSchemaFallback , #/types/SpecSchemaGeneric",
       "count": 1
-    },
-    {
-      "union": "anyOf null , string , number",
-      "count": 1
-    },
-    {
-      "union": "anyOf null , ts:V",
-      "count": 2
     },
     {
       "union": "anyOf string , #/types/FumadocsMetaItem",
@@ -283,6 +183,118 @@
     {
       "union": "anyOf string , ts:RegExp",
       "count": 3
+    },
+    {
+      "union": "anyOf ts:undefined , #/types/Declaration",
+      "count": 1
+    },
+    {
+      "union": "anyOf ts:undefined , #/types/Expression",
+      "count": 1
+    },
+    {
+      "union": "anyOf ts:undefined , #/types/Identifier , #/types/QualifiedName",
+      "count": 1
+    },
+    {
+      "union": "anyOf ts:undefined , #/types/IndexInfo",
+      "count": 1
+    },
+    {
+      "union": "anyOf ts:undefined , #/types/IndexSignatureDeclaration",
+      "count": 1
+    },
+    {
+      "union": "anyOf ts:undefined , #/types/Node",
+      "count": 10
+    },
+    {
+      "union": "anyOf ts:undefined , #/types/NodeArray",
+      "count": 1
+    },
+    {
+      "union": "anyOf ts:undefined , #/types/ParameterDeclaration",
+      "count": 1
+    },
+    {
+      "union": "anyOf ts:undefined , #/types/SchemaAdapter",
+      "count": 1
+    },
+    {
+      "union": "anyOf ts:undefined , #/types/SerializerContext",
+      "count": 2
+    },
+    {
+      "union": "anyOf ts:undefined , #/types/Signature",
+      "count": 2
+    },
+    {
+      "union": "anyOf ts:undefined , #/types/SpecExport",
+      "count": 6
+    },
+    {
+      "union": "anyOf ts:undefined , #/types/SpecType",
+      "count": 8
+    },
+    {
+      "union": "anyOf ts:undefined , #/types/Symbol",
+      "count": 12
+    },
+    {
+      "union": "anyOf ts:undefined , #/types/ThisTypePredicate , #/types/IdentifierTypePredicate , #/types/AssertsThisTypePredicate , #/types/AssertsIdentifierTypePredicate",
+      "count": 1
+    },
+    {
+      "union": "anyOf ts:undefined , #/types/Type",
+      "count": 5
+    },
+    {
+      "union": "anyOf ts:undefined , #/types/TypeNode",
+      "count": 3
+    },
+    {
+      "union": "anyOf ts:undefined , #/types/TypeParameterDeclaration",
+      "count": 1
+    },
+    {
+      "union": "anyOf ts:undefined , boolean",
+      "count": 1
+    },
+    {
+      "union": "anyOf ts:undefined , h:55e3470fc3",
+      "count": 1
+    },
+    {
+      "union": "anyOf ts:undefined , h:603559fc3b , h:c77c5abcb6 , h:c3ea984ace , h:c5908f0259 , h:99efaf92ee , h:94a68312fe , h:3ed68fa330 , h:b3edce9b0b , h:2b3c58ad0d , h:8ed510f7c8 , h:72fa91c39e , h:477c1e481b , h:bfccf69477 , h:510e9b5193 , h:5683d239f9 , h:d40185d372 , h:61b11e0d27 , h:470022145e , h:96f4d556a7 , h:37f52b7a68 , h:d824e72543 , h:2d097bb4da , h:257f479832 , h:ae208f9f6e , h:2df487060c , h:707fc40245 , h:48e0506690 , h:82d8a3b0eb , h:afa3b7288d , h:07515de2e8 , h:d069527f50",
+      "count": 8
+    },
+    {
+      "union": "anyOf ts:undefined , h:8eb177a2ce",
+      "count": 1
+    },
+    {
+      "union": "anyOf ts:undefined , h:b14f90d776 , h:ac6db8bb49 , h:55318be0f4 , h:dcfc091e59 , h:17723e6201 , h:5a2f68e38a , h:9c78ceca4d , h:5c2565be7e , h:b4892cc498 , h:17ce70b9d1 , h:4bc00e01e6 , h:15c504af69 , h:7935a2a2a7 , h:39ada1e398",
+      "count": 1
+    },
+    {
+      "union": "anyOf ts:undefined , h:f89d2b0692",
+      "count": 1
+    },
+    {
+      "union": "anyOf ts:undefined , string",
+      "count": 9
+    },
+    {
+      "union": "anyOf ts:undefined , string , h:ec2e1c6035 , h:abd0d14bb2 , h:f77432a18b , h:7d589cadd3 , h:e3ef754bc4 , h:b669559432 , h:3d5361bcb8 , h:602c1b06c7 , h:e843711b68 , h:b1534d4b00 , h:1138cae9f4 , h:116d8b6a25 , h:85a4583127 , h:e5ad3d52b2 , h:99754ec087 , h:93a5bdccce , h:50e08e3c7f , #/types/SpecSchemaRef , #/types/SpecSchemaFallback , #/types/SpecSchemaGeneric",
+      "count": 1
+    },
+    {
+      "union": "anyOf ts:undefined , string , number",
+      "count": 1
+    },
+    {
+      "union": "anyOf ts:undefined , ts:V",
+      "count": 2
     },
     {
       "union": "enum [\"0.2.0\",\"0.3.0\",\"0.4.0\",\"0.1.0\",\"latest\"]",

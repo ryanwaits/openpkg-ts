@@ -11,7 +11,7 @@
  * | { type: 'never' }             | { "not": {} }                                     |
  * | { type: 'any' }               | {}                                                |
  * | { type: 'unknown' }           | { "x-ts-type": "unknown" }                        |
- * | { type: 'undefined' }         | { "type": "null" }                                |
+ * | { type: 'undefined' }         | { "type": "null", "x-ts-type": "undefined" }      |
  * | { type: 'bigint' }            | { "type": "integer", "x-ts-type": "bigint" }      |
  * | { type: 'symbol' }            | { "type": "string", "x-ts-type": "symbol" }       |
  * | { type: 'function', ... }     | { "x-ts-function": true, "x-ts-signatures": [...] }|
@@ -51,7 +51,7 @@ const TS_PRIMITIVE_NORMALIZATIONS: Record<string, () => JSONSchema> = {
   never: () => ({ not: {} }),
   any: () => ({}),
   unknown: () => ({ 'x-ts-type': 'unknown' }),
-  undefined: () => ({ type: 'null' }),
+  undefined: () => ({ type: 'null', 'x-ts-type': 'undefined' }),
   bigint: () => ({ type: 'integer', 'x-ts-type': 'bigint' }),
   symbol: () => ({ type: 'string', 'x-ts-type': 'symbol' }),
 };
@@ -550,8 +550,8 @@ function normalizeCombinator(
 ): JSONSchema {
   let branches = schemas.map((s) => normalizeSchemaInternal(s, options));
 
-  // Dedupe structurally-identical anyOf/oneOf branches — `string | null |
-  // undefined` lowers undefined→null and null→null, yielding double null.
+  // Dedupe structurally-identical anyOf/oneOf branches. null and undefined
+  // stay distinct (`{type:null}` vs `{type:null, x-ts-type:undefined}`).
   if (keyword !== 'allOf') {
     const seen = new Set<string>();
     branches = branches.filter((b) => {

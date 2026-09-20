@@ -33,10 +33,10 @@ describe('normalizeSchema', () => {
       expect(result).toEqual({ 'x-ts-type': 'unknown' });
     });
 
-    test('undefined → null', () => {
+    test('undefined → null with x-ts-type', () => {
       const input: SpecSchema = { type: 'undefined' };
       const result = normalizeSchema(input);
-      expect(result).toEqual({ type: 'null' });
+      expect(result).toEqual({ type: 'null', 'x-ts-type': 'undefined' });
     });
 
     test('bigint → integer with x-ts-type', () => {
@@ -1548,6 +1548,12 @@ describe('AJV validation - normalized output is valid JSON Schema', () => {
       expect(validateSchema(result)).toBe(true);
     });
 
+    test('undefined normalizes to null with x-ts-type extension', () => {
+      const result = normalizeSchema({ type: 'undefined' } as SpecSchema);
+      expect(result).toEqual({ type: 'null', 'x-ts-type': 'undefined' });
+      expect(validateSchema(result)).toBe(true);
+    });
+
     // unknown normalizes to { 'x-ts-type': 'unknown' } - valid JSON Schema (empty-ish object)
     test('unknown normalizes with x-ts-type extension', () => {
       const result = normalizeSchema({ type: 'unknown' } as SpecSchema);
@@ -2218,6 +2224,14 @@ describe('Zod runtime vs normalized static output comparison', () => {
 
       expect(normalized.type).toBe('null');
       expect(normalized['x-ts-type']).toBe('void');
+    });
+
+    test('undefined maps to null with x-ts-type extension', () => {
+      const staticSchema: SpecSchema = { type: 'undefined' };
+      const normalized = normalizeSchema(staticSchema);
+
+      expect(normalized.type).toBe('null');
+      expect(normalized['x-ts-type']).toBe('undefined');
     });
 
     test('function types use x-ts-function extension', () => {

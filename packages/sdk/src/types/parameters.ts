@@ -29,7 +29,7 @@ export function extractParameters(
       // Regular parameter - check questionToken or initializer for optionality
       const isOptional = !!decl?.questionToken || !!decl?.initializer;
 
-      // Strip undefined from optional params - optionality is expressed via required: false
+      // Strip undefined from optional params — optionality is required: false
       const effectiveType = isOptional ? stripUndefinedFromType(type, checker) : type;
       registerReferencedTypes(effectiveType, ctx);
 
@@ -101,7 +101,7 @@ function expandBindingPattern(
       !!(propSymbol.flags & ts.SymbolFlags.Optional) || element.initializer !== undefined;
 
     const propType = checker.getTypeOfSymbol(propSymbol);
-    // Strip undefined from optional props - optionality is expressed via required: false
+    // Strip undefined from optional props — optionality is required: false
     const effectiveType = isOptional ? stripUndefinedFromType(propType, checker) : propType;
     registerReferencedTypes(effectiveType, ctx);
 

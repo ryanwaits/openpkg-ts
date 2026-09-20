@@ -247,8 +247,9 @@ export type JSONSchemaExtensions = {
    * Examples:
    * - bigint → { type: "integer", "x-ts-type": "bigint" }
    * - symbol → { type: "string", "x-ts-type": "symbol" }
-   * - void → { type: "null", "x-ts-type": "void" } (optionally)
-   * - never, any, unknown, undefined also supported
+   * - void → { type: "null", "x-ts-type": "void" }
+   * - undefined → { type: "null", "x-ts-type": "undefined" }
+   * - never, any, unknown also supported
    */
   'x-ts-type'?: 'bigint' | 'symbol' | 'void' | 'never' | 'any' | 'unknown' | 'undefined' | string;
 
