@@ -501,7 +501,12 @@ export class TypeRegistry {
       // Register referenced type so it appears in types[]
       this.registerType(propType, ctx);
 
-      let propSchema = buildSchema(propType, checker, ctx);
+      let propSchema = buildSchema(
+        propType,
+        checker,
+        ctx,
+        declaredTypeNode(prop.valueDeclaration ?? prop.getDeclarations()?.[0]),
+      );
 
       // Mirror buildObjectSchema: flattened registry schemas carry per-property
       // doc comments and deprecation for consumers reading only the schema layer.

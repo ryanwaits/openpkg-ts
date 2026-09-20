@@ -14,7 +14,7 @@ import {
   isSymbolDeprecated,
 } from '../ast/utils';
 import { extractParameters, registerReferencedTypes } from '../types/parameters';
-import { buildSchema } from '../types/schema-builder';
+import { buildSchema, typeNodeOfSignature } from '../types/schema-builder';
 import type { SerializerContext } from './context';
 
 export interface ExportMetadata {
@@ -66,7 +66,7 @@ export function buildSignatures(
 
     return {
       parameters: params.length > 0 ? params : undefined,
-      returns: { schema: buildSchema(returnType, checker, ctx) },
+      returns: { schema: buildSchema(returnType, checker, ctx, typeNodeOfSignature(sig)) },
       ...(sigDoc.description ? { description: sigDoc.description } : {}),
       ...(sigDoc.tags.length > 0 ? { tags: sigDoc.tags } : {}),
       ...(sigDoc.examples.length > 0 ? { examples: sigDoc.examples } : {}),

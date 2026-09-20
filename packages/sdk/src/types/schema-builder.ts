@@ -109,6 +109,106 @@ export function declaredTypeNode(decl: ts.Declaration | undefined): ts.TypeNode 
   return withType?.type;
 }
 
+/** Return annotation on a call signature, if the author wrote one. */
+export function typeNodeOfSignature(sig: ts.Signature): ts.TypeNode | undefined {
+  const decl = sig.getDeclaration();
+  if (!decl || !ts.isFunctionLike(decl)) return undefined;
+  return decl.type;
+}
+
+function resolvedSymbol(
+  symbol: ts.Symbol | undefined,
+  checker: ts.TypeChecker,
+): ts.Symbol | undefined {
+  if (!symbol) return undefined;
+  if (symbol.flags & ts.SymbolFlags.Alias) {
+    try {
+      return checker.getAliasedSymbol(symbol);
+    } catch {
+      return symbol;
+    }
+  }
+  return symbol;
+}
+
+/**
+ * Build a schema from a written TypeNode when the checker type is `any`
+ * (error types from arity mismatches, unresolved names, …). Recovers
+ * `LiveMap<string, V>` / `LiveMap<string, V> | null` instead of silent `{}`.
+ */
+function buildSchemaFromTypeNode(
+  node: ts.TypeNode,
+  checker: ts.TypeChecker,
+  ctx?: SerializerContext,
+): SpecSchema {
+  if (ts.isParenthesizedTypeNode(node)) {
+    return buildSchemaFromTypeNode(node.type, checker, ctx);
+  }
+  if (ts.isUnionTypeNode(node)) {
+    return { anyOf: node.types.map((t) => buildSchemaFromTypeNode(t, checker, ctx)) };
+  }
+  if (ts.isIntersectionTypeNode(node)) {
+    return { allOf: node.types.map((t) => buildSchemaFromTypeNode(t, checker, ctx)) };
+  }
+  if (node.kind === ts.SyntaxKind.NullKeyword) {
+    return { type: 'null' };
+  }
+  if (ts.isLiteralTypeNode(node) && node.literal.kind === ts.SyntaxKind.NullKeyword) {
+    return { type: 'null' };
+  }
+  if (node.kind === ts.SyntaxKind.UndefinedKeyword) {
+    return { type: 'undefined' };
+  }
+  if (node.kind === ts.SyntaxKind.VoidKeyword) {
+    return { type: 'void' };
+  }
+  if (node.kind === ts.SyntaxKind.AnyKeyword) {
+    return { 'x-ts-type': 'any' } as SpecSchema;
+  }
+  if (node.kind === ts.SyntaxKind.UnknownKeyword) {
+    return { type: 'unknown' };
+  }
+  if (ts.isTypeReferenceNode(node)) {
+    const raw = checker.getSymbolAtLocation(
+      ts.isQualifiedName(node.typeName) ? node.typeName.right : node.typeName,
+    );
+    const symbol = resolvedSymbol(raw, checker);
+    const name = symbol?.getName() ?? node.typeName.getText();
+    const args = node.typeArguments?.map((arg) => {
+      const argType = checker.getTypeFromTypeNode(arg);
+      return buildSchema(argType, checker, ctx, arg);
+    });
+    const withArgs = (schema: SpecSchema): SpecSchema => {
+      if (!args || args.length === 0) return schema;
+      if (typeof schema !== 'object' || schema === null || Array.isArray(schema)) {
+        return schema;
+      }
+      return { ...schema, typeArguments: args };
+    };
+
+    if (name && isBuiltinGeneric(name) && (!symbol || isBuiltinSymbol(symbol))) {
+      return withArgs({ ...builtinSchema(name) });
+    }
+    if (name && !name.startsWith('__')) {
+      let refId = name;
+      if (symbol && ctx) {
+        try {
+          refId = namedRefId(checker.getDeclaredTypeOfSymbol(symbol), name, ctx);
+        } catch {
+          refId = name;
+        }
+      }
+      return withArgs({ $ref: `#/types/${refId}` });
+    }
+    return { 'x-ts-type': scrubImportQualifiers(node.getText()) } as SpecSchema;
+  }
+  const t = checker.getTypeFromTypeNode(node);
+  if (!(t.flags & ts.TypeFlags.Any)) {
+    return buildSchema(t, checker, ctx);
+  }
+  return { 'x-ts-type': scrubImportQualifiers(node.getText()) } as SpecSchema;
+}
+
 /**
  * Strip `undefined` from a union type when optionality is already expressed
  * elsewhere (`required: false`, `flags.optional`). Used for both schema shape
@@ -533,8 +633,9 @@ export function buildSchema(
   type: ts.Type,
   checker: ts.TypeChecker,
   ctx?: SerializerContext,
+  typeNode?: ts.TypeNode,
 ): SpecSchema {
-  const schema = buildSchemaInternal(type, checker, ctx);
+  const schema = buildSchemaInternal(type, checker, ctx, typeNode);
   return ensureNonEmptySchema(schema, type, checker);
 }
 
@@ -542,7 +643,15 @@ export function buildSchema(
  * Build a leaf schema at max depth — no further recursion.
  * Named types → $ref, primitives → inline, unions/intersections → decomposed.
  */
-function buildMaxDepthSchema(type: ts.Type, checker: ts.TypeChecker): SpecSchema {
+function buildMaxDepthSchema(
+  type: ts.Type,
+  checker: ts.TypeChecker,
+  typeNode?: ts.TypeNode,
+): SpecSchema {
+  if (type.flags & ts.TypeFlags.Any) {
+    if (typeNode) return buildSchemaFromTypeNode(typeNode, checker);
+    return { 'x-ts-type': checker.typeToString(type) } as SpecSchema;
+  }
   // Type parameters are not addressable spec types — never $ref them.
   // (`this` types also carry TypeParameter flags but legitimately ref their class.)
   if (type.flags & ts.TypeFlags.TypeParameter && !isFluentThisType(type)) {
@@ -602,12 +711,13 @@ function buildSchemaInternal(
   type: ts.Type,
   checker: ts.TypeChecker,
   ctx?: SerializerContext,
+  typeNode?: ts.TypeNode,
 ): SpecSchema {
   // Check depth limit using context
   // Named types can still emit $ref at max depth (zero recursion needed)
   // Union/intersection types get decomposed into anyOf/allOf with leaf schemas
   if (isAtMaxDepth(ctx)) {
-    return buildMaxDepthSchema(type, checker);
+    return buildMaxDepthSchema(type, checker, typeNode);
   }
 
   // Circular reference guard — visitedTypes is stack-scoped (add before recurse, delete after)
@@ -645,7 +755,12 @@ function buildSchemaInternal(
     if (type.flags & ts.TypeFlags.Undefined) return { type: 'undefined' };
     if (type.flags & ts.TypeFlags.Null) return { type: 'null' };
     if (type.flags & ts.TypeFlags.Void) return { type: 'void' };
-    if (type.flags & ts.TypeFlags.Any) return { type: 'any' };
+    if (type.flags & ts.TypeFlags.Any) {
+      // Error types (wrong generic arity, unresolved names) are also Any.
+      // Prefer the written annotation so `LiveMap<string, V>` is not `{}`.
+      if (typeNode) return buildSchemaFromTypeNode(typeNode, checker, ctx);
+      return { 'x-ts-type': checker.typeToString(type) } as SpecSchema;
+    }
     if (type.flags & ts.TypeFlags.Unknown) return { type: 'unknown' };
     if (type.flags & ts.TypeFlags.Never) return { type: 'never' };
     if (type.flags & ts.TypeFlags.BigInt) return { type: 'bigint' };
@@ -1048,7 +1163,7 @@ export function buildFunctionSchema(
         const effectiveType = isOptional ? stripUndefinedFromType(paramType, checker) : paramType;
         return {
           name: param.getName(),
-          schema: buildSchema(effectiveType, checker, ctx),
+          schema: buildSchema(effectiveType, checker, ctx, decl.type),
           required: !isOptional,
         };
       });
@@ -1058,7 +1173,7 @@ export function buildFunctionSchema(
       return {
         parameters: params,
         returns: {
-          schema: buildSchema(returnType, checker, ctx),
+          schema: buildSchema(returnType, checker, ctx, typeNodeOfSignature(sig)),
         },
       };
     });
@@ -1121,7 +1236,8 @@ export function buildObjectSchema(
       // Optional props: omission from `required` carries the optionality —
       // strip undefined so the schema doesn't also encode `| undefined`
       const propType = isOptionalProp ? stripUndefinedFromType(rawPropType, checker) : rawPropType;
-      let propSchema = buildSchema(propType, checker, ctx);
+      const decl = prop.valueDeclaration ?? prop.getDeclarations()?.[0];
+      let propSchema = buildSchema(propType, checker, ctx, declaredTypeNode(decl));
 
       // Carry doc comments into the flattened schema so consumers reading only
       // schema.properties (not members[]) still see per-property descriptions.

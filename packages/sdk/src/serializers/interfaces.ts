@@ -148,7 +148,7 @@ function serializePropertySignature(
   // Optional members express optionality via flags.optional / required
   // omission — strip undefined so the schema doesn't admit null
   const type = node.questionToken ? stripUndefinedFromType(rawType, checker) : rawType;
-  let schema = buildSchema(type, checker, ctx);
+  let schema = buildSchema(type, checker, ctx, node.type);
   registerReferencedTypes(type, ctx);
 
   const flags: Record<string, unknown> = {};
@@ -241,7 +241,7 @@ function serializeCallSignature(
       {
         parameters: params.length > 0 ? params : undefined,
         returns: {
-          schema: buildSchema(returnType, checker, ctx),
+          schema: buildSchema(returnType, checker, ctx, node.type),
         },
       },
     ],
@@ -257,7 +257,7 @@ function serializeIndexSignature(
 
   // Get the value type
   const valueType = node.type ? checker.getTypeAtLocation(node.type) : checker.getAnyType();
-  const valueSchema = buildSchema(valueType, checker, ctx);
+  const valueSchema = buildSchema(valueType, checker, ctx, node.type);
   registerReferencedTypes(valueType, ctx);
 
   // Get the key type (usually string or number)

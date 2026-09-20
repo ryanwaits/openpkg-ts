@@ -21,10 +21,10 @@ describe('normalizeSchema', () => {
       expect(result).toEqual({ not: {} });
     });
 
-    test('any → {}', () => {
+    test('any → x-ts-type extension only', () => {
       const input: SpecSchema = { type: 'any' };
       const result = normalizeSchema(input);
-      expect(result).toEqual({});
+      expect(result).toEqual({ 'x-ts-type': 'any' });
     });
 
     test('unknown → x-ts-type extension only', () => {
@@ -439,7 +439,7 @@ describe('normalizeSchema', () => {
       };
       const result = normalizeSchema(input);
       expect(result).toEqual({
-        oneOf: [{}, { 'x-ts-type': 'unknown' }],
+        oneOf: [{ 'x-ts-type': 'any' }, { 'x-ts-type': 'unknown' }],
       });
     });
 
@@ -466,7 +466,7 @@ describe('normalizeSchema', () => {
     test('TypeScript type string shorthand', () => {
       expect(normalizeSchema('void' as SpecSchema)).toEqual({ type: 'null', 'x-ts-type': 'void' });
       expect(normalizeSchema('never' as SpecSchema)).toEqual({ not: {} });
-      expect(normalizeSchema('any' as SpecSchema)).toEqual({});
+      expect(normalizeSchema('any' as SpecSchema)).toEqual({ 'x-ts-type': 'any' });
       expect(normalizeSchema('unknown' as SpecSchema)).toEqual({ 'x-ts-type': 'unknown' });
       expect(normalizeSchema('bigint' as SpecSchema)).toEqual({
         type: 'integer',
@@ -1032,7 +1032,7 @@ describe('normalizeMembers', () => {
           count: { type: 'number', 'x-ts-accessor': 'getter' },
         },
         required: ['id', 'getName', 'count'],
-        additionalProperties: {},
+        additionalProperties: { 'x-ts-type': 'any' },
       });
     });
   });

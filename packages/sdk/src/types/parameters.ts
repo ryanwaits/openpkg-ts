@@ -3,7 +3,7 @@ import ts from 'typescript';
 import { isForeignPackage } from '../ast/type-identity';
 import { getParamDescription, parseInlineTags } from '../ast/utils';
 import type { SerializerContext } from '../serializers/context';
-import { buildSchema, stripUndefinedFromType } from './schema-builder';
+import { buildSchema, declaredTypeNode, stripUndefinedFromType } from './schema-builder';
 
 export function extractParameters(
   signature: ts.Signature,
@@ -39,7 +39,7 @@ export function extractParameters(
 
       const paramResult: SpecSignatureParameter = {
         name: paramName,
-        schema: buildSchema(effectiveType, checker, ctx),
+        schema: buildSchema(effectiveType, checker, ctx, decl.type),
         required: !isOptional,
       };
 
@@ -110,7 +110,12 @@ function expandBindingPattern(
 
     const param: SpecSignatureParameter = {
       name: propertyName,
-      schema: buildSchema(effectiveType, checker, ctx),
+      schema: buildSchema(
+        effectiveType,
+        checker,
+        ctx,
+        declaredTypeNode(propSymbol.valueDeclaration),
+      ),
       required: !isOptional,
     };
 

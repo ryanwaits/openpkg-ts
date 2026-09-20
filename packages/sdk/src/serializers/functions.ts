@@ -6,7 +6,7 @@ import {
   getJSDocForSignature,
 } from '../ast/utils';
 import { extractParameters, registerReferencedTypes } from '../types/parameters';
-import { buildSchema } from '../types/schema-builder';
+import { buildSchema, typeNodeOfSignature } from '../types/schema-builder';
 import type { SerializerContext } from './context';
 import { extractExportMetadata } from './shared';
 
@@ -20,7 +20,7 @@ function buildReturnSchema(sig: ts.Signature, ctx: SerializerContext): SpecSigna
   // Register return type references
   registerReferencedTypes(returnType, ctx);
 
-  const schema = buildSchema(returnType, ctx.typeChecker, ctx);
+  const schema = buildSchema(returnType, ctx.typeChecker, ctx, typeNodeOfSignature(sig));
 
   // Check for type predicate (type guard)
   const declaration = sig.getDeclaration();

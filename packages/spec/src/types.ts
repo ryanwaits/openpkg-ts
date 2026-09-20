@@ -249,7 +249,8 @@ export type JSONSchemaExtensions = {
    * - symbol → { type: "string", "x-ts-type": "symbol" }
    * - void → { type: "null", "x-ts-type": "void" }
    * - undefined → { type: "null", "x-ts-type": "undefined" }
-   * - never, any, unknown also supported
+   * - any → { "x-ts-type": "any" }
+   * - never, unknown also supported
    */
   'x-ts-type'?: 'bigint' | 'symbol' | 'void' | 'never' | 'any' | 'unknown' | 'undefined' | string;
 

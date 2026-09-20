@@ -178,7 +178,7 @@ function serializeProperty(
   registerReferencedTypes(type, ctx);
 
   // Then build the schema
-  let schema = buildSchema(type, checker, ctx);
+  let schema = buildSchema(type, checker, ctx, node.type);
 
   const flags: Record<string, unknown> = {};
   if (isStatic(node)) flags.static = true;
@@ -342,7 +342,12 @@ function serializeAccessor(
   }
 
   const type = checker.getTypeAtLocation(node);
-  const schema = buildSchema(type, checker, ctx);
+  const schema = buildSchema(
+    type,
+    checker,
+    ctx,
+    ts.isGetAccessorDeclaration(node) ? node.type : undefined,
+  );
   registerReferencedTypes(type, ctx);
 
   const kind = ts.isGetAccessorDeclaration(node) ? 'getter' : 'setter';
@@ -363,7 +368,7 @@ function serializeAccessor(
         parameters: [
           {
             name: paramName,
-            schema: buildSchema(paramType, checker, ctx),
+            schema: buildSchema(paramType, checker, ctx, param.type),
             required: true,
           },
         ],

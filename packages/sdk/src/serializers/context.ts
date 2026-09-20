@@ -3,7 +3,12 @@ import ts from 'typescript';
 import { TypeRegistry } from '../ast/registry';
 import { getJSDocComment, getJSDocForSignature } from '../ast/utils';
 import { extractParameters, registerReferencedTypes } from '../types/parameters';
-import { buildSchema, decoratePropertySchema } from '../types/schema-builder';
+import {
+  buildSchema,
+  declaredTypeNode,
+  decoratePropertySchema,
+  typeNodeOfSignature,
+} from '../types/schema-builder';
 
 export interface SerializerContext {
   typeChecker: ts.TypeChecker;
@@ -251,7 +256,7 @@ function serializeInheritedMember(
       return {
         parameters: params.length > 0 ? params : undefined,
         returns: {
-          schema: buildSchema(returnType, checker, ctx),
+          schema: buildSchema(returnType, checker, ctx, typeNodeOfSignature(sig)),
         },
         ...(sigDoc.description ? { description: sigDoc.description } : {}),
         ...(sigDoc.tags.length > 0 ? { tags: sigDoc.tags } : {}),
@@ -270,7 +275,7 @@ function serializeInheritedMember(
     visibility,
     schema:
       kind !== 'method'
-        ? buildSchema(type, checker, ctx)
+        ? buildSchema(type, checker, ctx, declaredTypeNode(decl))
         : decoratePropertySchema({ 'x-ts-function': true }, symbol, type, checker),
     signatures,
     flags: Object.keys(flags).length > 0 ? flags : undefined,

@@ -307,7 +307,17 @@ function serializeResolvedMembers(
     // members get a synthetic function schema so type text survives there too.
     const schema =
       kind === 'property'
-        ? decoratePropertySchema(buildSchema(propType, checker, ctx), prop, propType, checker)
+        ? decoratePropertySchema(
+            buildSchema(
+              propType,
+              checker,
+              ctx,
+              declaredTypeNode(prop.valueDeclaration ?? prop.getDeclarations()?.[0]),
+            ),
+            prop,
+            propType,
+            checker,
+          )
         : decoratePropertySchema({ 'x-ts-function': true }, prop, propType, checker);
 
     // Parsed from the final description — the arm-alias fallback above can

@@ -72,7 +72,9 @@ exports[`snapshot tests for complex types deeply nested object with all special 
 
 exports[`snapshot tests for complex types interface with all member kinds 1`] = `
 {
-  "additionalProperties": {},
+  "additionalProperties": {
+    "x-ts-type": "any",
+  },
   "properties": {
     "count": {
       "type": "integer",
@@ -304,7 +306,9 @@ exports[`snapshot tests for complex types class export with all member types 1`]
             {
               "name": "data",
               "required": true,
-              "schema": {},
+              "schema": {
+                "x-ts-type": "any",
+              },
             },
           ],
           "returns": {
@@ -318,7 +322,9 @@ exports[`snapshot tests for complex types class export with all member types 1`]
             {
               "name": "data",
               "required": true,
-              "schema": {},
+              "schema": {
+                "x-ts-type": "any",
+              },
             },
             {
               "name": "strict",
@@ -426,7 +432,9 @@ exports[`snapshot tests for complex types class export with all member types 2`]
           {
             "name": "data",
             "required": true,
-            "schema": {},
+            "schema": {
+              "x-ts-type": "any",
+            },
           },
         ],
         "returns": {
@@ -440,7 +448,9 @@ exports[`snapshot tests for complex types class export with all member types 2`]
           {
             "name": "data",
             "required": true,
-            "schema": {},
+            "schema": {
+              "x-ts-type": "any",
+            },
           },
           {
             "name": "strict",

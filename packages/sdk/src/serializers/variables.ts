@@ -30,7 +30,7 @@ export function serializeVariable(
   registerReferencedTypes(typeToSerialize, ctx);
 
   // Then build the schema
-  const schema = buildSchema(typeToSerialize, ctx.typeChecker, ctx);
+  const schema = buildSchema(typeToSerialize, ctx.typeChecker, ctx, node.type);
 
   // Add schema library metadata if this was a schema type
   const flags = schemaExtraction

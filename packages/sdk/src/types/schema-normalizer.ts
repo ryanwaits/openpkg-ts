@@ -9,7 +9,7 @@
  * |-------------------------------|---------------------------------------------------|
  * | { type: 'void' }              | { "type": "null", "x-ts-type": "void" }           |
  * | { type: 'never' }             | { "not": {} }                                     |
- * | { type: 'any' }               | {}                                                |
+ * | { type: 'any' }               | { "x-ts-type": "any" }                            |
  * | { type: 'unknown' }           | { "x-ts-type": "unknown" }                        |
  * | { type: 'undefined' }         | { "type": "null", "x-ts-type": "undefined" }      |
  * | { type: 'bigint' }            | { "type": "integer", "x-ts-type": "bigint" }      |
@@ -49,7 +49,7 @@ export type JSONSchema = Record<string, unknown>;
 const TS_PRIMITIVE_NORMALIZATIONS: Record<string, () => JSONSchema> = {
   void: () => ({ type: 'null', 'x-ts-type': 'void' }),
   never: () => ({ not: {} }),
-  any: () => ({}),
+  any: () => ({ 'x-ts-type': 'any' }),
   unknown: () => ({ 'x-ts-type': 'unknown' }),
   undefined: () => ({ type: 'null', 'x-ts-type': 'undefined' }),
   bigint: () => ({ type: 'integer', 'x-ts-type': 'bigint' }),
