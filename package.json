@@ -13,6 +13,7 @@
     "lint": "bunx biome check packages/",
     "lint:fix": "bunx biome check --write packages/",
     "test": "bun test",
+    "test:corpus": "NODE_OPTIONS='--max-old-space-size=2048' bun --max-heap-size=2048 scripts/corpus-extract.ts",
     "typecheck": "bun run typecheck:spec && bun run typecheck:sdk && bun run typecheck:cli",
     "typecheck:spec": "cd packages/spec && bun run typecheck",
     "typecheck:sdk": "cd packages/sdk && bun run typecheck",
