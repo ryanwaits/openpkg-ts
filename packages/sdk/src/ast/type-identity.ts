@@ -16,6 +16,31 @@ import type { SerializerContext } from '../serializers/context';
 const NODE_MODULES_PKG = /node_modules\/(@[^/]+\/[^/]+|[^/]+)/g;
 
 /**
+ * Hard cap on types[] entries. `followExternal` on packages with large
+ * generic method graphs (zod, typescript) can otherwise allocate without
+ * bound: `Set<ts.Type>` identity misses instantiations, so depth limits
+ * do not cut the walk.
+ */
+export const MAX_REGISTERED_TYPES = 10_000;
+
+/**
+ * True when the symbol is declared in a non-workspace node_modules package.
+ * Workspace siblings live under node_modules via symlink but stay in-graph.
+ * Foreign packages (zod, typescript, …) must not have their method graphs
+ * walked: generic instantiations slip past `Set<ts.Type>` cycle cuts.
+ */
+export function isForeignPackage(
+  symbol: ts.Symbol | undefined,
+  workspacePackages: ReadonlyMap<string, string>,
+): boolean {
+  const decl = symbol?.declarations?.[0];
+  if (!decl) return false;
+  const pkg = packageNameFromPath(decl.getSourceFile().fileName);
+  if (!pkg) return false;
+  return !workspacePackages.has(pkg);
+}
+
+/**
  * TypeScript's bundled platform libs (lib.dom, lib.es*). They sit inside the
  * `typescript` package dir but are globals, not that package's API.
  */

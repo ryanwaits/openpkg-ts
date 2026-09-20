@@ -18,7 +18,7 @@ import {
   withDescription,
   writtenTypeText,
 } from '../types/schema-builder';
-import { isLibFile, resolveTypeId } from './type-identity';
+import { isLibFile, MAX_REGISTERED_TYPES, resolveTypeId } from './type-identity';
 import { extractTypeParameters, isSymbolDeprecated } from './utils';
 
 /** Built-in types that shouldn't be registered */
@@ -129,6 +129,10 @@ export class TypeRegistry {
     return Array.from(this.types.values());
   }
 
+  get size(): number {
+    return this.types.size;
+  }
+
   /**
    * Register a type from a ts.Type with structured schema.
    * Returns the type ID if registered, undefined if skipped.
@@ -160,11 +164,7 @@ export class TypeRegistry {
     const id = resolveTypeId(symbol, ctx);
     if (this.has(id)) return id;
 
-    // Ambient/external types outside the expansion scope (lib.dom, bun-types,
-    // non-workspace node_modules) get an opaque stub: the $ref stays
-    // resolvable, but the spec doesn't inline a foreign package's full member
-    // surface (environment-dependent, hundreds of lines per type).
-    if (ctx.shouldExpandExternal && !ctx.shouldExpandExternal(symbol)) {
+    const stubExternal = (): string => {
       // Record the DECLARING package so consumers know exactly what name to
       // add to followExternal — the import specifier in user code may differ
       // (e.g. imported from 'ai' but declared in '@ai-sdk/provider').
@@ -181,6 +181,20 @@ export class TypeRegistry {
         schema: schema as SpecType['schema'],
       } as SpecType);
       return id;
+    };
+
+    // Ambient/external types outside the expansion scope (lib.dom, bun-types,
+    // non-workspace node_modules) get an opaque stub: the $ref stays
+    // resolvable, but the spec doesn't inline a foreign package's full member
+    // surface (environment-dependent, hundreds of lines per type).
+    if (ctx.shouldExpandExternal && !ctx.shouldExpandExternal(symbol)) {
+      return stubExternal();
+    }
+
+    // Do not add past the cap — overflow stubs would mislabel in-scope types
+    // as unfollowed packages and let types[] keep growing.
+    if (this.types.size >= MAX_REGISTERED_TYPES) {
+      return undefined;
     }
 
     // Prevent infinite recursion

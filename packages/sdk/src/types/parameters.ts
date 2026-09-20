@@ -1,5 +1,6 @@
 import type { SpecSignatureParameter } from '@openpkg-ts/spec';
 import ts from 'typescript';
+import { isForeignPackage } from '../ast/type-identity';
 import { getParamDescription, parseInlineTags } from '../ast/utils';
 import type { SerializerContext } from '../serializers/context';
 import { buildSchema, stripUndefinedFromType } from './schema-builder';
@@ -307,6 +308,14 @@ export function registerReferencedTypes(type: ts.Type, ctx: SerializerContext, d
     !typeSymbol.getName().startsWith('__') &&
     !ctx.shouldExpandExternal(typeSymbol)
   ) {
+    return;
+  }
+
+  // followExternal expands the named type's own schema via registerType.
+  // Recursing into foreign class methods (ZodObject.parse, .optional, …)
+  // fans out through generic instantiations and OOMs; maxTypeDepth does
+  // not bound that combinatorial walk.
+  if (isForeignPackage(typeSymbol, ctx.workspacePackages)) {
     return;
   }
 

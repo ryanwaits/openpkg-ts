@@ -1,5 +1,11 @@
 import ts from 'typescript';
-import { isLibSymbol, packageNameFromPath, resolveTypeId } from '../ast/type-identity';
+import {
+  isForeignPackage,
+  isLibSymbol,
+  MAX_REGISTERED_TYPES,
+  packageNameFromPath,
+  resolveTypeId,
+} from '../ast/type-identity';
 import type { SerializerContext } from '../serializers/context';
 import { buildSchema, ensureNonEmptySchema } from '../types/schema-builder';
 
@@ -79,11 +85,15 @@ export function expandReachableTypes(
   const checker = ctx.typeChecker;
   const visited = new Set<ts.Type>();
   const MAX_DEPTH = 30;
+  let visits = 0;
+  const MAX_VISITS = 50_000;
 
   const symbolAllowed = createExternalExpansionPredicate(opts);
 
   const visit = (type: ts.Type, depth: number): void => {
     if (!type || depth > MAX_DEPTH || visited.has(type)) return;
+    if (ctx.typeRegistry.size >= MAX_REGISTERED_TYPES) return;
+    if (++visits > MAX_VISITS) return;
     visited.add(type);
 
     const symbol = type.aliasSymbol ?? type.getSymbol();
@@ -119,6 +129,13 @@ export function expandReachableTypes(
     // Members only for in-scope types: walking into DOM/react internals would
     // pull their whole graphs.
     if (!allowed || !(type.flags & ts.TypeFlags.Object || type.isClassOrInterface())) {
+      return;
+    }
+
+    // followExternal registers the named type (schema via registerType) but
+    // must not walk foreign method/property graphs. ZodObject × ~200 methods
+    // × generic instantiations OOMs; maxTypeDepth does not apply here.
+    if (isForeignPackage(symbol, opts.workspacePackages)) {
       return;
     }
 
@@ -198,7 +215,7 @@ export function expandReachableTypes(
     // name keeps it; a distinct same-named symbol gets a package-scoped id.
     // This is the same machinery registerType uses, so no shadowing.
     const id = resolveTypeId(symbol, ctx);
-    if (ctx.typeRegistry.has(id)) {
+    if (ctx.typeRegistry.has(id) || ctx.typeRegistry.size >= MAX_REGISTERED_TYPES) {
       walkDeclarations(symbol);
       return;
     }
@@ -228,12 +245,15 @@ export function expandReachableTypes(
 
   // Referencing `Namespace.Type` makes the whole namespace addressable API
   // surface — register its exported types like api-extractor bundles them.
+  // Foreign packages (import * as z from 'zod') must not dump every export:
+  // handleRef already registered the referenced name.
   const handleNamespaceRef = (nameNode: ts.Node): void => {
     const symbol = checker.getSymbolAtLocation(nameNode);
     const target = symbol && resolveAlias(symbol);
     if (!target || visitedSymbols.has(target)) return;
     if (!(target.flags & (ts.SymbolFlags.ValueModule | ts.SymbolFlags.NamespaceModule))) return;
     if (!symbolAllowed(target)) return;
+    if (isForeignPackage(target, opts.workspacePackages)) return;
     visitedSymbols.add(target);
     for (const exp of checker.getExportsOfModule(target)) {
       const expTarget = resolveAlias(exp);

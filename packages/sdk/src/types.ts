@@ -42,9 +42,11 @@ export interface ExtractOptions {
    * environment-dependent) member surface. Referenced-but-not-exported types
    * from the entry package and workspace siblings always expand fully.
    *
-   * - `true` → fully expand every referenced package (restores pre-stub
-   *   behavior; output becomes environment-dependent for global types)
-   * - `string[]` → fully expand the listed packages (plus workspace siblings)
+   * - `true` → register named types from every referenced package.
+   *   Does not walk foreign method graphs (zod/typescript OOMs).
+   *   `types[]` is capped at 10k.
+   * - `string[]` → register named types from the listed packages
+   *   (plus workspace siblings)
    * - `false` → disable the reachability-expansion pass entirely
    * - default → workspace siblings only; everything else stubbed
    */
