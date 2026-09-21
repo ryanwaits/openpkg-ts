@@ -204,6 +204,11 @@ export function buildSchemaFromTypeNode(
       return { ...schema, typeArguments: args };
     };
 
+    // A type parameter is never a registered type, whatever it is named
+    // (`Error = any` shadows the lib type and would ref `#/types/Error`).
+    if (symbol && symbol.flags & ts.SymbolFlags.TypeParameter) {
+      return { 'x-ts-type': name } as SpecSchema;
+    }
     if (name && isBuiltinGeneric(name) && (!symbol || isBuiltinSymbol(symbol))) {
       return withArgs({ ...builtinSchema(name) });
     }
