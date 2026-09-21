@@ -146,4 +146,19 @@ describe('$ref resolution rate', () => {
     expect(params[1].schema).toMatchObject({ $ref: '#/types/Gen' });
     expect([...collectRefs(spec.exports)].filter((ref) => !typeIds.has(ref))).toEqual([]);
   });
+
+  test('unresolved imports nested in a signature get a stub to ref', async () => {
+    const code = `
+      import type { Component, Element, Node } from 'missing-ui';
+      export function Provider({ children }: { children?: Node; id?: string }): Element<Component<{ id: string }>> {
+        return children as never;
+      }
+    `;
+
+    const { spec } = await extract({ entryFile: 'test.ts', content: code });
+    const typeIds = new Set(spec.types?.map((t) => t.id));
+
+    expect([...collectRefs(spec.exports)].sort()).toEqual(['Component', 'Element', 'Node']);
+    expect([...collectRefs(spec.exports)].filter((ref) => !typeIds.has(ref))).toEqual([]);
+  });
 });

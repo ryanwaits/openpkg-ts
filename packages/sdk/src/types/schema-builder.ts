@@ -220,6 +220,11 @@ export function buildSchemaFromTypeNode(
           refId = name;
         }
       }
+      // Still an import alias: its module did not resolve. The ref needs a
+      // target, and a text stub is all anyone can say about it.
+      if (ctx && symbol && symbol.flags & ts.SymbolFlags.Alias && !ctx.typeRegistry.has(refId)) {
+        ctx.typeRegistry.add({ id: refId, name, kind: 'type', schema: { 'x-ts-type': name } });
+      }
       return withArgs({ $ref: `#/types/${refId}` });
     }
     return {
