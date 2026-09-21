@@ -167,6 +167,8 @@ function runExtract(p: Pin, entryFile: string): ChildOk & { ms: number } {
 function cheapFail(p: Pin, result: ChildOk, ms: number): string | undefined {
   if (ms > p.timeoutMs) return `extract took ${ms}ms (budget ${p.timeoutMs})`;
   if (result.exports < p.minExports) return `${result.exports} exports (min ${p.minExports})`;
+  // An `only` target asks for a few exports on purpose; coverage of the whole entry is not its job.
+  if (p.only?.length) return undefined;
   const discovered = result.discovered;
   const tolerance = Math.max(5, Math.ceil(discovered * 0.15));
   if (discovered - result.exports > tolerance)
