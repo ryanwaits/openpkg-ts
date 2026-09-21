@@ -1,5 +1,11 @@
 # @openpkg-ts/extract
 
+## 0.54.11
+
+### Patch Changes
+
+- e5f391c: Inline ArrayLike and ArrayBufferLike instead of emitting a $ref that is never registered.
+
 ## 0.54.10
 
 ### Patch Changes
