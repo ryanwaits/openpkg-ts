@@ -124,7 +124,10 @@ function resolvedSymbol(
   if (!symbol) return undefined;
   if (symbol.flags & ts.SymbolFlags.Alias) {
     try {
-      return checker.getAliasedSymbol(symbol);
+      // An import from an unresolved module aliases the checker's `unknown`
+      // symbol: the written name is the only identity it has.
+      const target = checker.getAliasedSymbol(symbol);
+      return checker.isUnknownSymbol(target) ? symbol : target;
     } catch {
       return symbol;
     }

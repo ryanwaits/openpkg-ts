@@ -130,4 +130,20 @@ describe('$ref resolution rate', () => {
 
     expect(rate).toBeGreaterThanOrEqual(90);
   });
+
+  test('a type imported from an unresolved module refs its written name', async () => {
+    const code = `
+      import type { Missing, Gen } from 'missing-pkg';
+      export declare function f(x: Missing, g: Gen<string>): void;
+    `;
+
+    const { spec } = await extract({ entryFile: 'test.ts', content: code });
+    const params = spec.exports[0].signatures?.[0].parameters ?? [];
+    const typeIds = new Set(spec.types?.map((t) => t.id));
+
+    // Was `#/types/unknown`: the checker aliases such imports to its unknown symbol
+    expect(params[0].schema).toEqual({ $ref: '#/types/Missing' });
+    expect(params[1].schema).toMatchObject({ $ref: '#/types/Gen' });
+    expect([...collectRefs(spec.exports)].filter((ref) => !typeIds.has(ref))).toEqual([]);
+  });
 });
