@@ -7,9 +7,9 @@
     "packages/sdk/src/compiler/fixtures/unresolved-deps/index.ts"
   ],
   "totals": {
-    "anyOf": 201,
+    "anyOf": 204,
     "enum": 86,
-    "x-ts-type": 368
+    "x-ts-type": 370
   },
   "uniqueUnions": [
     {
@@ -21,7 +21,7 @@
       "count": 1
     },
     {
-      "union": "anyOf #/types/FunctionDeclaration , #/types/ClassDeclaration , #/types/InterfaceDeclaration , #/types/TypeAliasDeclaration , #/types/MethodDeclaration , #/types/ArrowFunction , #/types/FunctionExpression",
+      "union": "anyOf #/types/FunctionDeclaration , #/types/ClassDeclaration , #/types/InterfaceDeclaration , #/types/TypeAliasDeclaration , #/types/MethodDeclaration , #/types/ArrowFunction , #/types/FunctionExpression , #/types/FunctionTypeNode",
       "count": 1
     },
     {
@@ -50,6 +50,10 @@
     },
     {
       "union": "anyOf #/types/SpecGenerationMeta , #/types/SpecGenerationInfo",
+      "count": 1
+    },
+    {
+      "union": "anyOf #/types/VariableDeclaration , #/types/BindingElement",
       "count": 1
     },
     {
@@ -110,7 +114,7 @@
     },
     {
       "union": "anyOf null , #/types/Type",
-      "count": 4
+      "count": 6
     },
     {
       "union": "anyOf null , h:7d155c019c",
@@ -273,7 +277,7 @@
       "count": 1
     },
     {
-      "union": "anyOf ts:undefined , h:b14f90d776 , h:ac6db8bb49 , h:55318be0f4 , h:dcfc091e59 , h:17723e6201 , h:5a2f68e38a , h:9c78ceca4d , h:5c2565be7e , h:b4892cc498 , h:17ce70b9d1 , h:4bc00e01e6 , h:15c504af69 , h:7935a2a2a7 , h:39ada1e398",
+      "union": "anyOf ts:undefined , h:b14f90d776 , h:ac6db8bb49 , h:55318be0f4 , h:dcfc091e59 , h:b4892cc498 , h:17723e6201 , h:5a2f68e38a , h:9c78ceca4d , h:5c2565be7e , h:17ce70b9d1 , h:4bc00e01e6 , h:15c504af69 , h:7935a2a2a7 , h:39ada1e398",
       "count": 1
     },
     {
@@ -718,7 +722,7 @@
     },
     {
       "union": "x-ts-type (type: ts.Type, checker: ts.TypeChecker) => ts.Type | null",
-      "count": 4
+      "count": 6
     },
     {
       "union": "x-ts-type (type: ts.Type, ctx: SerializerContext) => string | undefined",
@@ -853,7 +857,7 @@
       "count": 2
     },
     {
-      "union": "x-ts-type ts.FunctionDeclaration | ts.ClassDeclaration | ts.InterfaceDeclaration | ts.TypeAliasDeclaration | ts.MethodDeclaration | ts.ArrowFunction | ts.FunctionExpression",
+      "union": "x-ts-type ts.FunctionDeclaration | ts.ClassDeclaration | ts.InterfaceDeclaration | ts.TypeAliasDeclaration | ts.MethodDeclaration | ts.ArrowFunction | ts.FunctionExpression | ts.FunctionTypeNode",
       "count": 1
     }
   ]
