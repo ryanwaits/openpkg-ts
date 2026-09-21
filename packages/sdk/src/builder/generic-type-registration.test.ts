@@ -62,4 +62,14 @@ describe('generic types register from their declaration', () => {
 
     expect(viaPair.get('Pair')).toEqual(full.get('Pair') as SpecType);
   });
+
+  test('a class reached through its constructor side still describes instances', async () => {
+    const types = await typesOf(`
+      class Hidden { value = 1; static make(): Hidden { return new Hidden(); } }
+      export declare function ctor(): { Hidden: typeof Hidden };
+      export declare function get(): Hidden;
+    `);
+
+    expect(Object.keys(props(types.get('Hidden')) ?? {})).toEqual(['value']);
+  });
 });

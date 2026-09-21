@@ -114,20 +114,39 @@ function isExternalType(decl: ts.Declaration): boolean {
 }
 
 /**
- * A generic type is registered once, under one id: from its declaration
- * (`Box<T>`), never from the instantiation that happened to reach it first
- * (`Box<string>`), so the entry does not depend on export order or `only`.
+ * The declaration (`Box<T>`) behind an instantiation (`Box<string>`); the type
+ * itself when it is not one. An alias OF an instantiation (`type S =
+ * Box<string>`) is its own declaration.
  */
-function declaredForm(type: ts.Type, symbol: ts.Symbol, checker: ts.TypeChecker): ts.Type {
+export function declaredForm(
+  type: ts.Type,
+  checker: ts.TypeChecker,
+  symbol: ts.Symbol | undefined = type.aliasSymbol ?? type.getSymbol(),
+): ts.Type {
+  if (!symbol) return type;
   const generic = ts.SymbolFlags.TypeAlias | ts.SymbolFlags.Interface | ts.SymbolFlags.Class;
   if (!(symbol.flags & generic)) return type;
   const target = (type as ts.TypeReference).target;
   const instantiated = type.aliasTypeArguments?.length || (target && target !== type);
-  if (!instantiated) return type;
-  // Through an alias the instantiation and the declaration share the symbol;
-  // an alias OF an instantiation (`type S = Box<string>`) keeps its own body.
+  return instantiated ? declaredTypeOf(symbol, type, checker) : type;
+}
+
+function declaredTypeOf(symbol: ts.Symbol, fallback: ts.Type, checker: ts.TypeChecker): ts.Type {
   const declared = checker.getDeclaredTypeOfSymbol(symbol);
-  return declared.flags & ts.TypeFlags.Any ? type : declared;
+  return declared.flags & ts.TypeFlags.Any ? fallback : declared;
+}
+
+/**
+ * What an id stands for, whichever use reached it first: a generic by its
+ * declaration, never by one instantiation; a class by its instances, never by
+ * its constructor side (`typeof Foo` carries the class symbol too). So the
+ * entry does not depend on export order or `only`.
+ */
+function registeredForm(type: ts.Type, symbol: ts.Symbol, checker: ts.TypeChecker): ts.Type {
+  if (symbol.flags & ts.SymbolFlags.Class && !type.isClass()) {
+    return declaredTypeOf(symbol, type, checker);
+  }
+  return declaredForm(type, checker, symbol);
 }
 
 export class TypeRegistry {
@@ -228,7 +247,7 @@ export class TypeRegistry {
 
     try {
       const specType = this.buildSpecType(
-        declaredForm(type, symbol, ctx.typeChecker),
+        registeredForm(type, symbol, ctx.typeChecker),
         symbol,
         id,
         ctx,
