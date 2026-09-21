@@ -8,6 +8,7 @@ import {
 } from '../ast/utils';
 import { registerReferencedTypes } from '../types/parameters';
 import {
+  buildAliasBodySchema,
   buildFunctionSchema,
   buildObjectSchema,
   buildSchema,
@@ -111,7 +112,7 @@ export function serializeTypeAlias(
     members = serializeResolvedMembers(type, node, ctx);
   } else {
     // Then build the schema normally
-    schema = buildSchema(type, ctx.typeChecker, ctx);
+    schema = buildAliasBodySchema(type, ctx.typeChecker, ctx);
     // Object-shaped aliases beyond intersections/mapped — object literals,
     // utility instantiations (Pick/Omit), cross-package references — also get
     // the JSDoc-rich members layer (descriptions, tags, flags).

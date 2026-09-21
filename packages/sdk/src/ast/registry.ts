@@ -3,6 +3,7 @@ import ts from 'typescript';
 import type { SerializerContext } from '../serializers/context';
 import {
   ARRAY_PROTOTYPE_METHODS,
+  buildAliasBodySchema,
   buildFunctionSchema,
   buildSchema,
   declaredTypeNode,
@@ -270,7 +271,7 @@ export class TypeRegistry {
     }
 
     // Build structured schema - but avoid self-referential $ref
-    let schema = buildSchema(type, checker, ctx);
+    let schema = buildAliasBodySchema(type, checker, ctx);
 
     // If schema is just a self-ref, resolve the actual type structure.
     // Compare against the assigned id (a collision-scoped type self-refs by id).

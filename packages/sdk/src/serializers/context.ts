@@ -23,6 +23,8 @@ export interface SerializerContext {
   visitedTypes: Set<ts.Type>;
   /** Permanent "already processed" set for registerReferencedTypes */
   registeredTypes: Set<ts.Type>;
+  /** Generic union/intersection alias being built at its own declaration: decomposed once, referenced everywhere else. */
+  aliasBody?: ts.Type;
   /** Flag to indicate we're processing tuple elements - skip Array prototype methods */
   inTupleElement?: boolean;
   /** Include private/protected class members (default: false) */

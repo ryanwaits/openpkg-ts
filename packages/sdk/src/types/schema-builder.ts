@@ -933,6 +933,23 @@ export function buildSchema(
 }
 
 /**
+ * Schema of a named type at its own declaration. A generic union/intersection
+ * alias is decomposed here and nowhere else; every use of it is a `$ref`.
+ */
+export function buildAliasBodySchema(
+  type: ts.Type,
+  checker: ts.TypeChecker,
+  ctx: SerializerContext,
+): SpecSchema {
+  ctx.aliasBody = type;
+  try {
+    return buildSchema(type, checker, ctx);
+  } finally {
+    ctx.aliasBody = undefined;
+  }
+}
+
+/**
  * Build a leaf schema at max depth — no further recursion.
  * Named types → $ref, primitives → inline, unions/intersections → decomposed.
  */
@@ -998,6 +1015,56 @@ function buildMaxDepthSchema(
 
   // Fallback
   return { type: checker.typeToString(type) };
+}
+
+/**
+ * Written type-argument nodes of an annotation that names `symbol` itself
+ * (`Store<Mutate<S, Ms>>` for Store). Threaded to the arguments so one that
+ * degrades to text reads as written, not as its alias body. Undefined when the
+ * annotation names something else (an alias forwarding other arguments).
+ */
+function writtenTypeArguments(
+  typeNode: ts.TypeNode | undefined,
+  symbol: ts.Symbol | undefined,
+  checker: ts.TypeChecker,
+): readonly ts.TypeNode[] | undefined {
+  if (!typeNode || !symbol || !ts.isTypeReferenceNode(typeNode) || !typeNode.typeArguments) {
+    return undefined;
+  }
+  const name = ts.isQualifiedName(typeNode.typeName) ? typeNode.typeName.right : typeNode.typeName;
+  const written = resolvedSymbol(checker.getSymbolAtLocation(name), checker);
+  return written === symbol ? typeNode.typeArguments : undefined;
+}
+
+/**
+ * `$ref` + typeArguments for an instantiation of a project generic alias
+ * (`Result<T, E>`). Undefined for lib aliases (never registered in types[])
+ * and for types that carry no alias arguments.
+ */
+function genericAliasRef(
+  type: ts.Type,
+  checker: ts.TypeChecker,
+  ctx: SerializerContext | undefined,
+  typeNode?: ts.TypeNode,
+): SpecSchema | undefined {
+  const aliasTypeArgs = type.aliasTypeArguments;
+  const name = type.aliasSymbol?.getName();
+  if (!name || !aliasTypeArgs?.length) return undefined;
+  if (name.startsWith('__') || BUILTIN_TYPES.has(name) || isBuiltinGeneric(name)) return undefined;
+
+  const argNodes = writtenTypeArguments(typeNode, type.aliasSymbol, checker);
+  const build = (): SpecSchema => {
+    const schema: SpecSchema = {
+      $ref: `#/types/${namedRefId(type, name, ctx)}`,
+      typeArguments: aliasTypeArgs.map((t, i) => buildSchema(t, checker, ctx, argNodes?.[i])),
+    };
+    const packageOrigin = getTypeOrigin(type, checker);
+    if (packageOrigin) {
+      setSchemaExtension(schema, 'x-ts-package', packageOrigin);
+    }
+    return schema;
+  };
+  return ctx ? withDepth(ctx, build) : build();
 }
 
 /**
@@ -1133,6 +1200,17 @@ function buildSchemaInternal(
         }
         return schema;
       }
+    }
+
+    // Generic aliases of unions/intersections keep the reference as written
+    // (`StateCreator<S, Ms>`), like generic object and function aliases below:
+    // the alias is registered in types[], its body is not inlined per use.
+    // Its own declaration (buildAliasBodySchema) is the one place it decomposes.
+    if (type.isUnion() || type.isIntersection()) {
+      const ownBody = ctx?.aliasBody === type;
+      if (ownBody && ctx) ctx.aliasBody = undefined;
+      const aliasRef = ownBody ? undefined : genericAliasRef(type, checker, ctx, typeNode);
+      if (aliasRef) return aliasRef;
     }
 
     // Template literal types → string with an approximating pattern
@@ -1310,11 +1388,12 @@ function buildSchemaInternal(
 
       if (name && !isAnonymous(typeRef.target)) {
         const packageOrigin = getTypeOrigin(typeRef.target, checker);
+        const argNodes = writtenTypeArguments(typeNode, symbol, checker);
         if (ctx) {
           return withDepth(ctx, () => {
             const schema: SpecSchema = {
               $ref: `#/types/${namedRefId(typeRef.target, name, ctx)}`,
-              typeArguments: typeArgs.map((t) => buildSchema(t, checker, ctx)),
+              typeArguments: typeArgs.map((t, i) => buildSchema(t, checker, ctx, argNodes?.[i])),
             };
             if (packageOrigin) {
               setSchemaExtension(schema, 'x-ts-package', packageOrigin);
@@ -1368,29 +1447,8 @@ function buildSchemaInternal(
         return ctx ? withDepth(ctx, build) : build();
       }
 
-      if (!name.startsWith('__')) {
-        const packageOrigin = getTypeOrigin(type, checker);
-        if (ctx) {
-          return withDepth(ctx, () => {
-            const schema: SpecSchema = {
-              $ref: `#/types/${namedRefId(type, name, ctx)}`,
-              typeArguments: aliasTypeArgs.map((t) => buildSchema(t, checker, ctx)),
-            };
-            if (packageOrigin) {
-              setSchemaExtension(schema, 'x-ts-package', packageOrigin);
-            }
-            return schema;
-          });
-        }
-        const schema: SpecSchema = {
-          $ref: `#/types/${name}`,
-          typeArguments: aliasTypeArgs.map((t) => buildSchema(t, checker, ctx)),
-        };
-        if (packageOrigin) {
-          setSchemaExtension(schema, 'x-ts-package', packageOrigin);
-        }
-        return schema;
-      }
+      const aliasRef = genericAliasRef(type, checker, ctx, typeNode);
+      if (aliasRef) return aliasRef;
     }
 
     // Function types - check BEFORE named types to avoid $ref to function names
