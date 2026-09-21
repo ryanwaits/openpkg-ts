@@ -23,7 +23,7 @@ import { serializeFunctionExport } from '../serializers/functions';
 import { serializeInterface, serializeMergedTypeSide } from '../serializers/interfaces';
 import { buildSignatures } from '../serializers/shared';
 import { serializeTypeAlias } from '../serializers/type-aliases';
-import { serializeVariable } from '../serializers/variables';
+import { serializeDefaultExpression, serializeVariable } from '../serializers/variables';
 import type {
   Diagnostic,
   ExportTracker,
@@ -626,23 +626,27 @@ function serializeDeclaration(
         result = serializeFunctionExport(declaration.initializer, ctx, varName, declaration.type);
       } else {
         result = serializeVariable(declaration, varStatement, ctx);
-        // Reclassify as 'class' if variable has construct signatures
         if (result?.kind === 'variable') {
           const type = ctx.typeChecker.getTypeAtLocation(declaration);
-          if (type.getConstructSignatures().length > 0) {
-            result = { ...result, kind: 'class' };
-          } else {
-            const callSigs = callSignaturesForVariable(declaration, ctx);
-            if (callSigs.length > 0) {
-              result = {
-                ...result,
-                kind: 'function',
-                signatures: buildSignatures(callSigs, ctx.typeChecker, ctx),
-              };
-            }
-          }
+          result = withCallableKind(result, type, callSignaturesForVariable(declaration, ctx), ctx);
         }
       }
+    }
+  } else if (ts.isExportAssignment(declaration) && !declaration.isExportEquals) {
+    // `export default <expression>`: no binding to resolve to, the statement
+    // is the declaration. (An identifier is an alias and never lands here.)
+    const expression = skipOuterExpressions(declaration.expression);
+    if (ts.isArrowFunction(expression) || ts.isFunctionExpression(expression)) {
+      result = serializeFunctionExport(expression, ctx, exportName, undefined, declaration);
+    } else {
+      // What an importer sees: the symbol's type, widened like a `let`.
+      const type = ctx.typeChecker.getTypeOfSymbol(exportSymbol);
+      result = withCallableKind(
+        serializeDefaultExpression(declaration, exportSymbol, type, ctx),
+        type,
+        type.getCallSignatures(),
+        ctx,
+      );
     }
   } else if (
     ts.isNamespaceExport(declaration) ||
@@ -901,6 +905,37 @@ function variableStatementOf(
   while (ts.isBindingElement(node) || ts.isBindingName(node)) node = node.parent;
   const statement = node.parent?.parent;
   return statement && ts.isVariableStatement(statement) ? statement : undefined;
+}
+
+/** Parentheses and type assertions around a value (`(fn) satisfies T`, `{} as T`). */
+function skipOuterExpressions(expression: ts.Expression): ts.Expression {
+  let node = expression;
+  while (
+    ts.isParenthesizedExpression(node) ||
+    ts.isAsExpression(node) ||
+    ts.isSatisfiesExpression(node) ||
+    ts.isTypeAssertionExpression(node) ||
+    ts.isNonNullExpression(node)
+  ) {
+    node = node.expression;
+  }
+  return node;
+}
+
+/** A value with construct signatures is a class; with call signatures, a function. */
+function withCallableKind(
+  entry: SpecExport,
+  type: ts.Type,
+  callSigs: readonly ts.Signature[],
+  ctx: SerializerContext,
+): SpecExport {
+  if (type.getConstructSignatures().length > 0) return { ...entry, kind: 'class' };
+  if (callSigs.length === 0) return entry;
+  return {
+    ...entry,
+    kind: 'function',
+    signatures: buildSignatures(callSigs, ctx.typeChecker, ctx),
+  };
 }
 
 function callSignaturesForVariable(

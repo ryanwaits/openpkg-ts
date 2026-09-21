@@ -21,9 +21,38 @@ export function serializeVariable(
   const name = symbol?.getName() ?? node.name.getText();
   if (!name) return null;
 
+  return serializeValue(
+    name,
+    node,
+    symbol,
+    statement,
+    ctx.typeChecker.getTypeAtLocation(node),
+    ts.isVariableDeclaration(node) ? node.type : undefined,
+    ctx,
+  );
+}
+
+/** `export default <expression>`: a value with no binding, named by its export. */
+export function serializeDefaultExpression(
+  node: ts.ExportAssignment,
+  symbol: ts.Symbol,
+  type: ts.Type,
+  ctx: SerializerContext,
+): SpecExport {
+  return serializeValue(symbol.getName(), node.expression, symbol, node, type, undefined, ctx);
+}
+
+function serializeValue(
+  name: string,
+  node: ts.Node,
+  symbol: ts.Symbol | undefined,
+  jsdocNode: ts.Node,
+  type: ts.Type,
+  typeNode: ts.TypeNode | undefined,
+  ctx: SerializerContext,
+): SpecExport {
   const { description, tags, examples, source, deprecated, deprecationReason, inlineTags } =
-    extractExportMetadata(node, symbol, ctx.typeChecker, statement);
-  const type = ctx.typeChecker.getTypeAtLocation(node);
+    extractExportMetadata(node, symbol, ctx.typeChecker, jsdocNode);
 
   // Check if this is a schema library type (Zod, Valibot, TypeBox, ArkType)
   // If so, extract the output type instead of serializing the full schema class
@@ -34,12 +63,7 @@ export function serializeVariable(
   registerReferencedTypes(typeToSerialize, ctx);
 
   // Then build the schema
-  const schema = buildSchema(
-    typeToSerialize,
-    ctx.typeChecker,
-    ctx,
-    ts.isVariableDeclaration(node) ? node.type : undefined,
-  );
+  const schema = buildSchema(typeToSerialize, ctx.typeChecker, ctx, typeNode);
 
   // Add schema library metadata if this was a schema type
   const flags = schemaExtraction

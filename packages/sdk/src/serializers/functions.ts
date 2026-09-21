@@ -202,12 +202,14 @@ function signaturesFromDeclaredType(
 
 /**
  * @param declaredType - Written annotation of the variable holding `node`; when callable it supplies the signatures.
+ * @param jsdocNode - Statement carrying the docs when that is not `node` (`export default () => {}`).
  */
 export function serializeFunctionExport(
   node: ts.FunctionDeclaration | ts.ArrowFunction | ts.FunctionExpression,
   ctx: SerializerContext,
   nameOverride?: string,
   declaredType?: ts.TypeNode,
+  jsdocNode?: ts.Node,
 ): SpecExport | null {
   // Get name from override (for arrow fns), symbol, or node name
   const symbol = ctx.typeChecker.getSymbolAtLocation(node.name ?? node);
@@ -216,7 +218,7 @@ export function serializeFunctionExport(
   if (!name) return null;
 
   const { description, tags, examples, source, deprecated, deprecationReason, inlineTags } =
-    extractExportMetadata(node, symbol, ctx.typeChecker);
+    extractExportMetadata(node, symbol, ctx.typeChecker, jsdocNode);
 
   // Extract type parameters like <T, K extends Base>
   const declaredFn = declaredType && unwrapParens(declaredType);
