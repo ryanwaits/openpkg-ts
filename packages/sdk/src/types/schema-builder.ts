@@ -1387,7 +1387,8 @@ export function buildFunctionSchema(
         return {
           name: param.getName(),
           schema: buildSchema(effectiveType, checker, ctx, decl.type),
-          required: !isOptional,
+          required: !isOptional && !decl.dotDotDotToken,
+          ...(decl.dotDotDotToken ? { rest: true } : {}),
         };
       });
 

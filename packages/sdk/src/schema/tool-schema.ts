@@ -190,7 +190,9 @@ export function toToolSchema(
   const required: string[] = [];
   for (const param of sig.parameters ?? []) {
     let paramSchema = normalizeSchema(param.schema) as Record<string, unknown>;
-    if (param.rest) {
+    // The extractor emits a rest param with its declared (array/tuple) type;
+    // only hand-written specs carry the bare element schema.
+    if (param.rest && paramSchema.type !== 'array') {
       paramSchema = { type: 'array', items: paramSchema };
     }
     if (param.description && !paramSchema.description) {

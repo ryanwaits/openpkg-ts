@@ -416,7 +416,8 @@ type DeclarationWithTypeParams =
   | ts.TypeAliasDeclaration
   | ts.MethodDeclaration
   | ts.ArrowFunction
-  | ts.FunctionExpression;
+  | ts.FunctionExpression
+  | ts.FunctionTypeNode;
 
 /**
  * Extract type parameters from declarations like `<T extends Base, K = Default>`

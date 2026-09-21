@@ -123,7 +123,8 @@ function parametersFromAst(
     const param: SpecSignatureParameter = {
       name,
       schema: schemaFromTypeNode(p.type, ctx),
-      required: !isOptional,
+      required: !isOptional && !p.dotDotDotToken,
+      ...(p.dotDotDotToken ? { rest: true } : {}),
     };
     const description = getParamDescription(name, jsdocTags);
     if (description) param.description = description;
@@ -132,14 +133,16 @@ function parametersFromAst(
 }
 
 function signaturesFromAst(
-  node: ts.FunctionDeclaration | ts.ArrowFunction | ts.FunctionExpression,
+  decls: ts.SignatureDeclaration[],
   ctx: SerializerContext,
 ): SpecSignature[] {
-  const decls = functionSignatureDecls(node, ctx);
   return decls.map((decl, index) => {
     const sigDoc = getJSDocComment(decl);
     const sigTypeParams =
-      ts.isFunctionDeclaration(decl) || ts.isArrowFunction(decl) || ts.isFunctionExpression(decl)
+      ts.isFunctionDeclaration(decl) ||
+      ts.isArrowFunction(decl) ||
+      ts.isFunctionExpression(decl) ||
+      ts.isFunctionTypeNode(decl)
         ? extractTypeParameters(decl, ctx.typeChecker)
         : undefined;
     const returns: SpecSignatureReturn = { schema: schemaFromTypeNode(decl.type, ctx) };
@@ -156,11 +159,9 @@ function signaturesFromAst(
 }
 
 function signaturesFromChecker(
-  node: ts.FunctionDeclaration | ts.ArrowFunction | ts.FunctionExpression,
+  callSignatures: readonly ts.Signature[],
   ctx: SerializerContext,
 ): SpecSignature[] {
-  const type = ctx.typeChecker.getTypeAtLocation(node);
-  const callSignatures = type.getCallSignatures();
   return callSignatures.map((sig, index) => {
     const sigDoc = getJSDocForSignature(sig, ctx.typeChecker);
     const sigTypeParams = extractTypeParametersFromSignature(sig, ctx.typeChecker);
@@ -176,10 +177,37 @@ function signaturesFromChecker(
   });
 }
 
+function unwrapParens(node: ts.TypeNode): ts.TypeNode {
+  return ts.isParenthesizedTypeNode(node) ? unwrapParens(node.type) : node;
+}
+
+/**
+ * Signatures of a written annotation (`const f: T = ...`). The annotation is the
+ * public contract; the initializer is only checked against it, so its own
+ * parameter list (`(...args) => impl(...args)`) says nothing to a caller.
+ * Undefined when `T` is not callable or is too expensive to instantiate.
+ */
+function signaturesFromDeclaredType(
+  typeNode: ts.TypeNode,
+  ctx: SerializerContext,
+): SpecSignature[] | undefined {
+  const inner = unwrapParens(typeNode);
+  if (ts.isFunctionTypeNode(inner) && signatureDeclDefers(inner, ctx)) {
+    return signaturesFromAst([inner], ctx);
+  }
+  if (typeNodeDefersExpansion(inner, ctx.typeChecker, ctx.program)) return undefined;
+  const callSignatures = ctx.typeChecker.getTypeFromTypeNode(inner).getCallSignatures();
+  return callSignatures.length > 0 ? signaturesFromChecker(callSignatures, ctx) : undefined;
+}
+
+/**
+ * @param declaredType - Written annotation of the variable holding `node`; when callable it supplies the signatures.
+ */
 export function serializeFunctionExport(
   node: ts.FunctionDeclaration | ts.ArrowFunction | ts.FunctionExpression,
   ctx: SerializerContext,
   nameOverride?: string,
+  declaredType?: ts.TypeNode,
 ): SpecExport | null {
   // Get name from override (for arrow fns), symbol, or node name
   const symbol = ctx.typeChecker.getSymbolAtLocation(node.name ?? node);
@@ -190,13 +218,19 @@ export function serializeFunctionExport(
     extractExportMetadata(node, symbol, ctx.typeChecker);
 
   // Extract type parameters like <T, K extends Base>
-  const typeParameters = extractTypeParameters(node, ctx.typeChecker);
+  const declaredFn = declaredType && unwrapParens(declaredType);
+  const typeParameters = extractTypeParameters(
+    declaredFn && ts.isFunctionTypeNode(declaredFn) ? declaredFn : node,
+    ctx.typeChecker,
+  );
 
   // getTypeAtLocation instantiates param/constraint types. ValidPaths / DeepPickN
   // never come back from that call — serialize those signatures from the AST.
-  const signatures: SpecSignature[] = anySignatureDefers(node, ctx)
-    ? signaturesFromAst(node, ctx)
-    : signaturesFromChecker(node, ctx);
+  const signatures: SpecSignature[] =
+    (declaredType && signaturesFromDeclaredType(declaredType, ctx)) ??
+    (anySignatureDefers(node, ctx)
+      ? signaturesFromAst(functionSignatureDecls(node, ctx), ctx)
+      : signaturesFromChecker(ctx.typeChecker.getTypeAtLocation(node).getCallSignatures(), ctx));
 
   // Detect async and generator flags
   const flags: Record<string, unknown> = {};

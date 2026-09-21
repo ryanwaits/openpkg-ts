@@ -41,6 +41,7 @@ export function extractParameters(
     } else {
       // Regular parameter - check questionToken or initializer for optionality
       const isOptional = !!decl?.questionToken || !!decl?.initializer;
+      const isRest = !!decl.dotDotDotToken;
 
       const paramName = param.getName();
       const description = getParamDescription(paramName, jsdocTags);
@@ -60,7 +61,9 @@ export function extractParameters(
       const paramResult: SpecSignatureParameter = {
         name: paramName,
         schema,
-        required: !isOptional,
+        // A rest parameter accepts zero arguments, so it is never required.
+        required: !isOptional && !isRest,
+        ...(isRest ? { rest: true } : {}),
       };
 
       if (description) {

@@ -200,6 +200,28 @@ describe('toToolSchema — anthropic', () => {
   });
 });
 
+describe('toToolSchema — rest params', () => {
+  const restExport = (schema: Record<string, unknown>) =>
+    fnExport({
+      signatures: [{ parameters: [{ name: 'parts', rest: true, required: false, schema }] }],
+    });
+
+  test('array-typed rest param is not wrapped twice', () => {
+    const exp = restExport({ type: 'array', items: { type: 'string' } });
+    const result = toToolSchema(exp, spec(exp), { provider: 'anthropic' });
+    const props = result.parameters.properties as Record<string, unknown>;
+    expect(props.parts).toEqual({ type: 'array', items: { type: 'string' } });
+    expect(result.parameters.required ?? []).toEqual([]);
+  });
+
+  test('element-typed rest param is wrapped into an array', () => {
+    const exp = restExport({ type: 'string' });
+    const result = toToolSchema(exp, spec(exp), { provider: 'anthropic' });
+    const props = result.parameters.properties as Record<string, unknown>;
+    expect(props.parts).toEqual({ type: 'array', items: { type: 'string' } });
+  });
+});
+
 describe('toToolSchema — errors', () => {
   test('non-function export throws TypeError', () => {
     const exp = { id: 'x', name: 'x', kind: 'variable', schema: { type: 'string' } } as SpecExport;

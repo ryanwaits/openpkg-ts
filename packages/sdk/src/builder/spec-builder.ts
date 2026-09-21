@@ -608,7 +608,7 @@ function serializeDeclaration(
         const varName = ts.isIdentifier(declaration.name)
           ? declaration.name.text
           : declaration.name.getText();
-        result = serializeFunctionExport(declaration.initializer, ctx, varName);
+        result = serializeFunctionExport(declaration.initializer, ctx, varName, declaration.type);
       } else {
         result = serializeVariable(declaration, varStatement, ctx);
         // Reclassify as 'class' if variable has construct signatures

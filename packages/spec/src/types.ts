@@ -179,6 +179,7 @@ export type SpecSignatureParameter = {
   description?: string;
   schema: SpecSchema;
   default?: unknown;
+  /** Rest parameter (`...args`). `schema` is the declared array/tuple type and `required` is false. */
   rest?: boolean;
   decorators?: SpecDecorator[];
   /** Inline TSDoc tags found in `description` */
