@@ -399,7 +399,7 @@ export const PRIMITIVES: Set<string> = new Set([
   'bigint',
 ]);
 
-// Built-in generic types that use $ref + typeArguments
+// Built-in generics. Never registered in types[] — inline a structural schema.
 const BUILTIN_GENERICS = new Set([
   'Array',
   'ReadonlyArray',
@@ -417,6 +417,7 @@ const BUILTIN_GENERICS = new Set([
   'AsyncIterableIterator',
   'Generator',
   'AsyncGenerator',
+  'ArrayLike',
   'Partial',
   'Required',
   'Readonly',
@@ -581,6 +582,7 @@ const BUILTIN_TYPES = new Set([
   'Error',
   'Function',
   'ArrayBuffer',
+  'ArrayBufferLike',
   'SharedArrayBuffer',
   'DataView',
   'Uint8Array',
@@ -1204,6 +1206,14 @@ function buildSchemaInternal(
     // Only applies to non-generic aliases (generic aliases are handled later via aliasTypeArguments).
     if (type.aliasSymbol && !type.aliasTypeArguments?.length) {
       const aliasName = type.aliasSymbol.getName();
+      // Lib aliases (ArrayBufferLike = ArrayBuffer | SharedArrayBuffer) are not
+      // registered in types[]. Inline the builtin schema instead of a dangling $ref.
+      if (
+        (BUILTIN_TYPES.has(aliasName) || isBuiltinGeneric(aliasName)) &&
+        isBuiltinSymbol(type.aliasSymbol)
+      ) {
+        return builtinSchema(aliasName);
+      }
       if (!aliasName.startsWith('__') && !isPrimitiveName(aliasName)) {
         const packageOrigin = getTypeOrigin(type, checker);
         const schema: SpecSchema = { $ref: `#/types/${namedRefId(type, aliasName, ctx)}` };

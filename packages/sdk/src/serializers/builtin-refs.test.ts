@@ -74,6 +74,29 @@ describe('builtin and type-parameter references', () => {
     expect(returns['x-ts-type-arguments']).toEqual([{ $ref: '#/types/User' }]);
   });
 
+  test('ArrayLike and ArrayBufferLike are inlined, not dangling refs', async () => {
+    const { spec } = await extract({
+      entryFile: 'test.ts',
+      content: `
+        export function take(items: ArrayLike<string>, buf: ArrayBufferLike): void {}
+      `,
+    });
+    const registered = new Set((spec.types ?? []).map((t) => t.id));
+    expect(registered.has('ArrayLike')).toBe(false);
+    expect(registered.has('ArrayBufferLike')).toBe(false);
+    const params = spec.exports.find((e) => e.name === 'take')?.signatures?.[0]?.parameters ?? [];
+    expect(params[0]?.schema).toMatchObject({
+      type: 'object',
+      'x-ts-type': 'ArrayLike',
+      'x-ts-type-arguments': [{ type: 'string' }],
+    });
+    expect(params[1]?.schema).toMatchObject({
+      type: 'string',
+      format: 'binary',
+      'x-ts-type': 'ArrayBufferLike',
+    });
+  });
+
   test('generic type parameter emits x-ts-type text, not a $ref', async () => {
     const { spec } = await extract({ entryFile: 'test.ts', content: FIXTURE });
     const pick = spec.exports.find((e) => e.name === 'pick');
