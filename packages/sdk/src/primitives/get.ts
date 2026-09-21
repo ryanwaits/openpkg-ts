@@ -1,6 +1,6 @@
 import type { SpecExport, SpecType } from '@openpkg-ts/spec';
 import ts from 'typescript';
-import { packageNameFromPath } from '../ast/type-identity';
+import { claimExportedTypeIds, packageNameFromPath } from '../ast/type-identity';
 import { getExportKind } from '../ast/utils';
 import { createProgram } from '../compiler/program';
 import { serializeClass } from '../serializers/classes';
@@ -78,6 +78,7 @@ export async function getExport(options: GetExportOptions): Promise<GetExportRes
 
   const ctx = createContext(program, sourceFile, { maxTypeDepth });
   ctx.exportedIds = exportedIds;
+  claimExportedTypeIds(exportedSymbols, ctx);
 
   try {
     // Check if original symbol is a namespace export before resolving alias

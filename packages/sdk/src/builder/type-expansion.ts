@@ -113,7 +113,7 @@ export function expandReachableTypes(
     const named = !!symbol && !symbol.getName().startsWith('__');
     const allowed = !named || !symbol || symbolAllowed(symbol);
 
-    if (named && allowed && symbol && !ctx.exportedIds.has(symbol.getName())) {
+    if (named && allowed && symbol && !isExportedType(symbol)) {
       ctx.typeRegistry.registerType(type, ctx);
       const name = symbol.getName();
       if (!symbolByName.has(name)) {
@@ -194,6 +194,14 @@ export function expandReachableTypes(
     ts.SymbolFlags.RegularEnum |
     ts.SymbolFlags.ConstEnum;
 
+  // Exported names belong to the main serialization pass. Types are judged by
+  // identity: a file-private namesake of an exported type has its own scoped id.
+  const isExportedType = (symbol: ts.Symbol): boolean => {
+    const name = symbol.getName();
+    if (!ctx.exportedIds.has(name)) return false;
+    return !(symbol.flags & TYPE_SYMBOL_FLAGS) || resolveTypeId(symbol, ctx) === name;
+  };
+
   const visitedSymbols = new Set<ts.Symbol>();
 
   const symbolKind = (symbol: ts.Symbol): 'interface' | 'class' | 'enum' | 'type' => {
@@ -208,6 +216,13 @@ export function expandReachableTypes(
     return resolved;
   };
 
+  // An alias the checker resolves to `any` (an arm from an unresolved module)
+  // still has a written shape worth keeping.
+  const writtenWhenAny = (symbol: ts.Symbol, declared: ts.Type): ts.TypeNode | undefined =>
+    declared.flags & ts.TypeFlags.Any
+      ? symbol.declarations?.find(ts.isTypeAliasDeclaration)?.type
+      : undefined;
+
   const symbolByName = new Map<string, ts.Symbol>();
 
   const registerTypeSymbol = (symbol: ts.Symbol): void => {
@@ -218,7 +233,7 @@ export function expandReachableTypes(
 
     // Exported names belong to the main serialization pass — registering them
     // in types[] would duplicate exports[] entries with a different shape.
-    if (ctx.exportedIds.has(name)) {
+    if (isExportedType(symbol)) {
       walkDeclarations(symbol);
       return;
     }
@@ -241,7 +256,11 @@ export function expandReachableTypes(
         id,
         name,
         kind: symbolKind(symbol),
-        schema: ensureNonEmptySchema(buildSchema(declared, checker, ctx), declared, checker),
+        schema: ensureNonEmptySchema(
+          buildSchema(declared, checker, ctx, writtenWhenAny(symbol, declared)),
+          declared,
+          checker,
+        ),
       });
     }
     symbolByName.set(name, symbol);

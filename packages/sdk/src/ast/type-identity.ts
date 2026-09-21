@@ -7,7 +7,11 @@
  * other and drops its members. This module assigns a stable id per declaration
  * symbol: the first symbol to claim a bare name keeps it (so specs without
  * collisions are byte-identical to before), and any later distinct symbol with
- * the same name gets a package-scoped id.
+ * the same name gets a scoped id: `<package>.<Name>` when it lives in another
+ * package than the bare name's owner, else `<Namespace>.<Name>` for a
+ * declaration inside a `namespace`, else `<file>.<Name>` from the declaring
+ * file's basename (`devtools.Options`). Exported types claim their bare name
+ * before anything else is serialized, so a private namesake never takes it.
  */
 import * as path from 'node:path';
 import ts from 'typescript';
@@ -112,9 +116,28 @@ function declKey(symbol: ts.Symbol, checker: ts.TypeChecker): string | undefined
 }
 
 /**
+ * Readable label for the file a declaration lives in: basename without its
+ * TypeScript extension; an `index` file goes by its directory.
+ */
+function fileLabel(fileName: string): string {
+  const base = path.basename(fileName).replace(/(\.d)?\.[cm]?[tj]sx?$/, '');
+  return base === 'index' ? path.basename(path.dirname(fileName)) || base : base;
+}
+
+/** Dotted names of the `namespace` blocks enclosing a declaration, if any. */
+function namespaceLabel(decl: ts.Declaration | undefined): string | undefined {
+  const names: string[] = [];
+  for (let node: ts.Node | undefined = decl?.parent; node; node = node.parent) {
+    if (ts.isModuleDeclaration(node) && ts.isIdentifier(node.name)) names.unshift(node.name.text);
+  }
+  return names.length > 0 ? names.join('.') : undefined;
+}
+
+/**
  * Assign (or return the cached) collision-free id for a type declaration.
  * First declaration to claim a bare name keeps it; later distinct declarations
- * get `<package>.<name>`, then `<name>_2`, `<name>_3` as a last resort.
+ * get `<package>.<Name>` (another package than the bare name's owner), then
+ * `<Namespace>.<Name>` (declared in a `namespace`), then `<file>.<Name>`, then `<Name>_2`, `<Name>_3` as a last resort.
  */
 export function resolveTypeId(symbol: ts.Symbol, ctx: SerializerContext): string {
   const cached = ctx.typeIds.get(symbol);
@@ -141,16 +164,61 @@ export function resolveTypeId(symbol: ts.Symbol, ctx: SerializerContext): string
   const owner = ctx.idOwner.get(name);
   if (!owner || owner === key) return claim(name);
 
-  // Collision: a different declaration already owns this name. Scope by package.
-  const file = symbol.declarations?.[0]?.getSourceFile().fileName ?? '';
-  const scoped = `${packageLabel(file, ctx.workspacePackages)}.${name}`;
-  const scopedOwner = ctx.idOwner.get(scoped);
-  if (!scopedOwner || scopedOwner === key) return claim(scoped);
+  // Collision: a different declaration already owns this name. Scope by
+  // package when that tells the two apart, else by declaring file.
+  const decl = symbol.declarations?.[0];
+  const file = decl?.getSourceFile().fileName ?? '';
+  const pkg = packageLabel(file, ctx.workspacePackages);
+  const ownerFile = owner.includes('#') ? owner.slice(0, owner.lastIndexOf('#')) : '';
+  const scopes = pkg === packageLabel(ownerFile, ctx.workspacePackages) ? [] : [pkg];
+  const namespace = namespaceLabel(decl);
+  if (namespace) scopes.push(namespace);
+  if (file) scopes.push(fileLabel(file));
+  for (const scope of scopes) {
+    const scoped = `${scope}.${name}`;
+    const scopedOwner = ctx.idOwner.get(scoped);
+    if (!scopedOwner || scopedOwner === key) return claim(scoped);
+  }
 
-  // Same package AND same name (rare): fall back to a numeric suffix.
+  // Same file AND same name (rare): fall back to a numeric suffix.
   let n = 2;
   while (ctx.idOwner.has(`${name}_${n}`)) n++;
   return claim(`${name}_${n}`);
+}
+
+const EXPORTABLE_TYPE_FLAGS =
+  ts.SymbolFlags.Interface |
+  ts.SymbolFlags.TypeAlias |
+  ts.SymbolFlags.Class |
+  ts.SymbolFlags.RegularEnum |
+  ts.SymbolFlags.ConstEnum;
+
+/**
+ * Give every exported type its bare name before anything is serialized, so a
+ * file-private namesake reached first cannot take it. Export names are unique,
+ * which makes the outcome independent of export order and `only` filters.
+ */
+export function claimExportedTypeIds(
+  exportedSymbols: readonly ts.Symbol[],
+  ctx: SerializerContext,
+): void {
+  const renamed: ts.Symbol[] = [];
+  for (const exported of exportedSymbols) {
+    let target = exported;
+    if (exported.flags & ts.SymbolFlags.Alias) {
+      try {
+        target = ctx.typeChecker.getAliasedSymbol(exported);
+      } catch {
+        continue;
+      }
+    }
+    if (!(target.flags & EXPORTABLE_TYPE_FLAGS)) continue;
+    // `export { output as TypeOf }` must not take `output` from the type that
+    // is exported as `output`.
+    if (target.getName() === exported.getName()) resolveTypeId(target, ctx);
+    else renamed.push(target);
+  }
+  for (const target of renamed) resolveTypeId(target, ctx);
 }
 
 /**

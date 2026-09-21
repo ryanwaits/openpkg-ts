@@ -51,6 +51,25 @@ describe('normalize', () => {
     expect(result.types?.map((t) => t.name)).toEqual(['Apple', 'Zebra']);
   });
 
+  test('orders same-named types by id', () => {
+    const spec: OpenPkg = {
+      openpkg: '0.4.0',
+      meta: { name: 'test' },
+      exports: [],
+      types: [
+        { id: 'react.Options', name: 'Options', kind: 'type' },
+        { id: 'Options', name: 'Options', kind: 'type' },
+        { id: 'devtools.Options', name: 'Options', kind: 'type' },
+      ],
+    };
+    const result = normalize(spec);
+    expect(result.types?.map((t) => t.id)).toEqual([
+      'devtools.Options',
+      'Options',
+      'react.Options',
+    ]);
+  });
+
   test('ensures array fields exist on exports', () => {
     const spec: OpenPkg = {
       openpkg: '0.4.0',

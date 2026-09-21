@@ -25,7 +25,10 @@ export function normalize(spec: OpenPkg): OpenPkg {
   normalized.exports = normalized.exports.map((item) => normalizeExport(item));
 
   const types = Array.isArray(normalized.types) ? [...normalized.types] : [];
-  types.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+  // Same-named types are told apart by id, so order them by it too.
+  types.sort(
+    (a, b) => (a.name || '').localeCompare(b.name || '') || (a.id || '').localeCompare(b.id || ''),
+  );
   normalized.types = types.map((item) => normalizeType(item));
 
   // Normalize generation metadata to match schema

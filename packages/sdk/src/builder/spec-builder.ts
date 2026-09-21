@@ -12,7 +12,7 @@ import type {
 import { SCHEMA_URL, SCHEMA_VERSION } from '@openpkg-ts/spec';
 import ts from 'typescript';
 import { resolveAliasSymbol, resolveExportTarget } from '../ast/resolve';
-import { isLibFile, packageNameFromPath } from '../ast/type-identity';
+import { claimExportedTypeIds, isLibFile, packageNameFromPath } from '../ast/type-identity';
 import { isSymbolDeprecated, parseInlineTags } from '../ast/utils';
 import { createProgram } from '../compiler/program';
 import { extractStandardSchemasFromProject } from '../schema/standard-schema';
@@ -229,6 +229,7 @@ export async function extract(options: ExtractOptions): Promise<ExtractResult> {
       workspacePackages: result.workspacePackages ?? new Map(),
     });
     ctx.exportedIds = exportedIds;
+    claimExportedTypeIds(exportedSymbols, ctx);
 
     // Pre-filter exports to get accurate total for progress reporting
     const filteredSymbols = exportedSymbols.filter((s) =>

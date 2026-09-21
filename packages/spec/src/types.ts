@@ -365,7 +365,17 @@ export type SpecExport = {
 };
 
 export type SpecType = {
+  /**
+   * Key every `$ref: "#/types/<id>"` points at. Equals `name` unless two
+   * declarations share that name. Then the exported one, else the first one
+   * registered, keeps the bare name and each other declaration gets
+   * `<package>.<Name>` (declared in another package), else `<Namespace>.<Name>`
+   * (declared inside a `namespace`), else `<file>.<Name>` (declaring file's
+   * basename, an `index` file goes by its directory: `devtools.Options`), with
+   * `<Name>_2`, `<Name>_3` as a last resort.
+   */
   id: string;
+  /** Name as written in source. Not unique: resolve refs by `id`. */
   name: string;
   kind: SpecTypeKind;
   description?: string;

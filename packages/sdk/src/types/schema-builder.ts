@@ -197,20 +197,26 @@ export function buildSchemaFromTypeNode(
       let refId = name;
       if (symbol && ctx) {
         try {
-          refId = namedRefId(checker.getDeclaredTypeOfSymbol(symbol), name, ctx);
+          // A declared type with no symbol (an alias the checker resolves to
+          // `any`) still has its own declaration: key the ref on that.
+          refId =
+            typeRefId(checker.getDeclaredTypeOfSymbol(symbol), ctx) ||
+            (symbol.flags & ts.SymbolFlags.TypeAlias ? resolveTypeId(symbol, ctx) : name);
         } catch {
           refId = name;
         }
       }
       return withArgs({ $ref: `#/types/${refId}` });
     }
-    return { 'x-ts-type': scrubImportQualifiers(node.getText()) } as SpecSchema;
+    return {
+      'x-ts-type': scrubImportQualifiers(node.getText().replace(/\s+/g, ' ')),
+    } as SpecSchema;
   }
   const t = checker.getTypeFromTypeNode(node);
   if (!(t.flags & ts.TypeFlags.Any)) {
     return buildSchema(t, checker, ctx);
   }
-  return { 'x-ts-type': scrubImportQualifiers(node.getText()) } as SpecSchema;
+  return { 'x-ts-type': scrubImportQualifiers(node.getText().replace(/\s+/g, ' ')) } as SpecSchema;
 }
 
 /**
@@ -850,9 +856,10 @@ function buildMaxDepthSchema(
   type: ts.Type,
   checker: ts.TypeChecker,
   typeNode?: ts.TypeNode,
+  ctx?: SerializerContext,
 ): SpecSchema {
   if (type.flags & ts.TypeFlags.Any) {
-    if (typeNode) return buildSchemaFromTypeNode(typeNode, checker);
+    if (typeNode) return buildSchemaFromTypeNode(typeNode, checker, ctx);
     return { 'x-ts-type': checker.typeToString(type) } as SpecSchema;
   }
   // Type parameters are not addressable spec types — never $ref them.
@@ -870,7 +877,7 @@ function buildMaxDepthSchema(
       return builtinSchema(name);
     }
     if (!name.startsWith('__') && !isPrimitiveName(name)) {
-      return { $ref: `#/types/${name}` };
+      return { $ref: `#/types/${ctx ? resolveTypeId(symbol, ctx) : name}` };
     }
   }
 
@@ -893,13 +900,15 @@ function buildMaxDepthSchema(
 
   // Unions → anyOf with leaf schemas per member
   if (type.isUnion()) {
-    const schemas = type.types.map((t) => buildMaxDepthSchema(t, checker));
+    const schemas = type.types.map((t) => buildMaxDepthSchema(t, checker, undefined, ctx));
     return { anyOf: schemas };
   }
 
   // Intersections → allOf with leaf schemas per member
   if (type.isIntersection()) {
-    const schemas = (type as ts.IntersectionType).types.map((t) => buildMaxDepthSchema(t, checker));
+    const schemas = (type as ts.IntersectionType).types.map((t) =>
+      buildMaxDepthSchema(t, checker, undefined, ctx),
+    );
     return { allOf: schemas };
   }
 
@@ -920,7 +929,7 @@ function buildSchemaInternal(
   // Named types can still emit $ref at max depth (zero recursion needed)
   // Union/intersection types get decomposed into anyOf/allOf with leaf schemas
   if (isAtMaxDepth(ctx)) {
-    return buildMaxDepthSchema(type, checker, typeNode);
+    return buildMaxDepthSchema(type, checker, typeNode, ctx);
   }
 
   if (ctx) {
