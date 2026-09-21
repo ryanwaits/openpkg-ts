@@ -1,5 +1,12 @@
 # @openpkg-ts/spec
 
+## 0.54.8
+
+### Patch Changes
+
+- 2f03eb8: `export const f: T = (...args) => …` takes its signatures (and type parameters) from the written `T` when it is callable, not from the initializer. Rest parameters are emitted with `rest: true` and `required: false` everywhere parameters are serialized (they were `required: true` with no `rest`); `schema` is the declared array/tuple type, and `toToolSchema` no longer wraps it a second time.
+- 2f03eb8: New optional `SpecExport.localName`: the identifier a default export goes by in source (`useSWR` for `export default useSWR`); `name` stays `"default"`. It is the declaration's own name when it has one, else the identifier it is exported under; absent on named exports and anonymous defaults. `export default function () {}` and `export default class {}` are now extracted (as `default`) instead of skipped.
+
 ## 0.54.4
 
 ### Patch Changes
