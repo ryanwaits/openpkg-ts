@@ -155,4 +155,33 @@ describe('utility types over unresolved type parameters', () => {
     expect(byName('nullable')).toEqual({ 'x-ts-type': 'NonNullable<T>' });
     expect(byName('awaited')).toEqual({ 'x-ts-type': 'Awaited<T>' });
   });
+
+  test('a utility over a generic object with known keys flattens', async () => {
+    const { spec } = await extract({
+      entryFile: 'options.ts',
+      content: `
+        interface Options<D> { fallback?: D; retries: number }
+        export declare function configure<D, T extends { id: string }>(
+          config: Partial<Options<D>>,
+          picked: Pick<Options<D>, 'retries'>,
+          constrained: Partial<T>,
+        ): void;
+      `,
+    });
+    const params = spec.exports[0].signatures?.[0]?.parameters;
+    const byName = (n: string) => params?.find((p) => p.name === n)?.schema;
+
+    expect(byName('config')).toMatchObject({
+      type: 'object',
+      properties: { fallback: { 'x-ts-type': 'D' }, retries: { type: 'number' } },
+    });
+    expect((byName('config') as { required?: string[] }).required).toBeUndefined();
+    expect(byName('picked')).toMatchObject({
+      type: 'object',
+      properties: { retries: { type: 'number' } },
+      required: ['retries'],
+    });
+    // The constraint's keys are not T's
+    expect(byName('constrained')).toEqual({ 'x-ts-type': 'Partial<T>' });
+  });
 });

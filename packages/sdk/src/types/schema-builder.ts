@@ -807,7 +807,14 @@ function isUtilityOverTypeParameter(type: ts.Type): boolean {
   if (!name || !RESOLVED_UTILITY_TYPES.has(name)) return false;
   const args = type.aliasTypeArguments;
   if (!args || args.length === 0) return false;
-  return args.some((t) => containsUnresolvedTypeParameter(t));
+  if (!args.some((t) => containsUnresolvedTypeParameter(t))) return false;
+  // `Partial<Options<D>>` still has Options' keys: that flattens like a
+  // concrete instantiation. A bare `Partial<T>` has nothing of its own to list
+  // (a constrained T would list its constraint's keys, which is not T).
+  if (args[0].flags & ts.TypeFlags.TypeParameter || !(type.flags & ts.TypeFlags.Object)) {
+    return true;
+  }
+  return type.getProperties().length === 0;
 }
 
 function writtenUtilityText(
