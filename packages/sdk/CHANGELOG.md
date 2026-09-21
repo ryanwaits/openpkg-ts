@@ -1,5 +1,11 @@
 # @openpkg-ts/extract
 
+## 0.54.7
+
+### Patch Changes
+
+- 51ee0b5: Stop forcing NodeNext `moduleResolution` onto a tsconfig that sets `module` alone (e.g. `"ES6"`). The invalid mix broke extensionless relative imports, so anything imported through them extracted as `any` (immer's `setAutoFreeze = immer.setAutoFreeze.bind(immer)` and 8 siblings). They now extract as functions with the method's signatures and docs.
+
 ## 0.54.6
 
 ### Patch Changes
