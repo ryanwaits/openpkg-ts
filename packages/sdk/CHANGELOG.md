@@ -1,5 +1,26 @@
 # @openpkg-ts/extract
 
+## 0.54.10
+
+### Patch Changes
+
+- ef342e5: - A member whose name needs quotes (`"~standard"`) is named without them and listed once; the overriding declaration wins over the inherited one (zod `ZodType` had both `"~standard"` and `~standard`).
+  - A type parameter is never a `$ref` target, whatever it is named: SWR's `Error = any` parameter emitted `#/types/types.Error` with no entry, now `{ "x-ts-type": "Error" }`.
+  - A type imported from a module that does not resolve is referenced by its written name (`#/types/ReactNode`, was `#/types/unknown`) and always has a stub entry to resolve to.
+  - `import { Hono } from './hono'; export { Hono }` resolves through the import when the checker cannot (extensionless specifier in an ESM package): hono 21 of 21 exports, was 20 with `Hono` skipped as `no-declaration`.
+- ef342e5: A `types[]` entry for an interface or class records `extends` whenever the source has a heritage clause (the resolved base name, else the name as written; several bases joined with `&`, the shape exports already use). When a base is something the checker cannot see into (`any`: an unresolved import, an alias over a missing global such as zustand's `type Config = Parameters<(typeof window)['__REDUX_DEVTOOLS_EXTENSION__']['connect']>[1]`), the schema no longer reads as a closed object: both the `types[]` entry and the export emit `allOf: [own shape, { $ref: "#/types/Config" }]`, the form an alias intersection with the same arm (`{...} & Config`) already takes. A base that is a value import from an unresolved module has no type to register, so its arm is `{ "x-ts-type": "ExtClass" }`. Resolvable bases are unchanged: flattened into the shape, closed.
+- ef342e5: The schema expansion budget is per export and per registered type (10,000 steps each), not one 20,000-step pool spent in export order. An export comes out the same in a full run and under `only: [...]`; one that spends its budget degrades alone (its deep parts become `x-ts-type` text) and the `TYPE_EXPANSION_LIMIT` diagnostic names it. A 200,000-step ceiling for the whole extract stays as the guard against runaway. zod: 304 of 304 exports match an unlimited run, was 94; valibot 787 of 787, was 503.
+
+  Reachability and type registration walk a generic's declaration once instead of every instantiation's member graph (zod: the reachability pass went from +280 MB to +6 MB), which pays for most of the extra expansion: zod 3.5 s / 1.27 GB RSS (was 2.5 s / 1.14 GB with 69% of exports degraded), valibot 2.6 s / 0.81 GB (unchanged).
+
+  A class reached first through `typeof Foo` is registered by its instances, not by its constructor side (`{ prototype }`).
+
+- ef342e5: A signature type written as a generic union or intersection alias keeps that reference instead of inlining the alias body: zustand `redux` returns `{ $ref: "#/types/StateCreator", "x-ts-type-arguments": [...] }`, not the expanded `((setState, getState, store) => ...) & { $$storeMutators? }`. Generic object and function aliases and interfaces already did this. The alias stays in `types[]`, decomposed at its own declaration only. A type argument that degrades to text reads as written (`Mutate<StoreApi<T>, Mos>`), not as its alias body. Anonymous structural types still expand inline.
+
+  A generic type is registered from its declaration, never from the instantiation that reached it first: `types[].Box` has `value: T`, was `value: string` when `Box<string>` came first. The entry no longer depends on export order or `only`.
+
+  A lib utility over a generic object with known keys flattens like a concrete one: `Partial<Options<D>>` lists `Options`' keys (SWR's `SWRConfiguration` now exposes `revalidateOnFocus` and the rest). A bare `Partial<T>` stays `x-ts-type` text.
+
 ## 0.54.9
 
 ### Patch Changes
