@@ -20,7 +20,7 @@ import { serializeClass } from '../serializers/classes';
 import { createContext, type SerializerContext } from '../serializers/context';
 import { serializeEnum } from '../serializers/enums';
 import { serializeFunctionExport } from '../serializers/functions';
-import { serializeInterface } from '../serializers/interfaces';
+import { serializeInterface, serializeMergedTypeSide } from '../serializers/interfaces';
 import { buildSignatures } from '../serializers/shared';
 import { serializeTypeAlias } from '../serializers/type-aliases';
 import { serializeVariable } from '../serializers/variables';
@@ -208,6 +208,8 @@ export async function extract(options: ExtractOptions): Promise<ExtractResult> {
       });
     }
 
+    const mergedTypeSides: Array<{ index: number; symbol: ts.Symbol }> = [];
+
     const followExternal = options.followExternal;
 
     const ctx = createContext(program, sourceFile, {
@@ -336,6 +338,9 @@ export async function extract(options: ExtractOptions): Promise<ExtractResult> {
 
         const exp = serializeDeclaration(declaration, symbol, exportName, ctx, isTypeOnly);
         if (exp) {
+          if (!exp.members && isValueDeclaration(declaration) && hasTypeSide(targetSymbol)) {
+            mergedTypeSides.push({ index: exports.length, symbol: targetSymbol });
+          }
           exports.push(exp);
           tracker.status = 'success';
           tracker.kind = exp.kind;
@@ -353,6 +358,14 @@ export async function extract(options: ExtractOptions): Promise<ExtractResult> {
           code: 'SERIALIZATION_FAILED',
         });
       }
+    }
+
+    // Value + type under one name (`interface Foo` + `const Foo`): the export
+    // carries the type's members. Filled after every export is serialized so a
+    // wide surface (zod: 79 such classes) spends only what is left of the
+    // expansion budget and leaves all other exports as they were.
+    for (const { index, symbol } of mergedTypeSides) {
+      exports[index] = withMergedTypeSide(exports[index], symbol, ctx);
     }
 
     // Build verification summary from tracker
@@ -949,6 +962,39 @@ function defaultLocalName(
     }
   }
   return undefined;
+}
+
+function isValueDeclaration(declaration: ts.Declaration): boolean {
+  return (
+    ts.isVariableDeclaration(declaration) ||
+    ts.isBindingElement(declaration) ||
+    ts.isFunctionDeclaration(declaration)
+  );
+}
+
+function hasTypeSide(symbol: ts.Symbol): boolean {
+  return (symbol.flags & (ts.SymbolFlags.Interface | ts.SymbolFlags.TypeAlias)) !== 0;
+}
+
+/**
+ * The value's own docs win; the type side fills what is missing. `extends` and
+ * type parameters describe the instance type, so only a constructor takes them
+ * (a generic interface does not make its companion function generic).
+ */
+function withMergedTypeSide(
+  entry: SpecExport,
+  symbol: ts.Symbol,
+  ctx: SerializerContext,
+): SpecExport {
+  const typeSide = serializeMergedTypeSide(symbol, ctx);
+  if (!typeSide) return entry;
+  const { members, description, tags, ...instanceType } = typeSide;
+  return {
+    ...entry,
+    members,
+    ...(entry.kind === 'class' ? instanceType : {}),
+    ...(entry.description ? {} : { description, tags: [...(entry.tags ?? []), ...(tags ?? [])] }),
+  };
 }
 
 function withExportName(entry: SpecExport, exportName: string): SpecExport {

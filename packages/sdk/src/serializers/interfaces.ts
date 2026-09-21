@@ -7,7 +7,7 @@ import {
   decoratePropertySchema,
   stripUndefinedFromType,
 } from '../types/schema-builder';
-import type { SerializerContext } from './context';
+import { getInheritedMembers, type SerializerContext } from './context';
 import { buildSignatures, extractExportMetadata } from './shared';
 
 export function serializeInterface(
@@ -25,13 +25,49 @@ export function serializeInterface(
   // Extract type parameters like <T, K extends Base>
   const typeParameters = extractTypeParameters(node, checker);
 
-  // Extract members: properties, methods, call signatures
+  const { members, callSignatureMember } = serializeTypeElements(node.members, ctx);
+
+  // Extract extends clause
+  const extendsClause = getInterfaceExtends(node, checker);
+
+  // For callable interfaces, extract call signatures to export-level signatures array
+  // This makes it easier for consumers to know the interface is callable
+  const exportSignatures: SpecSignature[] | undefined =
+    callSignatureMember?.signatures && callSignatureMember.signatures.length > 0
+      ? callSignatureMember.signatures
+      : undefined;
+
+  return {
+    id: name,
+    name,
+    kind: 'interface',
+    description,
+    tags,
+    source,
+    typeParameters,
+    members: members.length > 0 ? members : undefined,
+    signatures: exportSignatures,
+    extends: extendsClause,
+    ...(deprecated ? { deprecated: true, deprecationReason } : {}),
+    ...(examples.length > 0 ? { examples } : {}),
+    ...(inlineTags ? { inlineTags } : {}),
+  };
+}
+
+/**
+ * Members of an interface body or type literal: properties, methods (overloads
+ * merged by name), call signatures (aggregated into one member), index signatures.
+ */
+function serializeTypeElements(
+  elements: readonly ts.TypeElement[],
+  ctx: SerializerContext,
+): { members: SpecMember[]; callSignatureMember: SpecMember | null } {
   const members: SpecMember[] = [];
   const methodsByName = new Map<string, SpecMember>();
   // Aggregate call signatures (overloads) into a single member
   let callSignatureMember: SpecMember | null = null;
 
-  for (const member of node.members) {
+  for (const member of elements) {
     if (ts.isPropertySignature(member)) {
       const propMember = serializePropertySignature(member, ctx);
       if (propMember) members.push(propMember);
@@ -108,30 +144,50 @@ export function serializeInterface(
   // Add deduplicated methods with merged overloads
   members.push(...methodsByName.values());
 
-  // Extract extends clause
-  const extendsClause = getInterfaceExtends(node, checker);
+  return { members, callSignatureMember };
+}
 
-  // For callable interfaces, extract call signatures to export-level signatures array
-  // This makes it easier for consumers to know the interface is callable
-  const exportSignatures: SpecSignature[] | undefined =
-    callSignatureMember?.signatures && callSignatureMember.signatures.length > 0
-      ? callSignatureMember.signatures
-      : undefined;
+/**
+ * Type side of a name that is also a value (`interface Foo` + `const Foo`, or
+ * `type Foo = {...}` + `const Foo`). The value export carries these the way a
+ * class carries its instance members: own members of every merged interface
+ * declaration (or of the alias's type literal), then members inherited through
+ * `extends`. Undefined when the symbol has no such type side.
+ */
+export function serializeMergedTypeSide(
+  symbol: ts.Symbol,
+  ctx: SerializerContext,
+): Pick<SpecExport, 'members' | 'extends' | 'typeParameters' | 'description' | 'tags'> | undefined {
+  const { typeChecker: checker } = ctx;
+  const declarations = symbol.declarations ?? [];
+  const interfaces = declarations.filter(ts.isInterfaceDeclaration);
+  const alias = declarations.find(ts.isTypeAliasDeclaration);
+  const typeDecl = interfaces[0] ?? alias;
+  if (!typeDecl) return undefined;
 
+  const elements =
+    interfaces.length > 0
+      ? interfaces.flatMap((decl) => [...decl.members])
+      : alias && ts.isTypeLiteralNode(alias.type)
+        ? [...alias.type.members]
+        : [];
+  const { members } = serializeTypeElements(elements, ctx);
+
+  if (interfaces.length > 0) {
+    const ownNames = new Set(members.flatMap((m) => (m.name ? [m.name] : [])));
+    members.push(
+      ...getInheritedMembers(checker.getDeclaredTypeOfSymbol(symbol), ownNames, ctx, false),
+    );
+  }
+  if (members.length === 0) return undefined;
+
+  const { description, tags } = getJSDocComment(typeDecl);
   return {
-    id: name,
-    name,
-    kind: 'interface',
+    members,
+    extends: interfaces.map((decl) => getInterfaceExtends(decl, checker)).find(Boolean),
+    typeParameters: extractTypeParameters(typeDecl, checker),
     description,
     tags,
-    source,
-    typeParameters,
-    members: members.length > 0 ? members : undefined,
-    signatures: exportSignatures,
-    extends: extendsClause,
-    ...(deprecated ? { deprecated: true, deprecationReason } : {}),
-    ...(examples.length > 0 ? { examples } : {}),
-    ...(inlineTags ? { inlineTags } : {}),
   };
 }
 
@@ -184,7 +240,9 @@ function serializeMethodSignature(
 
   const { description, tags, inlineTags } = getJSDocComment(node);
 
-  const type = checker.getTypeAtLocation(node);
+  // `run?(): void` is typed `(() => void) | undefined`; the union has no call signatures
+  const rawType = checker.getTypeAtLocation(node);
+  const type = node.questionToken ? stripUndefinedFromType(rawType, checker) : rawType;
   const callSignatures = type.getCallSignatures();
 
   const signatures = buildSignatures(callSignatures, checker, ctx);

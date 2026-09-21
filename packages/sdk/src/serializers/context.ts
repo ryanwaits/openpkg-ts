@@ -1,12 +1,13 @@
 import type { SpecInheritedMember, SpecSignature, SpecVisibility } from '@openpkg-ts/spec';
 import ts from 'typescript';
 import { TypeRegistry } from '../ast/registry';
-import { getJSDocComment, getJSDocForSignature } from '../ast/utils';
+import { getJSDocComment, getJSDocForSignature, isSymbolDeprecated } from '../ast/utils';
 import { extractParameters, registerReferencedTypes } from '../types/parameters';
 import {
   buildSchema,
   declaredTypeNode,
   decoratePropertySchema,
+  stripUndefinedFromType,
   typeNodeOfSignature,
 } from '../types/schema-builder';
 
@@ -167,7 +168,12 @@ function walkBaseTypes(
       // Skip private members (start with #) and internal properties
       if (propName.startsWith('#') || propName.startsWith('__')) continue;
 
-      const member = serializeInheritedMember(prop, baseName, ctx, isStatic);
+      const member = serializeInheritedMember(
+        prop,
+        declaringTypeName(prop) ?? baseName,
+        ctx,
+        isStatic,
+      );
       if (member) {
         inherited.push(member);
         inheritedNames.add(propName);
@@ -177,6 +183,16 @@ function walkBaseTypes(
     // Recursively walk up the chain
     walkBaseTypes(baseType, ownMemberNames, inherited, inheritedNames, visited, ctx, isStatic);
   }
+}
+
+/**
+ * A base's properties include what it inherited itself; provenance is the
+ * ancestor that declares the member, not the nearest base.
+ */
+function declaringTypeName(prop: ts.Symbol): string | undefined {
+  const parent = prop.declarations?.[0]?.parent;
+  if (!parent || !(ts.isClassLike(parent) || ts.isInterfaceDeclaration(parent))) return undefined;
+  return parent.name?.text;
 }
 
 function getStaticMembers(classType: ts.Type, checker: ts.TypeChecker): ts.Symbol[] {
@@ -195,6 +211,21 @@ function getStaticMembers(classType: ts.Type, checker: ts.TypeChecker): ts.Symbo
   });
 }
 
+/**
+ * Past the expansion budget the checker-rendered text is dropped: a generic
+ * base's methods are instantiated per subclass, and rendering them (zod's
+ * `pipe`/`refine` on 80 schema classes) costs 10 KB a member. Signatures stay.
+ */
+function inheritedMethodSchema(symbol: ts.Symbol, type: ts.Type, ctx: SerializerContext) {
+  if (!ctx.budgetExceeded) {
+    return decoratePropertySchema({ 'x-ts-function': true }, symbol, type, ctx.typeChecker);
+  }
+  return {
+    'x-ts-function': true,
+    ...(symbol.flags & ts.SymbolFlags.Method ? { 'x-ts-method': true } : {}),
+  };
+}
+
 function serializeInheritedMember(
   symbol: ts.Symbol,
   inheritedFrom: string,
@@ -209,9 +240,16 @@ function serializeInheritedMember(
   const decl = declarations[0];
   if (!decl) return null;
 
-  // Get type
-  const type = checker.getTypeOfSymbol(symbol);
-  registerReferencedTypes(type, ctx);
+  // Optionality is flags.optional; `run?(): void` typed `(() => void) | undefined`
+  // has no call signatures until the undefined branch is stripped
+  const isOptional = !!(symbol.flags & ts.SymbolFlags.Optional);
+  const rawType = checker.getTypeOfSymbol(symbol);
+  const type = isOptional ? stripUndefinedFromType(rawType, checker) : rawType;
+  // Past the budget every schema below is text, so no $ref needs a registry
+  // entry, and walking each subclass's instantiation of a generic base is the
+  // fan-out that costs memory (zod: +300 MB over 80 schema classes).
+  const registerTypes = !ctx.budgetExceeded;
+  if (registerTypes) registerReferencedTypes(type, ctx);
 
   // Determine visibility
   let visibility: SpecVisibility | undefined;
@@ -230,6 +268,7 @@ function serializeInheritedMember(
   if (visibility === 'private') return null;
 
   const { description, tags, inlineTags } = getJSDocComment(decl);
+  const { deprecated, reason: deprecationReason } = isSymbolDeprecated(symbol);
 
   // Determine kind
   let kind: string = 'property';
@@ -244,6 +283,7 @@ function serializeInheritedMember(
 
   const flags: Record<string, unknown> = {};
   if (isStatic) flags.static = true;
+  if (isOptional) flags.optional = true;
   if (decl && ts.canHaveModifiers(decl)) {
     const modifiers = ts.getModifiers(decl);
     if (modifiers?.some((m) => m.kind === ts.SyntaxKind.ReadonlyKeyword)) {
@@ -257,7 +297,7 @@ function serializeInheritedMember(
     signatures = callSigs.map((sig, index) => {
       const params = extractParameters(sig, ctx);
       const returnType = checker.getReturnTypeOfSignature(sig);
-      registerReferencedTypes(returnType, ctx);
+      if (registerTypes) registerReferencedTypes(returnType, ctx);
 
       // Get per-overload JSDoc
       const sigDoc = getJSDocForSignature(sig, checker);
@@ -285,9 +325,10 @@ function serializeInheritedMember(
     schema:
       kind !== 'method'
         ? buildSchema(type, checker, ctx, declaredTypeNode(decl))
-        : decoratePropertySchema({ 'x-ts-function': true }, symbol, type, checker),
+        : inheritedMethodSchema(symbol, type, ctx),
     signatures,
     flags: Object.keys(flags).length > 0 ? flags : undefined,
     ...(inlineTags ? { inlineTags } : {}),
+    ...(deprecated ? { deprecated: true, deprecationReason } : {}),
   };
 }
