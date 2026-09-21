@@ -608,9 +608,12 @@ export function getExtendsText(
   node: ts.ClassLikeDeclaration | ts.InterfaceDeclaration,
   checker: ts.TypeChecker,
 ): string | undefined {
-  const names = getExtendsExpressions(node).map(
-    (expr) => checker.getTypeAtLocation(expr).getSymbol()?.getName() ?? expr.expression.getText(),
-  );
+  // A base that is an alias of an anonymous type (`type P = Omit<Q, 'x'>`) has the internal
+  // symbol `__type`; its name is what the source wrote.
+  const names = getExtendsExpressions(node).map((expr) => {
+    const name = checker.getTypeAtLocation(expr).getSymbol()?.getName();
+    return name && !name.startsWith('__') ? name : expr.expression.getText();
+  });
   return names.length > 0 ? names.join(' & ') : undefined;
 }
 

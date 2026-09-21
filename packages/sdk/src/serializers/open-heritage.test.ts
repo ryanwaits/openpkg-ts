@@ -109,3 +109,19 @@ describe('heritage the checker cannot see into', () => {
     });
   });
 });
+
+/** zod's shape: `interface RegistryParams extends ToJSONSchemaParams`, where the base is an alias of a utility type. */
+describe('a base that is an alias of an anonymous type', () => {
+  test('extends names what the source wrote, and the base keys are inherited', async () => {
+    const spec = await specOf(`
+interface GeneratorParams { processors: string[]; target?: string; io?: 'input' | 'output' }
+export type Params = Omit<GeneratorParams, 'processors'>;
+export interface RegistryParams extends Params { uri?: (id: string) => string }
+export declare function toJSON(registry: object, params?: RegistryParams): void;
+`);
+    const entry = [...(spec.types ?? []), ...spec.exports].find((t) => t.name === 'RegistryParams');
+    expect(entry?.extends).toBe('Params');
+    const schema = entry?.schema as { properties?: Record<string, unknown> } | undefined;
+    expect(Object.keys(schema?.properties ?? {}).sort()).toEqual(['io', 'target', 'uri']);
+  });
+});
