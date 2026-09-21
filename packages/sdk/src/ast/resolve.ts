@@ -107,6 +107,12 @@ function resolveFromModuleSpecifier(
   if (ts.isExportSpecifier(decl)) {
     const exportDecl = decl.parent?.parent;
     if (exportDecl && ts.isExportDeclaration(exportDecl)) {
+      // `import { X } from './x'; export { X }`: the specifier is on the
+      // import, reached through the local binding.
+      if (!exportDecl.moduleSpecifier) {
+        const local = checker.getExportSpecifierLocalTargetSymbol(decl);
+        return local && local !== symbol ? local : undefined;
+      }
       moduleSpecifier = exportDecl.moduleSpecifier;
       importedName = (decl.propertyName ?? decl.name).text;
     }
