@@ -5,6 +5,7 @@ import {
   getExtendsText,
   getJSDocComment,
   isSymbolDeprecated,
+  propertyNameText,
 } from '../ast/utils';
 import { extractParameters, registerReferencedTypes } from '../types/parameters';
 import {
@@ -205,7 +206,7 @@ function serializePropertySignature(
   ctx: SerializerContext,
 ): SpecMember | null {
   const { typeChecker: checker } = ctx;
-  const name = node.name.getText();
+  const name = propertyNameText(node.name);
 
   const { description, tags, inlineTags } = getJSDocComment(node);
 
@@ -245,7 +246,7 @@ function serializeMethodSignature(
   ctx: SerializerContext,
 ): SpecMember | null {
   const { typeChecker: checker } = ctx;
-  const name = node.name.getText();
+  const name = propertyNameText(node.name);
 
   const { description, tags, inlineTags } = getJSDocComment(node);
 

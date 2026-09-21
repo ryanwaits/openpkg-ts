@@ -6,6 +6,7 @@ import {
   getExtendsText,
   getJSDocComment,
   isSymbolDeprecated,
+  propertyNameText,
 } from '../ast/utils';
 import { extractParameters, registerReferencedTypes } from '../types/parameters';
 import {
@@ -136,9 +137,7 @@ export function serializeClass(
 function getMemberName(member: ts.ClassElement): string | undefined {
   if (ts.isConstructorDeclaration(member)) return 'constructor';
   if (!member.name) return undefined;
-  if (ts.isIdentifier(member.name)) return member.name.text;
-  if (ts.isPrivateIdentifier(member.name)) return member.name.text;
-  return member.name.getText();
+  return propertyNameText(member.name);
 }
 
 function getVisibility(member: ts.ClassElement): SpecVisibility | undefined {

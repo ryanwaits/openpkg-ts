@@ -613,3 +613,13 @@ export function getExtendsText(
   );
   return names.length > 0 ? names.join(' & ') : undefined;
 }
+
+/**
+ * A member's name as the checker keys it: `"~standard"` and `'kebab-name'` lose
+ * their quotes (the quotes are syntax, and inherited members arrive unquoted).
+ * Computed names keep their source text.
+ */
+export function propertyNameText(name: ts.PropertyName): string {
+  if (ts.isComputedPropertyName(name)) return name.getText();
+  return name.text;
+}
