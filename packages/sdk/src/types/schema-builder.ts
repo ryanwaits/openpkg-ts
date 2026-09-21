@@ -1095,7 +1095,9 @@ function buildSchemaInternal(
 
   if (ctx) {
     ctx.schemaOps += 1;
-    if (ctx.schemaOps > ctx.maxSchemaOps) {
+    ctx.budget.ops += 1;
+    if (ctx.budget.ops > ctx.maxBudgetOps || ctx.schemaOps > ctx.maxSchemaOps) {
+      ctx.budget.exceeded = true;
       ctx.budgetExceeded = true;
       return { 'x-ts-type': cheapTypeText(type, checker, typeNode) } as SpecSchema;
     }

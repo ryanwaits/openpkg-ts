@@ -10,6 +10,7 @@ import {
   stripUndefinedFromType,
   typeNodeOfSignature,
 } from '../types/schema-builder';
+import { type ExpansionBudget, MAX_BUDGET_OPS, MAX_SCHEMA_OPS } from './expansion-budget';
 
 export interface SerializerContext {
   typeChecker: ts.TypeChecker;
@@ -53,12 +54,22 @@ export interface SerializerContext {
   idOwner: Map<string, string>;
   /** Workspace package name → dir, used to package-scope colliding type ids. */
   workspacePackages: ReadonlyMap<string, string>;
-  /** Structural schema-build steps taken this extract. */
+  /**
+   * Schema-build steps of the export or registered type being built. Each gets
+   * its own budget, so what one spends never changes what another emits: the
+   * same export comes out the same in a full run and under `only`.
+   */
+  budget: ExpansionBudget;
+  /** Cap on one budget's steps; past this, that owner's deep parts emit x-ts-type text. */
+  maxBudgetOps: number;
+  /** Structural schema-build steps taken this extract, all budgets together. */
   schemaOps: number;
-  /** Cap on schema-build steps; past this, emit x-ts-type text. */
+  /** Safety ceiling on schemaOps against runaway expansion; past this, everything emits text. */
   maxSchemaOps: number;
-  /** True once schemaOps exceeded maxSchemaOps. */
+  /** True once any schema degraded to text (a budget ran out, or a type defers expansion). */
   budgetExceeded: boolean;
+  /** Owners whose budget ran out, in the order they did. */
+  exhaustedBudgets: string[];
 }
 
 export interface CreateContextOptions {
@@ -93,9 +104,12 @@ export function createContext(
     declIds: new Map<string, string>(),
     idOwner: new Map<string, string>(),
     workspacePackages: options.workspacePackages ?? new Map<string, string>(),
+    budget: { owner: '', ops: 0, exceeded: false },
+    maxBudgetOps: MAX_BUDGET_OPS,
     schemaOps: 0,
-    maxSchemaOps: 20_000,
+    maxSchemaOps: MAX_SCHEMA_OPS,
     budgetExceeded: false,
+    exhaustedBudgets: [],
   };
 }
 
@@ -219,7 +233,7 @@ function getStaticMembers(classType: ts.Type, checker: ts.TypeChecker): ts.Symbo
  * `pipe`/`refine` on 80 schema classes) costs 10 KB a member. Signatures stay.
  */
 function inheritedMethodSchema(symbol: ts.Symbol, type: ts.Type, ctx: SerializerContext) {
-  if (!ctx.budgetExceeded) {
+  if (!ctx.budget.exceeded) {
     return decoratePropertySchema({ 'x-ts-function': true }, symbol, type, ctx.typeChecker);
   }
   return {
@@ -250,7 +264,7 @@ function serializeInheritedMember(
   // Past the budget every schema below is text, so no $ref needs a registry
   // entry, and walking each subclass's instantiation of a generic base is the
   // fan-out that costs memory (zod: +300 MB over 80 schema classes).
-  const registerTypes = !ctx.budgetExceeded;
+  const registerTypes = !ctx.budget.exceeded;
   if (registerTypes) registerReferencedTypes(type, ctx);
 
   // Determine visibility

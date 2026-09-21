@@ -9,6 +9,7 @@ import {
   resolveTypeId,
 } from '../ast/type-identity';
 import type { SerializerContext } from '../serializers/context';
+import { withExpansionBudget } from '../serializers/expansion-budget';
 import {
   buildSchema,
   ensureNonEmptySchema,
@@ -266,10 +267,12 @@ export function expandReachableTypes(
         id,
         name,
         kind: symbolKind(symbol),
-        schema: ensureNonEmptySchema(
-          buildSchema(declared, checker, ctx, writtenWhenAny(symbol, declared)),
-          declared,
-          checker,
+        schema: withExpansionBudget(ctx, `type ${id}`, () =>
+          ensureNonEmptySchema(
+            buildSchema(declared, checker, ctx, writtenWhenAny(symbol, declared)),
+            declared,
+            checker,
+          ),
         ),
       });
     }

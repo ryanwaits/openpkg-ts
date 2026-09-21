@@ -8,14 +8,13 @@ import { extract } from '../builder/spec-builder';
  */
 describe('degraded text of an instantiated signature', () => {
   test('names the type argument, not the type parameter', async () => {
-    const wide = Array.from({ length: 260 }, (_, i) => {
-      const props = Array.from({ length: 80 }, (_, p) => `p${p}: { v${i}: number }`).join('; ');
-      return `export function f${i}(): { ${props} } { return null as any; }`;
-    }).join('\n');
+    // One anonymous parameter type wide enough to spend the export's own budget
+    const inner = Array.from({ length: 110 }, (_, v) => `v${v}: number`).join('; ');
+    const huge = Array.from({ length: 100 }, (_, p) => `p${p}: { ${inner} }`).join('; ');
     const { spec, diagnostics } = await extract({
       entryFile: 'test.ts',
-      content: `${wide}
-        interface Ctor<T, D> { new (def: D): T }
+      content: `
+        interface Ctor<T, D> { new (big: { ${huge} }, def: D): T }
         export interface StrDef { type: 'string' }
         export interface Str { def: StrDef }
         export const Str: Ctor<Str, StrDef> = null as any;`,
@@ -23,7 +22,7 @@ describe('degraded text of an instantiated signature', () => {
 
     expect(diagnostics.some((d) => d.code === 'TYPE_EXPANSION_LIMIT')).toBe(true);
     const str = spec.exports.find((e) => e.name === 'Str');
-    expect(str?.signatures?.[0].parameters?.[0]).toMatchObject({
+    expect(str?.signatures?.[0].parameters?.[1]).toMatchObject({
       name: 'def',
       schema: { 'x-ts-type': 'StrDef' },
     });

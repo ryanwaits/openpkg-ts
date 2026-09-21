@@ -19,6 +19,7 @@ import { extractStandardSchemasFromProject } from '../schema/standard-schema';
 import { serializeClass, serializeConstructSignatures } from '../serializers/classes';
 import { createContext, type SerializerContext } from '../serializers/context';
 import { serializeEnum } from '../serializers/enums';
+import { withExpansionBudget } from '../serializers/expansion-budget';
 import { serializeFunctionExport } from '../serializers/functions';
 import { serializeInterface, serializeMergedTypeSide } from '../serializers/interfaces';
 import { buildSignatures } from '../serializers/shared';
@@ -337,7 +338,9 @@ export async function extract(options: ExtractOptions): Promise<ExtractResult> {
           continue;
         }
 
-        const exp = serializeDeclaration(declaration, symbol, exportName, ctx, isTypeOnly);
+        const exp = withExpansionBudget(ctx, exportName, () =>
+          serializeDeclaration(declaration, symbol, exportName, ctx, isTypeOnly),
+        );
         if (exp) {
           const typeSide = mergedTypeSideOf(exp, declaration, targetSymbol, ctx);
           if (typeSide) {
@@ -368,11 +371,11 @@ export async function extract(options: ExtractOptions): Promise<ExtractResult> {
 
     // Value + type under one name (`interface Foo` + `const Foo`, or an
     // interface merged onto a class): the export carries the type's members.
-    // Filled after every export is serialized so a
-    // wide surface (zod: 79 such classes) spends only what is left of the
-    // expansion budget and leaves all other exports as they were.
+    // The type side is built under a budget of its own, like a registered type.
     for (const { index, symbol, ontoClass } of mergedTypeSides) {
-      exports[index] = withMergedTypeSide(exports[index], symbol, ctx, ontoClass);
+      exports[index] = withExpansionBudget(ctx, exports[index].name, () =>
+        withMergedTypeSide(exports[index], symbol, ctx, ontoClass),
+      );
     }
 
     // Build verification summary from tracker
@@ -396,7 +399,7 @@ export async function extract(options: ExtractOptions): Promise<ExtractResult> {
 
     if (ctx.budgetExceeded) {
       diagnostics.push({
-        message: 'Stopped expanding some types after hitting the schema expansion budget',
+        message: `Stopped expanding some types after hitting the schema expansion budget${exhaustedBudgetNote(ctx)}`,
         severity: 'warning',
         code: 'TYPE_EXPANSION_LIMIT',
       });
@@ -1074,6 +1077,14 @@ function withMergedTypeSide(
     ...(entry.kind === 'class' && !ontoClass ? instanceType : {}),
     ...(entry.description ? {} : { description, tags: [...(entry.tags ?? []), ...(tags ?? [])] }),
   };
+}
+
+/** Names the exports and types whose own budget ran out (the rest only deferred a type). */
+function exhaustedBudgetNote(ctx: SerializerContext): string {
+  const owners = [...new Set(ctx.exhaustedBudgets)];
+  if (owners.length === 0) return '';
+  const shown = owners.slice(0, 10).join(', ');
+  return `: ${shown}${owners.length > 10 ? ` (+${owners.length - 10} more)` : ''}`;
 }
 
 function withExportName(entry: SpecExport, exportName: string): SpecExport {

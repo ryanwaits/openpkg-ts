@@ -1,6 +1,7 @@
 import type { SpecType, SpecTypeKind, SpecTypeParameter } from '@openpkg-ts/spec';
 import ts from 'typescript';
 import type { SerializerContext } from '../serializers/context';
+import { withExpansionBudget } from '../serializers/expansion-budget';
 import {
   ARRAY_PROTOTYPE_METHODS,
   buildAliasBodySchema,
@@ -246,11 +247,8 @@ export class TypeRegistry {
     this.processing.add(id);
 
     try {
-      const specType = this.buildSpecType(
-        registeredForm(type, symbol, ctx.typeChecker),
-        symbol,
-        id,
-        ctx,
+      const specType = withExpansionBudget(ctx, `type ${id}`, () =>
+        this.buildSpecType(registeredForm(type, symbol, ctx.typeChecker), symbol, id, ctx),
       );
       if (specType) {
         this.add(specType);
