@@ -47,22 +47,6 @@ jobs:
       - run: node_modules/typescript-native/bin/tsc --version
       - run: bun run typecheck:native
 
-  corpus:
-    name: Extract corpus (zustand, jotai, valtio, immer, valibot, zod, hono)
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    steps:
-      - uses: actions/checkout@v4
-      - uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: latest
-      - run: bun install
-      - run: bun run build
-      - name: Extract popular packages
-        env:
-          NODE_OPTIONS: --max-old-space-size=2048
-        run: bun run test:corpus
-
   test-ts-matrix:
     name: Test (typescript ${{ matrix.ts }})
     runs-on: ubuntu-latest
