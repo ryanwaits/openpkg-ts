@@ -9,7 +9,7 @@
   "totals": {
     "anyOf": 204,
     "enum": 86,
-    "x-ts-type": 370
+    "x-ts-type": 369
   },
   "uniqueUnions": [
     {
@@ -811,10 +811,6 @@
     {
       "union": "x-ts-type { type: \"tuple\"; items: SpecSchema[]; minItems?: number | undefined; maxItems?: number | undefined; }",
       "count": 12
-    },
-    {
-      "union": "x-ts-type { version: 1; vendor: string; types?: { input: unknown; output: unknown; } | undefined; jsonSchema: { input: (options: StandardJSONSchemaOptions) => Record<string, unknown>; output: (options: StandardJSONSchemaOptions) => Record<string, unknown>; }; }",
-      "count": 1
     },
     {
       "union": "x-ts-type boolean | \"add\" | \"remove\"",
