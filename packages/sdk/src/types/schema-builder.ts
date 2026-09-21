@@ -462,8 +462,29 @@ export function typeNodeDefersExpansion(
   return shouldDeferAlias(symbol);
 }
 
+/**
+ * The annotation names a type parameter but the type is its argument: a
+ * signature instantiated from a generic (`Ctor<Str, StrDef>`'s `new (def: D)`).
+ */
+function isStaleTypeParameterNode(
+  type: ts.Type,
+  checker: ts.TypeChecker,
+  typeNode: ts.TypeNode,
+): boolean {
+  if (type.flags & ts.TypeFlags.TypeParameter) return false;
+  if (!ts.isTypeReferenceNode(typeNode) || !ts.isIdentifier(typeNode.typeName)) return false;
+  const symbol = checker.getSymbolAtLocation(typeNode.typeName);
+  return !!symbol && (symbol.flags & ts.SymbolFlags.TypeParameter) !== 0;
+}
+
 /** Written alias text only — never typeToString (hangs on DeepPickN). */
-function cheapTypeText(type: ts.Type, _checker: ts.TypeChecker, typeNode?: ts.TypeNode): string {
+function cheapTypeText(type: ts.Type, checker: ts.TypeChecker, typeNode?: ts.TypeNode): string {
+  if (typeNode && isStaleTypeParameterNode(type, checker, typeNode)) {
+    // Name only (type arguments would need typeToString). A lib container's
+    // name alone (`Array`) says less than the annotation, so that keeps it.
+    const argument = type.aliasSymbol?.getName() ?? type.getSymbol()?.getName();
+    if (argument && !argument.startsWith('__') && !isBuiltinGeneric(argument)) return argument;
+  }
   if (typeNode) {
     try {
       const text = scrubImportQualifiers(typeNode.getText().replace(/\s+/g, ' ').trim());
