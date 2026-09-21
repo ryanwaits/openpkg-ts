@@ -69,7 +69,7 @@ describe('exports bound by destructuring', () => {
     expect(cache?.kind).toBe('variable');
     expect(cache?.schema).toMatchObject({ $ref: '#/types/Cache' });
 
-    expect(result.spec.generation?.skipped ?? []).toEqual([]);
+    expect(result.verification?.details.skipped ?? []).toEqual([]);
   });
 
   test('object pattern: renames, defaults, nesting and rest', async () => {
