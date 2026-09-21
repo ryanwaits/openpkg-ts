@@ -1,4 +1,5 @@
 import ts from 'typescript';
+import { declaredForm } from '../ast/registry';
 import { resolveAliasSymbol } from '../ast/resolve';
 import {
   isForeignPackage,
@@ -137,6 +138,15 @@ export function expandReachableTypes(
       for (const t of type.types) {
         visit(t, depth + 1);
       }
+    }
+
+    // An instantiation reaches what its declaration reaches, plus its
+    // arguments (walked above): walk the declaration once for all of them
+    // instead of resolving every instantiation's member graph.
+    const declared = declaredForm(type, checker);
+    if (declared !== type) {
+      visit(declared, depth);
+      return;
     }
 
     // Members only for in-scope types: walking into DOM/react internals would

@@ -1,5 +1,6 @@
 import type { SpecSignatureParameter } from '@openpkg-ts/spec';
 import ts from 'typescript';
+import { declaredForm } from '../ast/registry';
 import { isForeignPackage } from '../ast/type-identity';
 import { getParamDescription, parseInlineTags } from '../ast/utils';
 import type { SerializerContext } from '../serializers/context';
@@ -318,6 +319,22 @@ export function registerReferencedTypes(type: ts.Type, ctx: SerializerContext, d
     for (const arg of typeArgs) {
       registerReferencedTypes(arg, ctx, depth + 1);
     }
+  }
+
+  // Alias arguments (`Result<Ok, Err>`) are references too
+  for (const arg of type.aliasTypeArguments ?? []) {
+    registerReferencedTypes(arg, ctx, depth + 1);
+  }
+
+  // An instantiation (`Box<string>`) references what its declaration
+  // (`Box<T>`) references, plus its arguments (walked above). Walking the
+  // declaration instead is shared by every instantiation; walking each one
+  // makes the checker resolve the whole member graph again per use (zod: 80
+  // schema classes over one generic base).
+  const declared = declaredForm(type, checker);
+  if (declared !== type) {
+    registerReferencedTypes(declared, ctx, depth);
+    return;
   }
 
   // Handle union types
