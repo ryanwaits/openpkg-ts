@@ -144,9 +144,10 @@ function declaredTypeOf(symbol: ts.Symbol, fallback: ts.Type, checker: ts.TypeCh
  * entry does not depend on export order or `only`.
  */
 function registeredForm(type: ts.Type, symbol: ts.Symbol, checker: ts.TypeChecker): ts.Type {
-  if (symbol.flags & ts.SymbolFlags.Class && !type.isClass()) {
-    return declaredTypeOf(symbol, type, checker);
-  }
+  const constructorSide =
+    symbol.flags & ts.SymbolFlags.Class &&
+    (type as ts.ObjectType).objectFlags & ts.ObjectFlags.Anonymous;
+  if (constructorSide) return declaredTypeOf(symbol, type, checker);
   return declaredForm(type, checker, symbol);
 }
 
