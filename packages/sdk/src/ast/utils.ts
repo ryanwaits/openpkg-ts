@@ -588,3 +588,28 @@ export function getExportKind(
     return 'function';
   return 'variable';
 }
+
+/** Base type expressions of a class or interface declaration's `extends` clause. */
+export function getExtendsExpressions(
+  node: ts.ClassLikeDeclaration | ts.InterfaceDeclaration,
+): readonly ts.ExpressionWithTypeArguments[] {
+  return (
+    node.heritageClauses?.find((clause) => clause.token === ts.SyntaxKind.ExtendsKeyword)?.types ??
+    []
+  );
+}
+
+/**
+ * `extends` as the spec records it: each base by its resolved name, else as
+ * written (a base the checker cannot resolve still has a name in source).
+ * Several bases join with ' & '.
+ */
+export function getExtendsText(
+  node: ts.ClassLikeDeclaration | ts.InterfaceDeclaration,
+  checker: ts.TypeChecker,
+): string | undefined {
+  const names = getExtendsExpressions(node).map(
+    (expr) => checker.getTypeAtLocation(expr).getSymbol()?.getName() ?? expr.expression.getText(),
+  );
+  return names.length > 0 ? names.join(' & ') : undefined;
+}

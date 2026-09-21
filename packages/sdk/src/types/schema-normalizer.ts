@@ -717,10 +717,19 @@ export function normalizeExport(exp: SpecExport, options: NormalizeOptions = {})
     exp.members &&
     exp.members.length > 0
   ) {
-    result.schema = normalizeMembers(exp.members, options) as SpecSchema;
+    result.schema = withOpenArms(normalizeMembers(exp.members, options), result.schema);
   }
 
   return result;
+}
+
+/**
+ * A class or interface whose serializer set `schema: { allOf }` extends bases
+ * nobody could resolve: those arms keep the members shape from reading closed.
+ */
+function withOpenArms(membersSchema: JSONSchema, provided: SpecSchema | undefined): SpecSchema {
+  const arms = (provided as { allOf?: unknown } | undefined)?.allOf;
+  return (Array.isArray(arms) ? { allOf: [membersSchema, ...arms] } : membersSchema) as SpecSchema;
 }
 
 /**
@@ -747,7 +756,7 @@ export function normalizeType(type: SpecType, options: NormalizeOptions = {}): S
   // For interfaces and classes, generate schema from members
   // This populates the `schema` field with a JSON Schema object
   if (shouldGenerateMembersSchema(type.kind) && type.members && type.members.length > 0) {
-    result.schema = normalizeMembers(type.members, options) as SpecSchema;
+    result.schema = withOpenArms(normalizeMembers(type.members, options), result.schema);
   }
 
   return result;

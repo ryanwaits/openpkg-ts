@@ -2,7 +2,7 @@ import type { SpecSchema, SpecSignature } from '@openpkg-ts/spec';
 import ts from 'typescript';
 import { resolveAliasSymbol } from '../ast/resolve';
 import { isLibSymbol, packageNameFromPath, resolveTypeId, typeRefId } from '../ast/type-identity';
-import { isSymbolDeprecated } from '../ast/utils';
+import { getExtendsExpressions, isSymbolDeprecated } from '../ast/utils';
 import { BUILTIN_TYPE_SCHEMAS, type BuiltinSchema } from '../schema/builtins';
 import type { SerializerContext } from '../serializers/context';
 
@@ -172,13 +172,24 @@ export function buildSchemaFromTypeNode(
   if (node.kind === ts.SyntaxKind.UnknownKeyword) {
     return { type: 'unknown' };
   }
-  if (ts.isTypeReferenceNode(node)) {
+  // `extends Base<T>` is an expression, not a type reference; same recovery.
+  const nameNode = ts.isTypeReferenceNode(node)
+    ? node.typeName
+    : ts.isExpressionWithTypeArguments(node) &&
+        (ts.isIdentifier(node.expression) || ts.isPropertyAccessExpression(node.expression))
+      ? node.expression
+      : undefined;
+  if (nameNode) {
     const raw = checker.getSymbolAtLocation(
-      ts.isQualifiedName(node.typeName) ? node.typeName.right : node.typeName,
+      ts.isQualifiedName(nameNode)
+        ? nameNode.right
+        : ts.isPropertyAccessExpression(nameNode)
+          ? nameNode.name
+          : nameNode,
     );
     const symbol = resolvedSymbol(raw, checker);
-    const name = symbol?.getName() ?? node.typeName.getText();
-    const args = node.typeArguments?.map((arg) => {
+    const name = symbol?.getName() ?? nameNode.getText();
+    const args = (node as ts.NodeWithTypeArguments).typeArguments?.map((arg) => {
       if (typeNodeDefersExpansion(arg, checker, ctx?.program)) {
         return buildSchemaFromTypeNode(arg, checker, ctx);
       }
@@ -220,6 +231,48 @@ export function buildSchemaFromTypeNode(
     return buildSchema(t, checker, ctx);
   }
   return { 'x-ts-type': scrubImportQualifiers(node.getText().replace(/\s+/g, ' ')) } as SpecSchema;
+}
+
+/**
+ * Schema arms for the bases of a class or interface the checker cannot see
+ * into (`any`: an unresolved import, an alias over a missing global). Such a
+ * base contributes members nobody can list, so the own shape must not read as
+ * closed: callers emit `allOf: [own shape, ...arms]`, the form an alias
+ * intersection with the same arm (`{...} & Config`) already takes.
+ */
+export function openHeritageArms(
+  declarations: readonly ts.Declaration[],
+  checker: ts.TypeChecker,
+  ctx?: SerializerContext,
+): SpecSchema[] {
+  return declarations
+    .filter(
+      (decl): decl is ts.ClassLikeDeclaration | ts.InterfaceDeclaration =>
+        ts.isClassLike(decl) || ts.isInterfaceDeclaration(decl),
+    )
+    .flatMap((decl) => [...getExtendsExpressions(decl)])
+    .flatMap((expr) => {
+      const base = checker.getTypeAtLocation(expr);
+      if (!(base.flags & ts.TypeFlags.Any)) return [];
+      // An unresolved type import keeps its alias symbol and registers as a
+      // stub the arm can ref. A value import (class base) has no type to
+      // register: written text, not a dangling ref.
+      const registered = ctx?.typeRegistry.registerType(base, ctx);
+      const written = checker.getSymbolAtLocation(expr.expression);
+      const unresolvedImport =
+        !!written &&
+        !!(written.flags & ts.SymbolFlags.Alias) &&
+        resolvedSymbol(written, checker) === written;
+      if (!registered && unresolvedImport) {
+        return [{ 'x-ts-type': scrubImportQualifiers(expr.getText()) } as SpecSchema];
+      }
+      return [buildSchemaFromTypeNode(expr, checker, ctx)];
+    });
+}
+
+/** `allOf` of a shape and the open heritage arms; the shape alone when there are none. */
+export function withOpenHeritage(schema: SpecSchema, arms: readonly SpecSchema[]): SpecSchema {
+  return arms.length > 0 ? { allOf: [schema, ...arms] } : schema;
 }
 
 /**

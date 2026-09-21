@@ -9,6 +9,7 @@ import {
   decoratePropertySchema,
   getTypeOrigin,
   NUMBER_PROTOTYPE_METHODS,
+  openHeritageArms,
   PRIMITIVES,
   renderTypeText,
   STRING_PROTOTYPE_METHODS,
@@ -16,11 +17,12 @@ import {
   stripUndefinedFromType,
   withDeprecated,
   withDescription,
+  withOpenHeritage,
   writtenTypeText,
 } from '../types/schema-builder';
 import { resolveAliasSymbol } from './resolve';
 import { isLibFile, MAX_REGISTERED_TYPES, resolveTypeId } from './type-identity';
-import { extractTypeParameters, isSymbolDeprecated } from './utils';
+import { extractTypeParameters, getExtendsText, isSymbolDeprecated } from './utils';
 
 /** Built-in types that shouldn't be registered */
 const BUILTINS = new Set([
@@ -287,6 +289,15 @@ export class TypeRegistry {
       }
     }
 
+    // Heritage as the source has it, whatever the bases resolve to. Resolvable
+    // bases are already flattened into the shape; unresolvable ones open it.
+    const heritage = (symbol.declarations ?? []).filter(
+      (d): d is ts.ClassDeclaration | ts.InterfaceDeclaration =>
+        ts.isClassDeclaration(d) || ts.isInterfaceDeclaration(d),
+    );
+    const extendsText = heritage.map((d) => getExtendsText(d, checker)).find(Boolean);
+    schema = withOpenHeritage(schema, openHeritageArms(heritage, checker, ctx));
+
     // Generic types keep their type parameters — consumers can't meaningfully
     // flatten a generic alias without knowing it takes arguments.
     let typeParameters: SpecTypeParameter[] | undefined;
@@ -305,6 +316,7 @@ export class TypeRegistry {
       kind,
       ...(typeParameters && typeParameters.length > 0 ? { typeParameters } : {}),
       schema,
+      ...(extendsText ? { extends: extendsText } : {}),
       ...(external ? { external: true } : {}),
     };
   }

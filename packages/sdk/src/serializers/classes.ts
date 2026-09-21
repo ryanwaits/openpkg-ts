@@ -3,6 +3,7 @@ import ts from 'typescript';
 import {
   extractTypeParameters,
   extractTypeParametersFromSignature,
+  getExtendsText,
   getJSDocComment,
   isSymbolDeprecated,
 } from '../ast/utils';
@@ -10,6 +11,7 @@ import { extractParameters, registerReferencedTypes } from '../types/parameters'
 import {
   buildSchema,
   decoratePropertySchema,
+  openHeritageArms,
   stripUndefinedFromType,
 } from '../types/schema-builder';
 import { getInheritedMembers, type SerializerContext } from './context';
@@ -97,7 +99,8 @@ export function serializeClass(
   members.push(...inheritedStatic);
 
   // Extract extends clause
-  const extendsClause = getExtendsClause(node, checker);
+  const extendsClause = getExtendsText(node, checker);
+  const openArms = openHeritageArms([node], checker, ctx);
 
   // Extract implements clause
   const implementsClause = getImplementsClause(node, checker);
@@ -120,6 +123,8 @@ export function serializeClass(
     members: members.length > 0 ? members : undefined,
     signatures: signatures.length > 0 ? signatures : undefined,
     extends: extendsClause,
+    // Arms only: normalizeExport joins them to the shape it builds from members.
+    ...(openArms.length > 0 ? { schema: { allOf: openArms } } : {}),
     implements: implementsClause?.length ? implementsClause : undefined,
     ...(deprecated ? { deprecated: true, deprecationReason } : {}),
     ...(examples.length > 0 ? { examples } : {}),
@@ -412,22 +417,6 @@ function serializeAccessor(
     flags: Object.keys(flags).length > 0 ? flags : undefined,
     ...(inlineTags ? { inlineTags } : {}),
   };
-}
-
-function getExtendsClause(node: ts.ClassDeclaration, checker: ts.TypeChecker): string | undefined {
-  if (!node.heritageClauses) return undefined;
-
-  for (const clause of node.heritageClauses) {
-    if (clause.token === ts.SyntaxKind.ExtendsKeyword) {
-      const expr = clause.types[0];
-      if (expr) {
-        const type = checker.getTypeAtLocation(expr);
-        const symbol = type.getSymbol();
-        return symbol?.getName() ?? expr.expression.getText();
-      }
-    }
-  }
-  return undefined;
 }
 
 function getImplementsClause(

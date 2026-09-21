@@ -1,10 +1,16 @@
 import type { SpecExport, SpecMember, SpecSignature } from '@openpkg-ts/spec';
 import ts from 'typescript';
-import { extractTypeParameters, getJSDocComment, isSymbolDeprecated } from '../ast/utils';
+import {
+  extractTypeParameters,
+  getExtendsText,
+  getJSDocComment,
+  isSymbolDeprecated,
+} from '../ast/utils';
 import { extractParameters, registerReferencedTypes } from '../types/parameters';
 import {
   buildSchema,
   decoratePropertySchema,
+  openHeritageArms,
   stripUndefinedFromType,
 } from '../types/schema-builder';
 import { getInheritedMembers, type SerializerContext } from './context';
@@ -28,7 +34,8 @@ export function serializeInterface(
   const { members, callSignatureMember } = serializeTypeElements(node.members, ctx);
 
   // Extract extends clause
-  const extendsClause = getInterfaceExtends(node, checker);
+  const extendsClause = getExtendsText(node, checker);
+  const openArms = openHeritageArms([node], checker, ctx);
 
   // For callable interfaces, extract call signatures to export-level signatures array
   // This makes it easier for consumers to know the interface is callable
@@ -48,6 +55,8 @@ export function serializeInterface(
     members: members.length > 0 ? members : undefined,
     signatures: exportSignatures,
     extends: extendsClause,
+    // Arms only: normalizeExport joins them to the shape it builds from members.
+    ...(openArms.length > 0 ? { schema: { allOf: openArms } } : {}),
     ...(deprecated ? { deprecated: true, deprecationReason } : {}),
     ...(examples.length > 0 ? { examples } : {}),
     ...(inlineTags ? { inlineTags } : {}),
@@ -184,7 +193,7 @@ export function serializeMergedTypeSide(
   const { description, tags } = getJSDocComment(typeDecl);
   return {
     members,
-    extends: interfaces.map((decl) => getInterfaceExtends(decl, checker)).find(Boolean),
+    extends: interfaces.map((decl) => getExtendsText(decl, checker)).find(Boolean),
     typeParameters: extractTypeParameters(typeDecl, checker),
     description,
     tags,
@@ -335,23 +344,4 @@ function serializeIndexSignature(
     schema: valueSchema,
     ...(inlineTags ? { inlineTags } : {}),
   };
-}
-
-function getInterfaceExtends(
-  node: ts.InterfaceDeclaration,
-  checker: ts.TypeChecker,
-): string | undefined {
-  if (!node.heritageClauses) return undefined;
-
-  for (const clause of node.heritageClauses) {
-    if (clause.token === ts.SyntaxKind.ExtendsKeyword && clause.types.length > 0) {
-      const names = clause.types.map((expr) => {
-        const type = checker.getTypeAtLocation(expr);
-        return type.getSymbol()?.getName() ?? expr.expression.getText();
-      });
-      // Join multiple extends with ' & ' for intersection representation
-      return names.join(' & ');
-    }
-  }
-  return undefined;
 }
