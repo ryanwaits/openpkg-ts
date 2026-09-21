@@ -328,6 +328,16 @@ function discoverAmbientTypePackages(baseDir: string): string[] {
   return found;
 }
 
+/** The `moduleResolution` a tsconfig means when it sets `module` and says no more. */
+function resolutionFor(module: ts.ModuleKind): ts.ModuleResolutionKind | undefined {
+  if (module === ts.ModuleKind.NodeNext) return ts.ModuleResolutionKind.NodeNext;
+  if (module >= ts.ModuleKind.Node16 && module < ts.ModuleKind.NodeNext)
+    return ts.ModuleResolutionKind.Node16;
+  if (module >= ts.ModuleKind.ES2015) return ts.ModuleResolutionKind.Bundler;
+  // CommonJS and older: TypeScript's own default (node10) is right on every version.
+  return undefined;
+}
+
 export function createProgram(options: ProgramOptions): ProgramResult {
   const { content } = options;
   // Absolutize before any upward walk: a relative entry makes buildWorkspaceMap
@@ -355,12 +365,15 @@ export function createProgram(options: ProgramOptions): ProgramResult {
     // The NodeNext defaults are a pair. A tsconfig that sets `module` alone
     // (e.g. "ES6") must not inherit NodeNext resolution: the mix is invalid
     // (TS5110), extensionless relative imports stop resolving, and everything
-    // imported through them extracts as `any`. Let TypeScript derive it.
+    // imported through them extracts as `any`. Pick the resolution that goes
+    // with the module kind rather than TypeScript's default, which differs by
+    // version: for ES modules TS 5 derives `classic` (no directory index, no
+    // node_modules), TS 6 derives `bundler`.
     if (
       parsedConfig.options.module !== undefined &&
       parsedConfig.options.moduleResolution === undefined
     ) {
-      delete compilerOptions.moduleResolution;
+      compilerOptions.moduleResolution = resolutionFor(parsedConfig.options.module);
     }
 
     // Resolve project references (workspace packages)
