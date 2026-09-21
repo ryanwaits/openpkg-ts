@@ -1,5 +1,18 @@
 # @openpkg-ts/extract
 
+## 0.54.9
+
+### Patch Changes
+
+- ac2aee7: A value with construct signatures (`export const ZodString: core.$constructor<ZodString>`) carries them in `signatures[]` like a class carries its constructors (parameters, docs, `overloadIndex`, `typeParameters` of a generic `new`). zod: 81 of 81 classes have signatures, was 2. When such a value has no type of its own name (`ZodRealError: $constructor<ZodError>`), `members`, `extends` and `typeParameters` come from the type its first construct signature returns, unless that type is a lib or unfollowed external one. An interface merged onto a class (`class Foo {}` + `interface Foo { extra(): void }`) adds its members, own and inherited, to the class's `members[]`; the class keeps its own `extends` and type parameters. Past the expansion budget, the text of a parameter whose annotation is a type parameter of an instantiated generic names the argument (`$ZodStringDef`), not the parameter (`D`).
+- ac2aee7: `export default <expression>` is extracted instead of skipped as `default: internal`: `export default (a: number) => a` and function expressions (through parentheses, `as`, `satisfies`) are `kind: "function"` with signatures; object literals, primitives and call expressions (`export default defineConfig({...})`) are a `variable` typed by the checker, or a `function` / `class` when that type is callable / constructable. `name` is `"default"`, there is no `localName`, and docs come from the export statement.
+- ac2aee7: Two declarations that share a name never share one `types[]` entry or one `$ref`. valtio's `devtools(state, options)` pointed at `#/types/Options`, which held the unrelated `type Options = { sync?: boolean }` of another file: an alias the checker resolves to `any` (an intersection arm from an unresolved module) had its `$ref` emitted by bare name, and its entry was `{ "x-ts-type": "any" }`. Such refs are now keyed on the declaration, and the entry keeps the written shape (`allOf` with the `{ enabled, name }` arm). A file-private namesake of an exported type is also registered now (it was skipped as "already exported").
+
+  Id scheme (`SpecType.id`, the `$ref` key; `name` stays the source name): an exported type always owns its bare name, whatever the export order or `only` filter; otherwise the first declaration registered does. Every other declaration gets `<package>.<Name>` when it is declared in another package, else `<Namespace>.<Name>` when it sits in a `namespace`, else `<file>.<Name>` from the declaring file's basename (`devtools.Options`, `react.Options`; an `index` file goes by its directory), with `<Name>_2` as a last resort. This replaces `local.<Name>` / `<Name>_2` for same-package collisions (jotai: `useAtom.Options` instead of `Options_5`; zod: `StandardJSONSchemaV1.Types` instead of `Types_2`). zod's `input` / `output` refs become `#/types/core.input` / `#/types/core.output`: the exported `z.input` is a different declaration than `core.input`, which the refs mean. `normalize` orders same-named types by id.
+
+- Updated dependencies [ac2aee7]
+  - @openpkg-ts/spec@0.54.9
+
 ## 0.54.8
 
 ### Patch Changes
