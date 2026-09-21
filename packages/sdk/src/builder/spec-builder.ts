@@ -16,7 +16,7 @@ import { claimExportedTypeIds, isLibFile, packageNameFromPath } from '../ast/typ
 import { isSymbolDeprecated, parseInlineTags } from '../ast/utils';
 import { createProgram } from '../compiler/program';
 import { extractStandardSchemasFromProject } from '../schema/standard-schema';
-import { serializeClass } from '../serializers/classes';
+import { serializeClass, serializeConstructSignatures } from '../serializers/classes';
 import { createContext, type SerializerContext } from '../serializers/context';
 import { serializeEnum } from '../serializers/enums';
 import { serializeFunctionExport } from '../serializers/functions';
@@ -208,7 +208,7 @@ export async function extract(options: ExtractOptions): Promise<ExtractResult> {
       });
     }
 
-    const mergedTypeSides: Array<{ index: number; symbol: ts.Symbol }> = [];
+    const mergedTypeSides: Array<{ index: number; symbol: ts.Symbol; ontoClass: boolean }> = [];
 
     const followExternal = options.followExternal;
 
@@ -339,8 +339,13 @@ export async function extract(options: ExtractOptions): Promise<ExtractResult> {
 
         const exp = serializeDeclaration(declaration, symbol, exportName, ctx, isTypeOnly);
         if (exp) {
-          if (!exp.members && isValueDeclaration(declaration) && hasTypeSide(targetSymbol)) {
-            mergedTypeSides.push({ index: exports.length, symbol: targetSymbol });
+          const typeSide = mergedTypeSideOf(exp, declaration, targetSymbol, ctx);
+          if (typeSide) {
+            mergedTypeSides.push({
+              index: exports.length,
+              symbol: typeSide,
+              ontoClass: ts.isClassDeclaration(declaration),
+            });
           }
           exports.push(exp);
           tracker.status = 'success';
@@ -361,12 +366,13 @@ export async function extract(options: ExtractOptions): Promise<ExtractResult> {
       }
     }
 
-    // Value + type under one name (`interface Foo` + `const Foo`): the export
-    // carries the type's members. Filled after every export is serialized so a
+    // Value + type under one name (`interface Foo` + `const Foo`, or an
+    // interface merged onto a class): the export carries the type's members.
+    // Filled after every export is serialized so a
     // wide surface (zod: 79 such classes) spends only what is left of the
     // expansion budget and leaves all other exports as they were.
-    for (const { index, symbol } of mergedTypeSides) {
-      exports[index] = withMergedTypeSide(exports[index], symbol, ctx);
+    for (const { index, symbol, ontoClass } of mergedTypeSides) {
+      exports[index] = withMergedTypeSide(exports[index], symbol, ctx, ontoClass);
     }
 
     // Build verification summary from tracker
@@ -929,7 +935,14 @@ function withCallableKind(
   callSigs: readonly ts.Signature[],
   ctx: SerializerContext,
 ): SpecExport {
-  if (type.getConstructSignatures().length > 0) return { ...entry, kind: 'class' };
+  const constructSigs = type.getConstructSignatures();
+  if (constructSigs.length > 0) {
+    return {
+      ...entry,
+      kind: 'class',
+      signatures: serializeConstructSignatures(constructSigs, ctx),
+    };
+  }
   if (callSigs.length === 0) return entry;
   return {
     ...entry,
@@ -1013,6 +1026,33 @@ function hasTypeSide(symbol: ts.Symbol): boolean {
 }
 
 /**
+ * Symbol whose type members the export should carry, if any: the export's own
+ * merged type side, else for a constructor value of another name
+ * (`const RealError: Ctor<Err>`) the type it constructs.
+ */
+function mergedTypeSideOf(
+  exp: SpecExport,
+  declaration: ts.Declaration,
+  symbol: ts.Symbol,
+  ctx: SerializerContext,
+): ts.Symbol | undefined {
+  if (ts.isClassDeclaration(declaration)) {
+    return symbol.flags & ts.SymbolFlags.Interface ? symbol : undefined;
+  }
+  if (exp.members || !isValueDeclaration(declaration)) return undefined;
+  if (hasTypeSide(symbol)) return symbol;
+  if (exp.kind !== 'class') return undefined;
+
+  const [construct] = ctx.typeChecker.getTypeAtLocation(declaration).getConstructSignatures();
+  const instance = construct?.getReturnType();
+  const constructed = instance && (instance.aliasSymbol ?? instance.getSymbol());
+  if (!constructed || !hasTypeSide(constructed)) return undefined;
+  // A foreign or lib instance type (`new () => Date`) stays a reference.
+  if (ctx.shouldExpandExternal && !ctx.shouldExpandExternal(constructed)) return undefined;
+  return constructed;
+}
+
+/**
  * The value's own docs win; the type side fills what is missing. `extends` and
  * type parameters describe the instance type, so only a constructor takes them
  * (a generic interface does not make its companion function generic).
@@ -1021,14 +1061,17 @@ function withMergedTypeSide(
   entry: SpecExport,
   symbol: ts.Symbol,
   ctx: SerializerContext,
+  ontoClass: boolean,
 ): SpecExport {
   const typeSide = serializeMergedTypeSide(symbol, ctx);
   if (!typeSide) return entry;
   const { members, description, tags, ...instanceType } = typeSide;
+  // A class declaration keeps its own members, `extends` and type parameters.
+  const own = new Set(entry.members?.map((m) => m.name));
   return {
     ...entry,
-    members,
-    ...(entry.kind === 'class' ? instanceType : {}),
+    members: [...(entry.members ?? []), ...(members ?? []).filter((m) => !own.has(m.name))],
+    ...(entry.kind === 'class' && !ontoClass ? instanceType : {}),
     ...(entry.description ? {} : { description, tags: [...(entry.tags ?? []), ...(tags ?? [])] }),
   };
 }

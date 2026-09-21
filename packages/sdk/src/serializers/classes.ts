@@ -1,6 +1,11 @@
 import type { SpecExport, SpecMember, SpecSignature, SpecVisibility } from '@openpkg-ts/spec';
 import ts from 'typescript';
-import { extractTypeParameters, getJSDocComment, isSymbolDeprecated } from '../ast/utils';
+import {
+  extractTypeParameters,
+  extractTypeParametersFromSignature,
+  getJSDocComment,
+  isSymbolDeprecated,
+} from '../ast/utils';
 import { extractParameters, registerReferencedTypes } from '../types/parameters';
 import {
   buildSchema,
@@ -273,12 +278,32 @@ function serializeConstructor(
   return serializeConstructorSignature(node, sig, ctx);
 }
 
+/**
+ * Construct signatures of a value that is not a class declaration
+ * (`const Foo: { new (def: Def): Foo }`), in the shape a class's constructors take.
+ */
+export function serializeConstructSignatures(
+  sigs: readonly ts.Signature[],
+  ctx: SerializerContext,
+): SpecSignature[] {
+  return sigs.map((sig, index) => {
+    const typeParameters = extractTypeParametersFromSignature(sig, ctx.typeChecker);
+    return {
+      ...serializeConstructorSignature(sig.getDeclaration(), sig, ctx),
+      ...(typeParameters ? { typeParameters } : {}),
+      ...(sigs.length > 1 ? { overloadIndex: index } : {}),
+    };
+  });
+}
+
 function serializeConstructorSignature(
-  node: ts.ConstructorDeclaration,
+  node: ts.SignatureDeclaration | ts.JSDocSignature | undefined,
   sig: ts.Signature,
   ctx: SerializerContext,
 ): SpecSignature {
-  const { description, tags, examples, inlineTags } = getJSDocComment(node);
+  const { description, tags, examples, inlineTags } = node
+    ? getJSDocComment(node)
+    : { description: undefined, tags: [], examples: [], inlineTags: undefined };
   const params = extractParameters(sig, ctx);
 
   return {

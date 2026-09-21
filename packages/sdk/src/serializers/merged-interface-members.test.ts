@@ -168,4 +168,92 @@ describe('value + interface under one name', () => {
     expect(plain?.kind).toBe('class');
     expect(plain?.members).toBeUndefined();
   });
+  test('constructor const carries construct signatures like a class', async () => {
+    const byName = await exportsOf(`
+      ${ZODLIKE}
+      export interface Pair<A, B> { first: A; second: B }
+      export const Pair: {
+        /** From a tuple. */
+        new <A, B>(entries: [A, B]): Pair<A, B>;
+        new <A, B>(first: A, second?: B, ...rest: unknown[]): Pair<A, B>;
+      } = null as any;`);
+
+    expect(byName.get('Str')?.signatures).toHaveLength(1);
+    expect(byName.get('Str')?.signatures?.[0].parameters).toMatchObject([
+      { name: 'def', required: true },
+    ]);
+
+    const pair = byName.get('Pair');
+    expect(pair?.signatures).toHaveLength(2);
+    expect(pair?.signatures?.[0]).toMatchObject({ description: 'From a tuple.', overloadIndex: 0 });
+    expect(pair?.signatures?.[1].parameters?.map((p) => [p.name, p.required, p.rest])).toEqual([
+      ['first', true, undefined],
+      ['second', false, undefined],
+      ['rest', false, true],
+    ]);
+  });
+
+  test('constructor const of another name takes members from what it constructs', async () => {
+    const real = (
+      await exportsOf(`
+        type Ctor<T> = { new (issues: string[]): T };
+        interface BaseErr { readonly issues: string[] }
+        /** A thrown error. */
+        export interface Err extends BaseErr { flatten(): string }
+        export const RealErr: Ctor<Err> = null as any;`)
+    ).get('RealErr');
+
+    expect(real?.kind).toBe('class');
+    expect(real?.members?.map((m) => m.name)).toEqual(['flatten', 'issues']);
+    expect(member(real, 'issues')).toMatchObject({ inheritedFrom: 'BaseErr' });
+    expect(real?.signatures?.[0].parameters?.[0]).toMatchObject({ name: 'issues' });
+  });
+
+  test('constructor const of a lib type does not inline the lib surface', async () => {
+    const stamp = (await exportsOf(`export const Stamp: { new (): Date } = null as any;`)).get(
+      'Stamp',
+    );
+
+    expect(stamp?.kind).toBe('class');
+    expect(stamp?.members).toBeUndefined();
+  });
+
+  test('interface merged onto a class adds its members', async () => {
+    const foo = (
+      await exportsOf(`
+        class Base { base(): void {} }
+        interface Mixin { mixed(): number }
+        export class Foo extends Base { own(): string { return ''; } dup(): void {} }
+        export interface Foo extends Mixin {
+          /** Declared by merging. */
+          extra(flag?: boolean): void;
+          dup(): void;
+        }`)
+    ).get('Foo');
+
+    expect(foo?.kind).toBe('class');
+    expect(foo?.extends).toBe('Base');
+    expect(foo?.members?.map((m) => m.name).sort()).toEqual([
+      'base',
+      'dup',
+      'extra',
+      'mixed',
+      'own',
+    ]);
+    expect(member(foo, 'extra')).toMatchObject({
+      kind: 'method',
+      description: 'Declared by merging.',
+    });
+    expect(member(foo, 'mixed')).toMatchObject({ inheritedFrom: 'Mixin' });
+
+    // An empty class keeps its own shape: the interface only adds members.
+    const bag = (
+      await exportsOf(`
+        interface Sized { size: number }
+        export class Bag {}
+        export interface Bag extends Sized { put(value: string): void }`)
+    ).get('Bag');
+    expect(bag?.extends).toBeUndefined();
+    expect(bag?.members?.map((m) => m.name).sort()).toEqual(['put', 'size']);
+  });
 });
