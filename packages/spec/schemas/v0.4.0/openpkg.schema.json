@@ -97,6 +97,10 @@
       "properties": {
         "id": { "type": "string" },
         "name": { "type": "string" },
+        "localName": {
+          "type": "string",
+          "description": "Identifier a default export goes by in source; name stays \"default\". Absent on named exports and anonymous defaults."
+        },
         "kind": {
           "type": "string",
           "enum": [

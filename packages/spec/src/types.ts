@@ -334,6 +334,13 @@ export type SpecTypeKind = 'class' | 'interface' | 'type' | 'enum' | 'external';
 export type SpecExport = {
   id: string;
   name: string;
+  /**
+   * Identifier a default export goes by in source (`useSWR` for
+   * `export default useSWR`; `name` stays `"default"`). The declaration's own
+   * name when it has one, else the identifier it is exported under. Absent on
+   * named exports and on anonymous defaults.
+   */
+  localName?: string;
   kind: SpecExportKind;
   signatures?: SpecSignature[];
   typeParameters?: SpecTypeParameter[];

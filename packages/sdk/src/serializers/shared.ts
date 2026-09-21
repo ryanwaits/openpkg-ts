@@ -5,7 +5,7 @@ import type {
   SpecSource,
   SpecTag,
 } from '@openpkg-ts/spec';
-import type ts from 'typescript';
+import ts from 'typescript';
 import {
   extractTypeParametersFromSignature,
   getJSDocComment,
@@ -45,6 +45,11 @@ export function extractExportMetadata(
   );
   const source = getSourceLocation(node, node.getSourceFile());
   return { description, tags, examples, source, deprecated, deprecationReason, inlineTags };
+}
+
+/** `export default function () {}` / `export default class {}` have no name node; they are named by their export. */
+export function anonymousDefaultName(node: ts.Declaration): string | undefined {
+  return ts.getCombinedModifierFlags(node) & ts.ModifierFlags.Default ? 'default' : undefined;
 }
 
 /**

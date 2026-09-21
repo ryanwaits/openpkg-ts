@@ -653,6 +653,8 @@ function serializeDeclaration(
 
   if (result) {
     result = withExportName(result, exportName);
+    const localName = exportName === 'default' && defaultLocalName(declaration, exportSymbol);
+    if (localName) result = { ...result, localName };
     // Add typeOnly flag for type-only re-exports
     if (isTypeOnly) {
       result = {
@@ -924,6 +926,29 @@ function callSignaturesForVariable(
     }
   }
   return checker.getTypeAtLocation(declaration).getCallSignatures();
+}
+
+/**
+ * Identifier a default export goes by in source: the declaration's own name,
+ * else the name it is exported under (`export default foo`, `export { foo as default }`).
+ * Undefined for anonymous defaults.
+ */
+function defaultLocalName(
+  declaration: ts.Declaration,
+  exportSymbol: ts.Symbol,
+): string | undefined {
+  const declared = ts.getNameOfDeclaration(declaration);
+  if (declared && ts.isIdentifier(declared) && declared.text !== 'default') return declared.text;
+
+  for (const decl of exportSymbol.declarations ?? []) {
+    if (ts.isExportAssignment(decl) && ts.isIdentifier(decl.expression)) {
+      return decl.expression.text;
+    }
+    if (ts.isExportSpecifier(decl) && decl.propertyName && ts.isIdentifier(decl.propertyName)) {
+      if (decl.propertyName.text !== 'default') return decl.propertyName.text;
+    }
+  }
+  return undefined;
 }
 
 function withExportName(entry: SpecExport, exportName: string): SpecExport {

@@ -8,7 +8,7 @@ import {
   stripUndefinedFromType,
 } from '../types/schema-builder';
 import { getInheritedMembers, type SerializerContext } from './context';
-import { buildSignatures, extractExportMetadata } from './shared';
+import { anonymousDefaultName, buildSignatures, extractExportMetadata } from './shared';
 
 export function serializeClass(
   node: ts.ClassDeclaration,
@@ -16,7 +16,7 @@ export function serializeClass(
 ): SpecExport | null {
   const { typeChecker: checker } = ctx;
   const symbol = checker.getSymbolAtLocation(node.name ?? node);
-  const name = symbol?.getName() ?? node.name?.getText();
+  const name = symbol?.getName() ?? node.name?.getText() ?? anonymousDefaultName(node);
   if (!name) return null;
 
   const { description, tags, examples, source, deprecated, deprecationReason, inlineTags } =

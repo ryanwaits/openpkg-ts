@@ -21,7 +21,7 @@ import {
   typeNodeOfSignature,
 } from '../types/schema-builder';
 import type { SerializerContext } from './context';
-import { extractExportMetadata } from './shared';
+import { anonymousDefaultName, extractExportMetadata } from './shared';
 
 /**
  * Build the return schema for a signature, detecting type guards.
@@ -211,7 +211,8 @@ export function serializeFunctionExport(
 ): SpecExport | null {
   // Get name from override (for arrow fns), symbol, or node name
   const symbol = ctx.typeChecker.getSymbolAtLocation(node.name ?? node);
-  const name = nameOverride ?? symbol?.getName() ?? node.name?.getText();
+  const name =
+    nameOverride ?? symbol?.getName() ?? node.name?.getText() ?? anonymousDefaultName(node);
   if (!name) return null;
 
   const { description, tags, examples, source, deprecated, deprecationReason, inlineTags } =
