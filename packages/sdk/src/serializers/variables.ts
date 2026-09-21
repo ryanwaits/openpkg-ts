@@ -1,5 +1,5 @@
 import type { SpecExport } from '@openpkg-ts/spec';
-import type ts from 'typescript';
+import ts from 'typescript';
 import { extractSchemaType } from '../schema/registry';
 import { extractExportMetadata } from './shared';
 // Import adapters to ensure they're registered (side effect)
@@ -8,8 +8,12 @@ import { registerReferencedTypes } from '../types/parameters';
 import { buildSchema } from '../types/schema-builder';
 import type { SerializerContext } from './context';
 
+/**
+ * @param node - The declaration, or the binding element for names bound by
+ *   destructuring (`const [a, { b }] = init`); the checker types each binding.
+ */
 export function serializeVariable(
-  node: ts.VariableDeclaration,
+  node: ts.VariableDeclaration | ts.BindingElement,
   statement: ts.VariableStatement,
   ctx: SerializerContext,
 ): SpecExport | null {
@@ -30,7 +34,12 @@ export function serializeVariable(
   registerReferencedTypes(typeToSerialize, ctx);
 
   // Then build the schema
-  const schema = buildSchema(typeToSerialize, ctx.typeChecker, ctx, node.type);
+  const schema = buildSchema(
+    typeToSerialize,
+    ctx.typeChecker,
+    ctx,
+    ts.isVariableDeclaration(node) ? node.type : undefined,
+  );
 
   // Add schema library metadata if this was a schema type
   const flags = schemaExtraction

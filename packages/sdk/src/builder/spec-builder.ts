@@ -596,11 +596,12 @@ function serializeDeclaration(
     result = serializeTypeAlias(declaration, ctx);
   } else if (ts.isEnumDeclaration(declaration)) {
     result = serializeEnum(declaration, ctx);
-  } else if (ts.isVariableDeclaration(declaration)) {
-    const varStatement = declaration.parent?.parent as ts.VariableStatement | undefined;
-    if (varStatement && ts.isVariableStatement(varStatement)) {
+  } else if (ts.isVariableDeclaration(declaration) || ts.isBindingElement(declaration)) {
+    const varStatement = variableStatementOf(declaration);
+    if (varStatement) {
       // Check if it's an arrow/function expression - serialize as function instead of variable
       if (
+        ts.isVariableDeclaration(declaration) &&
         declaration.initializer &&
         (ts.isArrowFunction(declaration.initializer) ||
           ts.isFunctionExpression(declaration.initializer))
@@ -873,12 +874,29 @@ function extractExamples(doc: ts.JSDoc): string[] {
   return examples;
 }
 
+/**
+ * Statement declaring a variable or a name bound by destructuring; binding
+ * elements nest under patterns (`const [a, { b }] = init`).
+ */
+function variableStatementOf(
+  declaration: ts.VariableDeclaration | ts.BindingElement,
+): ts.VariableStatement | undefined {
+  let node: ts.Node = declaration;
+  while (ts.isBindingElement(node) || ts.isBindingName(node)) node = node.parent;
+  const statement = node.parent?.parent;
+  return statement && ts.isVariableStatement(statement) ? statement : undefined;
+}
+
 function callSignaturesForVariable(
-  declaration: ts.VariableDeclaration,
+  declaration: ts.VariableDeclaration | ts.BindingElement,
   ctx: SerializerContext,
 ): readonly ts.Signature[] {
   const checker = ctx.typeChecker;
-  if (declaration.type && ts.isTypeReferenceNode(declaration.type)) {
+  if (
+    ts.isVariableDeclaration(declaration) &&
+    declaration.type &&
+    ts.isTypeReferenceNode(declaration.type)
+  ) {
     const nameNode = ts.isQualifiedName(declaration.type.typeName)
       ? declaration.type.typeName.right
       : declaration.type.typeName;
