@@ -112,6 +112,23 @@ function isExternalType(decl: ts.Declaration): boolean {
   return sourceFile.fileName.includes('node_modules');
 }
 
+/**
+ * A generic type is registered once, under one id: from its declaration
+ * (`Box<T>`), never from the instantiation that happened to reach it first
+ * (`Box<string>`), so the entry does not depend on export order or `only`.
+ */
+function declaredForm(type: ts.Type, symbol: ts.Symbol, checker: ts.TypeChecker): ts.Type {
+  const generic = ts.SymbolFlags.TypeAlias | ts.SymbolFlags.Interface | ts.SymbolFlags.Class;
+  if (!(symbol.flags & generic)) return type;
+  const target = (type as ts.TypeReference).target;
+  const instantiated = type.aliasTypeArguments?.length || (target && target !== type);
+  if (!instantiated) return type;
+  // Through an alias the instantiation and the declaration share the symbol;
+  // an alias OF an instantiation (`type S = Box<string>`) keeps its own body.
+  const declared = checker.getDeclaredTypeOfSymbol(symbol);
+  return declared.flags & ts.TypeFlags.Any ? type : declared;
+}
+
 export class TypeRegistry {
   private types = new Map<string, SpecType>();
   private processing = new Set<string>();
@@ -209,7 +226,12 @@ export class TypeRegistry {
     this.processing.add(id);
 
     try {
-      const specType = this.buildSpecType(type, symbol, id, ctx);
+      const specType = this.buildSpecType(
+        declaredForm(type, symbol, ctx.typeChecker),
+        symbol,
+        id,
+        ctx,
+      );
       if (specType) {
         this.add(specType);
         return specType.id;
