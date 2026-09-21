@@ -240,3 +240,41 @@ describe('ambient @types discovery follows symlinks', () => {
     expect(compilerOptions.types).toEqual([]);
   });
 });
+
+describe('tsconfig module settings are not mixed with NodeNext defaults', () => {
+  let tmp: string;
+
+  afterEach(() => {
+    if (tmp) fs.rmSync(tmp, { recursive: true, force: true });
+  });
+
+  function writeBoundMethodPackage(compilerOptions: Record<string, unknown>): string {
+    tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'openpkg-module-pair-'));
+    write(path.join(tmp, 'package.json'), JSON.stringify({ name: 'pkg' }));
+    write(path.join(tmp, 'tsconfig.json'), JSON.stringify({ compilerOptions }));
+    write(
+      path.join(tmp, 'src/internal.ts'),
+      'export class Counter {\n  add(amount: number, label?: string): number {\n    return amount + (label ? 1 : 0);\n  }\n}\n',
+    );
+    const entry = path.join(tmp, 'src/index.ts');
+    write(
+      entry,
+      'import { Counter } from "./internal";\nconst counter = new Counter();\nexport const add = /* @__PURE__ */ counter.add.bind(counter);\n',
+    );
+    return entry;
+  }
+
+  test('module without moduleResolution resolves extensionless relative imports', () => {
+    const entry = writeBoundMethodPackage({ module: 'ES6', strict: true });
+    expect(exportedTypeString(entry, 'add')).toBe(
+      '(amount: number, label?: string | undefined) => number',
+    );
+  });
+
+  test('moduleResolution without module resolves extensionless relative imports', () => {
+    const entry = writeBoundMethodPackage({ moduleResolution: 'bundler', strict: true });
+    expect(exportedTypeString(entry, 'add')).toBe(
+      '(amount: number, label?: string | undefined) => number',
+    );
+  });
+});

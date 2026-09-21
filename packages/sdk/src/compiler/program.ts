@@ -352,6 +352,16 @@ export function createProgram(options: ProgramOptions): ProgramResult {
       path.dirname(configPath),
     );
     compilerOptions = { ...compilerOptions, ...parsedConfig.options };
+    // The NodeNext defaults are a pair. A tsconfig that sets `module` alone
+    // (e.g. "ES6") must not inherit NodeNext resolution: the mix is invalid
+    // (TS5110), extensionless relative imports stop resolving, and everything
+    // imported through them extracts as `any`. Let TypeScript derive it.
+    if (
+      parsedConfig.options.module !== undefined &&
+      parsedConfig.options.moduleResolution === undefined
+    ) {
+      delete compilerOptions.moduleResolution;
+    }
 
     // Resolve project references (workspace packages)
     additionalRootFiles = resolveProjectReferences(configPath, parsedConfig);
