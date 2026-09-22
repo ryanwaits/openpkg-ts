@@ -7,7 +7,7 @@
     "packages/sdk/src/compiler/fixtures/unresolved-deps/index.ts"
   ],
   "totals": {
-    "anyOf": 204,
+    "anyOf": 205,
     "enum": 86,
     "x-ts-type": 369
   },
@@ -242,7 +242,7 @@
     },
     {
       "union": "anyOf ts:undefined , #/types/Symbol",
-      "count": 12
+      "count": 13
     },
     {
       "union": "anyOf ts:undefined , #/types/ThisTypePredicate , #/types/IdentifierTypePredicate , #/types/AssertsThisTypePredicate , #/types/AssertsIdentifierTypePredicate",
