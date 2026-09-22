@@ -2,12 +2,17 @@ import type { SpecSignatureParameter } from '@openpkg-ts/spec';
 import ts from 'typescript';
 import { declaredForm } from '../ast/registry';
 import { isForeignPackage } from '../ast/type-identity';
-import { getParamDescription, parseInlineTags } from '../ast/utils';
+import {
+  bindingPatternKind,
+  destructuredParamName,
+  getParamDescription,
+  jsdocParamTagName,
+  parseInlineTags,
+} from '../ast/utils';
 import type { SerializerContext } from '../serializers/context';
 import {
   buildSchema,
   buildSchemaFromTypeNode,
-  declaredTypeNode,
   isDeferredMappedOrConditional,
   stripUndefinedFromType,
   typeNodeDefersExpansion,
@@ -23,6 +28,7 @@ export function extractParameters(
   // Get JSDoc tags from the signature declaration for param descriptions
   const signatureDecl = signature.getDeclaration();
   const jsdocTags = signatureDecl ? ts.getJSDocTags(signatureDecl) : [];
+  const names = destructuredNames(signature.getParameters(), jsdocTags);
 
   for (const param of signature.getParameters()) {
     const decl = param.valueDeclaration as ts.ParameterDeclaration | undefined;
@@ -30,197 +36,151 @@ export function extractParameters(
     const defer = typeNodeDefersExpansion(decl.type, checker, ctx.program);
     const type = defer ? undefined : checker.getTypeOfSymbolAtLocation(param, decl);
 
-    // Check if this is a destructured parameter (ObjectBindingPattern)
-    if (decl && ts.isObjectBindingPattern(decl.name)) {
-      const expandedParams = expandBindingPattern(
-        decl,
-        type ?? checker.getTypeOfSymbolAtLocation(param, decl),
-        jsdocTags,
-        ctx,
-      );
-      result.push(...expandedParams);
-    } else {
-      // Regular parameter - check questionToken or initializer for optionality
-      const isOptional = !!decl?.questionToken || !!decl?.initializer;
-      const isRest = !!decl.dotDotDotToken;
+    // Optionality comes from `?` or an initializer, on the pattern itself for
+    // a destructured parameter (`{ a } = {}`), never from its keys.
+    const isOptional = !!decl.questionToken || !!decl.initializer;
+    const isRest = !!decl.dotDotDotToken;
 
-      const paramName = param.getName();
-      const description = getParamDescription(paramName, jsdocTags);
+    // A binding pattern is ONE positional argument. The checker calls it
+    // `__0`; the spec gives it a readable name and the declared object type.
+    const pattern = bindingPatternKind(decl);
+    const paramName = pattern ? (names.get(param) ?? param.getName()) : param.getName();
+    const description = getParamDescription(paramName, jsdocTags);
 
-      const schema = defer
-        ? buildSchemaFromTypeNode(decl.type as ts.TypeNode, checker, ctx)
-        : buildSchema(
-            isOptional ? stripUndefinedFromType(type as ts.Type, checker) : (type as ts.Type),
-            checker,
-            ctx,
-            decl.type,
-          );
-      if (!defer && type) {
-        registerReferencedTypes(isOptional ? stripUndefinedFromType(type, checker) : type, ctx);
-      }
-
-      const paramResult: SpecSignatureParameter = {
-        name: paramName,
-        schema,
-        // A rest parameter accepts zero arguments, so it is never required.
-        required: !isOptional && !isRest,
-        ...(isRest ? { rest: true } : {}),
-      };
-
-      if (description) {
-        paramResult.description = description;
-        const inlineTags = parseInlineTags(description);
-        if (inlineTags) paramResult.inlineTags = inlineTags;
-      }
-
-      if (decl.initializer) {
-        applyDefault(paramResult, decl.initializer);
-      }
-
-      result.push(paramResult);
+    const schema = defer
+      ? buildSchemaFromTypeNode(decl.type as ts.TypeNode, checker, ctx)
+      : buildSchema(
+          isOptional ? stripUndefinedFromType(type as ts.Type, checker) : (type as ts.Type),
+          checker,
+          ctx,
+          decl.type,
+        );
+    if (!defer && type) {
+      registerReferencedTypes(isOptional ? stripUndefinedFromType(type, checker) : type, ctx);
     }
-  }
 
-  return result;
-}
-
-/**
- * Expand ObjectBindingPattern parameters into individual properties.
- * Handles destructured params like ({ a, b }: { a: string; b: number })
- */
-function expandBindingPattern(
-  paramDecl: ts.ParameterDeclaration,
-  paramType: ts.Type,
-  jsdocTags: readonly ts.JSDocTag[],
-  ctx: SerializerContext,
-): SpecSignatureParameter[] {
-  const { typeChecker: checker } = ctx;
-  const result: SpecSignatureParameter[] = [];
-  const bindingPattern = paramDecl.name as ts.ObjectBindingPattern;
-
-  // Get all properties from the full type (including intersection types)
-  const allProperties = getEffectiveProperties(paramType, checker);
-
-  // Infer param alias from JSDoc tags (e.g., @param opts.name → alias is "opts")
-  const inferredAlias = inferParamAlias(jsdocTags);
-
-  for (const element of bindingPattern.elements) {
-    if (!ts.isBindingElement(element)) continue;
-
-    // Get property name (handle re-aliasing like { foo: bar })
-    const propertyName = element.propertyName
-      ? ts.isIdentifier(element.propertyName)
-        ? element.propertyName.text
-        : element.propertyName.getText()
-      : ts.isIdentifier(element.name)
-        ? element.name.text
-        : element.name.getText();
-
-    // Find the property in the type
-    const propSymbol = allProperties.get(propertyName);
-    if (!propSymbol) continue;
-
-    // Check optionality: property is optional OR has default value
-    const isOptional =
-      !!(propSymbol.flags & ts.SymbolFlags.Optional) || element.initializer !== undefined;
-
-    const propType = checker.getTypeOfSymbol(propSymbol);
-    // Strip undefined from optional props — optionality is required: false
-    const effectiveType = isOptional ? stripUndefinedFromType(propType, checker) : propType;
-    registerReferencedTypes(effectiveType, ctx);
-
-    // Get description from JSDoc
-    const description = getParamDescription(propertyName, jsdocTags, inferredAlias);
-
-    const param: SpecSignatureParameter = {
-      name: propertyName,
-      schema: buildSchema(
-        effectiveType,
-        checker,
-        ctx,
-        declaredTypeNode(propSymbol.valueDeclaration),
-      ),
-      required: !isOptional,
+    const paramResult: SpecSignatureParameter = {
+      name: paramName,
+      schema,
+      // A rest parameter accepts zero arguments, so it is never required.
+      required: !isOptional && !isRest,
+      ...(isRest ? { rest: true } : {}),
+      ...(pattern ? { 'x-ts-destructured': true } : {}),
     };
 
     if (description) {
-      param.description = description;
+      paramResult.description = description;
       const inlineTags = parseInlineTags(description);
-      if (inlineTags) param.inlineTags = inlineTags;
+      if (inlineTags) paramResult.inlineTags = inlineTags;
     }
 
-    // Extract default value if present
-    if (element.initializer) {
-      applyDefault(param, element.initializer);
+    if (decl.initializer) {
+      applyDefault(paramResult, decl.initializer);
     }
 
-    result.push(param);
+    if (pattern === 'object') {
+      annotateBindingElements(decl.name as ts.ObjectBindingPattern, paramResult, jsdocTags);
+    }
+
+    result.push(paramResult);
   }
 
   return result;
 }
 
 /**
- * Get all properties from a type, flattening intersection types.
+ * Pick a public name for each destructured parameter of a signature.
+ * A `@param` tag that names the pattern wins: `@param opts.host` (dotted, the
+ * prefix is the name) or a bare `@param opts` that no identifier parameter
+ * and no destructured key claims (`@param model` documents the key `model`,
+ * not the pattern). Otherwise `options` / `args`, kept distinct from the
+ * other parameters.
  */
-function getEffectiveProperties(type: ts.Type, _checker: ts.TypeChecker): Map<string, ts.Symbol> {
-  const properties = new Map<string, ts.Symbol>();
+function destructuredNames(
+  params: readonly ts.Symbol[],
+  jsdocTags: readonly ts.JSDocTag[],
+): Map<ts.Symbol, string> {
+  const names = new Map<ts.Symbol, string>();
+  const taken = new Set<string>();
+  const keys = new Set<string>();
+  const patterns: Array<{ symbol: ts.Symbol; kind: 'object' | 'array' }> = [];
 
-  if (type.isIntersection()) {
-    // Flatten intersection types
-    for (const subType of type.types) {
-      for (const prop of subType.getProperties()) {
-        properties.set(prop.getName(), prop);
-      }
+  for (const param of params) {
+    const decl = param.valueDeclaration as ts.ParameterDeclaration | undefined;
+    const kind = bindingPatternKind(decl);
+    if (!kind) {
+      taken.add(param.getName());
+      continue;
     }
-  } else {
-    // Regular type
-    for (const prop of type.getProperties()) {
-      properties.set(prop.getName(), prop);
+    patterns.push({ symbol: param, kind });
+    const name = (decl as ts.ParameterDeclaration).name as ts.BindingPattern;
+    for (const element of name.elements) {
+      const key = bindingElementKey(element);
+      if (key) keys.add(key);
     }
   }
+  if (patterns.length === 0) return names;
 
-  return properties;
+  // `@param` names not claimed by an identifier parameter or a destructured
+  // key, in source order. A dotted tag (`opts.host`) contributes its prefix.
+  const candidates: string[] = [];
+  for (const tag of jsdocTags) {
+    const [tagName, ...rest] = jsdocParamTagName(tag).split('.');
+    if (!tagName || tagName.startsWith('__') || taken.has(tagName)) continue;
+    if (rest.length === 0 && keys.has(tagName)) continue;
+    if (!candidates.includes(tagName)) candidates.push(tagName);
+  }
+
+  patterns.forEach(({ symbol, kind }, i) => {
+    const name = destructuredParamName(kind, taken, candidates[i]);
+    taken.add(name);
+    names.set(symbol, name);
+  });
+  return names;
+}
+
+/** Public property name an object-pattern element binds (`{ model: local }` → `model`). */
+function bindingElementKey(element: ts.ArrayBindingElement): string | undefined {
+  if (!ts.isBindingElement(element) || element.dotDotDotToken) return undefined;
+  const key = element.propertyName ?? element.name;
+  if (ts.isIdentifier(key)) return key.text;
+  if (ts.isStringLiteral(key) || ts.isNumericLiteral(key)) return key.text;
+  return undefined;
 }
 
 /**
- * Infer parameter alias from JSDoc @param tags.
- * Looks for patterns like @param opts.name where "opts" is the alias.
+ * Carry what the binding elements say about the keys — `= default` and
+ * `@param name.key` descriptions — onto the matching property schemas.
+ * Only an inline object schema can take them; a `$ref` is left as is.
  */
-function inferParamAlias(jsdocTags: readonly ts.JSDocTag[]): string | undefined {
-  const prefixes: string[] = [];
+function annotateBindingElements(
+  pattern: ts.ObjectBindingPattern,
+  param: SpecSignatureParameter,
+  jsdocTags: readonly ts.JSDocTag[],
+): void {
+  const schema = param.schema as Record<string, unknown>;
+  const properties = schema?.properties as Record<string, unknown> | undefined;
+  if (!properties) return;
 
-  for (const tag of jsdocTags) {
-    if (tag.tagName.text !== 'param') continue;
+  for (const element of pattern.elements) {
+    const propertyName = bindingElementKey(element);
+    if (!propertyName) continue;
 
-    // Extract the parameter name from the tag
-    const tagText =
-      typeof tag.comment === 'string' ? tag.comment : (ts.getTextOfJSDocComment(tag.comment) ?? '');
+    const prop = properties[propertyName];
+    if (!prop || typeof prop !== 'object' || Array.isArray(prop)) continue;
+    const propSchema = prop as Record<string, unknown>;
 
-    // Handle @param {type} name.prop or @param name.prop patterns
-    const paramTag = tag as ts.JSDocParameterTag;
-    const paramName = paramTag.name?.getText() ?? '';
+    const description = getParamDescription(propertyName, jsdocTags, param.name);
+    if (description && propSchema.description === undefined) {
+      propSchema.description = description;
+    }
 
-    if (paramName.includes('.')) {
-      const prefix = paramName.split('.')[0];
-      if (prefix && !prefix.startsWith('__')) {
-        prefixes.push(prefix);
-      }
-    } else if (tagText.includes('.')) {
-      // Fallback: check comment text for dotted names
-      const match = tagText.match(/^(\w+)\./);
-      if (match && !match[1].startsWith('__')) {
-        prefixes.push(match[1]);
-      }
+    if (element.initializer) {
+      const extracted = extractLiteralDefault(element.initializer);
+      if (extracted.literal) propSchema.default = extracted.value;
+      else propSchema['x-ts-default'] = extracted.text;
     }
   }
-
-  if (prefixes.length === 0) return undefined;
-
-  // Return the most common prefix
-  const counts = new Map<string, number>();
-  for (const p of prefixes) counts.set(p, (counts.get(p) ?? 0) + 1);
-  return Array.from(counts.entries()).sort((a, b) => b[1] - a[1])[0]?.[0];
 }
 
 /**

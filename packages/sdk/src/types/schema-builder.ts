@@ -2,7 +2,12 @@ import type { SpecSchema, SpecSignature } from '@openpkg-ts/spec';
 import ts from 'typescript';
 import { resolveAliasSymbol } from '../ast/resolve';
 import { isLibSymbol, packageNameFromPath, resolveTypeId, typeRefId } from '../ast/type-identity';
-import { getExtendsExpressions, isSymbolDeprecated } from '../ast/utils';
+import {
+  bindingPatternKind,
+  destructuredParamName,
+  getExtendsExpressions,
+  isSymbolDeprecated,
+} from '../ast/utils';
 import { BUILTIN_TYPE_SCHEMAS, type BuiltinSchema } from '../schema/builtins';
 import type { SerializerContext } from '../serializers/context';
 
@@ -1549,6 +1554,12 @@ export function buildFunctionSchema(
 ): SpecSchema {
   const buildSignatures = () => {
     const signatures: SpecSignature[] = callSignatures.map((sig) => {
+      const taken = new Set(
+        sig
+          .getParameters()
+          .filter((p) => !bindingPatternKind(p.valueDeclaration as ts.ParameterDeclaration))
+          .map((p) => p.getName()),
+      );
       const params = sig.getParameters().flatMap((param) => {
         const decl = param.valueDeclaration as ts.ParameterDeclaration | undefined;
         if (!decl) return [];
@@ -1557,11 +1568,19 @@ export function buildFunctionSchema(
         // Optionality is expressed via required: false — strip the undefined
         // branch so the schema doesn't also encode `| undefined`
         const effectiveType = isOptional ? stripUndefinedFromType(paramType, checker) : paramType;
+        // A binding pattern is one argument; the checker names it `__0`.
+        const pattern = bindingPatternKind(decl);
+        let name = param.getName();
+        if (pattern) {
+          name = destructuredParamName(pattern, taken);
+          taken.add(name);
+        }
         return {
-          name: param.getName(),
+          name,
           schema: buildSchema(effectiveType, checker, ctx, decl.type),
           required: !isOptional && !decl.dotDotDotToken,
           ...(decl.dotDotDotToken ? { rest: true } : {}),
+          ...(pattern ? { 'x-ts-destructured': true } : {}),
         };
       });
 

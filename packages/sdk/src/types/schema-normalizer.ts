@@ -269,6 +269,7 @@ function normalizeSignature(
       ...(param.description ? { description: param.description } : {}),
       ...(param.default !== undefined ? { default: param.default } : {}),
       ...(param.rest ? { rest: param.rest } : {}),
+      ...(param['x-ts-destructured'] ? { 'x-ts-destructured': true } : {}),
     }));
   }
 

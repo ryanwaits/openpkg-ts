@@ -148,17 +148,20 @@ export function search(query: string, limit = DEFAULT_LIMIT) {}`;
     expect((params[0].schema as Record<string, unknown>)['x-ts-default']).toBe('{} as T');
   });
 
-  test('destructured non-literal initializers set parameter.default to source text', async () => {
+  test('destructured element initializers land on the property schemas', async () => {
     const code = `const FALLBACK = 'x';
 export function run({ mode = FALLBACK, retries = 3 }: { mode?: string; retries?: number }) {}`;
     const result = await extract({ entryFile: 'test.ts', content: code });
     const fn = result.spec.exports.find((e) => e.name === 'run');
     const params = firstSignatureParams(fn);
 
-    const mode = params.find((p) => p.name === 'mode');
-    const retries = params.find((p) => p.name === 'retries');
-    expect(mode?.default).toBe('FALLBACK');
-    expect((mode?.schema as Record<string, unknown>)['x-ts-default']).toBe('FALLBACK');
-    expect(retries?.default).toBe(3);
+    expect(params).toHaveLength(1);
+    // Element defaults never make the pattern itself optional.
+    expect(params[0].required).toBe(true);
+    expect(params[0].default).toBeUndefined();
+    const props = (params[0].schema as { properties: Record<string, Record<string, unknown>> })
+      .properties;
+    expect(props.mode['x-ts-default']).toBe('FALLBACK');
+    expect(props.retries.default).toBe(3);
   });
 });

@@ -350,7 +350,50 @@ export function getSourceLocation(node: ts.Node, sourceFile: ts.SourceFile): Spe
 }
 
 /**
- * Get description for a destructured parameter property from JSDoc @param tags.
+ * Kind of binding pattern a parameter is declared with, if any.
+ * `({ a }: T)` → `'object'`, `([a]: T)` → `'array'`, `(a: T)` → `undefined`.
+ */
+export function bindingPatternKind(
+  decl: ts.ParameterDeclaration | undefined,
+): 'object' | 'array' | undefined {
+  if (!decl) return undefined;
+  if (ts.isObjectBindingPattern(decl.name)) return 'object';
+  if (ts.isArrayBindingPattern(decl.name)) return 'array';
+  return undefined;
+}
+
+/**
+ * Public name for a destructured parameter. The checker names it `__0`;
+ * the spec wants a readable one: the `@param` tag that documents it, else
+ * `options` (object pattern) or `args` (array pattern), suffixed on collision.
+ */
+export function destructuredParamName(
+  kind: 'object' | 'array',
+  taken: ReadonlySet<string>,
+  jsdocName?: string,
+): string {
+  if (jsdocName && !taken.has(jsdocName)) return jsdocName;
+  const base = kind === 'object' ? 'options' : 'args';
+  if (!taken.has(base)) return base;
+  let i = 2;
+  while (taken.has(`${base}${i}`)) i++;
+  return `${base}${i}`;
+}
+
+/** Name an `@param` tag documents (`opts.host` → `opts.host`), or '' if unreadable. */
+export function jsdocParamTagName(tag: ts.JSDocTag): string {
+  if (tag.tagName.text !== 'param') return '';
+  const paramTag = tag as ts.JSDocParameterTag;
+  try {
+    return paramTag.name?.getText() ?? '';
+  } catch {
+    // getText() may fail on synthetic nodes without parent links
+    return (paramTag.name as ts.Identifier | undefined)?.text ?? '';
+  }
+}
+
+/**
+ * Get description for a parameter or destructured key from JSDoc @param tags.
  * Matches patterns like:
  * - @param paramName - exact match
  * - @param opts.paramName - dotted notation with alias
@@ -363,15 +406,7 @@ export function getParamDescription(
 ): string | undefined {
   for (const tag of jsdocTags) {
     if (tag.tagName.text !== 'param') continue;
-
-    const paramTag = tag as ts.JSDocParameterTag;
-    let tagParamName = '';
-    try {
-      tagParamName = paramTag.name?.getText() ?? '';
-    } catch {
-      // getText() may fail on synthetic nodes without parent links
-      tagParamName = (paramTag.name as ts.Identifier)?.text ?? '';
-    }
+    const tagParamName = jsdocParamTagName(tag);
 
     // Try matching strategies:
     // 1. Exact match: @param propertyName

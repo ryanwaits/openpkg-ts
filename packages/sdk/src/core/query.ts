@@ -142,8 +142,12 @@ export function formatSchema(
     // Handle object
     if ('type' in schema && schema.type === 'object') {
       if ('properties' in schema && schema.properties) {
+        const required = new Set(Array.isArray(schema.required) ? schema.required : []);
         const props = Object.entries(schema.properties)
-          .map(([k, v]) => `${k}: ${formatSchema(v as SpecSchema, nextOpts)}`)
+          .map(
+            ([k, v]) =>
+              `${k}${required.has(k) ? '' : '?'}: ${formatSchema(v as SpecSchema, nextOpts)}`,
+          )
           .join('; ');
         return `{ ${props} }`;
       }

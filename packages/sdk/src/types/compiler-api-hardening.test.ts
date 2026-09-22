@@ -86,8 +86,10 @@ describe('optional parameter schemas (stripUndefinedFromType, schema path)', () 
     const result = await extract({ entryFile: 'test.ts', content: code });
     const fn = result.spec.exports.find((e) => e.name === 'destructured');
     const param = fn?.signatures?.[0]?.parameters?.[0];
-    expect(param?.name).toBe('mode');
-    expect(param?.schema).toEqual({ type: 'string', enum: ['dev', 'prod'] });
+    expect(param?.name).toBe('options');
+    expect(param?.['x-ts-destructured']).toBe(true);
+    const props = (param?.schema as { properties?: Record<string, unknown> })?.properties;
+    expect(props?.mode).toMatchObject({ type: 'string', enum: ['dev', 'prod'] });
   });
 });
 
