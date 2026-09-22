@@ -1,4 +1,4 @@
-import type { SpecSignatureParameter } from '@openpkg-ts/spec';
+import type { SpecSchema, SpecSignatureParameter } from '@openpkg-ts/spec';
 import ts from 'typescript';
 import { declaredForm } from '../ast/registry';
 import { isForeignPackage } from '../ast/type-identity';
@@ -11,9 +11,11 @@ import {
 } from '../ast/utils';
 import type { SerializerContext } from '../serializers/context';
 import {
+  buildObjectSchema,
   buildSchema,
   buildSchemaFromTypeNode,
   isDeferredMappedOrConditional,
+  renderTypeText,
   stripUndefinedFromType,
   typeNodeDefersExpansion,
 } from './schema-builder';
@@ -28,7 +30,7 @@ export function extractParameters(
   // Get JSDoc tags from the signature declaration for param descriptions
   const signatureDecl = signature.getDeclaration();
   const jsdocTags = signatureDecl ? ts.getJSDocTags(signatureDecl) : [];
-  const names = destructuredNames(signature.getParameters(), jsdocTags);
+  const names = destructuredNames(signature.getParameters(), jsdocTags, checker);
 
   for (const param of signature.getParameters()) {
     const decl = param.valueDeclaration as ts.ParameterDeclaration | undefined;
@@ -47,7 +49,7 @@ export function extractParameters(
     const paramName = pattern ? (names.get(param) ?? param.getName()) : param.getName();
     const description = getParamDescription(paramName, jsdocTags);
 
-    const schema = defer
+    let schema = defer
       ? buildSchemaFromTypeNode(decl.type as ts.TypeNode, checker, ctx)
       : buildSchema(
           isOptional ? stripUndefinedFromType(type as ts.Type, checker) : (type as ts.Type),
@@ -57,6 +59,9 @@ export function extractParameters(
         );
     if (!defer && type) {
       registerReferencedTypes(isOptional ? stripUndefinedFromType(type, checker) : type, ctx);
+    }
+    if (pattern === 'object') {
+      schema = resolvedObjectSchema(schema, param, decl, isOptional, ctx);
     }
 
     const paramResult: SpecSignatureParameter = {
@@ -99,36 +104,57 @@ export function extractParameters(
 function destructuredNames(
   params: readonly ts.Symbol[],
   jsdocTags: readonly ts.JSDocTag[],
+  checker: ts.TypeChecker,
 ): Map<ts.Symbol, string> {
   const names = new Map<ts.Symbol, string>();
   const taken = new Set<string>();
-  const keys = new Set<string>();
-  const patterns: Array<{ symbol: ts.Symbol; kind: 'object' | 'array' }> = [];
+  const patterns: Array<{
+    symbol: ts.Symbol;
+    decl: ts.ParameterDeclaration;
+    kind: 'object' | 'array';
+  }> = [];
 
   for (const param of params) {
     const decl = param.valueDeclaration as ts.ParameterDeclaration | undefined;
     const kind = bindingPatternKind(decl);
-    if (!kind) {
+    if (!kind || !decl) {
       taken.add(param.getName());
       continue;
     }
-    patterns.push({ symbol: param, kind });
-    const name = (decl as ts.ParameterDeclaration).name as ts.BindingPattern;
-    for (const element of name.elements) {
-      const key = bindingElementKey(element);
-      if (key) keys.add(key);
-    }
+    patterns.push({ symbol: param, decl, kind });
   }
   if (patterns.length === 0) return names;
 
-  // `@param` names not claimed by an identifier parameter or a destructured
-  // key, in source order. A dotted tag (`opts.host`) contributes its prefix.
+  // `@param` names not claimed by an identifier parameter or a key of any
+  // destructured parameter's type, in source order. A dotted tag
+  // (`opts.host`) contributes its prefix. Keys come from the checker, not the
+  // pattern: `@param maxOutputTokens` documents a key reached via `...rest`.
+  const tagNames = jsdocTags.map(jsdocParamTagName).filter((n) => n && !n.startsWith('__'));
+  if (tagNames.length === 0) {
+    for (const { symbol, kind } of patterns) {
+      const name = destructuredParamName(kind, taken);
+      taken.add(name);
+      names.set(symbol, name);
+    }
+    return names;
+  }
+
+  const keys = new Set<string>();
+  for (const { symbol, decl } of patterns) {
+    for (const element of (decl.name as ts.BindingPattern).elements) {
+      const key = bindingElementKey(element);
+      if (key) keys.add(key);
+    }
+    const type = checker.getTypeOfSymbolAtLocation(symbol, decl);
+    for (const prop of resolvedProperties(type, checker)) keys.add(prop.getName());
+  }
+
   const candidates: string[] = [];
-  for (const tag of jsdocTags) {
-    const [tagName, ...rest] = jsdocParamTagName(tag).split('.');
-    if (!tagName || tagName.startsWith('__') || taken.has(tagName)) continue;
-    if (rest.length === 0 && keys.has(tagName)) continue;
-    if (!candidates.includes(tagName)) candidates.push(tagName);
+  for (const tagName of tagNames) {
+    const [head, ...rest] = tagName.split('.');
+    if (taken.has(head)) continue;
+    if (rest.length === 0 && keys.has(head)) continue;
+    if (!candidates.includes(head)) candidates.push(head);
   }
 
   patterns.forEach(({ symbol, kind }, i) => {
@@ -146,6 +172,97 @@ function bindingElementKey(element: ts.ArrayBindingElement): string | undefined 
   if (ts.isIdentifier(key)) return key.text;
   if (ts.isStringLiteral(key) || ts.isNumericLiteral(key)) return key.text;
   return undefined;
+}
+
+/**
+ * Every property the checker sees on a type, across union arms. `apparent`
+ * resolves mapped/conditional and intersection types to their members.
+ */
+function resolvedProperties(type: ts.Type, checker: ts.TypeChecker): ts.Symbol[] {
+  const seen = new Map<string, ts.Symbol>();
+  for (const arm of objectArms(type, checker)) {
+    for (const prop of armProperties(arm, checker)) {
+      if (!seen.has(prop.getName())) seen.set(prop.getName(), prop);
+    }
+  }
+  return [...seen.values()];
+}
+
+const PRIMITIVE_LIKE =
+  ts.TypeFlags.StringLike |
+  ts.TypeFlags.NumberLike |
+  ts.TypeFlags.BigIntLike |
+  ts.TypeFlags.BooleanLike |
+  ts.TypeFlags.ESSymbolLike |
+  ts.TypeFlags.Void |
+  ts.TypeFlags.Undefined |
+  ts.TypeFlags.Null;
+
+/** Union arms (or the type itself) that carry properties and are not primitives. */
+function objectArms(type: ts.Type, checker: ts.TypeChecker): ts.Type[] {
+  const arms = type.isUnion() ? type.types : [type];
+  return arms.filter(
+    (arm) => !(arm.flags & PRIMITIVE_LIKE) && armProperties(arm, checker).length > 0,
+  );
+}
+
+/**
+ * Properties of one arm. The arm's own view first: an intersection holding a
+ * conditional member distributes under `getApparentType` into a union, which
+ * would hide the keys the intersection itself already resolves.
+ */
+function armProperties(arm: ts.Type, checker: ts.TypeChecker): ts.Symbol[] {
+  const own = checker.getPropertiesOfType(arm);
+  return own.length > 0 ? own : checker.getPropertiesOfType(checker.getApparentType(arm));
+}
+
+/**
+ * A destructured parameter must expose its keys. When the declared type is
+ * not an inline object literal — an intersection (`CallSettings & { model }`),
+ * a union of objects, a mapped/conditional alias — resolve it to the object
+ * the checker sees: `properties` from the apparent type, `required` for the
+ * keys required in every union arm, the written form under `x-ts-type`.
+ *
+ * A `$ref` to a named type is kept as is: the target carries the properties.
+ */
+function resolvedObjectSchema(
+  schema: SpecSchema,
+  param: ts.Symbol,
+  decl: ts.ParameterDeclaration,
+  isOptional: boolean,
+  ctx: SerializerContext,
+): SpecSchema {
+  if (typeof schema !== 'object' || schema === null || Array.isArray(schema)) return schema;
+  const current = schema as Record<string, unknown>;
+  if (current.properties || current.$ref) return schema;
+
+  const { typeChecker: checker } = ctx;
+  const raw = checker.getTypeOfSymbolAtLocation(param, decl);
+  const type = isOptional ? stripUndefinedFromType(raw, checker) : raw;
+  const arms = objectArms(type, checker);
+  if (arms.length === 0) return schema;
+
+  const props = resolvedProperties(type, checker);
+  const resolved = buildObjectSchema(props, checker, ctx, type) as Record<string, unknown>;
+  if (arms.length > 1) {
+    // Required only when every arm requires it.
+    const requiredInAll = new Set<string>(props.map((p) => p.getName()));
+    for (const arm of arms) {
+      const armRequired = new Set(
+        armProperties(arm, checker)
+          .filter((p) => !(p.flags & ts.SymbolFlags.Optional))
+          .map((p) => p.getName()),
+      );
+      for (const name of [...requiredInAll]) if (!armRequired.has(name)) requiredInAll.delete(name);
+    }
+    const required = (resolved.required as string[] | undefined)?.filter((n) =>
+      requiredInAll.has(n),
+    );
+    if (required?.length) resolved.required = required;
+    else delete resolved.required;
+  }
+  resolved['x-ts-type'] = renderTypeText(type, checker, decl);
+  return resolved as SpecSchema;
 }
 
 /**

@@ -133,6 +133,57 @@ export function embed({ model: modelArg, value }: { model: string; value: string
     expect(props.value.description).toBe('The value.');
   });
 
+  test('bare @param tags naming keys of an intersection type do not name the pattern', async () => {
+    const code = `
+export interface A { a: string }
+/**
+ * Runs.
+ * @param a - Key a.
+ * @param b - Key b.
+ */
+export function f({ a, ...rest }: A & { b: string }): void {}
+`;
+    const { params } = await paramsOf(code, 'f');
+
+    expect(params).toHaveLength(1);
+    expect(params[0].name).toBe('options');
+    expect(params[0].description).toBeUndefined();
+  });
+
+  test('intersection type resolves to an object with every key', async () => {
+    const code = `
+export interface Base { a: string }
+export function f({ a, b }: Base & { b: number }): void {}
+`;
+    const { fn, params } = await paramsOf(code, 'f');
+
+    expect(params).toHaveLength(1);
+    const [p] = params;
+    expect(p.name).toBe('options');
+    expect(p['x-ts-destructured']).toBe(true);
+    const schema = p.schema as Obj;
+    expect(schema.type).toBe('object');
+    expect(Object.keys(schema.properties as Obj).sort()).toEqual(['a', 'b']);
+    expect(schema.required).toEqual(['a', 'b']);
+    // Signature text keeps the written form; consumers read properties/required.
+    expect(schema['x-ts-type']).toBe('Base & { b: number; }');
+    expect(formatParameters(fn?.signatures?.[0])).toBe('(options: Base & { b: number; })');
+  });
+
+  test('union of object types resolves to the keys of every arm', async () => {
+    const code = `
+export function f({ a }: { a: string; b?: number } | { a: string; c: string }): void {}
+`;
+    const { params } = await paramsOf(code, 'f');
+
+    expect(params).toHaveLength(1);
+    const schema = params[0].schema as Obj;
+    expect(schema.type).toBe('object');
+    expect(Object.keys(schema.properties as Obj).sort()).toEqual(['a', 'b', 'c']);
+    // Required only when required in every arm.
+    expect(schema.required).toEqual(['a']);
+  });
+
   test('ordinary named parameter is unchanged', async () => {
     const code = `export function plain(options: { a: string }, b?: number): void {}`;
     const { params } = await paramsOf(code, 'plain');
