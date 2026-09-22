@@ -181,6 +181,13 @@ export type SpecSignatureParameter = {
   default?: unknown;
   /** Rest parameter (`...args`). `schema` is the declared array/tuple type and `required` is false. */
   rest?: boolean;
+  /**
+   * The parameter is a binding pattern (`({ a, b }: T)` or `([a, b]: T)`).
+   * It is one positional argument: `name` is synthesized (`options` / `args`,
+   * or the `@param` name) and `schema` is the declared type, keyed by the
+   * public property names, never the local renames.
+   */
+  'x-ts-destructured'?: boolean;
   decorators?: SpecDecorator[];
   /** Inline TSDoc tags found in `description` */
   inlineTags?: SpecInlineTag[];
