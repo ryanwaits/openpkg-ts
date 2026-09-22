@@ -184,6 +184,60 @@ export function f({ a }: { a: string; b?: number } | { a: string; c: string }): 
     expect(schema.required).toEqual(['a']);
   });
 
+  test('a key from an undecided conditional is never asserted as `never`', async () => {
+    // Same shape as vercel/ai's `ToolsContextParameter<TOOLS>`: the
+    // conditional sits inside an intersection alias, so the checker (not the
+    // AST fallback) resolves the parameter and merges `ctx` across branches.
+    const code = `
+type Ctx<T> = T extends { ctx: infer C } ? C : never;
+type Settings<T> = [Ctx<T>] extends [never] ? { ctx?: never } : { ctx: Ctx<T> };
+export type Tools<T> = { tools?: T } & Settings<T>;
+export function f<T>({ model, ctx }: { model: string } & Tools<T>): void {}
+`;
+    const { params } = await paramsOf(code, 'f');
+
+    expect(params[0].name).toBe('options');
+    const schema = params[0].schema as Obj;
+    expect(schema.type).toBe('object');
+    expect(schema.required).toEqual(['model']);
+    const props = schema.properties as Record<string, Obj>;
+    // Omitted, or the written conditional text with no asserted `type`.
+    if (props.ctx) {
+      expect(props.ctx.type).toBeUndefined();
+      expect(props.ctx.not).toBeUndefined();
+      expect(props.ctx['x-ts-type']).toBe('Ctx<T>');
+    }
+  });
+
+  test('a written `never` key stays `never`', async () => {
+    const code = `
+export function f({ a, b }: { a: string; b: never }): void {}
+export function g(options: { a: string; b: never }): void {}
+`;
+    const { params } = await paramsOf(code, 'f');
+    const { params: plain } = await paramsOf(code, 'g');
+
+    const props = (params[0].schema as Obj).properties as Record<string, Obj>;
+    // `never` normalizes to JSON Schema's `{ not: {} }`.
+    expect(props.b).toEqual({ not: {} });
+    // A single arm renders exactly as the same type on a named parameter.
+    expect(params[0].schema).toEqual(plain[0].schema);
+  });
+
+  test('deferred (AST) path still names the pattern', async () => {
+    // A conditional alias written directly on the parameter skips the
+    // checker; the pattern must still read as one named parameter.
+    const code = `
+type Settings<T> = T extends string ? { a: string } : { b?: number };
+export function f<T>({ a }: { model: string } & Settings<T>): void {}
+`;
+    const { params } = await paramsOf(code, 'f');
+
+    expect(params).toHaveLength(1);
+    expect(params[0].name).toBe('options');
+    expect(params[0]['x-ts-destructured']).toBe(true);
+  });
+
   test('ordinary named parameter is unchanged', async () => {
     const code = `export function plain(options: { a: string }, b?: number): void {}`;
     const { params } = await paramsOf(code, 'plain');

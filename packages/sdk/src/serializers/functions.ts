@@ -7,6 +7,8 @@ import type {
 } from '@openpkg-ts/spec';
 import ts from 'typescript';
 import {
+  bindingPatternKind,
+  destructuredParamName,
   extractTypeParameters,
   extractTypeParametersFromSignature,
   getJSDocComment,
@@ -117,14 +119,27 @@ function parametersFromAst(
   ctx: SerializerContext,
 ): SpecSignatureParameter[] {
   const jsdocTags = ts.getJSDocTags(decl);
+  // A binding pattern is one positional argument named `options` / `args`,
+  // kept distinct from the identifier parameters.
+  const taken = new Set(
+    decl.parameters.flatMap((p) => (ts.isIdentifier(p.name) ? [p.name.text] : [])),
+  );
   return decl.parameters.map((p) => {
-    const name = ts.isIdentifier(p.name) ? p.name.text : p.name.getText();
+    const pattern = bindingPatternKind(p);
+    let name: string;
+    if (pattern) {
+      name = destructuredParamName(pattern, taken);
+      taken.add(name);
+    } else {
+      name = ts.isIdentifier(p.name) ? p.name.text : p.name.getText();
+    }
     const isOptional = !!p.questionToken || !!p.initializer;
     const param: SpecSignatureParameter = {
       name,
       schema: schemaFromTypeNode(p.type, ctx),
       required: !isOptional && !p.dotDotDotToken,
       ...(p.dotDotDotToken ? { rest: true } : {}),
+      ...(pattern ? { 'x-ts-destructured': true } : {}),
     };
     const description = getParamDescription(name, jsdocTags);
     if (description) param.description = description;

@@ -115,6 +115,35 @@ export function declaredTypeNode(decl: ts.Declaration | undefined): ts.TypeNode 
   return withType?.type;
 }
 
+/**
+ * The written type of a property, when its declarations agree on one.
+ *
+ * A property the checker merges across union arms or conditional branches
+ * (`{ x?: never } | { x: T }`, `C extends true ? { x?: never } : { x: T }`)
+ * carries every branch's declaration. `never` / `undefined` there only mark
+ * the branch that omits the key, so they yield to the branch that types it.
+ * Declarations that still disagree give no node: the checker's type stands
+ * alone rather than one branch's text being asserted for all.
+ */
+function propertyTypeNode(prop: ts.Symbol): ts.TypeNode | undefined {
+  const decls = prop.getDeclarations() ?? [];
+  if (decls.length <= 1) return declaredTypeNode(prop.valueDeclaration ?? decls[0]);
+
+  const nodes = decls.map(declaredTypeNode).filter((n): n is ts.TypeNode => n !== undefined);
+  const informative = nodes.filter(
+    (n) => n.kind !== ts.SyntaxKind.NeverKeyword && n.kind !== ts.SyntaxKind.UndefinedKeyword,
+  );
+  const [first, ...rest] = informative.length > 0 ? informative : nodes;
+  if (!first) return undefined;
+  try {
+    const text = (n: ts.TypeNode) => n.getText().replace(/\s+/g, ' ');
+    const firstText = text(first);
+    return rest.every((n) => text(n) === firstText) ? first : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 /** Return annotation on a call signature, if the author wrote one. */
 export function typeNodeOfSignature(sig: ts.Signature): ts.TypeNode | undefined {
   const decl = sig.getDeclaration();
@@ -354,7 +383,7 @@ export function decoratePropertySchema(
     // When the author wrote a named type whose resolved rendering differs
     // (`InitiatorType` → a 21-literal union), also carry the declared form so a
     // docs consumer can show what was written instead of the expansion.
-    const declared = writtenTypeText(declaredTypeNode(decl));
+    const declared = writtenTypeText(propertyTypeNode(prop));
     if (declared && declared !== text && !PRIMITIVES.has(declared) && !('x-ts-declared' in obj)) {
       result = { ...result, 'x-ts-declared': declared };
     }
@@ -1652,8 +1681,7 @@ export function buildObjectSchema(
       // Optional props: omission from `required` carries the optionality —
       // strip undefined so the schema doesn't also encode `| undefined`
       const propType = isOptionalProp ? stripUndefinedFromType(rawPropType, checker) : rawPropType;
-      const decl = prop.valueDeclaration ?? prop.getDeclarations()?.[0];
-      let propSchema = buildSchema(propType, checker, ctx, declaredTypeNode(decl));
+      let propSchema = buildSchema(propType, checker, ctx, propertyTypeNode(prop));
 
       // Carry doc comments into the flattened schema so consumers reading only
       // schema.properties (not members[]) still see per-property descriptions.
