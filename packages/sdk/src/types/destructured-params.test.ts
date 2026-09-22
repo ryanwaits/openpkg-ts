@@ -182,6 +182,58 @@ export function f({ a }: { a: string; b?: number } | { a: string; c: string }): 
     expect(Object.keys(schema.properties as Obj).sort()).toEqual(['a', 'b', 'c']);
     // Required only when required in every arm.
     expect(schema.required).toEqual(['a']);
+    // The first arm requires nothing beyond `a`, so no per-arm constraint
+    // could bind: `anyOf: [{}, { required: ['c'] }]` is always satisfied.
+    expect(schema.anyOf).toBeUndefined();
+  });
+
+  test('discriminated union keeps per-arm requiredness under anyOf', async () => {
+    const code = `
+export interface Base { model: string }
+export function f({ model, a, b }: Base & ({ a: string; b?: never } | { b: number; a?: never })): void {}
+`;
+    const { fn, params } = await paramsOf(code, 'f');
+
+    const schema = params[0].schema as Obj;
+    expect(schema.type).toBe('object');
+    expect(Object.keys(schema.properties as Obj).sort()).toEqual(['a', 'b', 'model']);
+    expect(schema.required).toEqual(['model']);
+    // Each arm lists only what it requires beyond the shared `required`.
+    expect(schema.anyOf).toEqual([{ required: ['a'] }, { required: ['b'] }]);
+    // A key typed `never` in the arm that omits it takes its type from the
+    // arm that has it.
+    const props = schema.properties as Record<string, Obj>;
+    expect(props.a).toMatchObject({ type: 'string' });
+    expect(props.b).toMatchObject({ type: 'number' });
+    expect(JSON.stringify(props.b)).not.toContain('undefined');
+
+    expect(formatParameters(fn?.signatures?.[0])).toBe(
+      '(options: Base & ({ a: string; b?: never; } | { b: number; a?: never; }))',
+    );
+  });
+
+  test('a three-way union with an arm that requires nothing has no anyOf', async () => {
+    // `anyOf` with an empty arm is vacuous, so it is omitted entirely rather
+    // than listing the two arms that do require something.
+    const code = `
+export function f({ a }: { a: string } | { a: string; b: number } | { a: string; c: string }): void {}
+`;
+    const { params } = await paramsOf(code, 'f');
+
+    const schema = params[0].schema as Obj;
+    expect(schema.required).toEqual(['a']);
+    expect(schema.anyOf).toBeUndefined();
+  });
+
+  test('identical arms collapse to no anyOf', async () => {
+    const code = `
+export function f({ a }: { a: string; b: number; c?: string } | { a: string; b: number; d?: string }): void {}
+`;
+    const { params } = await paramsOf(code, 'f');
+
+    const schema = params[0].schema as Obj;
+    expect(schema.required).toEqual(['a', 'b']);
+    expect(schema.anyOf).toBeUndefined();
   });
 
   test('a key from an undecided conditional is never asserted as `never`', async () => {

@@ -9,6 +9,7 @@ import {
   type SpecType,
   type SpecTypeParameter,
 } from '@openpkg-ts/spec';
+import { isRequiredOnlyAnyOf } from '../types/schema-normalizer';
 
 /**
  * Format function schema to signature string.
@@ -105,8 +106,10 @@ export function formatSchema(
       return withPackage(baseName);
     }
 
-    // Handle anyOf (union)
-    if ('anyOf' in schema && Array.isArray(schema.anyOf)) {
+    // Handle anyOf (union). Arms that only constrain `required` beside
+    // `properties` (a discriminated union's per-arm keys) are not types:
+    // the object below renders them, each key optional.
+    if ('anyOf' in schema && Array.isArray(schema.anyOf) && !isRequiredOnlyAnyOf(schema.anyOf)) {
       const threshold = options?.collapseUnionThreshold ?? 5;
       const members = schema.anyOf as SpecSchema[];
 

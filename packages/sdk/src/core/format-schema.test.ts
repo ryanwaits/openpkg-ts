@@ -182,3 +182,19 @@ describe('formatSchema recursive union explosion', () => {
     expect(result.length).toBeLessThan(50);
   });
 });
+
+describe('formatSchema with per-arm required constraints', () => {
+  test('anyOf of bare required lists beside properties renders the object', () => {
+    const schema = {
+      type: 'object',
+      properties: {
+        model: { type: 'string' },
+        prompt: { type: 'string' },
+        messages: { type: 'number' },
+      },
+      required: ['model'],
+      anyOf: [{ required: ['prompt'] }, { required: ['messages'] }],
+    };
+    expect(formatSchema(schema)).toBe('{ model: string; prompt?: string; messages?: number }');
+  });
+});

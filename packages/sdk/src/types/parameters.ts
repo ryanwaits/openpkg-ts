@@ -177,15 +177,38 @@ function bindingElementKey(element: ts.ArrayBindingElement): string | undefined 
 /**
  * Every property the checker sees on a type, across union arms. `apparent`
  * resolves mapped/conditional and intersection types to their members.
+ *
+ * A key present in several arms takes the first arm that types it: in a
+ * discriminated union (`{ prompt: P; messages?: never } | { messages: M }`)
+ * the `never` arm only says the key is absent there, not what it holds.
  */
 function resolvedProperties(type: ts.Type, checker: ts.TypeChecker): ts.Symbol[] {
   const seen = new Map<string, ts.Symbol>();
   for (const arm of objectArms(type, checker)) {
     for (const prop of armProperties(arm, checker)) {
-      if (!seen.has(prop.getName())) seen.set(prop.getName(), prop);
+      const name = prop.getName();
+      const current = seen.get(name);
+      if (!current || (isAbsentMarker(current, checker) && !isAbsentMarker(prop, checker))) {
+        seen.set(name, prop);
+      }
     }
   }
   return [...seen.values()];
+}
+
+/** `key?: never` — the arm has no such key. Its type says nothing about the key. */
+function isAbsentMarker(prop: ts.Symbol, checker: ts.TypeChecker): boolean {
+  const type = stripUndefinedFromType(checker.getTypeOfSymbol(prop), checker);
+  return !!(type.flags & (ts.TypeFlags.Never | ts.TypeFlags.Undefined));
+}
+
+/** Names an arm requires. */
+function armRequiredNames(arm: ts.Type, checker: ts.TypeChecker): Set<string> {
+  return new Set(
+    armProperties(arm, checker)
+      .filter((p) => !(p.flags & ts.SymbolFlags.Optional))
+      .map((p) => p.getName()),
+  );
 }
 
 const PRIMITIVE_LIKE =
@@ -223,6 +246,11 @@ function armProperties(arm: ts.Type, checker: ts.TypeChecker): ts.Symbol[] {
  * the checker sees: `properties` from the apparent type, `required` for the
  * keys required in every union arm, the written form under `x-ts-type`.
  *
+ * A union keeps its per-arm requiredness as `anyOf: [{ required: [...] }]`,
+ * each arm listing only what it requires beyond the shared `required`
+ * (`prompt` | `messages`). Arms that require nothing more make the constraint
+ * vacuous, so then it is omitted entirely, as it is when every arm agrees.
+ *
  * A `$ref` to a named type is kept as is: the target carries the properties.
  */
 function resolvedObjectSchema(
@@ -245,24 +273,42 @@ function resolvedObjectSchema(
   const props = resolvedProperties(type, checker);
   const resolved = buildObjectSchema(props, checker, ctx, type) as Record<string, unknown>;
   if (arms.length > 1) {
+    const perArm = arms.map((arm) => armRequiredNames(arm, checker));
     // Required only when every arm requires it.
-    const requiredInAll = new Set<string>(props.map((p) => p.getName()));
-    for (const arm of arms) {
-      const armRequired = new Set(
-        armProperties(arm, checker)
-          .filter((p) => !(p.flags & ts.SymbolFlags.Optional))
-          .map((p) => p.getName()),
-      );
-      for (const name of [...requiredInAll]) if (!armRequired.has(name)) requiredInAll.delete(name);
-    }
-    const required = (resolved.required as string[] | undefined)?.filter((n) =>
-      requiredInAll.has(n),
+    const requiredInAll = new Set(
+      props.map((p) => p.getName()).filter((name) => perArm.every((set) => set.has(name))),
     );
-    if (required?.length) resolved.required = required;
+    // Property order, not arm order: `resolved.required` follows `props`.
+    const required = props.map((p) => p.getName()).filter((n) => requiredInAll.has(n));
+    if (required.length) resolved.required = required;
     else delete resolved.required;
+
+    const emitted = new Set(Object.keys(resolved.properties as Record<string, unknown>));
+    const anyOf = perArmRequired(perArm, requiredInAll, emitted);
+    if (anyOf) resolved.anyOf = anyOf;
   }
   resolved['x-ts-type'] = renderTypeText(type, checker, decl);
   return resolved as SpecSchema;
+}
+
+/**
+ * The `anyOf` arms for a union's per-arm requiredness, or nothing when the
+ * constraint would not bind: an arm that requires nothing beyond `shared`
+ * satisfies `anyOf` on its own, and identical arms collapse to one.
+ */
+function perArmRequired(
+  perArm: Set<string>[],
+  shared: Set<string>,
+  emitted: Set<string>,
+): Array<{ required: string[] }> | undefined {
+  const distinct = new Map<string, string[]>();
+  for (const set of perArm) {
+    const extra = [...set].filter((name) => emitted.has(name) && !shared.has(name));
+    if (extra.length === 0) return undefined;
+    distinct.set(extra.join('\0'), extra);
+  }
+  if (distinct.size < 2) return undefined;
+  return [...distinct.values()].map((required) => ({ required }));
 }
 
 /**

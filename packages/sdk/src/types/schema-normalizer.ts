@@ -134,8 +134,10 @@ function normalizeSchemaDispatch(schema: SpecSchema, options: NormalizeOptions):
     return {};
   }
 
-  // Handle combinators first (anyOf, allOf, oneOf)
-  if ('anyOf' in schema && Array.isArray(schema.anyOf)) {
+  // Handle combinators first (anyOf, allOf, oneOf). An `anyOf` of bare
+  // `{ required }` arms beside `properties` constrains the object (a
+  // discriminated union's per-arm keys); the object branch carries it.
+  if ('anyOf' in schema && Array.isArray(schema.anyOf) && !isRequiredOnlyAnyOf(schema.anyOf)) {
     return normalizeCombinator('anyOf', schema.anyOf, schema, options);
   }
   if ('allOf' in schema && Array.isArray(schema.allOf)) {
@@ -418,6 +420,11 @@ function normalizeObjectType(
     result.required = schema.required;
   }
 
+  // Per-arm requiredness of a union: `anyOf: [{ required: [...] }, ...]`
+  if (Array.isArray(schema.anyOf) && isRequiredOnlyAnyOf(schema.anyOf)) {
+    result.anyOf = schema.anyOf;
+  }
+
   // Normalize additionalProperties
   if ('additionalProperties' in schema) {
     if (typeof schema.additionalProperties === 'boolean') {
@@ -538,6 +545,20 @@ function normalizeRef(
   }
 
   return result;
+}
+
+/** Every arm is `{ required: [...] }` alone: a constraint on the enclosing object, not a union of types. */
+export function isRequiredOnlyAnyOf(arms: unknown[]): boolean {
+  return (
+    arms.length > 0 &&
+    arms.every(
+      (arm) =>
+        typeof arm === 'object' &&
+        arm !== null &&
+        Object.keys(arm).length === 1 &&
+        Array.isArray((arm as { required?: unknown }).required),
+    )
+  );
 }
 
 /**
