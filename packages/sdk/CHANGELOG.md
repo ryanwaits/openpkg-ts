@@ -1,5 +1,11 @@
 # @openpkg-ts/extract
 
+## 0.55.2
+
+### Patch Changes
+
+- db56009: A type alias that only references another named type (`type Msg = UIMessage<A, B>`, `type A = B`, or a conditional resolving to one) no longer repeats the target's properties as its own `members`. Its schema is `$ref: #/types/<Target>` with `x-ts-type-arguments`, in both `exports[]` and `types[]`. Object-literal, intersection, `Pick`/`Omit` and mapped aliases keep their members.
+
 ## 0.55.1
 
 ### Patch Changes
