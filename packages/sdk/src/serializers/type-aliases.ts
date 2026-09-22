@@ -17,6 +17,7 @@ import {
   isBuiltinSymbol,
   isReadonlyPropertySymbol,
   PRIMITIVES,
+  referencedNamedType,
   renderTypeText,
   shouldEmitAliasTypeText,
   stripUndefinedFromType,
@@ -73,10 +74,18 @@ export function serializeTypeAlias(
   // Register referenced types FIRST (before buildSchema adds to visitedTypes)
   registerReferencedTypes(type, ctx);
 
+  // An alias that only points at another named type (`type Msg = UIMessage<…>`,
+  // `type A = B`, a conditional resolving to `B`) owns no members: they belong
+  // to the target, and repeating them here makes doc tools ask for `Msg.parts`
+  // to be documented on the alias's page.
+  const isReference = isReferenceAlias(node, type);
+
   // Check if this is an intersection type node - preserve structure
   let schema: SpecSchema;
   let members: SpecMember[] | undefined;
-  if (ts.isIntersectionTypeNode(node.type)) {
+  if (isReference) {
+    schema = buildAliasBodySchema(type, ctx.typeChecker, ctx);
+  } else if (ts.isIntersectionTypeNode(node.type)) {
     schema = buildIntersectionSchemaFromNode(node.type, ctx);
     // Parity with mapped/conditional aliases: the allOf shell keeps the
     // intersection structure, but consumers still get resolved members with
@@ -155,6 +164,20 @@ export function serializeTypeAlias(
     ...(examples.length > 0 ? { examples } : {}),
     ...(inlineTags ? { inlineTags } : {}),
   };
+}
+
+/**
+ * The alias body is a reference to another named type rather than a shape of
+ * its own: a class/interface/enum (possibly instantiated), another alias
+ * (`type A = Lit` keeps Lit's alias symbol), or a conditional/mapped body the
+ * checker resolves to one. Intersections always own their shape.
+ */
+function isReferenceAlias(node: ts.TypeAliasDeclaration, type: ts.Type): boolean {
+  if (ts.isIntersectionTypeNode(node.type)) return false;
+  if (referencedNamedType(type)) return true;
+  const alias = type.aliasSymbol;
+  if (!alias || alias.getName().startsWith('__')) return false;
+  return !alias.declarations?.includes(node);
 }
 
 /**

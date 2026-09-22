@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'bun:test';
+import type { SpecExport } from '@openpkg-ts/spec';
 import { extract } from '../builder/spec-builder';
 
 const WASM_PROXY_PATTERN = `
@@ -142,5 +143,122 @@ export type AliasToNamed = Named;
     expect(JSON.stringify(alias?.schema)).toContain('Named');
     // Object-literal aliases now carry the members layer too
     expect(point?.members?.map((m) => m.name)).toEqual(['x', 'y']);
+  });
+});
+
+// vercel/ai shape: `InferAgentUIMessage<AGENT> = UIMessage<…>` was emitted
+// with UIMessage's id/role/metadata/parts as its OWN members, so doc-coverage
+// tools reported "InferAgentUIMessage.parts is never documented".
+const REFERENCE_ALIASES = `
+export interface UIMessage<METADATA = unknown, DATA = unknown, TOOLS = unknown> {
+  /** Message id */
+  id: string;
+  role: 'user' | 'assistant';
+  metadata?: METADATA;
+  parts: Array<DATA | TOOLS>;
+}
+export type InferUITools<T> = T extends { tools: infer TOOLS } ? TOOLS : never;
+export type InferAgentUIMessage<AGENT, MESSAGE_METADATA = unknown> = UIMessage<
+  MESSAGE_METADATA,
+  never,
+  InferUITools<AGENT>
+>;
+export type ConcreteMessage = UIMessage<string, number, boolean>;
+export interface Named { name: string; age?: number }
+export type AliasToNamed = Named;
+export type CondToNamed = true extends true ? Named : never;
+export type Lit = { a: string };
+export type AliasToLit = Lit;
+export type Picked = Pick<Named, 'name'>;
+export type Mapped = { [K in keyof Named]: string };
+export type WithExtra = Named & { extra: boolean };
+export class Klass { x = 1; go(): void {} }
+export type AliasToClass = Klass;
+`;
+
+describe('type alias serialization — reference aliases carry no members of their own', () => {
+  const memberNames = (e: SpecExport | undefined) => e?.members?.map((m) => m.name);
+
+  test('generic alias to a generic interface: $ref + type arguments, no members', async () => {
+    const result = await extract({ entryFile: 'test.ts', content: REFERENCE_ALIASES });
+    const exp = result.spec.exports.find((e) => e.name === 'InferAgentUIMessage');
+    const schema = exp?.schema as Record<string, unknown>;
+    expect(schema.$ref).toBe('#/types/UIMessage');
+    expect(Array.isArray(schema['x-ts-type-arguments'])).toBe(true);
+    expect((schema['x-ts-type-arguments'] as unknown[]).length).toBe(3);
+    expect(exp?.members).toBeUndefined();
+
+    const type = result.spec.types?.find((t) => t.name === 'InferAgentUIMessage');
+    expect((type?.schema as Record<string, unknown>)?.$ref).toBe('#/types/UIMessage');
+    expect((type as { members?: unknown })?.members).toBeUndefined();
+  });
+
+  test('concrete instantiation alias: $ref to the target + type arguments, no members', async () => {
+    const result = await extract({ entryFile: 'test.ts', content: REFERENCE_ALIASES });
+    const exp = result.spec.exports.find((e) => e.name === 'ConcreteMessage');
+    const schema = exp?.schema as Record<string, unknown>;
+    expect(schema.$ref).toBe('#/types/UIMessage');
+    expect(schema['x-ts-type-arguments']).toEqual([
+      { type: 'string' },
+      { type: 'number' },
+      { type: 'boolean' },
+    ]);
+    expect(schema['x-ts-type']).toBe('UIMessage<string, number, boolean>');
+    expect(exp?.members).toBeUndefined();
+
+    const type = result.spec.types?.find((t) => t.name === 'ConcreteMessage');
+    expect((type?.schema as Record<string, unknown>)?.$ref).toBe('#/types/UIMessage');
+    expect((type?.schema as Record<string, unknown>)?.properties).toBeUndefined();
+  });
+
+  test('the referenced interface still carries its own members', async () => {
+    const result = await extract({ entryFile: 'test.ts', content: REFERENCE_ALIASES });
+    const ui = result.spec.exports.find((e) => e.name === 'UIMessage');
+    expect(memberNames(ui)).toEqual(['id', 'role', 'metadata', 'parts']);
+    expect(ui?.members?.find((m) => m.name === 'id')?.description).toBe('Message id');
+  });
+
+  test('alias to a named interface / class / object-literal alias: $ref, no members', async () => {
+    const result = await extract({ entryFile: 'test.ts', content: REFERENCE_ALIASES });
+    for (const [name, target] of [
+      ['AliasToNamed', 'Named'],
+      ['AliasToClass', 'Klass'],
+      ['AliasToLit', 'Lit'],
+    ]) {
+      const exp = result.spec.exports.find((e) => e.name === name);
+      expect((exp?.schema as Record<string, unknown>)?.$ref).toBe(`#/types/${target}`);
+      expect(exp?.members).toBeUndefined();
+    }
+  });
+
+  test('conditional alias resolving to a named type: $ref, no members', async () => {
+    const result = await extract({ entryFile: 'test.ts', content: REFERENCE_ALIASES });
+    const exp = result.spec.exports.find((e) => e.name === 'CondToNamed');
+    expect((exp?.schema as Record<string, unknown>)?.$ref).toBe('#/types/Named');
+    expect(exp?.members).toBeUndefined();
+  });
+
+  test('object-literal, intersection, Pick and mapped aliases keep their own members', async () => {
+    const result = await extract({ entryFile: 'test.ts', content: REFERENCE_ALIASES });
+    const byName = (name: string) => result.spec.exports.find((e) => e.name === name);
+    expect(memberNames(byName('Lit'))).toEqual(['a']);
+    expect(memberNames(byName('WithExtra'))?.sort()).toEqual(['age', 'extra', 'name']);
+    // Pick<Named, 'name'> and a mapped body own their resolved shape — no
+    // registered type carries exactly these members. Text stays as written.
+    const picked = byName('Picked');
+    expect(memberNames(picked)).toEqual(['name']);
+    expect((picked?.schema as Record<string, unknown>)['x-ts-declared']).toBe(
+      "Pick<Named, 'name'>",
+    );
+    expect(memberNames(byName('Mapped'))?.sort()).toEqual(['age', 'name']);
+  });
+
+  test('class and interface exports are unchanged', async () => {
+    const result = await extract({ entryFile: 'test.ts', content: REFERENCE_ALIASES });
+    const klass = result.spec.exports.find((e) => e.name === 'Klass');
+    expect(klass?.kind).toBe('class');
+    expect(memberNames(klass)).toEqual(['x', 'go']);
+    const named = result.spec.exports.find((e) => e.name === 'Named');
+    expect(memberNames(named)).toEqual(['name', 'age']);
   });
 });

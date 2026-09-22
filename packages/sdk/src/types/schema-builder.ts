@@ -398,6 +398,29 @@ export function decoratePropertySchema(
 }
 
 /**
+ * Named type an alias body merely points at — `type A = B<X>`, `type A = B`,
+ * or a conditional the checker resolves to `B`. Undefined when the alias owns
+ * its shape (object literal, intersection, Pick/Omit/mapped instantiation) or
+ * the target is a lib builtin (Array, Promise). Lib symbols are excluded because
+ * they are never registered in types[] and their `getProperties()` is prototype
+ * surface, not API.
+ */
+export function referencedNamedType(type: ts.Type): ts.Symbol | undefined {
+  if (!(type.flags & ts.TypeFlags.Object)) return undefined;
+  const target = (type as ts.TypeReference).target ?? type;
+  const symbol = target.getSymbol();
+  if (!symbol || isAnonymous(target)) return undefined;
+  const named =
+    ts.SymbolFlags.Class |
+    ts.SymbolFlags.Interface |
+    ts.SymbolFlags.RegularEnum |
+    ts.SymbolFlags.ConstEnum;
+  if (!(symbol.flags & named)) return undefined;
+  if (isBuiltinSymbol(symbol)) return undefined;
+  return symbol;
+}
+
+/**
  * Alias-level x-ts-type is emitted when the alias RHS is a renderable
  * expression (array, instantiation, union, intersection, function, keyof, …).
  * Type-literal and mapped bodies are skipped — their structure is already
@@ -1238,7 +1261,12 @@ function buildSchemaInternal(
     // Named type aliases that resolve to unions/intersections → $ref BEFORE decomposing.
     // Without this, `type Foo = A & B` would be expanded as allOf instead of emitting $ref.
     // Only applies to non-generic aliases (generic aliases are handled later via aliasTypeArguments).
-    if (type.aliasSymbol && !type.aliasTypeArguments?.length) {
+    // At its own declaration, an alias that merely instantiates a named type
+    // (`type Msg = UIMessage<string, never>`) refs the TARGET with its
+    // arguments below, not itself: the alias owns no shape of its own.
+    const ownReferenceBody = ctx?.aliasBody === type && referencedNamedType(type) !== undefined;
+    if (ownReferenceBody && ctx) ctx.aliasBody = undefined;
+    if (type.aliasSymbol && !type.aliasTypeArguments?.length && !ownReferenceBody) {
       const aliasName = type.aliasSymbol.getName();
       // Lib aliases (ArrayBufferLike = ArrayBuffer | SharedArrayBuffer) are not
       // registered in types[]. Inline the builtin schema instead of a dangling $ref.
