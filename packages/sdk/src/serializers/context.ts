@@ -258,15 +258,6 @@ function serializeInheritedMember(
 
   // Optionality is flags.optional; `run?(): void` typed `(() => void) | undefined`
   // has no call signatures until the undefined branch is stripped
-  const isOptional = !!(symbol.flags & ts.SymbolFlags.Optional);
-  const rawType = checker.getTypeOfSymbol(symbol);
-  const type = isOptional ? stripUndefinedFromType(rawType, checker) : rawType;
-  // Past the budget every schema below is text, so no $ref needs a registry
-  // entry, and walking each subclass's instantiation of a generic base is the
-  // fan-out that costs memory (zod: +300 MB over 80 schema classes).
-  const registerTypes = !ctx.budget.exceeded;
-  if (registerTypes) registerReferencedTypes(type, ctx);
-
   // Determine visibility
   let visibility: SpecVisibility | undefined;
   if (decl && ts.canHaveModifiers(decl)) {
@@ -280,8 +271,20 @@ function serializeInheritedMember(
     }
   }
 
-  // Skip private members
+  // Same rule as a class's own members: private never, protected only with
+  // includePrivate. Checked before registering types, so a base class's
+  // internals don't pull their parameter types into the spec.
   if (visibility === 'private') return null;
+  if (visibility === 'protected' && !ctx.includePrivate) return null;
+
+  const isOptional = !!(symbol.flags & ts.SymbolFlags.Optional);
+  const rawType = checker.getTypeOfSymbol(symbol);
+  const type = isOptional ? stripUndefinedFromType(rawType, checker) : rawType;
+  // Past the budget every schema below is text, so no $ref needs a registry
+  // entry, and walking each subclass's instantiation of a generic base is the
+  // fan-out that costs memory (zod: +300 MB over 80 schema classes).
+  const registerTypes = !ctx.budget.exceeded;
+  if (registerTypes) registerReferencedTypes(type, ctx);
 
   const { description, tags, inlineTags } = getJSDocComment(decl);
   const { deprecated, reason: deprecationReason } = isSymbolDeprecated(symbol);
